@@ -40,10 +40,11 @@
 
 - فتح `BaseDirectory` مباشرة من شاشة الإعدادات
 - نسخ ملخص مسارات التشغيل من شاشة الإعدادات
-- طبقة UX المرجعية الكاملة حتى مستوى الـ flows:
+- طبقة UX المرجعية الكاملة حتى مستوى الـ flows والتعبير البصري:
   - [ux_simplification_v1.1.md](ux_simplification_v1.1.md)
   - [ux_task_architecture_v1.1.md](ux_task_architecture_v1.1.md)
   - [ux_flow_specs_v1.1.md](ux_flow_specs_v1.1.md)
+  - [ux_visual_intelligence_v1.1.md](ux_visual_intelligence_v1.1.md)
 
 ## القرار التالي المطلوب
 
@@ -60,6 +61,7 @@
 - المرجع التنفيذي لهذه النقطة: [ux_simplification_v1.1.md](ux_simplification_v1.1.md)
 - المعمارية المعتمدة للمسارات: [ux_task_architecture_v1.1.md](ux_task_architecture_v1.1.md)
 - مواصفات أول flows قبل التنفيذ: [ux_flow_specs_v1.1.md](ux_flow_specs_v1.1.md)
+- قواعد الذكاء البصري للتنفيذ: [ux_visual_intelligence_v1.1.md](ux_visual_intelligence_v1.1.md)
 
 إذا ظهر خلل حرج في النسخة المنشورة `v1.0.0`، فلا يُصلح هنا، بل على:
 
@@ -79,6 +81,8 @@
   لخريطة IA/UX التنفيذية المعتمدة
 - `ux_flow_specs_v1.1.md`
   لطبقة "كيف بالضبط" لأول flows قبل التنفيذ
+- `ux_visual_intelligence_v1.1.md`
+  لطبقة التعبير البصري عن الأولوية والحالة والخطوة التالية
 - `merge_summary_v1.1_operational_polish.md`
   لمعرفة وضع الفرع النشط الحالي
 - `release_v1.md`
