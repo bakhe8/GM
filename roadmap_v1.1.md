@@ -9,6 +9,7 @@
 - سياسة الفروع: [git_workflow.md](git_workflow.md)
 - ملخص الفرع الحالي: `merge_summary_v1.1_operational_polish.md`
 - أولوية تبسيط الاستخدام: [ux_simplification_v1.1.md](ux_simplification_v1.1.md)
+- Blueprint التنفيذ: [ux_task_architecture_v1.1.md](ux_task_architecture_v1.1.md)
 
 ## أين نقف الآن
 

@@ -70,6 +70,8 @@
   لمعرفة اتجاه العمل القادم
 - `ux_simplification_v1.1.md`
   لتبسيط تجربة الاستخدام كأولوية قادمة
+- `ux_task_architecture_v1.1.md`
+  لخريطة IA/UX التنفيذية المعتمدة
 - `merge_summary_v1.1_operational_polish.md`
   لمعرفة وضع الفرع النشط الحالي
 - `release_v1.md`
