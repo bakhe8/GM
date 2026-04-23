@@ -82,7 +82,7 @@ namespace GuaranteeManager.Views
                 BuildInquiryActionSections(),
                 ResolveInquiryActionHandler,
                 true,
-                "inquiry.export",
+                "inquiry.export-guarantee",
                 "inquiry.open-history");
         }
 
