@@ -1,0 +1,108 @@
+<Window x:Class="GuaranteeManager.Views.CreateExtensionRequestWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="طلب تمديد جديد"
+        Height="540"
+        Width="760"
+        MinHeight="500"
+        MinWidth="700"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{StaticResource Surface_Bg_Light}"
+        FlowDirection="RightToLeft"
+        FontFamily="{StaticResource Font_Primary}">
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Style="{StaticResource Panel.Advisor}" Margin="0,0,0,8" Padding="12">
+            <StackPanel Orientation="Horizontal">
+                <Border Style="{StaticResource Badge.Icon.Emphasis}">
+                    <Path Data="{StaticResource Icon_Geometry_Advisor}" Style="{StaticResource Path_SectionIcon}"/>
+                </Border>
+                <StackPanel>
+                    <TextBlock Text="طلب تمديد جديد" Style="{StaticResource Text_H1}" Margin="0"/>
+                    <TextBlock Text="يسجل الطلب كطلب معلق دون تغيير بيانات الضمان حتى يرد البنك. تعرض النافذة تاريخ الانتهاء الحالي ثم تسمح باختيار التاريخ المطلوب للمقارنة قبل المتابعة."
+                               Style="{StaticResource Text_Muted}"
+                               TextWrapping="Wrap"
+                               Margin="0,4,0,0"/>
+                    <Border Style="{StaticResource Tile.Neutral}" Margin="0,8,0,0">
+                        <TextBlock Text="احرص على أن يكون التاريخ المطلوب بعد الانتهاء الحالي، وأن يُسجل اسم منشئ الطلب قبل الحفظ."
+                                   Style="{StaticResource Text_Caption}"/>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Form Card -->
+        <Border Grid.Row="1" Style="{StaticResource Card.Panel}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="الضمان" Style="{StaticResource InputLabel}" VerticalAlignment="Center"/>
+                <ComboBox x:Name="CmbGuarantee"
+                          Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3"
+                          DisplayMemberPath="WorkflowDisplayLabel"
+                          SelectionChanged="Guarantee_SelectionChanged"/>
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="المورد" Style="{StaticResource InputLabel}" Margin="0,8,0,8"/>
+                <TextBlock x:Name="TxtSupplier" Grid.Row="1" Grid.Column="1" Margin="0,8,0,8" VerticalAlignment="Center"/>
+
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="البنك" Style="{StaticResource InputLabel}" Margin="0,8,0,8"/>
+                <TextBlock x:Name="TxtBank" Grid.Row="1" Grid.Column="3" Margin="0,8,0,8" VerticalAlignment="Center"/>
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="الانتهاء الحالي" Style="{StaticResource InputLabel}" Margin="0,8,0,8"/>
+                <TextBlock x:Name="TxtCurrentExpiry" Grid.Row="2" Grid.Column="1" Margin="0,8,0,8" VerticalAlignment="Center"/>
+
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="التاريخ المطلوب" Style="{StaticResource InputLabel}" Margin="0,8,0,8"/>
+                <DatePicker x:Name="DateRequestedExpiry" Grid.Row="2" Grid.Column="3" Margin="0,8,0,8"/>
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="منشئ الطلب" Style="{StaticResource InputLabel}" Margin="0,8,0,8"/>
+                <TextBox x:Name="TxtCreatedBy" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,8,0,8"/>
+
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="ملاحظات الطلب" Style="{StaticResource InputLabel}" Margin="0,8,0,8"/>
+                <TextBox x:Name="TxtNotes"
+                          Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"
+                          Margin="0,8,0,0"
+                          AcceptsReturn="True"
+                          TextWrapping="Wrap"
+                          VerticalScrollBarVisibility="Auto"
+                          MinHeight="120"
+                          Padding="8"/>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="2" Margin="0,8,0,0">
+            <Border Style="{StaticResource Tile.Neutral}">
+                <TextBlock x:Name="TxtSaveGuidance"
+                           Style="{StaticResource Text_Caption}"
+                           Text="أكمل اختيار الضمان وتاريخ التمديد واسم منشئ الطلب قبل الحفظ."/>
+            </Border>
+            <StackPanel Orientation="Horizontal" FlowDirection="LeftToRight">
+                <Button x:Name="BtnSave"
+                        Content="متابعة إنشاء الطلب"
+                        Click="Save_Click"
+                        Style="{StaticResource Button.Primary}"/>
+                <Button Content="إغلاق دون حفظ"
+                        Click="Cancel_Click"
+                        Margin="8,0,0,0"
+                        Style="{StaticResource Button.Subtle}"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

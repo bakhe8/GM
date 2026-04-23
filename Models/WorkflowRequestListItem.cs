@@ -1,0 +1,80 @@
+using System;
+
+namespace GuaranteeManager.Models
+{
+    public class WorkflowRequestListItem
+    {
+        public WorkflowRequest Request { get; set; } = new WorkflowRequest();
+        public int CurrentGuaranteeId { get; set; }
+        public int RootGuaranteeId { get; set; }
+        public string GuaranteeNo { get; set; } = string.Empty;
+        public string Supplier { get; set; } = string.Empty;
+        public string Bank { get; set; } = string.Empty;
+        public GuaranteeReferenceType ReferenceType { get; set; } = GuaranteeReferenceType.None;
+        public string ReferenceNumber { get; set; } = string.Empty;
+        public decimal CurrentAmount { get; set; }
+        public DateTime CurrentExpiryDate { get; set; }
+        public int CurrentVersionNumber { get; set; }
+        public GuaranteeLifecycleStatus LifecycleStatus { get; set; } = GuaranteeLifecycleStatus.Active;
+
+        public string LifecycleStatusLabel => LifecycleStatus switch
+        {
+            GuaranteeLifecycleStatus.Active => "نشط",
+            GuaranteeLifecycleStatus.Expired => "منتهي الصلاحية",
+            GuaranteeLifecycleStatus.Released => "مفرج",
+            GuaranteeLifecycleStatus.Liquidated => "مسيّل",
+            GuaranteeLifecycleStatus.Replaced => "مستبدل",
+            GuaranteeLifecycleStatus.Closed => "مغلق",
+            _ => "غير معروف"
+        };
+
+        public string CurrentVersionLabel => $"v{CurrentVersionNumber}";
+        public string RequestDateLabel => Request.RequestDate.ToString("yyyy-MM-dd");
+        public string ResponseDateLabel => Request.ResponseRecordedAt?.ToString("yyyy-MM-dd") ?? "---";
+        public bool IsPending => Request.Status == RequestStatus.Pending;
+        public bool IsPurchaseOrderOnly => ReferenceType == GuaranteeReferenceType.PurchaseOrder && !string.IsNullOrWhiteSpace(ReferenceNumber);
+        public bool IsContractRelated => ReferenceType == GuaranteeReferenceType.Contract && !string.IsNullOrWhiteSpace(ReferenceNumber);
+        public string ReferenceTypeLabel => ReferenceType switch
+        {
+            GuaranteeReferenceType.Contract => "عقد",
+            GuaranteeReferenceType.PurchaseOrder => "أمر شراء",
+            _ => "بدون مرجع"
+        };
+        public string CurrentValueFieldLabel => Request.Type switch
+        {
+            RequestType.Extension => "تاريخ الانتهاء الحالي",
+            RequestType.Reduction => "المبلغ الحالي",
+            RequestType.Release => "الحالة التشغيلية الحالية",
+            RequestType.Liquidation => "الحالة التشغيلية الحالية",
+            RequestType.Verification => "الحالة التشغيلية الحالية",
+            RequestType.Replacement => "رقم الضمان الحالي",
+            RequestType.Annulment => "الحالة التشغيلية الحالية",
+            _ => "الحقل الحالي"
+        };
+        public string RequestedValueFieldLabel => Request.Type switch
+        {
+            RequestType.Extension => "تاريخ الانتهاء المطلوب",
+            RequestType.Reduction => "المبلغ المطلوب",
+            RequestType.Release => "الإجراء المطلوب",
+            RequestType.Liquidation => "الإجراء المطلوب",
+            RequestType.Verification => "الإجراء المطلوب",
+            RequestType.Replacement => "رقم الضمان البديل",
+            RequestType.Annulment => "الإجراء المطلوب",
+            _ => "الحقل المطلوب"
+        };
+        public string CurrentValueLabel => Request.Type switch
+        {
+            RequestType.Extension => CurrentExpiryDate.ToString("yyyy-MM-dd"),
+            RequestType.Reduction => CurrentAmount.ToString("N2"),
+            RequestType.Release => LifecycleStatusLabel,
+            RequestType.Liquidation => LifecycleStatusLabel,
+            RequestType.Verification => LifecycleStatusLabel,
+            RequestType.Replacement => GuaranteeNo,
+            RequestType.Annulment => LifecycleStatusLabel,
+            _ => "---"
+        };
+        public string RequestedValueLabel => Request.RequestedValueLabel;
+        public string CurrentValueDisplay => string.IsNullOrWhiteSpace(CurrentValueLabel) ? "---" : CurrentValueLabel;
+        public string RequestedValueDisplay => string.IsNullOrWhiteSpace(RequestedValueLabel) ? "---" : RequestedValueLabel;
+    }
+}

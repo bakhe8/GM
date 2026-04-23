@@ -1,0 +1,149 @@
+<UserControl x:Class="GuaranteeManager.Views.OperationCenterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                Style="{StaticResource MetricStrip.Panel}"
+                CornerRadius="{StaticResource Corner_Inner}">
+            <Grid Height="80">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Style="{StaticResource MetricStrip.ItemStack}">
+                    <TextBlock Style="{StaticResource Text_Caption}" Text="إجمالي الطلبات"/>
+                    <TextBlock Style="{StaticResource Text_Metric}" Text="{Binding RequestCount}" Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <Rectangle Grid.Column="1" Style="{StaticResource MetricStrip.Separator}"/>
+
+                <StackPanel Grid.Column="2" Style="{StaticResource MetricStrip.ItemStack}">
+                    <TextBlock Style="{StaticResource Text_Caption}" Text="قيد الانتظار"/>
+                    <TextBlock Style="{StaticResource Text_Metric}" Text="{Binding PendingCount}" Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <Rectangle Grid.Column="3" Style="{StaticResource MetricStrip.Separator}"/>
+
+                <StackPanel Grid.Column="4" Style="{StaticResource MetricStrip.ItemStack}">
+                    <TextBlock Style="{StaticResource Text_Caption}" Text="منفذة"/>
+                    <TextBlock Style="{StaticResource Text_Metric}" Text="{Binding ExecutedCount}" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1" Margin="{DynamicResource Space_Section_Bottom}" Style="{StaticResource Card.Panel}" CornerRadius="{StaticResource Corner_Inner}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource Text_Section}" Text="غرفة الطلبات"/>
+                        <TextBlock
+                                   Margin="0,4,0,0"
+                                   Style="{StaticResource Text_Muted}"
+                                   Text="{Binding OperationSummary}"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Margin="16,0,0,0" Style="{StaticResource Button.Primary}" Click="OpenGuarantee_Click" Content="فتح ملف الضمان" IsEnabled="{Binding HasSelectedRequest}"/>
+                    <Button Grid.Column="2" Margin="16,0,0,0" Style="{StaticResource Button.Subtle}" Click="OpenLetter_Click" Content="خطاب الطلب" IsEnabled="{Binding CanOpenLetter}"/>
+                    <Button Grid.Column="3"
+                            Margin="16,0,0,0"
+                            Style="{StaticResource Button.Subtle}"
+                            Click="OpenResponse_Click"
+                            Content="{Binding ResponseActionLabel}"
+                            IsEnabled="{Binding CanUseResponseAction}"/>
+                    <Button Grid.Column="4" Margin="16,0,0,0" Style="{StaticResource Button.Subtle}" Click="Refresh_Click" Content="تحديث"/>
+                </Grid>
+
+                <Grid Grid.Row="1" Margin="{DynamicResource Space_Section_Top}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="TxtRequestSearch" Text="{Binding SearchText, Mode=OneWay}" TextChanged="FiltersChanged" ToolTip="بحث برقم الضمان أو المورد أو البنك"/>
+                    <ComboBox x:Name="CmbTypeFilter" Grid.Column="1" Margin="16,0,0,0" ItemsSource="{Binding TypeOptions}" SelectedItem="{Binding SelectedType, Mode=OneWay}" SelectionChanged="FiltersChanged"/>
+                    <ComboBox x:Name="CmbStatusFilter" Grid.Column="2" Margin="16,0,0,0" ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus, Mode=OneWay}" SelectionChanged="FiltersChanged"/>
+                    <Button Grid.Column="3" Margin="16,0,0,0" Style="{StaticResource Button.Subtle}" Click="ClearFilters_Click" Content="إعادة ضبط"/>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2"
+                Margin="0,0,0,8"
+                Style="{StaticResource Card.Panel}"
+                CornerRadius="{StaticResource Corner_Inner}">
+            <StackPanel>
+                <TextBlock Style="{StaticResource Text_Section}" Text="ابدأ طلبًا جديدًا"/>
+                <TextBlock Margin="0,4,0,0"
+                           Style="{StaticResource Text_Muted}"
+                           Text="{Binding RequestCreationSummary}"/>
+                <StackPanel x:Name="CreateRequestActionPanel" Margin="0,12,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="3"
+                Style="{StaticResource Card.Panel}"
+                CornerRadius="{StaticResource Corner_Inner}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel>
+                    <TextBlock Style="{StaticResource Text_Section}" Text="الطلبات المعروضة"/>
+                    <TextBlock Margin="0,4,0,0"
+                               Style="{StaticResource Text_Muted}"
+                               Text="يعرض الجدول جميع الطلبات المطابقة للمرشحات الحالية، مع إبقاء الإجراءات الأساسية والردود ضمن نفس السياق العملي."/>
+                </StackPanel>
+
+                <DataGrid x:Name="GridRequests"
+                          Grid.Row="1"
+                          Margin="{DynamicResource Space_Section_Top}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          ItemsSource="{Binding FilteredRequests}"
+                          SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                          PreviewMouseLeftButtonDown="GridRequests_PreviewMouseLeftButtonDown"
+                          SelectionChanged="GridRequests_SelectionChanged"
+                          PreviewMouseRightButtonDown="GridRequests_PreviewMouseRightButtonDown"
+                          ContextMenuOpening="GridRequests_ContextMenuOpening"
+                          MouseDoubleClick="GridRequests_MouseDoubleClick">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="#" Binding="{Binding Request.SequenceNumber}" Width="0.5*" MinWidth="40" ElementStyle="{StaticResource DataGridText.Center}"/>
+                        <DataGridTextColumn Header="رقم الضمان" Binding="{Binding GuaranteeNo}" Width="1.1*" MinWidth="100" ElementStyle="{StaticResource DataGridText.Rtl}"/>
+                        <DataGridTextColumn Header="المورد" Binding="{Binding Supplier}" Width="1.4*" MinWidth="140" ElementStyle="{StaticResource DataGridText.Rtl}"/>
+                        <DataGridTextColumn Header="البنك" Binding="{Binding Bank}" Width="1.2*" MinWidth="120" ElementStyle="{StaticResource DataGridText.Rtl}"/>
+                        <DataGridTextColumn Header="النوع" Binding="{Binding Request.TypeLabel}" Width="1*" MinWidth="90" ElementStyle="{StaticResource DataGridText.Rtl}"/>
+                        <DataGridTextColumn Header="الحالة" Binding="{Binding Request.StatusLabel}" Width="1*" MinWidth="90" ElementStyle="{StaticResource DataGridText.Rtl}"/>
+                        <DataGridTextColumn Header="المطلوب" Binding="{Binding RequestedValueDisplay}" Width="1*" MinWidth="100" ElementStyle="{StaticResource DataGridText.Rtl}"/>
+                        <DataGridTextColumn Header="التاريخ" Binding="{Binding RequestDateLabel}" Width="0.9*" MinWidth="90" ElementStyle="{StaticResource DataGridText.Center}"/>
+                        <DataGridTextColumn Header="الرد" Binding="{Binding ResponseDateLabel}" Width="0.9*" MinWidth="90" ElementStyle="{StaticResource DataGridText.Center}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

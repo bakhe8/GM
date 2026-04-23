@@ -1,0 +1,39 @@
+# Logs
+Logs/
+*.log
+
+# Runtime data — never commit
+Data/*.db
+Data/*.db-*
+Data/.dbkey
+Data/window-state.json
+Attachments/
+Workflow/
+Data/Backups/
+
+# Build output and temp artifacts
+bin/
+obj/
+scratch/
+DevSeedRuntime/
+**/bin/
+**/obj/
+.mypy_cache/
+*_wpftmp.csproj
+Attachments/_staging/
+releases/*.zip
+releases/v*/
+
+# Editor directories and files
+.vs/
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.ntvs*
+*.njsproj
+*.sw?

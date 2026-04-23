@@ -1,0 +1,48 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <sys:Double x:Key="Size_Interactive_Height">30</sys:Double>
+    <sys:Double x:Key="Size_TitleBar_Height">30</sys:Double>
+    <sys:Double x:Key="Size_Header">56</sys:Double>
+    <sys:Double x:Key="Size_RightRail_Width">232</sys:Double>
+    <sys:Double x:Key="Size_SideSheet_Width">360</sys:Double>
+
+    <sys:Double x:Key="Space_04">4</sys:Double>
+    <sys:Double x:Key="Space_08">8</sys:Double>
+    <sys:Double x:Key="Space_12">12</sys:Double>
+    <sys:Double x:Key="Space_16">16</sys:Double>
+    <sys:Double x:Key="Space_20">20</sys:Double>
+    <sys:Double x:Key="Space_24">24</sys:Double>
+    <sys:Double x:Key="Space_32">32</sys:Double>
+
+    <Thickness x:Key="Space_Padding_Button">16,0</Thickness>
+    <Thickness x:Key="Space_Padding_ButtonWide">20,0</Thickness>
+    <Thickness x:Key="Space_Padding_Input">12,0</Thickness>
+    <Thickness x:Key="Space_Padding_Card">16</Thickness>
+    <Thickness x:Key="Space_Padding_CardCompact">12</Thickness>
+    <Thickness x:Key="Space_Padding_SideSheet">16,16,16,20</Thickness>
+
+    <CornerRadius x:Key="Corner_None">0</CornerRadius>
+    <CornerRadius x:Key="Corner_Solid_Flat">0</CornerRadius>
+    <CornerRadius x:Key="Corner_Rounded_6">6</CornerRadius>
+    <CornerRadius x:Key="Corner_Rounded_8">8</CornerRadius>
+
+    <!-- Official design-system source of truth: Slim / Solid / Flat -->
+    <CornerRadius x:Key="Corner_Shell">0</CornerRadius>
+    <CornerRadius x:Key="Corner_Solid">0</CornerRadius>
+    <CornerRadius x:Key="Corner_Inner">10</CornerRadius>
+    <sys:Double x:Key="Space_Unified">8</sys:Double>
+    <sys:Double x:Key="Space_Section_Gap">8</sys:Double>
+    <Thickness x:Key="Space_Shell_Outer">8</Thickness>
+    <Thickness x:Key="Space_Section_Bottom">0,0,0,8</Thickness>
+    <Thickness x:Key="Space_Section_Top">0,8,0,0</Thickness>
+    <Thickness x:Key="Space_Unified_Bottom">0,0,0,8</Thickness>
+    <Thickness x:Key="Space_Unified_Top">0,8,0,0</Thickness>
+    <Thickness x:Key="Space_Unified_All">8</Thickness>
+    <Thickness x:Key="Padding_Card">12</Thickness>
+
+    <!-- Transitional aliases kept to avoid breaking existing screens while the system converges -->
+    <Thickness x:Key="Space_Workspace_Unified">8</Thickness>
+    <Thickness x:Key="Padding_Card_Slim">12</Thickness>
+</ResourceDictionary>

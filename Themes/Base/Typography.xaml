@@ -1,0 +1,62 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <FontFamily x:Key="Font_Primary">Segoe UI, Dubai, Tahoma</FontFamily>
+    <FontFamily x:Key="Font_Icons">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+    <Style x:Key="Text_RtlBase" TargetType="TextBlock">
+        <Setter Property="FlowDirection" Value="RightToLeft"/>
+        <Setter Property="TextAlignment" Value="Left"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+    </Style>
+
+    <Style x:Key="Text_H1" TargetType="TextBlock" BasedOn="{StaticResource Text_RtlBase}">
+        <Setter Property="FontSize" Value="28"/>
+        <Setter Property="FontWeight" Value="ExtraBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Text_Primary}"/>
+    </Style>
+
+    <Style x:Key="Text_H2" TargetType="TextBlock" BasedOn="{StaticResource Text_RtlBase}">
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="{StaticResource Text_Primary}"/>
+    </Style>
+
+    <Style x:Key="Text_Section" TargetType="TextBlock" BasedOn="{StaticResource Text_RtlBase}">
+        <Setter Property="FontSize" Value="15"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Text_Primary}"/>
+    </Style>
+
+    <Style x:Key="Text_Body" TargetType="TextBlock" BasedOn="{StaticResource Text_RtlBase}">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Text_Secondary}"/>
+    </Style>
+
+    <Style x:Key="Text_Muted" TargetType="TextBlock" BasedOn="{StaticResource Text_RtlBase}">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush_Text_Muted}"/>
+    </Style>
+
+    <Style x:Key="Text_Caption" TargetType="TextBlock" BasedOn="{StaticResource Text_RtlBase}">
+        <Setter Property="FontSize" Value="11.5"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush_Text_Muted}"/>
+    </Style>
+
+    <Style x:Key="InputLabel" TargetType="TextBlock" BasedOn="{StaticResource Text_Caption}">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Text_Secondary}"/>
+    </Style>
+
+    <Style x:Key="Text_Metric" TargetType="TextBlock" BasedOn="{StaticResource Text_RtlBase}">
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="{StaticResource Text_Primary}"/>
+    </Style>
+
+</ResourceDictionary>

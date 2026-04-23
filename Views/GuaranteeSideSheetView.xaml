@@ -1,0 +1,167 @@
+<UserControl x:Class="GuaranteeManager.Views.GuaranteeSideSheetView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <Style x:Key="GuaranteeSideSheet.AttachmentTile" TargetType="Border" BasedOn="{StaticResource Card.Compact}">
+            <Setter Property="Padding" Value="{StaticResource Space_Padding_CardCompact}"/>
+        </Style>
+        <Style x:Key="GuaranteeSideSheet.TimelineTile" TargetType="Border" BasedOn="{StaticResource Card.Compact}">
+            <Setter Property="Background" Value="{StaticResource Neutral_025}"/>
+            <Setter Property="Padding" Value="10"/>
+        </Style>
+    </UserControl.Resources>
+    <Grid Margin="{DynamicResource Space_Padding_SideSheet}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Style="{StaticResource Card.Panel}">
+            <StackPanel>
+                <TextBlock x:Name="TxtGuaranteeNo"
+                           Style="{StaticResource Text_H2}"
+                           Text="BG-0000"/>
+                <TextBlock x:Name="TxtGuaranteeSummary"
+                           Margin="0,4,0,0"
+                           Style="{StaticResource Text_Muted}"
+                           Text="المورد | البنك"/>
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="1"
+              Margin="{DynamicResource Space_Section_Top}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Style="{StaticResource Card.Compact}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource Text_Caption}" Text="الحالة"/>
+                    <TextBlock x:Name="TxtStatus" Margin="0,6,0,0" Style="{StaticResource Text_Section}" Text="نشط"/>
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="2"
+                    Style="{StaticResource Card.Compact}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource Text_Caption}" Text="القيمة"/>
+                    <TextBlock x:Name="TxtAmount" Margin="0,6,0,0" Style="{StaticResource Text_Section}" Text="0.00"/>
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="4"
+                    Style="{StaticResource Card.Compact}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource Text_Caption}" Text="الانتهاء"/>
+                    <TextBlock x:Name="TxtExpiry" Margin="0,6,0,0" Style="{StaticResource Text_Section}" Text="--"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="2"
+                Margin="{DynamicResource Space_Section_Top}"
+                Style="{StaticResource Card.Panel}">
+            <StackPanel>
+                <TextBlock Style="{StaticResource Text_Section}" Text="مرفقات الإصدار الحالي"/>
+                <TextBlock Margin="0,4,0,0"
+                           Style="{StaticResource Text_Muted}"
+                           Text="يعرض هذا القسم المرفقات الرسمية المحفوظة مع الإصدار الحالي للضمان."/>
+                <StackPanel x:Name="AttachmentEmptyState"
+                            Margin="{DynamicResource Space_Section_Top}"
+                            Style="{StaticResource Panel.EmptyState}"
+                            Visibility="Collapsed">
+                    <Path Data="{StaticResource Icon_Geometry_Attachment}"/>
+                    <TextBlock Text="لا توجد مرفقات حالية لهذا الإصدار."/>
+                </StackPanel>
+                <ItemsControl x:Name="AttachmentsItems"
+                               Margin="{DynamicResource Space_Section_Top}"
+                               Visibility="Collapsed">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,8" Style="{StaticResource GuaranteeSideSheet.AttachmentTile}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock FontWeight="SemiBold" Text="{Binding OriginalFileName}"/>
+                                        <TextBlock Margin="0,4,0,0" Style="{StaticResource Text_Caption}" Text="{Binding UploadedAtLabel}"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1"
+                                            Style="{StaticResource Button.Subtle}"
+                                            Padding="10,0"
+                                            Tag="{Binding FilePath}"
+                                            Click="AttachmentOpen_Click"
+                                            Content="فتح"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="3"
+                Margin="{DynamicResource Space_Section_Top}"
+                Style="{StaticResource Card.Panel}">
+            <StackPanel>
+                <TextBlock Style="{StaticResource Text_Section}" Text="التسلسل المختصر"/>
+                <TextBlock Margin="0,4,0,0"
+                           Style="{StaticResource Text_Muted}"
+                           Text="يعرض هذا القسم أحدث العناصر المرتبطة بالضمان من تاريخ الإصدارات والطلبات المرتبطة."/>
+                <StackPanel x:Name="TimelineEmptyState"
+                            Margin="{DynamicResource Space_Section_Top}"
+                            Style="{StaticResource Panel.EmptyState}"
+                            Visibility="Collapsed">
+                    <Path Data="{StaticResource Icon_Geometry_History}"/>
+                    <TextBlock Text="لا توجد عناصر تاريخية مختصرة لعرضها حاليًا."/>
+                </StackPanel>
+                <ItemsControl x:Name="TimelineItems"
+                               Margin="{DynamicResource Space_Section_Top}"
+                               Visibility="Collapsed">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,8"
+                                    Style="{StaticResource GuaranteeSideSheet.TimelineTile}">
+                                <StackPanel>
+                                    <TextBlock FontWeight="Bold" Text="{Binding Title}"/>
+                                    <TextBlock Margin="0,4,0,0" Style="{StaticResource Text_Muted}" Text="{Binding Description}"/>
+                                    <TextBlock Margin="0,6,0,0" Style="{StaticResource Text_Caption}" Text="{Binding Stamp}"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Grid Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0"
+                            Style="{StaticResource Button.Primary}"
+                            Click="OpenFile_Click"
+                            Content="فتح الضمان"/>
+                    <Button Grid.Column="2"
+                            Style="{StaticResource Button.Subtle}"
+                            Click="Export_Click"
+                            Content="تصدير"/>
+                    <Button Grid.Column="4"
+                            Style="{StaticResource Button.Subtle}"
+                            Click="Refresh_Click"
+                            Content="تحديث"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
