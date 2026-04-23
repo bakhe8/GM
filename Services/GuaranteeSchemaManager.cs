@@ -67,10 +67,11 @@ namespace GuaranteeManager.Services
         public static void EnsureVersioningAndMetadataSchema(SqliteConnection connection)
         {
             EnsureVersioningSchema(connection);
-            EnsureBeneficiaryColumn(connection);
-            EnsureReferenceColumns(connection);
-            EnsureLifecycleStatusColumn(connection);
-            EnsureReplacementRelationColumns(connection);
+            HashSet<string> guaranteeColumns = SqliteSchemaInspector.GetTableColumns(connection, "Guarantees");
+            EnsureBeneficiaryColumn(connection, guaranteeColumns);
+            EnsureReferenceColumns(connection, guaranteeColumns);
+            EnsureLifecycleStatusColumn(connection, guaranteeColumns);
+            EnsureReplacementRelationColumns(connection, guaranteeColumns);
         }
 
         public static void EnsureCurrentGuaranteeIntegrity(SqliteConnection connection)
@@ -96,19 +97,7 @@ namespace GuaranteeManager.Services
                 }
             }
 
-            bool hasIsCurrent = false;
-            var colCmd = connection.CreateCommand();
-            colCmd.CommandText = "PRAGMA table_info('Guarantees')";
-            using (var reader = colCmd.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    if (reader.GetString(1) == "IsCurrent")
-                    {
-                        hasIsCurrent = true;
-                    }
-                }
-            }
+            bool hasIsCurrent = SqliteSchemaInspector.GetTableColumns(connection, "Guarantees").Contains("IsCurrent");
 
             if (isUnique || !hasIsCurrent)
             {
@@ -264,20 +253,7 @@ namespace GuaranteeManager.Services
             ";
             command.ExecuteNonQuery();
 
-            bool hasOldAttachmentColumn = false;
-            var checkCmd = connection.CreateCommand();
-            checkCmd.CommandText = "PRAGMA table_info('Guarantees')";
-            using (var reader = checkCmd.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    if (reader.GetString(1) == "AttachmentFileName")
-                    {
-                        hasOldAttachmentColumn = true;
-                        break;
-                    }
-                }
-            }
+            bool hasOldAttachmentColumn = SqliteSchemaInspector.GetTableColumns(connection, "Guarantees").Contains("AttachmentFileName");
 
             if (!hasOldAttachmentColumn)
             {
@@ -314,34 +290,19 @@ namespace GuaranteeManager.Services
             SimpleLogger.Log($"Migrated {attachmentsToMigrate.Count} old attachments to the new multi-attachment table.");
         }
 
-        private static void EnsureBeneficiaryColumn(SqliteConnection connection)
+        private static void EnsureBeneficiaryColumn(SqliteConnection connection, HashSet<string> columns)
         {
-            bool hasBeneficiary = false;
-            var cmd = connection.CreateCommand();
-            cmd.CommandText = "PRAGMA table_info('Guarantees')";
-            using (var reader = cmd.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    if (reader.GetString(1) == "Beneficiary")
-                    {
-                        hasBeneficiary = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!hasBeneficiary)
+            if (!columns.Contains("Beneficiary"))
             {
                 var alter = connection.CreateCommand();
                 alter.CommandText = "ALTER TABLE Guarantees ADD COLUMN Beneficiary TEXT";
                 alter.ExecuteNonQuery();
+                columns.Add("Beneficiary");
             }
         }
 
-        private static void EnsureReferenceColumns(SqliteConnection connection)
+        private static void EnsureReferenceColumns(SqliteConnection connection, HashSet<string> columns)
         {
-            HashSet<string> columns = SqliteSchemaInspector.GetTableColumns(connection, "Guarantees");
             bool hasReferenceType = columns.Contains("ReferenceType");
             bool hasReferenceNumber = columns.Contains("ReferenceNumber");
 
@@ -350,6 +311,7 @@ namespace GuaranteeManager.Services
                 var alter = connection.CreateCommand();
                 alter.CommandText = "ALTER TABLE Guarantees ADD COLUMN ReferenceType TEXT NOT NULL DEFAULT 'None'";
                 alter.ExecuteNonQuery();
+                columns.Add("ReferenceType");
             }
 
             if (!hasReferenceNumber)
@@ -357,63 +319,33 @@ namespace GuaranteeManager.Services
                 var alter = connection.CreateCommand();
                 alter.CommandText = "ALTER TABLE Guarantees ADD COLUMN ReferenceNumber TEXT";
                 alter.ExecuteNonQuery();
+                columns.Add("ReferenceNumber");
             }
         }
 
-        private static void EnsureLifecycleStatusColumn(SqliteConnection connection)
+        private static void EnsureLifecycleStatusColumn(SqliteConnection connection, HashSet<string> columns)
         {
-            bool hasLifecycleStatus = false;
-            var cmd = connection.CreateCommand();
-            cmd.CommandText = "PRAGMA table_info('Guarantees')";
-            using (var reader = cmd.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    if (reader.GetString(1) == "LifecycleStatus")
-                    {
-                        hasLifecycleStatus = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!hasLifecycleStatus)
+            if (!columns.Contains("LifecycleStatus"))
             {
                 var alter = connection.CreateCommand();
                 alter.CommandText = "ALTER TABLE Guarantees ADD COLUMN LifecycleStatus TEXT NOT NULL DEFAULT 'Active'";
                 alter.ExecuteNonQuery();
+                columns.Add("LifecycleStatus");
                 SimpleLogger.Log("Added LifecycleStatus column to Guarantees table.");
             }
         }
 
-        private static void EnsureReplacementRelationColumns(SqliteConnection connection)
+        private static void EnsureReplacementRelationColumns(SqliteConnection connection, HashSet<string> columns)
         {
-            bool hasReplacesRootId = false;
-            bool hasReplacedByRootId = false;
-
-            var cmd = connection.CreateCommand();
-            cmd.CommandText = "PRAGMA table_info('Guarantees')";
-            using (var reader = cmd.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    string columnName = reader.GetString(1);
-                    if (columnName == "ReplacesRootId")
-                    {
-                        hasReplacesRootId = true;
-                    }
-                    else if (columnName == "ReplacedByRootId")
-                    {
-                        hasReplacedByRootId = true;
-                    }
-                }
-            }
+            bool hasReplacesRootId = columns.Contains("ReplacesRootId");
+            bool hasReplacedByRootId = columns.Contains("ReplacedByRootId");
 
             if (!hasReplacesRootId)
             {
                 var alter = connection.CreateCommand();
                 alter.CommandText = "ALTER TABLE Guarantees ADD COLUMN ReplacesRootId INTEGER";
                 alter.ExecuteNonQuery();
+                columns.Add("ReplacesRootId");
             }
 
             if (!hasReplacedByRootId)
@@ -421,6 +353,7 @@ namespace GuaranteeManager.Services
                 var alter = connection.CreateCommand();
                 alter.CommandText = "ALTER TABLE Guarantees ADD COLUMN ReplacedByRootId INTEGER";
                 alter.ExecuteNonQuery();
+                columns.Add("ReplacedByRootId");
             }
 
             if (!hasReplacesRootId || !hasReplacedByRootId)
