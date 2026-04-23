@@ -40,14 +40,17 @@
 
 - فتح `BaseDirectory` مباشرة من شاشة الإعدادات
 - نسخ ملخص مسارات التشغيل من شاشة الإعدادات
-- ملفي توثيق يوضحان الحالة الحالية بشكل أدق
+- طبقة UX المرجعية الكاملة حتى مستوى الـ flows:
+  - [ux_simplification_v1.1.md](ux_simplification_v1.1.md)
+  - [ux_task_architecture_v1.1.md](ux_task_architecture_v1.1.md)
+  - [ux_flow_specs_v1.1.md](ux_flow_specs_v1.1.md)
 
 ## القرار التالي المطلوب
 
 لدينا الآن أحد مسارين:
 
-1. دمج `feature/v1.1-operational-polish` إلى `main` إذا اعتبرنا هذه الدفعة مكتملة.
-2. الاستمرار على نفس الفرع بمهمة تشغيلية صغيرة إضافية قبل الدمج.
+1. بدء تنفيذ أول flow من [ux_flow_specs_v1.1.md](ux_flow_specs_v1.1.md) على نفس الفرع.
+2. أو اعتبار هذه الدفعة التوثيقية مكتملة ثم دمج `feature/v1.1-operational-polish` إلى `main`.
 
 ## أهم ملاحظة من آخر تجربة كاملة
 
@@ -55,6 +58,8 @@
 - لا توجد الآن وظيفة أساسية ناقصة أو خلل تشغيلي واضح بحسب التجربة الحالية
 - المشكلة الأعلى أولوية أصبحت **صعوبة فهم الواجهة والوصول السريع للوظائف**
 - المرجع التنفيذي لهذه النقطة: [ux_simplification_v1.1.md](ux_simplification_v1.1.md)
+- المعمارية المعتمدة للمسارات: [ux_task_architecture_v1.1.md](ux_task_architecture_v1.1.md)
+- مواصفات أول flows قبل التنفيذ: [ux_flow_specs_v1.1.md](ux_flow_specs_v1.1.md)
 
 إذا ظهر خلل حرج في النسخة المنشورة `v1.0.0`، فلا يُصلح هنا، بل على:
 
@@ -72,6 +77,8 @@
   لتبسيط تجربة الاستخدام كأولوية قادمة
 - `ux_task_architecture_v1.1.md`
   لخريطة IA/UX التنفيذية المعتمدة
+- `ux_flow_specs_v1.1.md`
+  لطبقة "كيف بالضبط" لأول flows قبل التنفيذ
 - `merge_summary_v1.1_operational_polish.md`
   لمعرفة وضع الفرع النشط الحالي
 - `release_v1.md`
