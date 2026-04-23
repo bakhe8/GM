@@ -44,6 +44,7 @@
   - [ux_simplification_v1.1.md](ux_simplification_v1.1.md)
   - [ux_task_architecture_v1.1.md](ux_task_architecture_v1.1.md)
   - [ux_flow_specs_v1.1.md](ux_flow_specs_v1.1.md)
+  - [ux_design_intelligence_v1.1.md](ux_design_intelligence_v1.1.md)
   - [ux_visual_intelligence_v1.1.md](ux_visual_intelligence_v1.1.md)
 
 ## القرار التالي المطلوب
@@ -61,6 +62,7 @@
 - المرجع التنفيذي لهذه النقطة: [ux_simplification_v1.1.md](ux_simplification_v1.1.md)
 - المعمارية المعتمدة للمسارات: [ux_task_architecture_v1.1.md](ux_task_architecture_v1.1.md)
 - مواصفات أول flows قبل التنفيذ: [ux_flow_specs_v1.1.md](ux_flow_specs_v1.1.md)
+- طبقة الذكاء السلوكي للتنفيذ: [ux_design_intelligence_v1.1.md](ux_design_intelligence_v1.1.md)
 - قواعد الذكاء البصري للتنفيذ: [ux_visual_intelligence_v1.1.md](ux_visual_intelligence_v1.1.md)
 
 إذا ظهر خلل حرج في النسخة المنشورة `v1.0.0`، فلا يُصلح هنا، بل على:
@@ -81,6 +83,8 @@
   لخريطة IA/UX التنفيذية المعتمدة
 - `ux_flow_specs_v1.1.md`
   لطبقة "كيف بالضبط" لأول flows قبل التنفيذ
+- `ux_design_intelligence_v1.1.md`
+  لطبقة الذاكرة، الإخفاء الذكي، التوقع، ومعاينة الأثر
 - `ux_visual_intelligence_v1.1.md`
   لطبقة التعبير البصري عن الأولوية والحالة والخطوة التالية
 - `merge_summary_v1.1_operational_polish.md`

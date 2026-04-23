@@ -10,6 +10,9 @@
 > أما المواصفات التفصيلية لأول flows قبل التنفيذ فموثقة الآن في:
 > [ux_flow_specs_v1.1.md](ux_flow_specs_v1.1.md)
 >
+> أما طبقة الذكاء السلوكي وكيف يحمل النظام العبء عن المستخدم فموثقة الآن في:
+> [ux_design_intelligence_v1.1.md](ux_design_intelligence_v1.1.md)
+>
 > أما طبقة التعبير البصري عن الأولوية والحالة والخطوة التالية فموثقة الآن في:
 > [ux_visual_intelligence_v1.1.md](ux_visual_intelligence_v1.1.md)
 

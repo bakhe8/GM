@@ -18,7 +18,9 @@
    معمارية المسارات والسياق
 5. `ux_flow_specs_v1.1.md`
    المواصفات التنفيذية التفصيلية لأول flows
-6. [ux_visual_intelligence_v1.1.md](ux_visual_intelligence_v1.1.md)
+6. [ux_design_intelligence_v1.1.md](ux_design_intelligence_v1.1.md)
+   طبقة الذكاء السلوكي التي تحدد كيف يحمل النظام العبء عن المستخدم
+7. [ux_visual_intelligence_v1.1.md](ux_visual_intelligence_v1.1.md)
    طبقة التعبير البصري عن الأولوية والحالة والخطوة التالية
 
 هذه الوثيقة لا تعيد فتح سؤال:
