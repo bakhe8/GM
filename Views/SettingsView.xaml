@@ -108,10 +108,21 @@
                             <TextBlock Style="{StaticResource Text_Section}" Text="فتح المجلدات"/>
                             <TextBlock Margin="0,8,0,0" Style="{StaticResource Text_Body}" Text="افتح مجلدات العمل الرئيسية مباشرة من البرنامج."/>
                             <Button Margin="0,12,0,0" Style="{StaticResource Button.Subtle}" Click="OpenStorageRootFolder_Click" Content="فتح جذر التخزين"/>
-                            <Button Margin="0,12,0,0" Style="{StaticResource Button.Subtle}" Click="OpenDataFolder_Click" Content="فتح مجلد البيانات"/>
+                            <Button Margin="0,8,0,0" Style="{StaticResource Button.Subtle}" Click="OpenBaseDirectoryFolder_Click" Content="فتح مجلد التنفيذ الحالي"/>
+                            <Button Margin="0,8,0,0" Style="{StaticResource Button.Subtle}" Click="OpenDataFolder_Click" Content="فتح مجلد البيانات"/>
                             <Button Margin="0,8,0,0" Style="{StaticResource Button.Subtle}" Click="OpenAttachmentsFolder_Click" Content="فتح مجلد المرفقات"/>
                             <Button Margin="0,8,0,0" Style="{StaticResource Button.Subtle}" Click="OpenWorkflowFolder_Click" Content="فتح مجلد الطلبات والردود"/>
                             <Button Margin="0,8,0,0" Style="{StaticResource Button.Subtle}" Click="OpenLogsFolder_Click" Content="فتح مجلد السجلات"/>
+
+                            <Separator Margin="0,16,0,16"/>
+                            <TextBlock Style="{StaticResource Text_Section}" Text="دعم وتشخيص"/>
+                            <TextBlock Margin="0,8,0,0"
+                                       Style="{StaticResource Text_Body}"
+                                       Text="انسخ ملخص مسارات التشغيل الحالية لإرساله عند الحاجة إلى الدعم أو التحقق من بيئة العمل."/>
+                            <Button Margin="0,12,0,0"
+                                    Style="{StaticResource Button.Subtle}"
+                                    Click="CopyOperationalPathsSummary_Click"
+                                    Content="نسخ ملخص المسارات"/>
 
                             <Separator Margin="0,16,0,16"/>
                             <StackPanel x:Name="DevToolsSection">

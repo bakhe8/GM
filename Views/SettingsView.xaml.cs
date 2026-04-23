@@ -209,10 +209,26 @@ namespace GuaranteeManager.Views
         }
 
         private void OpenStorageRootFolder_Click(object sender, RoutedEventArgs e) => OpenFolder(AppPaths.StorageRootDirectory, "جذر التخزين");
+        private void OpenBaseDirectoryFolder_Click(object sender, RoutedEventArgs e) => OpenFolder(AppPaths.BaseDirectory, "مجلد التنفيذ الحالي");
         private void OpenDataFolder_Click(object sender, RoutedEventArgs e) => OpenFolder(AppPaths.DataFolder, "مجلد البيانات");
         private void OpenAttachmentsFolder_Click(object sender, RoutedEventArgs e) => OpenFolder(AppPaths.AttachmentsFolder, "مجلد المرفقات");
         private void OpenWorkflowFolder_Click(object sender, RoutedEventArgs e) => OpenFolder(AppPaths.WorkflowFolder, "مجلد الطلبات والردود");
         private void OpenLogsFolder_Click(object sender, RoutedEventArgs e) => OpenFolder(AppPaths.LogsFolder, "مجلد السجلات");
+
+        private void CopyOperationalPathsSummary_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                RefreshView();
+                Clipboard.SetText(_viewModel.BuildOperationalPathsSummary());
+                GetShell()?.SetStatus("تم نسخ ملخص مسارات التشغيل.", ShellStatusTone.Success);
+            }
+            catch (Exception ex)
+            {
+                AppDialogService.ShowError(ex, "تعذر نسخ ملخص مسارات التشغيل.");
+                GetShell()?.SetStatus("فشل نسخ ملخص مسارات التشغيل.", ShellStatusTone.Error);
+            }
+        }
 
         private void SeedData_Click(object sender, RoutedEventArgs e)
         {

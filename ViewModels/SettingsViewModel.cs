@@ -133,6 +133,17 @@ namespace GuaranteeManager.ViewModels
                 : BuildPortableRestoreStatusMessage();
         }
 
+        public string BuildOperationalPathsSummary()
+        {
+            return OperationalPathsSummaryFormatter.Build(
+                StorageRootPath,
+                BaseDirectoryPath,
+                DatabasePath,
+                AttachmentsPath,
+                WorkflowPath,
+                LogsPath);
+        }
+
         private string BuildRestoreStatusMessage()
         {
             if (string.IsNullOrWhiteSpace(_backupService.LastPreRestoreSafetyBackupPath))
