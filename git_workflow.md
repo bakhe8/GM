@@ -73,7 +73,7 @@
 ## الحالة الحالية
 
 - `main` يمثل حاليًا الحالة المدموجة حتى دفعة `v1.1-kickoff` عند commit `d855be1`
-- الفرع النشط الآن: `feature/v1.1-operational-polish` عند commit `604bfd9`
+- الفرع النشط الآن: `feature/v1.1-operational-polish` عند commit `97e0acb`
 - فرع `release/v1.0.x` يبقى مخصصًا فقط لأي hotfix يعود إلى خط `1.0.x`
 
 ## قاعدة توثيق مختصرة
