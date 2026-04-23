@@ -53,9 +53,16 @@ namespace GuaranteeManager.Services
         private const string AttachmentsPrefix = "payload/Attachments/";
         private const string WorkflowPrefix = "payload/Workflow/";
 
-        public static void CreatePackage(string destinationPath, string connectionString, string passphrase)
+        public static void CreatePackage(string destinationPath, string connectionString, string passphrase, bool allowLegacyPassphrase = false)
         {
-            PortableBackupPackageCrypto.ValidatePassphrase(passphrase);
+            if (allowLegacyPassphrase)
+            {
+                PortableBackupPackageCrypto.ValidatePassphrase(passphrase);
+            }
+            else
+            {
+                PortableBackupPackageCrypto.ValidatePassphraseForNewPackage(passphrase);
+            }
 
             if (string.IsNullOrWhiteSpace(destinationPath))
             {

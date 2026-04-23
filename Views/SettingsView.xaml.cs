@@ -137,7 +137,8 @@ namespace GuaranteeManager.Views
             string? passphrase = PromptForPortablePassphrase(
                 "حزمة محمولة",
                 "أدخل عبارة مرور لحماية الحزمة المحمولة. ستحتاجها عند الاسترجاع على هذا الجهاز أو جهاز آخر.",
-                "عبارة المرور");
+                "عبارة المرور",
+                "استخدم 12 حرفًا على الأقل، مع حرف ورقم ورمز خاص، واحتفظ بها في مكان آمن.");
 
             if (string.IsNullOrWhiteSpace(passphrase))
             {
@@ -175,7 +176,8 @@ namespace GuaranteeManager.Views
             string? passphrase = PromptForPortablePassphrase(
                 "استرجاع حزمة محمولة",
                 "أدخل عبارة المرور الخاصة بالحزمة المحمولة المحددة.",
-                "عبارة المرور");
+                "عبارة المرور",
+                "أدخل نفس عبارة المرور التي استُخدمت عند إنشاء الحزمة، حتى لو كانت من إصدار أقدم.");
 
             if (string.IsNullOrWhiteSpace(passphrase))
             {
@@ -237,7 +239,7 @@ namespace GuaranteeManager.Views
 #endif
         }
 
-        private string? PromptForPortablePassphrase(string title, string prompt, string label)
+        private string? PromptForPortablePassphrase(string title, string prompt, string label, string nextStepHint)
         {
             MainWindow? owner = GetShell();
             TextPromptWindow dialog = new(
@@ -245,7 +247,7 @@ namespace GuaranteeManager.Views
                 prompt,
                 label,
                 "اعتماد العبارة والمتابعة",
-                nextStepHint: "استخدم عبارة مكونة من 8 أحرف على الأقل، واحتفظ بها في مكان آمن.");
+                nextStepHint: nextStepHint);
 
             if (owner != null)
             {

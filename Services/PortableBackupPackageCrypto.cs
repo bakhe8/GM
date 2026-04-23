@@ -16,6 +16,9 @@ namespace GuaranteeManager.Services
 
     internal static class PortableBackupPackageCrypto
     {
+        private const int MinimumPassphraseLength = 8;
+        private const int MinimumNewPackagePassphraseLength = 12;
+
         public static PortableKeyEnvelope ProtectText(string plainText, string passphrase)
         {
             ValidatePassphrase(passphrase);
@@ -74,9 +77,25 @@ namespace GuaranteeManager.Services
 
         public static void ValidatePassphrase(string passphrase)
         {
-            if (string.IsNullOrWhiteSpace(passphrase) || passphrase.Trim().Length < 8)
+            if (string.IsNullOrWhiteSpace(passphrase) || passphrase.Trim().Length < MinimumPassphraseLength)
             {
-                throw new InvalidOperationException("عبارة المرور يجب أن تحتوي على 8 أحرف على الأقل.");
+                throw new InvalidOperationException($"عبارة المرور يجب أن تحتوي على {MinimumPassphraseLength} أحرف على الأقل.");
+            }
+        }
+
+        public static void ValidatePassphraseForNewPackage(string passphrase)
+        {
+            ValidatePassphrase(passphrase);
+
+            string trimmed = passphrase.Trim();
+            bool hasLetter = trimmed.Any(char.IsLetter);
+            bool hasDigit = trimmed.Any(char.IsDigit);
+            bool hasSymbol = trimmed.Any(ch => !char.IsLetterOrDigit(ch) && !char.IsWhiteSpace(ch));
+
+            if (trimmed.Length < MinimumNewPackagePassphraseLength || !hasLetter || !hasDigit || !hasSymbol)
+            {
+                throw new InvalidOperationException(
+                    "عبارة المرور للحزم الجديدة يجب أن تحتوي على 12 حرفًا على الأقل، وتشمل حرفًا واحدًا ورقمًا واحدًا ورمزًا خاصًا واحدًا على الأقل.");
             }
         }
 

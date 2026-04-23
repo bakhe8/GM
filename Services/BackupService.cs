@@ -122,7 +122,11 @@ namespace GuaranteeManager.Services
                 string safetyPackagePath = Path.Combine(
                     AppPaths.BackupFolder,
                     $"pre_portable_restore_{DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture)}.gmpkg");
-                CreatePortableBackupPackageCore(safetyPackagePath, passphrase, trackAsLastUserPackage: false);
+                CreatePortableBackupPackageCore(
+                    safetyPackagePath,
+                    passphrase,
+                    trackAsLastUserPackage: false,
+                    allowLegacyPassphrase: true);
                 LastPortableRestoreSafetyPackagePath = safetyPackagePath;
             }
 
@@ -185,14 +189,18 @@ namespace GuaranteeManager.Services
             Directory.Move(extractedDirectoryPath, targetDirectoryPath);
         }
 
-        private void CreatePortableBackupPackageCore(string destinationPath, string passphrase, bool trackAsLastUserPackage)
+        private void CreatePortableBackupPackageCore(
+            string destinationPath,
+            string passphrase,
+            bool trackAsLastUserPackage,
+            bool allowLegacyPassphrase = false)
         {
             if (trackAsLastUserPackage)
             {
                 LastPortableBackupPackagePath = null;
             }
 
-            PortableBackupPackageUtility.CreatePackage(destinationPath, _connectionString, passphrase);
+            PortableBackupPackageUtility.CreatePackage(destinationPath, _connectionString, passphrase, allowLegacyPassphrase);
 
             if (trackAsLastUserPackage)
             {
