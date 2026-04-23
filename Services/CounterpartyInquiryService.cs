@@ -194,7 +194,7 @@ namespace GuaranteeManager.Services
             result.Facts.Add(new OperationalInquiryFact { Label = "عدد الضمانات الحالية", Value = supplierGuarantees.Count.ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "طلبات معلقة", Value = supplierRequests.Count(item => item.Request.Status == RequestStatus.Pending).ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "ضمانات قريبة الانتهاء", Value = supplierGuarantees.Count(g => g.IsExpiringSoon).ToString("N0") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "ضمانات منتهية وما زالت نشطة", Value = supplierGuarantees.Count(g => g.IsExpired && g.LifecycleStatus == GuaranteeLifecycleStatus.Active).ToString("N0") });
+            result.Facts.Add(new OperationalInquiryFact { Label = "ضمانات منتهية وتحتاج متابعة", Value = supplierGuarantees.Count(g => g.NeedsExpiryFollowUp).ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact
             {
                 Label = "آخر طلب",

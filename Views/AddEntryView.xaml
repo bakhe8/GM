@@ -557,12 +557,12 @@
                                             Content="تصدير الآن"/>
                                     <TextBlock Grid.Column="2"
                                                Style="{StaticResource AddEntry.ReportTitle}"
-                                               Text="منتهية ونشطة"/>
+                                               Text="منتهية وتحتاج متابعة"/>
                                     <TextBlock Grid.Row="1"
                                                Grid.Column="2"
                                                Grid.ColumnSpan="3"
                                                Style="{StaticResource AddEntry.ReportSummary}"
-                                               Text="الضمانات المنتهية زمنيًا وما زالت فعالة."/>
+                                               Text="الضمانات المنتهية زمنيًا التي ما زالت بحاجة إلى إجراء تشغيلي."/>
                                 </Grid>
                             </Grid>
                         </Border>

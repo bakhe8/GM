@@ -19,7 +19,7 @@ namespace GuaranteeManager.Services
                     .ToList();
 
                 var expiredActive = guarantees
-                    .Where(g => g.IsExpired && g.LifecycleStatus == GuaranteeLifecycleStatus.Active)
+                    .Where(g => g.NeedsExpiryFollowUp)
                     .OrderBy(g => g.ExpiryDate)
                     .ThenBy(g => g.GuaranteeNo)
                     .ToList();
@@ -60,7 +60,7 @@ namespace GuaranteeManager.Services
                 string[,] rows =
                 {
                     { "قريب الانتهاء", expiringSoon.Count.ToString("N0"), "ضمانات تقترب من نهاية مدتها الزمنية.", "المراجعة والتواصل قبل الانتهاء." },
-                    { "منتهي وما زال نشطًا", expiredActive.Count.ToString("N0"), "ضمانات منتهية زمنيًا ولكن حالتها التشغيلية ما زالت نشطة.", "مراجعة الإغلاق أو طلب الإجراء المناسب." },
+                    { "منتهية وتحتاج متابعة", expiredActive.Count.ToString("N0"), "ضمانات منتهية زمنيًا وما زالت بحاجة إلى إجراء تشغيلي.", "مراجعة الإجراء المناسب أو توثيق الوضع الحالي." },
                     { "طلبات معلقة", pendingRequests.Count.ToString("N0"), "طلبات لم يسجل لها رد بنك بعد.", "المتابعة مع البنك أو الجهة المعنية." },
                     { "منفذ بلا مستند رد بنك", executedWithoutResponse.Count.ToString("N0"), "طلبات منفذة لم يُحفظ لها مستند رد بنك.", "استكمال مستندات الإثبات عند الحاجة." }
                 };
@@ -86,9 +86,9 @@ namespace GuaranteeManager.Services
 
                 if (expiredActive.Any())
                 {
-                    var sheet = workbook.Worksheets.Add("منتهي ونشط");
+                    var sheet = workbook.Worksheets.Add("منتهية وتحتاج متابعة");
                     sheet.SetRightToLeft(true);
-                    ExcelReportSupport.WriteGuaranteesWorksheet(sheet, expiredActive, "المنتهي زمنيًا وما زال نشطًا", $"عدد السجلات: {expiredActive.Count}");
+                    ExcelReportSupport.WriteGuaranteesWorksheet(sheet, expiredActive, "الضمانات المنتهية التي تحتاج متابعة", $"عدد السجلات: {expiredActive.Count}");
                 }
 
                 if (pendingRequests.Any())

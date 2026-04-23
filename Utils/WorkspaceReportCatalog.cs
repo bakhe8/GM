@@ -12,7 +12,7 @@ namespace GuaranteeManager.Utils
             new("portfolio.all", "المحفظة الكاملة", "تصدير قائمة الضمانات كما هي الآن."),
             new("portfolio.summary", "ملخص المحفظة", "مخرج تنفيذي يجمع الضمانات والطلبات."),
             new("portfolio.expiring", "قريب الانتهاء", "الضمانات التي تقترب من نهاية المدة."),
-            new("portfolio.expired", "منتهية ونشطة", "الضمانات المنتهية زمنيًا وما زالت فعالة."),
+            new("portfolio.expired", "منتهية وتحتاج متابعة", "الضمانات المنتهية زمنيًا التي ما زالت بحاجة إلى إجراء تشغيلي."),
             new("portfolio.no-attachments", "الضمانات بلا مرفقات", "السجلات الحالية التي لا تحتوي على أي مرفقات."),
             new("portfolio.versions.no-attachments", "الإصدارات بلا مرفقات", "كل الإصدارات في السجل الكامل التي لا تحتوي على مرفقات.")
         ];
@@ -37,7 +37,7 @@ namespace GuaranteeManager.Utils
                     QueryAllGuarantees(databaseService),
                     QueryAllRequests(databaseService)),
                 "portfolio.expiring" => excelService.ExportExpiringSoonGuarantees(QueryExpiringSoonGuarantees(databaseService)),
-                "portfolio.expired" => excelService.ExportExpiredActiveGuarantees(QueryExpiredActiveGuarantees(databaseService)),
+                "portfolio.expired" => excelService.ExportExpiredActiveGuarantees(QueryExpiredFollowUpGuarantees(databaseService)),
                 "portfolio.no-attachments" => excelService.ExportGuaranteesWithoutAttachments(QueryCurrentGuaranteesWithoutAttachments(databaseService)),
                 "portfolio.versions.no-attachments" => excelService.ExportGuaranteeVersionsWithoutAttachments(QueryGuaranteeVersionsWithoutAttachments(databaseService)),
                 "requests.pending" => excelService.ExportWorkflowRequestsByStatus(
@@ -66,20 +66,21 @@ namespace GuaranteeManager.Utils
             });
         }
 
-        private static List<Guarantee> QueryExpiredActiveGuarantees(IDatabaseService databaseService)
+        private static List<Guarantee> QueryExpiredFollowUpGuarantees(IDatabaseService databaseService)
         {
             return databaseService.QueryGuarantees(new GuaranteeQueryOptions
-            {
-                TimeStatus = GuaranteeTimeStatus.Expired,
-                LifecycleStatus = GuaranteeLifecycleStatus.Active,
-                SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
-            });
+                {
+                    TimeStatus = GuaranteeTimeStatus.Expired,
+                    SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
+                })
+                .Where(guarantee => guarantee.NeedsExpiryFollowUp)
+                .ToList();
         }
 
         private static List<Guarantee> QueryDailyFollowUpGuarantees(IDatabaseService databaseService)
         {
             List<Guarantee> expiringSoon = QueryExpiringSoonGuarantees(databaseService);
-            List<Guarantee> expiredActive = QueryExpiredActiveGuarantees(databaseService);
+            List<Guarantee> expiredActive = QueryExpiredFollowUpGuarantees(databaseService);
 
             return [.. expiringSoon, .. expiredActive];
         }

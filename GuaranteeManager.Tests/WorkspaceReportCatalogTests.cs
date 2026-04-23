@@ -75,6 +75,38 @@ namespace GuaranteeManager.Tests
             Assert.DoesNotContain(excel.VersionRowsWithoutAttachments!, guarantee => guarantee.GuaranteeNo == withAttachmentSeed.GuaranteeNo);
         }
 
+        [Fact]
+        public void Run_ExpiredFollowUp_ExportsOnlyGuaranteesThatNeedPostExpiryAction()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+
+            Guarantee expiredActive = _fixture.CreateGuarantee();
+            expiredActive.ExpiryDate = DateTime.Today.AddDays(-5);
+            expiredActive.LifecycleStatus = GuaranteeLifecycleStatus.Active;
+
+            Guarantee expiredLifecycle = _fixture.CreateGuarantee();
+            expiredLifecycle.ExpiryDate = DateTime.Today.AddDays(-3);
+            expiredLifecycle.LifecycleStatus = GuaranteeLifecycleStatus.Expired;
+
+            Guarantee releasedExpired = _fixture.CreateGuarantee();
+            releasedExpired.ExpiryDate = DateTime.Today.AddDays(-2);
+            releasedExpired.LifecycleStatus = GuaranteeLifecycleStatus.Released;
+
+            database.SaveGuarantee(expiredActive, new List<string>());
+            database.SaveGuarantee(expiredLifecycle, new List<string>());
+            database.SaveGuarantee(releasedExpired, new List<string>());
+
+            var excel = new CaptureExcelService();
+
+            bool exported = WorkspaceReportCatalog.Run("portfolio.expired", database, excel);
+
+            Assert.True(exported);
+            Assert.NotNull(excel.ExpiredFollowUpGuarantees);
+            Assert.Contains(excel.ExpiredFollowUpGuarantees!, guarantee => guarantee.GuaranteeNo == expiredActive.GuaranteeNo);
+            Assert.Contains(excel.ExpiredFollowUpGuarantees!, guarantee => guarantee.GuaranteeNo == expiredLifecycle.GuaranteeNo);
+            Assert.DoesNotContain(excel.ExpiredFollowUpGuarantees!, guarantee => guarantee.GuaranteeNo == releasedExpired.GuaranteeNo);
+        }
+
         private sealed class CaptureExcelService : IExcelService
         {
             public string? LastOutputPath => null;
@@ -82,6 +114,8 @@ namespace GuaranteeManager.Tests
             public IReadOnlyList<Guarantee>? CurrentWithoutAttachments { get; private set; }
 
             public IReadOnlyList<Guarantee>? VersionRowsWithoutAttachments { get; private set; }
+
+            public IReadOnlyList<Guarantee>? ExpiredFollowUpGuarantees { get; private set; }
 
             public bool ExportGuarantees(IReadOnlyList<Guarantee> guarantees) => throw new NotSupportedException();
             public bool ExportGuaranteesByBank(string bank, IReadOnlyList<Guarantee> guarantees) => throw new NotSupportedException();
@@ -92,7 +126,11 @@ namespace GuaranteeManager.Tests
             public bool ExportSingleGuaranteeReport(Guarantee guarantee) => throw new NotSupportedException();
             public bool ExportDailyFollowUpReport(IReadOnlyList<Guarantee> guarantees, IReadOnlyList<WorkflowRequestListItem> requests) => throw new NotSupportedException();
             public bool ExportExpiringSoonGuarantees(IReadOnlyList<Guarantee> guarantees) => throw new NotSupportedException();
-            public bool ExportExpiredActiveGuarantees(IReadOnlyList<Guarantee> guarantees) => throw new NotSupportedException();
+            public bool ExportExpiredActiveGuarantees(IReadOnlyList<Guarantee> guarantees)
+            {
+                ExpiredFollowUpGuarantees = guarantees.ToList();
+                return true;
+            }
             public bool ExportGuaranteeStatisticsByBank(IReadOnlyList<Guarantee> guarantees) => throw new NotSupportedException();
             public bool ExportGuaranteeStatisticsBySupplier(IReadOnlyList<Guarantee> guarantees) => throw new NotSupportedException();
             public bool ExportGuaranteePortfolioSummary(IReadOnlyList<Guarantee> guarantees, IReadOnlyList<WorkflowRequestListItem> requests) => throw new NotSupportedException();

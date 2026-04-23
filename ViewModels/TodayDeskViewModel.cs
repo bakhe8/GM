@@ -14,7 +14,7 @@ namespace GuaranteeManager.ViewModels
         private IReadOnlyList<WorkflowRequestListItem> _pendingRequests = Array.Empty<WorkflowRequestListItem>();
         private string _totalGuarantees = "0";
         private string _expiringSoon = "0";
-        private string _expiredActive = "0";
+        private string _expiredFollowUp = "0";
         private string _pendingRequestsCount = "0";
         private Guarantee? _selectedUrgentGuarantee;
         private WorkflowRequestListItem? _selectedPendingRequest;
@@ -48,10 +48,10 @@ namespace GuaranteeManager.ViewModels
             private set => SetProperty(ref _expiringSoon, value);
         }
 
-        public string ExpiredActive
+        public string ExpiredFollowUp
         {
-            get => _expiredActive;
-            private set => SetProperty(ref _expiredActive, value);
+            get => _expiredFollowUp;
+            private set => SetProperty(ref _expiredFollowUp, value);
         }
 
         public string PendingRequestsCount
@@ -80,11 +80,11 @@ namespace GuaranteeManager.ViewModels
                 TimeStatus = GuaranteeTimeStatus.ExpiringSoon,
                 IncludeAttachments = false
             }).ToString();
-            ExpiredActive = _databaseService.CountGuarantees(new GuaranteeQueryOptions
+            ExpiredFollowUp = _databaseService.QueryGuarantees(new GuaranteeQueryOptions
             {
-                LifecycleStatus = GuaranteeLifecycleStatus.Expired,
+                TimeStatus = GuaranteeTimeStatus.Expired,
                 IncludeAttachments = false
-            }).ToString();
+            }).Count(item => item.NeedsExpiryFollowUp).ToString();
             PendingRequestsCount = _databaseService.GetPendingWorkflowRequestCount().ToString();
 
             UrgentGuarantees = _databaseService.QueryGuarantees(new GuaranteeQueryOptions

@@ -189,17 +189,17 @@ namespace GuaranteeManager.Services
         public ExcelExportResult ExportExpiredActiveGuarantees(IReadOnlyList<Guarantee> guarantees)
         {
             var filteredGuarantees = guarantees
-                .Where(g => g.IsExpired && g.LifecycleStatus == GuaranteeLifecycleStatus.Active)
+                .Where(g => g.NeedsExpiryFollowUp)
                 .OrderBy(g => g.ExpiryDate)
                 .ThenBy(g => g.GuaranteeNo)
                 .ToList();
 
             return ExportGuaranteesReport(
                 filteredGuarantees,
-                "تصدير المنتهي زمنيًا وما زال نشطًا",
-                $"Guarantees_ExpiredActive_{DateTime.Now:yyyyMMdd_HHmm}.xlsx",
-                "المنتهي زمنيًا وما زال نشطًا تشغيليًا",
-                $"يعرض الضمانات المنتهية زمنيًا مع بقاء حالتها التشغيلية نشطة. عدد السجلات: {filteredGuarantees.Count}");
+                "تصدير الضمانات المنتهية التي تحتاج متابعة",
+                $"Guarantees_ExpiredFollowUp_{DateTime.Now:yyyyMMdd_HHmm}.xlsx",
+                "الضمانات المنتهية التي تحتاج متابعة",
+                $"يعرض الضمانات المنتهية زمنيًا التي ما زالت بحاجة إلى إجراء تشغيلي. عدد السجلات: {filteredGuarantees.Count}");
         }
 
         public ExcelExportResult ExportGuaranteeStatisticsByBank(IReadOnlyList<Guarantee> guarantees)

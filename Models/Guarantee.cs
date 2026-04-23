@@ -65,6 +65,9 @@ namespace GuaranteeManager.Models
 
         public bool IsExpired => ExpiryDate.Date < DateTime.Today;
         public bool IsExpiringSoon => !IsExpired && ExpiryDate.Date <= DateTime.Today.AddDays(30);
+        public bool NeedsExpiryFollowUp =>
+            IsExpired &&
+            (LifecycleStatus == GuaranteeLifecycleStatus.Active || LifecycleStatus == GuaranteeLifecycleStatus.Expired);
         public string StatusLabel => IsExpired ? "منتهي" : (IsExpiringSoon ? "قريب الانتهاء" : "نشط");
         public string LifecycleStatusLabel => GuaranteeLifecycleStatusDisplay.GetLabel(LifecycleStatus);
         public string VersionLabel => $"v{VersionNumber}";
