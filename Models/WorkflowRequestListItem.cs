@@ -17,16 +17,7 @@ namespace GuaranteeManager.Models
         public int CurrentVersionNumber { get; set; }
         public GuaranteeLifecycleStatus LifecycleStatus { get; set; } = GuaranteeLifecycleStatus.Active;
 
-        public string LifecycleStatusLabel => LifecycleStatus switch
-        {
-            GuaranteeLifecycleStatus.Active => "نشط",
-            GuaranteeLifecycleStatus.Expired => "منتهي الصلاحية",
-            GuaranteeLifecycleStatus.Released => "مفرج",
-            GuaranteeLifecycleStatus.Liquidated => "مسيّل",
-            GuaranteeLifecycleStatus.Replaced => "مستبدل",
-            GuaranteeLifecycleStatus.Closed => "مغلق",
-            _ => "غير معروف"
-        };
+        public string LifecycleStatusLabel => GuaranteeLifecycleStatusDisplay.GetLabel(LifecycleStatus);
 
         public string CurrentVersionLabel => $"v{CurrentVersionNumber}";
         public string RequestDateLabel => Request.RequestDate.ToString("yyyy-MM-dd");

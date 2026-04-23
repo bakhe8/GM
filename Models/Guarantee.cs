@@ -17,7 +17,24 @@ namespace GuaranteeManager.Models
         Released,
         Liquidated,
         Replaced,
+        // Legacy-only value kept for backwards compatibility with older datasets.
         Closed
+    }
+
+    public static class GuaranteeLifecycleStatusDisplay
+    {
+        public static string GetLabel(GuaranteeLifecycleStatus status) => status switch
+        {
+            GuaranteeLifecycleStatus.Active => "نشط",
+            GuaranteeLifecycleStatus.Expired => "منتهي الصلاحية",
+            GuaranteeLifecycleStatus.Released => "مفرج",
+            GuaranteeLifecycleStatus.Liquidated => "مسيّل",
+            GuaranteeLifecycleStatus.Replaced => "مستبدل",
+            GuaranteeLifecycleStatus.Closed => "مغلق (قديم)",
+            _ => "غير معروف"
+        };
+
+        public static bool IsLegacyOnly(GuaranteeLifecycleStatus status) => status == GuaranteeLifecycleStatus.Closed;
     }
 
     public class Guarantee
@@ -49,16 +66,7 @@ namespace GuaranteeManager.Models
         public bool IsExpired => ExpiryDate.Date < DateTime.Today;
         public bool IsExpiringSoon => !IsExpired && ExpiryDate.Date <= DateTime.Today.AddDays(30);
         public string StatusLabel => IsExpired ? "منتهي" : (IsExpiringSoon ? "قريب الانتهاء" : "نشط");
-        public string LifecycleStatusLabel => LifecycleStatus switch
-        {
-            GuaranteeLifecycleStatus.Active => "نشط",
-            GuaranteeLifecycleStatus.Expired => "منتهي الصلاحية",
-            GuaranteeLifecycleStatus.Released => "مفرج",
-            GuaranteeLifecycleStatus.Liquidated => "مسيّل",
-            GuaranteeLifecycleStatus.Replaced => "مستبدل",
-            GuaranteeLifecycleStatus.Closed => "مغلق",
-            _ => "غير معروف"
-        };
+        public string LifecycleStatusLabel => GuaranteeLifecycleStatusDisplay.GetLabel(LifecycleStatus);
         public string VersionLabel => $"v{VersionNumber}";
         public int AttachmentCount => Attachments?.Count ?? 0;
         public bool HasReference => ReferenceType != GuaranteeReferenceType.None && !string.IsNullOrWhiteSpace(ReferenceNumber);

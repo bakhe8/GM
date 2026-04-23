@@ -227,7 +227,7 @@ namespace GuaranteeManager.Services
                 "مفرج",
                 "مسيّل",
                 "مستبدل",
-                "مغلق"
+                "مغلق (قديم)"
             };
 
             WriteTitle(worksheet, 1, headers.Length, reportTitle, reportSubtitle);
