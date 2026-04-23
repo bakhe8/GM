@@ -83,6 +83,13 @@
                     <Border Margin="0,8,0,0" Style="{StaticResource Card.Panel}">
                         <StackPanel>
                             <TextBlock Style="{StaticResource Text_Section}" Text="مجلدات التشغيل"/>
+                            <TextBlock Margin="0,8,0,0" Style="{StaticResource Text_Caption}" Text="جذر التخزين الفعلي"/>
+                            <TextBlock Margin="0,4,0,0" Style="{StaticResource Text_Muted}" Text="{Binding StorageRootPath}" TextWrapping="Wrap"/>
+                            <TextBlock Margin="0,4,0,0"
+                                       Style="{StaticResource Text_Caption}"
+                                       Text="هذا هو الجذر الذي يحتوي بيانات التشغيل الفعلية (`Data` و`Attachments` و`Workflow` و`Logs`)."/>
+                            <TextBlock Margin="0,12,0,0" Style="{StaticResource Text_Caption}" Text="مجلد التنفيذ الحالي"/>
+                            <TextBlock Margin="0,4,0,0" Style="{StaticResource Text_Muted}" Text="{Binding BaseDirectoryPath}" TextWrapping="Wrap"/>
                             <TextBlock Margin="0,8,0,0" Style="{StaticResource Text_Caption}" Text="قاعدة البيانات"/>
                             <TextBlock Margin="0,4,0,0" Style="{StaticResource Text_Muted}" Text="{Binding DatabasePath}" TextWrapping="Wrap"/>
                             <TextBlock Margin="0,12,0,0" Style="{StaticResource Text_Caption}" Text="المرفقات"/>
@@ -100,6 +107,7 @@
                         <StackPanel>
                             <TextBlock Style="{StaticResource Text_Section}" Text="فتح المجلدات"/>
                             <TextBlock Margin="0,8,0,0" Style="{StaticResource Text_Body}" Text="افتح مجلدات العمل الرئيسية مباشرة من البرنامج."/>
+                            <Button Margin="0,12,0,0" Style="{StaticResource Button.Subtle}" Click="OpenStorageRootFolder_Click" Content="فتح جذر التخزين"/>
                             <Button Margin="0,12,0,0" Style="{StaticResource Button.Subtle}" Click="OpenDataFolder_Click" Content="فتح مجلد البيانات"/>
                             <Button Margin="0,8,0,0" Style="{StaticResource Button.Subtle}" Click="OpenAttachmentsFolder_Click" Content="فتح مجلد المرفقات"/>
                             <Button Margin="0,8,0,0" Style="{StaticResource Button.Subtle}" Click="OpenWorkflowFolder_Click" Content="فتح مجلد الطلبات والردود"/>

@@ -11,6 +11,8 @@ namespace GuaranteeManager.ViewModels
         private string _guaranteeCount = "0";
         private string _requestCount = "0";
         private string _attachmentCount = "0";
+        private string _storageRootPath = "--";
+        private string _baseDirectoryPath = "--";
         private string _databasePath = "--";
         private string _attachmentsPath = "--";
         private string _workflowPath = "--";
@@ -50,6 +52,18 @@ namespace GuaranteeManager.ViewModels
         {
             get => _databasePath;
             private set => SetProperty(ref _databasePath, value);
+        }
+
+        public string StorageRootPath
+        {
+            get => _storageRootPath;
+            private set => SetProperty(ref _storageRootPath, value);
+        }
+
+        public string BaseDirectoryPath
+        {
+            get => _baseDirectoryPath;
+            private set => SetProperty(ref _baseDirectoryPath, value);
         }
 
         public string AttachmentsPath
@@ -99,6 +113,8 @@ namespace GuaranteeManager.ViewModels
             GuaranteeCount = _databaseService.CountGuarantees().ToString();
             RequestCount = _databaseService.CountWorkflowRequests().ToString();
             AttachmentCount = _databaseService.CountAttachments().ToString();
+            StorageRootPath = AppPaths.StorageRootDirectory;
+            BaseDirectoryPath = AppPaths.BaseDirectory;
             DatabasePath = AppPaths.DatabasePath;
             AttachmentsPath = AppPaths.AttachmentsFolder;
             WorkflowPath = AppPaths.WorkflowFolder;

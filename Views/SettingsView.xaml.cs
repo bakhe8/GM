@@ -208,6 +208,7 @@ namespace GuaranteeManager.Views
             }
         }
 
+        private void OpenStorageRootFolder_Click(object sender, RoutedEventArgs e) => OpenFolder(AppPaths.StorageRootDirectory, "جذر التخزين");
         private void OpenDataFolder_Click(object sender, RoutedEventArgs e) => OpenFolder(AppPaths.DataFolder, "مجلد البيانات");
         private void OpenAttachmentsFolder_Click(object sender, RoutedEventArgs e) => OpenFolder(AppPaths.AttachmentsFolder, "مجلد المرفقات");
         private void OpenWorkflowFolder_Click(object sender, RoutedEventArgs e) => OpenFolder(AppPaths.WorkflowFolder, "مجلد الطلبات والردود");
