@@ -6,7 +6,7 @@
 ## الجواب السريع
 
 - baseline المنشور للمستخدمين: `v1.0.0`
-- النسخة التطويرية الحالية على هذه الشجرة: `GuaranteeManager v1.1.0-preview.1`
+- النسخة التطويرية الحالية على هذه الشجرة: `GuaranteeManager v1.1.0-preview.2`
 - الفرع النشط: `feature/v1.1-operational-polish`
 - الواجهات القديمة أصبحت **أرشيفًا مرجعيًا فقط** تحت `archive/v1_views`
 - الواجهة الحالية تحت `Presentation/` هي الواجهة الرسمية العاملة
@@ -19,15 +19,14 @@
 
 ## الأولوية الحالية
 
-لسنا الآن في مرحلة إضافة ميزات جديدة.  
-الأولوية الحالية هي:
+بعد إقفال جولة stabilization الأساسية ورفع الشجرة إلى `preview.2`، صارت الأولوية الحالية هي:
 
-1. **Repository Stabilization**
-2. **Documentation Consolidation**
-3. **Release Discipline**
+1. **Controlled UAT**
+2. **Real-data validation**
+3. **Performance and usability polish**
 
-أي أن السؤال الحالي ليس: "ما الذي ينقص المنتج؟"  
-بل: "كيف نغلق أثر التغييرات الضخمة ونحوّل الشجرة إلى حالة نظيفة قابلة للاعتماد؟"
+أي أن السؤال الحالي لم يعد: "هل الشجرة نفسها منضبطة؟"  
+بل: "هل هذه baseline النظيفة تصمد تحت الاستخدام الواقعي؟"
 
 ## آخر تحقق معروف
 
@@ -61,5 +60,5 @@
   - لمعرفة هل ظهر backlog جديد أم لا
 - [UIAcceptance/baselines/2026-04-26-stabilization](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-stabilization)
   - للـ baseline المعتمد حاليًا
-- [README_v1.1.0-preview.1.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/releases/README_v1.1.0-preview.1.md:1)
+- [README_v1.1.0-preview.2.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/releases/README_v1.1.0-preview.2.md:1)
   - لوضع النسخة الحالية كإصدار تطويري

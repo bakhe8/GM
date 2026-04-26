@@ -10,7 +10,7 @@
   - سياسة الفروع، الترقيم، ومعايير الانتقال بين `preview` و`rc` و`release`.
 - `releases/README_v1.0.0.md`
   - وصف baseline المنشورة `v1.0.0`.
-- `releases/README_v1.1.0-preview.1.md`
+- `releases/README_v1.1.0-preview.2.md`
   - وصف النسخة التطويرية الحالية.
 - `Assets/Documentation/Screenshots/README.md`
   - سياسة لقطات القبول، baselines، ومخرجات الأداة.
