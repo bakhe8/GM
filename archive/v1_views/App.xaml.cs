@@ -2,13 +2,16 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
+using GuaranteeManager.Contracts;
 using GuaranteeManager.Services;
+using GuaranteeManager.UI_V2.Shell;
 using GuaranteeManager.Utils;
+using GuaranteeManager.ViewModels;
 #if DEBUG
 using GuaranteeManager.Development;
 #endif
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
-using MessageBox = GuaranteeManager.Services.AppMessageBox;
 
 namespace GuaranteeManager
 {
@@ -43,9 +46,9 @@ namespace GuaranteeManager
             }
 
             base.OnStartup(e);
-            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            ShutdownMode = ShutdownMode.OnMainWindowClose;
 
-            // 1. Setup directories
+            // 1. Setup Navigation & Directories
             AppPaths.EnsureDirectoriesExist();
             SimpleLogger.Log($"Application session started. StorageRoot={AppPaths.StorageRootDirectory}");
 
@@ -81,8 +84,7 @@ namespace GuaranteeManager
                 SimpleLogger.LogError(ex, "App Startup (Backup)");
             }
 
-            ShutdownMode = ShutdownMode.OnMainWindowClose;
-            MainWindow = new MainWindow();
+            MainWindow = new UI_V2.Shell.V2ShellWindow();
             MainWindow.Show();
         }
 
@@ -184,10 +186,6 @@ namespace GuaranteeManager
         {
             ServiceCollection services = new();
 
-            services.AddSingleton<IUiDiagnosticsService, UiDiagnosticsService>();
-            services.AddSingleton<IAppDialogService, AppDialogService>();
-            services.AddSingleton<INavigationGuard, NavigationGuardService>();
-            services.AddSingleton<SecondaryWindowManager>();
             services.AddSingleton<AttachmentStorageService>();
             services.AddSingleton<WorkflowResponseStorageService>();
             services.AddSingleton<WorkflowLetterService>();
@@ -200,15 +198,30 @@ namespace GuaranteeManager
                     provider.GetRequiredService<WorkflowLetterService>(),
                     provider.GetRequiredService<WorkflowResponseStorageService>()));
             services.AddSingleton<IExcelService, ExcelService>();
-            services.AddSingleton<IGuaranteeHistoryDocumentService, GuaranteeHistoryDocumentService>();
             services.AddSingleton<IOperationalInquiryService>(provider =>
                 new OperationalInquiryService(provider.GetRequiredService<IDatabaseService>()));
             services.AddSingleton<IContextActionService, ContextActionService>();
+            services.AddSingleton<IViewFactory, ViewFactory>();
+            services.AddSingleton<ShellViewModel>();
 #if DEBUG
             services.AddSingleton<DataSeedingService>();
 #endif
+            services.AddSingleton<MainWindow>();
 
             Services = services.BuildServiceProvider();
+        }
+
+        private static bool IsUiV2PreviewRequested(string[] args)
+        {
+            foreach (string arg in args)
+            {
+                if (string.Equals(arg, "--ui-v2-preview", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

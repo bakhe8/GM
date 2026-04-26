@@ -5,56 +5,43 @@ using System.Text.Json;
 using System.Windows;
 using GuaranteeManager.Utils;
 
-namespace GuaranteeManager.Services
+namespace GuaranteeManager
 {
     public static class WindowStateService
     {
+        private static readonly Lock SyncLock = new();
+        private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+
         private static string StateFilePath => Path.Combine(AppPaths.DataFolder, "window-state.json");
 
         public static void Restore(Window window, string key)
         {
             try
             {
-                Dictionary<string, WindowStateInfo> states = LoadStates();
-                if (!states.TryGetValue(key, out WindowStateInfo? state))
+                if (!TryGetState(key, out WindowStateRecord? state) || state == null)
                 {
                     return;
                 }
 
-                Rect workArea = SystemParameters.WorkArea;
-                double safeMinWidth = Math.Min(window.MinWidth, workArea.Width);
-                double safeMinHeight = Math.Min(window.MinHeight, workArea.Height);
-                double restoredWidth = IsFinite(state.Width) && state.Width > 0
-                    ? Clamp(state.Width, safeMinWidth, workArea.Width)
-                    : window.Width;
-                double restoredHeight = IsFinite(state.Height) && state.Height > 0
-                    ? Clamp(state.Height, safeMinHeight, workArea.Height)
-                    : window.Height;
-
-                if (IsFinite(restoredWidth) && restoredWidth > 0)
+                window.WindowStartupLocation = WindowStartupLocation.Manual;
+                if (window.ResizeMode != ResizeMode.NoResize && state.Width > 200 && state.Height > 120)
                 {
-                    window.Width = restoredWidth;
+                    window.Width = state.Width;
+                    window.Height = state.Height;
                 }
 
-                if (IsFinite(restoredHeight) && restoredHeight > 0)
-                {
-                    window.Height = restoredHeight;
-                }
+                window.Left = state.Left;
+                window.Top = state.Top;
+                EnsureVisible(window);
 
-                if (IsFinite(state.Left) && IsFinite(state.Top))
-                {
-                    window.Left = Clamp(state.Left, workArea.Left, Math.Max(workArea.Left, workArea.Right - restoredWidth));
-                    window.Top = Clamp(state.Top, workArea.Top, Math.Max(workArea.Top, workArea.Bottom - restoredHeight));
-                }
-
-                if (Enum.TryParse(state.WindowState, out WindowState savedState) && savedState == WindowState.Maximized)
+                if (state.IsMaximized && window.ResizeMode != ResizeMode.NoResize)
                 {
                     window.WindowState = WindowState.Maximized;
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                SimpleLogger.LogError(ex, $"RestoreWindowState ({key})");
+                // تجاهل مشاكل الاستعادة حتى لا تؤثر على فتح النافذة.
             }
         }
 
@@ -62,66 +49,89 @@ namespace GuaranteeManager.Services
         {
             try
             {
-                AppPaths.EnsureDirectoriesExist();
-                Dictionary<string, WindowStateInfo> states = LoadStates();
-                Rect bounds = window.WindowState == WindowState.Normal ? new Rect(window.Left, window.Top, window.Width, window.Height) : window.RestoreBounds;
+                Rect bounds = window.WindowState == WindowState.Normal
+                    ? new Rect(window.Left, window.Top, window.Width, window.Height)
+                    : window.RestoreBounds;
 
-                states[key] = new WindowStateInfo
+                if (bounds.Width <= 0 || bounds.Height <= 0)
                 {
-                    Left = bounds.Left,
-                    Top = bounds.Top,
-                    Width = bounds.Width,
-                    Height = bounds.Height,
-                    WindowState = window.WindowState == WindowState.Minimized ? WindowState.Normal.ToString() : window.WindowState.ToString()
-                };
+                    return;
+                }
 
-                string json = JsonSerializer.Serialize(states, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(StateFilePath, json);
+                Dictionary<string, WindowStateRecord> states = LoadStates();
+                states[key] = new WindowStateRecord(
+                    bounds.Left,
+                    bounds.Top,
+                    bounds.Width,
+                    bounds.Height,
+                    window.WindowState == WindowState.Maximized);
+
+                SaveStates(states);
             }
-            catch (Exception ex)
+            catch
             {
-                SimpleLogger.LogError(ex, $"SaveWindowState ({key})");
+                // تجاهل مشاكل الحفظ حتى لا تؤثر على إغلاق النافذة.
             }
         }
 
-        private static Dictionary<string, WindowStateInfo> LoadStates()
+        private static bool TryGetState(string key, out WindowStateRecord? state)
         {
-            if (!File.Exists(StateFilePath))
+            Dictionary<string, WindowStateRecord> states = LoadStates();
+            return states.TryGetValue(key, out state);
+        }
+
+        private static Dictionary<string, WindowStateRecord> LoadStates()
+        {
+            lock (SyncLock)
             {
-                return new Dictionary<string, WindowStateInfo>();
-            }
+                AppPaths.EnsureDirectoriesExist();
+                if (!File.Exists(StateFilePath))
+                {
+                    return new Dictionary<string, WindowStateRecord>(StringComparer.OrdinalIgnoreCase);
+                }
 
-            string json = File.ReadAllText(StateFilePath);
-            if (string.IsNullOrWhiteSpace(json))
+                using FileStream stream = File.OpenRead(StateFilePath);
+                return JsonSerializer.Deserialize<Dictionary<string, WindowStateRecord>>(stream)
+                    ?? new Dictionary<string, WindowStateRecord>(StringComparer.OrdinalIgnoreCase);
+            }
+        }
+
+        private static void SaveStates(Dictionary<string, WindowStateRecord> states)
+        {
+            lock (SyncLock)
             {
-                return new Dictionary<string, WindowStateInfo>();
+                AppPaths.EnsureDirectoriesExist();
+                using FileStream stream = File.Create(StateFilePath);
+                JsonSerializer.Serialize(stream, states, JsonOptions);
             }
-
-            return JsonSerializer.Deserialize<Dictionary<string, WindowStateInfo>>(json) ?? new Dictionary<string, WindowStateInfo>();
         }
 
-        private static bool IsFinite(double value)
+        private static void EnsureVisible(Window window)
         {
-            return !double.IsNaN(value) && !double.IsInfinity(value);
-        }
+            Rect virtualBounds = new(
+                SystemParameters.VirtualScreenLeft,
+                SystemParameters.VirtualScreenTop,
+                SystemParameters.VirtualScreenWidth,
+                SystemParameters.VirtualScreenHeight);
 
-        private static double Clamp(double value, double minimum, double maximum)
-        {
-            if (maximum < minimum)
+            Rect currentBounds = new(window.Left, window.Top, window.Width, window.Height);
+            if (!virtualBounds.IntersectsWith(currentBounds))
             {
-                return minimum;
+                window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                return;
             }
 
-            return Math.Max(minimum, Math.Min(maximum, value));
+            double maxLeft = Math.Max(virtualBounds.Left, virtualBounds.Right - window.Width);
+            double maxTop = Math.Max(virtualBounds.Top, virtualBounds.Bottom - window.Height);
+            window.Left = Math.Max(virtualBounds.Left, Math.Min(window.Left, maxLeft));
+            window.Top = Math.Max(virtualBounds.Top, Math.Min(window.Top, maxTop));
         }
 
-        private sealed class WindowStateInfo
-        {
-            public double Left { get; set; }
-            public double Top { get; set; }
-            public double Width { get; set; }
-            public double Height { get; set; }
-            public string WindowState { get; set; } = "Normal";
-        }
+        private sealed record WindowStateRecord(
+            double Left,
+            double Top,
+            double Width,
+            double Height,
+            bool IsMaximized);
     }
 }

@@ -6,9 +6,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     <NoWarn>CA1416</NoWarn>
+    <Version>1.1.0-preview.1</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+    <InformationalVersion>1.1.0-preview.1</InformationalVersion>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -29,13 +33,26 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Data\**\*;Logs\**\*;Attachments\**\*;Workflow\**\*" />
-    <Content Remove="Data\**\*;Logs\**\*;Attachments\**\*;Workflow\**\*" />
+    <None Remove="Data\**\*;Logs\**\*;Attachments\**\*;Workflow\**\*;archive\**\*" />
+    <Content Remove="Data\**\*;Logs\**\*;Attachments\**\*;Workflow\**\*;archive\**\*" />
+    <Compile Remove="archive\**\*.cs" />
+    <Page Remove="archive\**\*.xaml" />
   </ItemGroup>
 
   <ItemGroup>
     <None Remove="Assets\KFSHRC\*.png" />
     <Resource Include="Assets\KFSHRC\*.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="RuntimeIdentifier" Value="$(RuntimeIdentifier)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\Logos\*.png" />
+    <Content Include="Assets\Logos\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

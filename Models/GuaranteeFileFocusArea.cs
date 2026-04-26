@@ -4,6 +4,7 @@ namespace GuaranteeManager.Models
     {
         None = 0,
         ExecutiveSummary,
+        Requests,
         Series,
         Actions,
         Attachments,

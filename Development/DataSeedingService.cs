@@ -68,11 +68,15 @@ namespace GuaranteeManager.Development
             _connectionString = $"Data Source={AppPaths.DatabasePath}";
         }
 
-        public void Seed()
+        public void Seed(bool clearExistingData = true)
         {
             try
             {
-                ClearExistingData();
+                if (clearExistingData)
+                {
+                    ClearExistingData();
+                }
+
                 _counter = 1;
 
                 // ── نشط — بدون طلبات ──────────────────────────────────────────────
@@ -740,7 +744,11 @@ namespace GuaranteeManager.Development
 
             current = GetCurrent(current)!;
             var annReq = _workflowService.CreateAnnulmentRequest(current.Id, "نقض الضمان المفرج عنه", "بدر الخالدي");
-            _workflowService.RecordBankResponse(annReq.Id, RequestStatus.Executed, "تم نقض الضمان وأُغلق الملف");
+            _workflowService.RecordBankResponse(
+                annReq.Id,
+                RequestStatus.Executed,
+                "تم نقض الضمان وأُغلق الملف",
+                CreateDummyResponseDocument("رد_البنك_نقض_بعد_الإفراج"));
         }
 
         private void SeedReleased_AnnulmentRejected()
@@ -794,7 +802,11 @@ namespace GuaranteeManager.Development
 
             current = GetCurrent(current)!;
             var annReq = _workflowService.CreateAnnulmentRequest(current.Id, "نقض الضمان المسيّل", "نادية الفيفي");
-            _workflowService.RecordBankResponse(annReq.Id, RequestStatus.Executed, "أُغلق الملف بعد النقض");
+            _workflowService.RecordBankResponse(
+                annReq.Id,
+                RequestStatus.Executed,
+                "أُغلق الملف بعد النقض",
+                CreateDummyResponseDocument("رد_البنك_نقض_بعد_التسييل"));
         }
 
         private void SeedLiquidated_AnnulmentRejected()
@@ -991,7 +1003,17 @@ namespace GuaranteeManager.Development
             };
         }
 
-        private string NextGuaranteeNo() => $"BG-{DateTime.Now.Year}-{_counter++:D4}";
+        private string NextGuaranteeNo()
+        {
+            while (true)
+            {
+                string guaranteeNo = $"BG-{DateTime.Now.Year}-{_counter++:D4}";
+                if (_databaseService.IsGuaranteeNoUnique(guaranteeNo))
+                {
+                    return guaranteeNo;
+                }
+            }
+        }
 
         private Guarantee Save(Guarantee g, int attachmentCount = 0)
         {
@@ -1028,6 +1050,16 @@ namespace GuaranteeManager.Development
                 paths.Add(fullPath);
             }
             return paths;
+        }
+
+        private string CreateDummyResponseDocument(string baseName)
+        {
+            string tempDir = Path.Combine(Path.GetTempPath(), "GSeed");
+            Directory.CreateDirectory(tempDir);
+
+            string fullPath = Path.Combine(tempDir, $"{baseName}_{Guid.NewGuid():N}.pdf");
+            File.WriteAllText(fullPath, $"مستند رد بنك تجريبي: {baseName}");
+            return fullPath;
         }
 
         private void ClearExistingData()

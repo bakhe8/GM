@@ -1,0 +1,139 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Colors.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Buttons.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Cards.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style x:Key="ReferenceTableContainer" TargetType="Border" BasedOn="{StaticResource Card}">
+        <Setter Property="ClipToBounds" Value="True" />
+    </Style>
+
+    <Style x:Key="ReferenceTableHeaderBand" TargetType="Grid">
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="FlowDirection" Value="LeftToRight" />
+        <Setter Property="Background" Value="#F8FAFC" />
+    </Style>
+
+    <Style x:Key="ReferenceTableHeaderDivider" TargetType="Border">
+        <Setter Property="BorderBrush" Value="#E1E8F2" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+    </Style>
+
+    <Style x:Key="TableHeaderText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="#64748B" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="TableHeaderRight" TargetType="TextBlock" BasedOn="{StaticResource TableHeaderText}">
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="TextAlignment" Value="Right" />
+        <Setter Property="Margin" Value="0,0,8,0" />
+    </Style>
+
+    <Style x:Key="TableCellText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11.2" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="#1B2436" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <Style x:Key="TableCellCenter" TargetType="TextBlock" BasedOn="{StaticResource TableCellText}">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="TextAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="TableCellRight" TargetType="TextBlock" BasedOn="{StaticResource TableCellText}">
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="TextAlignment" Value="Right" />
+        <Setter Property="FlowDirection" Value="RightToLeft" />
+        <Setter Property="Margin" Value="0,0,8,0" />
+    </Style>
+
+    <Style x:Key="StatusPill" TargetType="Border">
+        <Setter Property="CornerRadius" Value="11" />
+        <Setter Property="Padding" Value="8,2" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Background" Value="#F2FBF4" />
+        <Setter Property="BorderBrush" Value="#C9EFCF" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style x:Key="ReferenceTableRowItem" TargetType="ListBoxItem">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Root"
+                            Height="40"
+                            Margin="2,0"
+                            Background="White"
+                            BorderBrush="#E7EDF5"
+                            BorderThickness="0,1,0,0"
+                            ClipToBounds="True">
+                        <Grid>
+                            <Rectangle x:Name="SelectionBar"
+                                       Width="3"
+                                       HorizontalAlignment="Right"
+                                       Fill="#2563EB"
+                                       Visibility="Collapsed" />
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="#EEF4FC" />
+                            <Setter TargetName="SelectionBar" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="#F8FAFF" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ReferenceTableRowsListBox" TargetType="ListBox">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Hidden" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource ReferenceTableRowItem}" />
+    </Style>
+
+    <Style x:Key="ReferenceTablePager" TargetType="Grid">
+        <Setter Property="Margin" Value="10,0" />
+        <Setter Property="FlowDirection" Value="LeftToRight" />
+    </Style>
+
+    <Style x:Key="ReferenceTablePagerButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+        <Setter Property="MinWidth" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="BorderBrush" Value="#E2E8F0" />
+    </Style>
+
+    <Style x:Key="ReferenceTablePagerActiveButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+        <Setter Property="MinWidth" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="#2563EB" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style x:Key="ReferenceTableFooterSummary" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Muted}" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+</ResourceDictionary>

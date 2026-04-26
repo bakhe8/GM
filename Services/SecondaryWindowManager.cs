@@ -1,108 +1,88 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
 
 namespace GuaranteeManager.Services
 {
     public sealed class SecondaryWindowManager
     {
-        private readonly Dictionary<string, Window> _openWindows = new Dictionary<string, Window>();
+        private readonly IAppDialogService _dialogs;
+        private readonly IUiDiagnosticsService _diagnostics;
+        private readonly HashSet<string> _activeKeys = new(StringComparer.OrdinalIgnoreCase);
+        private readonly object _gate = new();
 
-        public static SecondaryWindowManager Instance { get; } = new SecondaryWindowManager();
-
-        private SecondaryWindowManager()
+        public SecondaryWindowManager(IAppDialogService dialogs, IUiDiagnosticsService diagnostics)
         {
+            _dialogs = dialogs;
+            _diagnostics = diagnostics;
         }
 
-        public bool ShowOrActivate(string key, Func<Window> factory, Action<Window>? onExisting = null)
+        public bool? ShowDialog(string windowKey, Func<Window> windowFactory, string title, string duplicateMessage)
         {
-            if (_openWindows.TryGetValue(key, out Window? existingWindow))
+            if (!TryEnter(windowKey))
             {
-                if (existingWindow.IsLoaded)
-                {
-                    onExisting?.Invoke(existingWindow);
-                    BringToFront(existingWindow);
-                    return false;
-                }
-
-                _openWindows.Remove(key);
-            }
-
-            Window window = factory();
-            AttachOwnerIfMissing(window);
-            _openWindows[key] = window;
-            window.Closed += (_, _) =>
-            {
-                if (_openWindows.TryGetValue(key, out Window? currentWindow) && ReferenceEquals(currentWindow, window))
-                {
-                    _openWindows.Remove(key);
-                }
-            };
-
-            window.Show();
-            BringToFront(window);
-            return true;
-        }
-
-        public void CloseAll()
-        {
-            foreach (Window window in _openWindows.Values.Distinct().ToList())
-            {
-                try
-                {
-                    if (window.IsLoaded)
+                _diagnostics.RecordEvent(
+                    "dialog.secondary",
+                    "duplicate-blocked",
+                    new
                     {
-                        window.Close();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    SimpleLogger.LogError(ex, $"SecondaryWindowManager.CloseAll ({window.GetType().Name})");
-                }
+                        WindowKey = windowKey,
+                        Title = title
+                    });
+                _dialogs.ShowInformation(duplicateMessage, title);
+                return null;
             }
 
-            _openWindows.Clear();
-        }
-
-        private static void AttachOwnerIfMissing(Window window)
-        {
-            if (window.Owner != null)
+            Window window = windowFactory();
+            if (window.Owner == null && Application.Current?.MainWindow != window)
             {
-                return;
-            }
-
-            if (Application.Current?.MainWindow is not Window mainWindow)
-            {
-                return;
-            }
-
-            if (ReferenceEquals(window, mainWindow))
-            {
-                return;
+                window.Owner = Application.Current?.MainWindow;
             }
 
             try
             {
-                window.Owner = mainWindow;
+                _diagnostics.RecordEvent(
+                    "dialog.secondary",
+                    "open",
+                    new
+                    {
+                        WindowKey = windowKey,
+                        Title = window.Title,
+                        OwnerTitle = window.Owner?.Title ?? string.Empty
+                    });
+
+                bool? result = window.ShowDialog();
+                _diagnostics.RecordEvent(
+                    "dialog.secondary",
+                    "close",
+                    new
+                    {
+                        WindowKey = windowKey,
+                        Title = window.Title,
+                        Result = result
+                    });
+                return result;
             }
-            catch (InvalidOperationException ex)
+            finally
             {
-                SimpleLogger.LogError(ex, $"SecondaryWindowManager.AttachOwnerIfMissing ({window.GetType().Name})");
+                Exit(windowKey);
             }
         }
 
-        private static void BringToFront(Window window)
+        private bool TryEnter(string windowKey)
         {
-            if (window.WindowState == WindowState.Minimized)
+            lock (_gate)
             {
-                window.WindowState = WindowState.Normal;
+                return _activeKeys.Add(windowKey);
             }
+        }
 
-            window.Activate();
-            window.Topmost = true;
-            window.Topmost = false;
-            window.Focus();
+        private void Exit(string windowKey)
+        {
+            lock (_gate)
+            {
+                _activeKeys.Remove(windowKey);
+            }
         }
     }
 }

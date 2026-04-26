@@ -1,66 +1,68 @@
-using System;
 using System.Windows;
 
 namespace GuaranteeManager.Services
 {
-    public static class AppDialogService
+    public sealed class AppDialogService : IAppDialogService
     {
-        public static void ShowInfo(string message, string title = "معلومة")
+        private readonly IUiDiagnosticsService _diagnostics;
+
+        public AppDialogService(IUiDiagnosticsService diagnostics)
         {
-            MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+            _diagnostics = diagnostics;
         }
 
-        public static void ShowSuccess(string message, string title = "تمت العملية")
+        public MessageBoxResult Show(string message, string title, MessageBoxButton buttons, MessageBoxImage image)
         {
-            MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+            _diagnostics.RecordEvent(
+                "dialog.message",
+                "show",
+                new
+                {
+                    Title = title,
+                    Buttons = buttons.ToString(),
+                    Image = image.ToString(),
+                    Message = message
+                });
+            return System.Windows.MessageBox.Show(message, title, buttons, image);
         }
 
-        public static void ShowWarning(string message, string title = "تنبيه")
+        public void ShowInformation(string message, string title)
         {
-            MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Warning);
+            Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        public static void ShowError(string message, string title = "خطأ")
+        public void ShowWarning(string message, string title)
         {
-            MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
+            Show(message, title, MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
-        public static void ShowError(Exception ex, string userMessage, string title = "خطأ")
+        public void ShowError(string message, string title)
         {
-            if (ex is ApplicationOperationException operationException)
-            {
-                ShowError(operationException.UserMessageWithReference, title);
-                return;
-            }
-
-            ShowError($"{userMessage}{Environment.NewLine}{ex.Message}", title);
+            Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
-        public static bool ConfirmDelete(string subjectLabel, string identifier, string? details = null)
+        public bool Confirm(string message, string title)
         {
-            string message = $"هل أنت متأكد من حذف {subjectLabel} {identifier}؟";
-            if (!string.IsNullOrWhiteSpace(details))
-            {
-                message += $"{Environment.NewLine}{details}";
-            }
+            _diagnostics.RecordEvent(
+                "dialog.message",
+                "confirm.request",
+                new
+                {
+                    Title = title,
+                    Message = message
+                });
 
-            return MessageBox.Show(message, "تأكيد الحذف", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
-        }
+            MessageBoxResult result = System.Windows.MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question);
+            _diagnostics.RecordEvent(
+                "dialog.message",
+                "confirm.result",
+                new
+                {
+                    Title = title,
+                    Accepted = result == MessageBoxResult.Yes
+                });
 
-        public static bool ConfirmDiscardChanges(string? details = null)
-        {
-            string message = "لديك تغييرات غير محفوظة. هل تريد الخروج والتراجع عنها؟";
-            if (!string.IsNullOrWhiteSpace(details))
-            {
-                message += $"{Environment.NewLine}{details}";
-            }
-
-            return MessageBox.Show(message, "بيانات غير محفوظة", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
-        }
-
-        public static MessageBoxResult Ask(string message, string title, MessageBoxButton buttons, MessageBoxImage image = MessageBoxImage.Question)
-        {
-            return MessageBox.Show(message, title, buttons, image);
+            return result == MessageBoxResult.Yes;
         }
     }
 }
