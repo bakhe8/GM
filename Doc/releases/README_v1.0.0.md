@@ -1,0 +1,31 @@
+# GuaranteeManager v1.0.0
+
+هذه هي **النسخة الأولى المعتمدة للتوزيع الداخلي** من البرنامج.
+
+> **ملاحظة:** هذا الملف يخص حزمة التوزيع `v1.0.0` فقط، ولا يمثل الحالة الحالية
+> لتطوير المشروع بعد الإطلاق. للوضع الحالي راجع [CURRENT_STATE.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/CURRENT_STATE.md:1) و[git_workflow.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/git_workflow.md:1).
+
+## الملف المعتمد للتوزيع
+
+- `GuaranteeManager_v1.0.0_win-x64.zip`
+
+## طريقة التشغيل
+
+1. فك ضغط الملف `GuaranteeManager_v1.0.0_win-x64.zip`.
+2. افتح المجلد الناتج `v1.0.0`.
+3. شغّل الملف `GuaranteeManager.exe`.
+
+## ملاحظات مهمة
+
+- لا يتم التشغيل من مجلد المشروع أو من `bin`.
+- لا يتم نسخ أي ملفات محلية من بيئة التطوير مثل:
+  - `Data`
+  - `Logs`
+  - `Attachments`
+  - `Workflow`
+- البرنامج ينشئ بياناته التشغيلية محليًا عند الاستخدام الأول.
+
+## النسخة المرجعية
+
+- رقم النسخة داخل البرنامج: `v1.0.0`
+- نوع الإصدار: **الإصدار الأول الرسمي**

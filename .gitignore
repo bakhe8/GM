@@ -23,6 +23,13 @@ DevSeedRuntime/
 Attachments/_staging/
 releases/*.zip
 releases/v*/
+/tmp-*.json
+/_acceptance*.png
+/_acceptance2_*.png
+/_uiaccept*.png
+/_notification_check.png
+/Doc/Assets/Documentation/Screenshots/UIAcceptance/latest/
+/Doc/Assets/Documentation/Screenshots/UIAcceptance/20*/
 
 # Editor directories and files
 .vs/
