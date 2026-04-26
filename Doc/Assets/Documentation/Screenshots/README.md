@@ -27,6 +27,8 @@
       [2026-04-26-uat-pass-02.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-uat-pass-02.md)
     - وثالث دفعة UAT التي أغلقت فجوة النوافذ الأصلية للطباعة وأثبتت المعالجة المحلية لغياب مستند رد البنك:
       [2026-04-26-uat-pass-03.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-uat-pass-03.md)
+    - ورابع دفعة UAT على baseline `preview.2` التي شددت حسم نوافذ التأكيد وأعادت `NewGuaranteeDiscard` و`All` إلى النجاح:
+      [2026-04-26-uat-pass-04.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-uat-pass-04.md)
 
 ## تشغيل الأداة
 
@@ -146,6 +148,7 @@
 ## ملاحظتان مهمتان
 
 - يمكن استخدام `DialogAction` بلا عنوان نافذة عندما نريد التعامل مع نافذة التأكيد النشطة مباشرة.
+- `DialogAction` لم تعد تعتبر "الضغط على الزر" نجاحًا بحد ذاته؛ هي الآن تنتظر جاهزية الزر، ثم تتحقق من إغلاق الحوار فعليًا، وتعيد المحاولة بأسلوب بديل إذا لزم.
 - يمكن استخدام `SetField` إما عبر `Label` أو مباشرة عبر `AutomationId` إذا كان الحقل معروف الهوية.
 - التصوير والـ contact sheet لم يعودا يحمّلان مكتبات الرسوم إلا عند الحاجة الفعلية لهما.
 - الأداة لم تعد تسمح بالتنقل العام أو النقر على النافذة الرئيسية بينما توجد رسالة أو حوار مفتوح فوق التطبيق؛ ستطلب أولًا حسم الحوار عبر `DialogAction` أو استهدافه صراحة.

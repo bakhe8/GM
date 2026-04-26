@@ -76,16 +76,16 @@ function Complete-UiConfirmationDialog {
     param(
         [System.Windows.Automation.AutomationElement]$Dialog,
         [string[]]$PreferredLabels,
+        [System.Diagnostics.Process]$Process,
         [int]$MaxAttempts = 3
     )
 
-    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
-        Show-UiWindow -Window $dialog
-        $button = Get-UiDialogActionButton -Dialog $dialog -PreferredLabels $PreferredLabels
-        Invoke-UiElement -Element $button
-        Start-Sleep -Milliseconds 500
-        return
+    $result = Invoke-UiDialogActionButton -Dialog $Dialog -PreferredLabels $PreferredLabels -ProcessId $Process.Id -MaxAttempts $MaxAttempts -CloseTimeoutSeconds 3
+    if (-not $result.Closed) {
+        throw "تعذر حسم حوار '$($result.Dialog.Name)' بعد $($result.Attempt) محاولات. آخر أسلوب: $($result.Strategy)."
     }
+
+    return $result
 }
 
 function Invoke-SmokeNavigationScenario {
@@ -143,7 +143,7 @@ function Invoke-NewGuaranteeDiscardScenario {
     Show-UiWindow -Window $confirmation
     $confirmCapture = Save-ScenarioStep -Name "dialog-discard-confirmation" -Window $confirmation
 
-    Complete-UiConfirmationDialog -Dialog $confirmation -PreferredLabels @("Yes", "&Yes", "نعم", "موافق", "OK")
+    Complete-UiConfirmationDialog -Dialog $confirmation -PreferredLabels @("Yes", "&Yes", "نعم", "موافق", "OK") -Process $Process | Out-Null
     Wait-UiWindowClosed -Process $Process -Title "تأكيد الإغلاق" -TimeoutSeconds 10
     Wait-UiWindowClosed -Process $Process -AutomationId "Dialog.NewGuarantee" -TimeoutSeconds 10
 

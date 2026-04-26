@@ -443,17 +443,22 @@ function Invoke-UiAction {
             )
             $dialogSummary = Get-UiElementSummary -Element $dialog
             $buttonSummary = Get-UiElementSummary -Element $button
-            Invoke-UiElement -Element $button
-            $closed = Wait-UiWindowClosed -Process $process -WindowSummary $dialogSummary
-            if (-not $closed) {
-                throw "تم الضغط على الإجراء داخل الحوار '$($dialogSummary.Name)' لكن النافذة بقيت مفتوحة بعد انتهاء مهلة الانتظار."
+            $result = Invoke-UiDialogActionButton -Dialog $dialog -PreferredLabels @(
+                $preferredLabels |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+                Select-Object -Unique
+            ) -ProcessId $process.Id -CloseTimeoutSeconds 3
+            if (-not $result.Closed) {
+                throw "تم الوصول إلى زر داخل الحوار '$($dialogSummary.Name)' لكن النافذة بقيت مفتوحة بعد $(if ($null -ne $result.Attempt) { $result.Attempt } else { 0 }) محاولات. آخر أسلوب: $($result.Strategy)."
             }
             return [pscustomobject]@{
                 ProcessId = $process.Id
                 Action = "DialogAction"
                 Dialog = $dialogSummary
-                Button = $buttonSummary
-                Closed = $closed
+                Button = if ($null -ne $result.Button) { $result.Button } else { $buttonSummary }
+                Closed = $result.Closed
+                Strategy = $result.Strategy
+                Attempt = $result.Attempt
             }
         }
 

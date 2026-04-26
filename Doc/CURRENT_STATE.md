@@ -36,6 +36,8 @@
   - [UIAcceptance/baselines/2026-04-26-stabilization](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-stabilization)
 - كما توجد جولة قبول ناجحة على بيانات مولدة أثقل هنا:
   - [UIAcceptance/baselines/2026-04-26-heavy-seed-acceptance](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-heavy-seed-acceptance)
+- كما توجد جولة UAT أحدث على baseline `preview.2` شددت حسم نوافذ التأكيد وأعادت مساري `NewGuaranteeDiscard` و`All` إلى النجاح:
+  - [UIAcceptance/baselines/2026-04-26-uat-pass-04.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-uat-pass-04.md)
 - مجلد `UIAcceptance/latest/` يبقى generated وتشغيليًا فقط، وليس baseline رسمية
 
 ## وضع التوثيق
