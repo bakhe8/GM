@@ -64,6 +64,15 @@
 1. **الخفة افتراضيًا**
    - لا يعمل أي provider ثقيل دائمًا
 
+1.1 **الفيديو آخر تصعيد**
+   - `VideoCapture` ليست first-line evidence
+   - بل last-resort فقط
+   - ويجب أن تسبقها دائمًا:
+     - صورة ثابتة
+     - أو burst متعددة الإطارات
+     - أو failure bundle بصري
+   - ولا يجوز تفعيلها تلقائيًا عبر heuristics الحالية
+
 2. **الاستكشاف الحر أولًا**
    - لا يجوز أن يصبح الوصول إلى نتيجة معينة مشروطًا بسيناريو واحد أو تسلسل خطوات واحد
    - يجب أن أستطيع الوصول لنفس الغاية عبر أكثر من أسلوب:
@@ -278,6 +287,7 @@
 الهدف:
 
 - دعم فيديو وصوت من غير تحميل دائم
+- مع بقاء الفيديو **last-resort** لا first-line evidence
 
 المخرجات:
 
@@ -285,6 +295,13 @@
 - `Stop-UiVideoCapture`
 - `Start-UiAudioCapture`
 - `Stop-UiAudioCapture`
+
+سياسة هذه المرحلة:
+
+- `VideoCapture` تعمل فقط:
+  - عند طلب صريح
+  - أو عند تصعيد واعٍ بعد فشل الصورة والـ burst في تفسير الإشكال
+- ولا تُستخدم كتفعيل تلقائي افتراضي
 
 ### Phase G — Reactive Triggers
 
@@ -640,6 +657,11 @@
   - smoke: `10/10`
   - integration: `70/70`
   - freedom: `9/9`
+- كما ثبتنا الآن أن:
+  - `VideoCapture`
+  - `AutoTriggerAllowed = false`
+  - `EscalationLevel = last-resort`
+  - `PreferredPredecessors = BurstCapture, AutoCaptureOnFailure`
 
 ---
 

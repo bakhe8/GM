@@ -186,6 +186,16 @@
   - `saved`
   - أو `missing`
   حسب ما إذا كان المزود نفسه أخرج ملفًا محفوظًا أم لا
+- ومهم جدًا:
+  - `VideoCapture` ليست first-line evidence
+  - بل **last-resort** فقط
+  - والأولوية قبلها دائمًا لـ:
+    - صورة ثابتة
+    - `BurstCapture`
+    - `AutoCaptureOnFailure`
+  - لذلك فالأداة تعرفها الآن كقدرة:
+    - `AutoTriggerAllowed = false`
+    - `RequiresExplicitOperatorIntent = true`
 
 ومهم أيضًا:
 

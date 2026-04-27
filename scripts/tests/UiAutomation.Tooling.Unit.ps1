@@ -330,6 +330,12 @@ try {
         $videoDefinition = @($definitions | Where-Object Name -eq "VideoCapture" | Select-Object -First 1)
         Assert-RegressionCondition ($videoDefinition.Count -eq 1) "VideoCapture definition could not be resolved."
         Assert-RegressionCondition ([string]$videoDefinition[0].ProviderState -in @("available", "unavailable")) "VideoCapture returned an invalid provider state."
+        Assert-RegressionCondition ([string]$videoDefinition[0].EscalationLevel -eq "last-resort") "VideoCapture should be marked as a last-resort capability."
+        Assert-RegressionCondition (-not [bool]$videoDefinition[0].AutoTriggerAllowed) "VideoCapture should not be auto-triggered."
+        Assert-RegressionCondition ([bool]$videoDefinition[0].RequiresExplicitOperatorIntent) "VideoCapture should require explicit operator intent."
+        Assert-RegressionCondition (@($videoDefinition[0].PreferredPredecessors).Count -ge 2) "VideoCapture should advertise image-first predecessors."
+        Assert-RegressionCondition (@($videoDefinition[0].PreferredPredecessors) -contains "BurstCapture") "VideoCapture should prefer BurstCapture before escalation."
+        Assert-RegressionCondition (@($videoDefinition[0].PreferredPredecessors) -contains "AutoCaptureOnFailure") "VideoCapture should prefer AutoCaptureOnFailure before escalation."
 
         $audioDefinition = @($definitions | Where-Object Name -eq "AudioCapture" | Select-Object -First 1)
         Assert-RegressionCondition ($audioDefinition.Count -eq 1) "AudioCapture definition could not be resolved."

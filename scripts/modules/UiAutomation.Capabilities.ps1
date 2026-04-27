@@ -7,6 +7,8 @@ function Get-UiCapabilityDefinitions {
             Name = "BurstCapture"
             Category = "Visual"
             ProviderState = "available"
+            EscalationLevel = "first-line"
+            AutoTriggerAllowed = $true
             DefaultLeaseMs = 1800
             DefaultFrameCount = 4
             DefaultIntervalMs = 90
@@ -17,6 +19,8 @@ function Get-UiCapabilityDefinitions {
             Name = "AutoCaptureOnFailure"
             Category = "Visual"
             ProviderState = "available"
+            EscalationLevel = "first-line"
+            AutoTriggerAllowed = $true
             DefaultLeaseMs = 3000
             DefaultCooldownMs = 1800
             DefaultFrameCount = 3
@@ -28,6 +32,8 @@ function Get-UiCapabilityDefinitions {
             Name = "ReactiveAssist"
             Category = "Adaptive"
             ProviderState = "available"
+            EscalationLevel = "first-line"
+            AutoTriggerAllowed = $true
             DefaultLeaseMs = 3200
             DefaultSlowActionMs = 850
             DefaultCooldownMs = 3200
@@ -43,6 +49,8 @@ function Get-UiCapabilityDefinitions {
             Name = "ExplorationAssist"
             Category = "Adaptive"
             ProviderState = "available"
+            EscalationLevel = "first-line"
+            AutoTriggerAllowed = $true
             DefaultLeaseMs = 5000
             Description = "ينسق بين القدرات الحالية ويختار modality أنسب أثناء الاستكشاف الحر بدل إلزام النموذج بأسلوب واحد."
         },
@@ -50,6 +58,8 @@ function Get-UiCapabilityDefinitions {
             Name = "FaultWatch"
             Category = "Signals"
             ProviderState = "available"
+            EscalationLevel = "first-line"
+            AutoTriggerAllowed = $true
             DefaultLeaseMs = 4200
             DefaultLookbackSeconds = 45
             DefaultCooldownMs = 2600
@@ -64,18 +74,24 @@ function Get-UiCapabilityDefinitions {
             Name = "VideoCapture"
             Category = "Media"
             ProviderState = if ($null -ne $videoProvider) { "available" } else { "unavailable" }
+            EscalationLevel = "last-resort"
+            AutoTriggerAllowed = $false
+            PreferredPredecessors = @("BurstCapture", "AutoCaptureOnFailure")
+            RequiresExplicitOperatorIntent = $true
             DefaultLeaseMs = 4000
             Description = if ($null -ne $videoProvider) {
-                "تسجيل فيديو/تتبع بصري عند الطلب عبر المزود $([string]$videoProvider.Name)."
+                "تسجيل فيديو/تتبع بصري عند الطلب عبر المزود $([string]$videoProvider.Name)، ويُعد خيارًا أخيرًا بعد الصورة والـ burst evidence."
             }
             else {
-                "تسجيل فيديو قصير عند الطلب أو عند trigger."
+                "تسجيل فيديو قصير عند الطلب فقط، ويُعد خيارًا أخيرًا بعد الصورة والـ burst evidence."
             }
         },
         [pscustomobject]@{
             Name = "AudioCapture"
             Category = "Media"
             ProviderState = if ($null -ne $audioProvider) { "available" } else { "unavailable" }
+            EscalationLevel = "reserved"
+            AutoTriggerAllowed = $false
             DefaultLeaseMs = 4000
             Description = if ($null -ne $audioProvider) {
                 "التقاط صوت قصير عند الحاجة عبر المزود $([string]$audioProvider.Name)."
@@ -88,6 +104,8 @@ function Get-UiCapabilityDefinitions {
             Name = "MouseTrace"
             Category = "Input"
             ProviderState = "available"
+            EscalationLevel = "supporting"
+            AutoTriggerAllowed = $true
             DefaultLeaseMs = 2500
             DefaultSampleCount = 4
             DefaultIntervalMs = 40

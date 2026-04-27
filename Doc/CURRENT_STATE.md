@@ -255,6 +255,17 @@
     - `tooling smoke`: `10/10`
     - `tooling integration`: `70/70`
     - `tooling freedom`: `9/9`
+- كما ثبتنا الآن سياسة مهمة تخص النظر نفسه:
+  - `VideoCapture` ليست امتدادًا طبيعيًا أوليًا
+  - بل **خيار أخير دائمًا**
+  - وقبلها يجب أن نمر على:
+    - `Capture`
+    - أو `BurstCapture`
+    - أو `AutoCaptureOnFailure`
+  - لذلك صارت `VideoCapture` معرّفة داخل الأداة كقدرة:
+    - `last-resort`
+    - `AutoTriggerAllowed = false`
+    - `RequiresExplicitOperatorIntent = true`
 
 وأول خطوة تنفيذية منه بدأت فعليًا الآن:
 
