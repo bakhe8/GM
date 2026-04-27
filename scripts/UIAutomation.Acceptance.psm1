@@ -191,6 +191,49 @@ function Get-UiCalibrationProfile {
     return $content | ConvertFrom-Json
 }
 
+function Add-UiFileLineWithRetry {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path,
+        [Parameter(Mandatory)]
+        [string]$Line,
+        [int]$MaxAttempts = 6,
+        [int]$DelayMilliseconds = 70
+    )
+
+    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+        try {
+            $directory = Split-Path -Parent $Path
+            if (-not [string]::IsNullOrWhiteSpace($directory) -and -not (Test-Path -LiteralPath $directory)) {
+                New-Item -ItemType Directory -Force -Path $directory | Out-Null
+            }
+
+            $fileStream = [System.IO.File]::Open($Path, [System.IO.FileMode]::Append, [System.IO.FileAccess]::Write, [System.IO.FileShare]::ReadWrite)
+            try {
+                $writer = New-Object System.IO.StreamWriter($fileStream, [System.Text.Encoding]::UTF8)
+                try {
+                    $writer.WriteLine($Line)
+                    $writer.Flush()
+                    return
+                }
+                finally {
+                    $writer.Dispose()
+                }
+            }
+            finally {
+                $fileStream.Dispose()
+            }
+        }
+        catch {
+            if ($attempt -ge $MaxAttempts) {
+                throw
+            }
+
+            Start-Sleep -Milliseconds ($DelayMilliseconds * $attempt)
+        }
+    }
+}
+
 function Write-UiTimelineEvent {
     param(
         [Parameter(Mandatory)]
@@ -216,7 +259,7 @@ function Write-UiTimelineEvent {
     }
 
     $line = $record | ConvertTo-Json -Depth 8 -Compress
-    Add-Content -Path (Get-UiTimelinePath) -Value $line -Encoding UTF8
+    Add-UiFileLineWithRetry -Path (Get-UiTimelinePath) -Line $line
 }
 
 function Get-UiTimelineEntries {
@@ -811,6 +854,8 @@ function Get-UiElementSummary {
         AutomationId = if ($null -ne $current) { try { $current.AutomationId } catch { $null } } else { $null }
         ControlType = $controlTypeName
         ClassName = if ($null -ne $current) { try { $current.ClassName } catch { $null } } else { $null }
+        HelpText = if ($null -ne $current) { try { $current.HelpText } catch { $null } } else { $null }
+        ItemStatus = if ($null -ne $current) { try { $current.ItemStatus } catch { $null } } else { $null }
         ProcessId = if ($null -ne $current) { try { $current.ProcessId } catch { 0 } } else { 0 }
         NativeWindowHandle = if ($null -ne $current) { try { $current.NativeWindowHandle } catch { 0 } } else { 0 }
         IsOffscreen = if ($null -ne $current) { try { [bool]$current.IsOffscreen } catch { $false } } else { $false }

@@ -41,10 +41,12 @@
 - ثم أُغلقت فجوة تشغيلية صغيرة في `RequestsDialog` داخل ملف الضمان: الأزرار الثقيلة أصبحت تتبع صلاحية الطلب المحدد بدل أن تبدو متاحة دائمًا
 - ثم أُغلقت فجوة نضج صغيرة في `OperationalInquiryDialog`: الأزرار المعطلة صارت تشرح سبب التعطيل عبر tooltips واضحة بدل أن تبقى صامتة
 - ثم أُغلقت فجوة خروج صغيرة في `RequestsDialog`: صار للحوار زر `إغلاق` واضح، وأصبح `Escape` يغلقه كما يتوقع المستخدم، مع تحسين بسيط للأداة حتى لا تعتبر اختفاء الحوار السريع فشلًا
+- ثم طُبقت أول سياسة واضحة لـ `Settings`: نجاحات الإنشاء والنسخ والتوليد التجريبي صارت هادئة عبر شريط الحالة، بينما مسارات الاسترجاع بقيت modal لأنها تحمل أثرًا أعلى وتفاصيل أمان مهمة
+- ثم ثُبت هذا حيًا على مسار `نسخ ملخص المسارات` من `Settings`: لا تظهر نافذة نجاح modal، ويظهر بدلها نص نجاح واضح في الشريط السفلي، مع لقطة مرجعية هنا:
+  - [UIAcceptance/latest/settings-copy-status.png](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/latest/settings-copy-status.png)
 
 والحصر الحالي يقول إن المتبقي الحقيقي من `preview.2 polish` يتمحور الآن في:
 
-- سياسة `الاكتمال الصامت` داخل `Settings`
 - معاينة الأثر في `NewGuaranteeDialog` و`EditGuaranteeDialog`
 - مراجعة `HistoryDialog` من زاوية الخطوة التالية
 - مراجعة أخيرة لـ `OperationalInquiryDialog` من زاوية `الجواب ثم الفعل`

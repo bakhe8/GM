@@ -15,6 +15,7 @@ namespace GuaranteeManager
     {
         private readonly Services.BackupService _backupService;
         private readonly Services.IUiDiagnosticsService _diagnostics;
+        private readonly Services.IShellStatusService _shellStatus;
 #if DEBUG
         private readonly DataSeedingService? _seedingService;
 #endif
@@ -23,6 +24,7 @@ namespace GuaranteeManager
         {
             _backupService = App.CurrentApp.GetRequiredService<Services.BackupService>();
             _diagnostics = App.CurrentApp.GetRequiredService<Services.IUiDiagnosticsService>();
+            _shellStatus = App.CurrentApp.GetRequiredService<Services.IShellStatusService>();
 #if DEBUG
             _seedingService = App.CurrentApp.GetRequiredService<DataSeedingService>();
 #endif
@@ -95,7 +97,7 @@ namespace GuaranteeManager
                 _backupService.CreateManualBackup(dialog.FileName);
                 string output = _backupService.LastManualBackupPath ?? dialog.FileName;
                 _diagnostics.RecordEvent("settings.operation", "manual-backup-created", new { OutputPath = output });
-                MessageBox.Show($"تم إنشاء النسخة الاحتياطية بنجاح:\n{output}", "النسخ الاحتياطي", MessageBoxButton.OK, MessageBoxImage.Information);
+                _shellStatus.ShowSuccess("تم إنشاء النسخة الاحتياطية.", $"الإعدادات • {Path.GetFileName(output)}");
             }
             catch (Exception ex)
             {
@@ -184,7 +186,7 @@ namespace GuaranteeManager
                 _backupService.CreatePortableBackupPackage(dialog.FileName, passphrase);
                 string output = _backupService.LastPortableBackupPackagePath ?? dialog.FileName;
                 _diagnostics.RecordEvent("settings.operation", "portable-backup-created", new { OutputPath = output });
-                MessageBox.Show($"تم إنشاء الحزمة المحمولة بنجاح:\n{output}", "حزمة محمولة", MessageBoxButton.OK, MessageBoxImage.Information);
+                _shellStatus.ShowSuccess("تم إنشاء الحزمة المحمولة.", $"الإعدادات • {Path.GetFileName(output)}");
             }
             catch (Exception ex)
             {
@@ -267,7 +269,7 @@ namespace GuaranteeManager
                     AppPaths.LogsFolder);
                 Clipboard.SetText(summary);
                 _diagnostics.RecordEvent("settings.operation", "copy-operational-summary", new { Length = summary.Length });
-                MessageBox.Show("تم نسخ ملخص مسارات التشغيل.", "الإعدادات", MessageBoxButton.OK, MessageBoxImage.Information);
+                _shellStatus.ShowSuccess("تم نسخ ملخص مسارات التشغيل.", "الإعدادات • الحافظة جاهزة");
             }
             catch (Exception ex)
             {
@@ -298,7 +300,7 @@ namespace GuaranteeManager
                 _seedingService.Seed();
                 refresh();
                 _diagnostics.RecordEvent("settings.operation", "seed-development-data", new { Status = "Succeeded" });
-                MessageBox.Show("تم توليد البيانات التجريبية بنجاح.", "بيئة التطوير", MessageBoxButton.OK, MessageBoxImage.Information);
+                _shellStatus.ShowSuccess("تم توليد البيانات التجريبية.", "الإعدادات • بيئة التطوير");
             }
             catch (Exception ex)
             {
