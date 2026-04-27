@@ -39,6 +39,10 @@
 2. **Real-data validation**
 3. **Performance and usability polish**
 
+وبشكل موازٍ، صار لدينا الآن مسار هندسي واضح لتطوير الأداة نفسها بدل تركها تكبر بطريقة عضوية فقط:
+
+- [guides/UIAutomation_Tooling_Roadmap.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UIAutomation_Tooling_Roadmap.md:1)
+
 كما أضيف الآن مرجع حي لمراجعة نضج السطوح الأساسية الأربع مقابل التوجيه المستخرج من الأرشيف:
 
 - [guides/Focused_Surface_Review_From_Archive.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Focused_Surface_Review_From_Archive.md:1)
