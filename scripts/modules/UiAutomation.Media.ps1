@@ -1117,13 +1117,14 @@ function Stop-UiAudioCaptureSidecar {
     )
 
     $sessionState = Get-UiMediaSessionState
+    $policy = Get-UiAudioScopePolicy
     $timestamp = (Get-Date).ToString("o")
     $sessionState.AudioCapture = [pscustomobject]@{
         Kind = "Audio"
         IsActive = $false
-        ProviderName = "Audio.None"
-        ProviderState = "inactive"
-        Mode = "none"
+        ProviderName = [string]$policy.CurrentProviderName
+        ProviderState = [string]$policy.ProviderReadiness
+        Mode = "policy-unavailable"
         Reason = $Reason
         StartedAt = $sessionState.AudioCapture.StartedAt
         UpdatedAt = $timestamp
@@ -1134,8 +1135,11 @@ function Stop-UiAudioCaptureSidecar {
         ArtifactPath = $null
         ProcessIds = @()
         LiveProcessCount = 0
-        ScopeContract = New-UiDefaultMediaScopeContract -Kind "Audio" -ProviderName "Audio.None" -ScopeModel "none" -ProviderScopeLevel "none"
-        Notes = @("لا يوجد sidecar صوت مفعلة حاليًا.")
+        ScopeContract = New-UiDefaultMediaScopeContract -Kind "Audio" -ProviderName ([string]$policy.CurrentProviderName) -ScopeModel "planned-per-app-attested" -ProviderScopeLevel "none"
+        Notes = @(
+            "لا توجد sidecar صوت مفعلة حاليًا.",
+            [string]$policy.StartBlockedReason
+        )
     }
 
     return Save-UiMediaSessionState -SessionState $sessionState
