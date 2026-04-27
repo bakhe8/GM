@@ -3095,6 +3095,11 @@ namespace GuaranteeManager
         private readonly IDatabaseService _database;
         private readonly IWorkflowService _workflow;
         private readonly IExcelService _excel;
+        private readonly Border _nextStepCard = new();
+        private readonly TextBlock _nextStepSummary = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#0F172A");
+        private readonly TextBlock _nextStepHint = WorkspaceSurfaceChrome.Text(10.8, FontWeights.Normal, "#475569");
+        private readonly Button _nextStepActionButton = new();
+        private Action? _nextStepAction;
 
         private OperationalInquiryDialog(
             OperationalInquiryResult result,
@@ -3109,6 +3114,9 @@ namespace GuaranteeManager
 
             Title = "الاستعلامات التشغيلية";
             UiInstrumentation.Identify(this, "Dialog.OperationalInquiry", Title);
+            UiInstrumentation.Identify(_nextStepSummary, "Dialog.OperationalInquiry.NextStepSummary", "ملخص الخطوة التالية");
+            UiInstrumentation.Identify(_nextStepHint, "Dialog.OperationalInquiry.NextStepHint", "شرح الخطوة التالية");
+            UiInstrumentation.Identify(_nextStepActionButton, "Dialog.OperationalInquiry.NextStepButton", "زر الخطوة التالية");
             Width = 980;
             Height = 680;
             MinWidth = 860;
@@ -3120,6 +3128,7 @@ namespace GuaranteeManager
             DialogWindowSupport.Attach(this, nameof(OperationalInquiryDialog));
 
             Content = BuildLayout();
+            ConfigureNextStepState();
         }
 
         public static void ShowFor(
@@ -3467,6 +3476,7 @@ namespace GuaranteeManager
                     bankRow,
                     detailHeadline,
                     detailCaption,
+                    BuildNextStepCard(),
                     WorkspaceSurfaceChrome.Divider(),
                     BuildInfoLine("الاستعلام", _result.Title),
                     BuildInfoLine("الموضوع", _result.Subject),
@@ -3479,6 +3489,39 @@ namespace GuaranteeManager
             };
 
             return WorkspaceSurfaceChrome.BuildReferenceDetailPanel(content);
+        }
+
+        private UIElement BuildNextStepCard()
+        {
+            _nextStepCard.Background = WorkspaceSurfaceChrome.BrushFrom("#EFF6FF");
+            _nextStepCard.BorderBrush = WorkspaceSurfaceChrome.BrushFrom("#BFDBFE");
+            _nextStepCard.BorderThickness = new Thickness(1);
+            _nextStepCard.CornerRadius = new CornerRadius(8);
+            _nextStepCard.Padding = new Thickness(12, 10, 12, 10);
+            _nextStepCard.Margin = new Thickness(0, 10, 0, 0);
+
+            _nextStepActionButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
+            _nextStepActionButton.MinWidth = 132;
+            _nextStepActionButton.Height = 32;
+            _nextStepActionButton.HorizontalAlignment = HorizontalAlignment.Right;
+            _nextStepActionButton.Margin = new Thickness(0, 10, 0, 0);
+            _nextStepActionButton.Click += (_, _) => _nextStepAction?.Invoke();
+
+            var stack = new StackPanel();
+            stack.Children.Add(new TextBlock
+            {
+                Text = "الخطوة التالية",
+                FontSize = 11,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#2563EB"),
+                Margin = new Thickness(0, 0, 0, 6)
+            });
+            stack.Children.Add(_nextStepSummary);
+            _nextStepHint.Margin = new Thickness(0, 4, 0, 0);
+            stack.Children.Add(_nextStepHint);
+            stack.Children.Add(_nextStepActionButton);
+            _nextStepCard.Child = stack;
+            return _nextStepCard;
         }
 
         private UIElement BuildActions()
@@ -3823,6 +3866,76 @@ namespace GuaranteeManager
             App.CurrentApp.GetRequiredService<IShellStatusService>().ShowSuccess(
                 $"تم تصدير تقرير الضمان رقم {guarantee.GuaranteeNo}.",
                 $"الاستعلامات التشغيلية • {savedFile}");
+        }
+
+        private void ConfigureNextStepState()
+        {
+            Guarantee? guarantee = ResolveFocusGuarantee();
+            bool hasAttachments = guarantee?.Attachments?.Count > 0;
+
+            if (_result.CanOpenResponseDocument)
+            {
+                ApplyNextStepState(
+                    "أقرب خطوة الآن هي مراجعة رد البنك الذي استند إليه هذا الجواب.",
+                    "سيفتح المستند النهائي المرتبط بالطلب الحالي حتى تتأكد من النص المرجعي قبل أي متابعة أخرى.",
+                    "فتح رد البنك",
+                    OpenResponse);
+                return;
+            }
+
+            if (_result.CanOpenRequestLetter)
+            {
+                ApplyNextStepState(
+                    "أقرب خطوة الآن هي مراجعة خطاب الطلب المرتبط بهذا الجواب.",
+                    "سيفتح الخطاب الأصلي المرتبط بالطلب حتى تربط النتيجة الحالية بسياقها التنفيذي المباشر.",
+                    "فتح خطاب الطلب",
+                    OpenLetter);
+                return;
+            }
+
+            if (hasAttachments)
+            {
+                ApplyNextStepState(
+                    "إذا احتجت تدقيقًا إضافيًا، فابدأ بمرفقات الإصدار الحالي لهذا الضمان.",
+                    "المرفقات تعطيك الدليل العملي الأقرب قبل الرجوع إلى السجل الكامل أو تصدير التقرير.",
+                    "فتح مرفقات الإصدار",
+                    OpenAttachments);
+                return;
+            }
+
+            if (_result.CanOpenHistory)
+            {
+                ApplyNextStepState(
+                    "إذا أردت فهم التسلسل الكامل قبل القرار، فافتح سجل الضمان المرتبط بهذا الجواب.",
+                    "سيفتح السجل كل الإصدارات والطلبات المرتبطة حتى تنتقل من الجواب المختصر إلى السياق الكامل بسرعة.",
+                    "فتح السجل",
+                    OpenHistory);
+                return;
+            }
+
+            if (guarantee != null)
+            {
+                ApplyNextStepState(
+                    "يمكنك الآن حفظ تقرير الضمان الحالي لمراجعته أو مشاركته خارج هذا الحوار.",
+                    "هذا مفيد عندما يكون الجواب واضحًا وتريد تثبيت مرجعه كتابيًا بدل التنقل بين الأدلة مرة أخرى.",
+                    "تقرير الضمان",
+                    ExportGuaranteeReport);
+                return;
+            }
+
+            ApplyNextStepState(
+                "لا توجد خطوة خارجية أوضح من الجواب الحالي.",
+                "راجع الأدلة والخط الزمني في نفس الحوار، ثم أغلقه عندما تكتفي بالسياق الحالي.",
+                "إغلاق الحوار",
+                Close);
+        }
+
+        private void ApplyNextStepState(string summary, string hint, string actionLabel, Action action)
+        {
+            _nextStepSummary.Text = summary;
+            _nextStepHint.Text = hint;
+            _nextStepActionButton.Content = actionLabel;
+            _nextStepAction = action;
         }
     }
 
