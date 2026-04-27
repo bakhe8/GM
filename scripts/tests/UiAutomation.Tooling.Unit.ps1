@@ -205,6 +205,14 @@ try {
         return $summary
     } | Out-Null
 
+    Invoke-RegressionStep -Name "cursor-position-shape" -ScriptBlock {
+        $cursor = Get-UiCursorPosition
+        Assert-RegressionCondition ($null -ne $cursor) "Get-UiCursorPosition did not return a cursor payload."
+        Assert-RegressionCondition ($cursor.PSObject.Properties.Name -contains "X") "Cursor payload did not include X."
+        Assert-RegressionCondition ($cursor.PSObject.Properties.Name -contains "Y") "Cursor payload did not include Y."
+        return $cursor
+    } | Out-Null
+
     Invoke-RegressionStep -Name "capability-definitions-shape" -ScriptBlock {
         $definitions = @(Get-UiCapabilityDefinitions)
         Assert-RegressionCondition ($definitions.Count -ge 5) "Capability definitions returned fewer items than expected."

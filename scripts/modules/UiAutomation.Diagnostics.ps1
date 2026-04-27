@@ -525,6 +525,24 @@ function Get-TracePayloadFromResult {
         $payload["WindowAutomationId"] = $Result.Window.AutomationId
     }
 
+    if ($Result.PSObject.Properties.Name -contains "Position" -and $null -ne $Result.Position) {
+        $payload["Position"] = $Result.Position
+    }
+
+    if ($Result.PSObject.Properties.Name -contains "StartPosition" -and $null -ne $Result.StartPosition) {
+        $payload["StartPosition"] = $Result.StartPosition
+    }
+
+    if ($Result.PSObject.Properties.Name -contains "EndPosition" -and $null -ne $Result.EndPosition) {
+        $payload["EndPosition"] = $Result.EndPosition
+    }
+
+    foreach ($propertyName in @("Button", "ClickCount", "HoverMilliseconds", "ScrollDelta", "DeltaX", "DeltaY")) {
+        if ($Result.PSObject.Properties.Name -contains $propertyName) {
+            $payload[$propertyName] = $Result.$propertyName
+        }
+    }
+
     if ($Result.PSObject.Properties.Name -contains "CapabilityName" -and -not [string]::IsNullOrWhiteSpace([string]$Result.CapabilityName)) {
         $payload["CapabilityName"] = [string]$Result.CapabilityName
     }

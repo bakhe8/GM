@@ -27,6 +27,13 @@ namespace GuaranteeManager.UiAcceptance
             public int Bottom;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+
         [DllImport("user32.dll")]
         public static extern bool SetForegroundWindow(IntPtr hWnd);
 
@@ -59,6 +66,9 @@ namespace GuaranteeManager.UiAcceptance
 
         [DllImport("user32.dll")]
         public static extern bool SetCursorPos(int x, int y);
+
+        [DllImport("user32.dll")]
+        public static extern bool GetCursorPos(out POINT point);
 
         [DllImport("user32.dll")]
         public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, UIntPtr dwExtraInfo);
@@ -108,6 +118,7 @@ function Get-UiStorageRoot {
 }
 
 . (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Core.ps1")
+. (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Mouse.ps1")
 . (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Windows.ps1")
 . (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Dialogs.ps1")
 . (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Capture.ps1")
@@ -350,6 +361,19 @@ $script:UiSupportedApiCatalog = @(
             "Send-UiVirtualKey",
             "Send-UiSendKeys",
             "Invoke-UiSidebarNavigation")
+    },
+    [pscustomobject]@{
+        Category = "Mouse"
+        Description = "التحكم الحر بالماوس عند الحاجة داخل نفس الاستكشاف."
+        Commands = @(
+            "Get-UiCursorPosition",
+            "Move-UiMouse",
+            "Invoke-UiMouseClick",
+            "Invoke-UiMouseRightClick",
+            "Invoke-UiMouseDoubleClick",
+            "Invoke-UiMouseHover",
+            "Invoke-UiMouseDrag",
+            "Invoke-UiMouseScroll")
     },
     [pscustomobject]@{
         Category = "Capture"

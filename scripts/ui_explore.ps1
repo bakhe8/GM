@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("Launch", "Windows", "Elements", "Sidebar", "Click", "SetField", "WaitWindow", "WaitWindowClosed", "Capture", "DialogAction", "State", "Diagnostics", "Probe", "Compare", "Events", "Key", "SendKeys", "HostState", "CapabilityOn", "CapabilityOff")]
+    [ValidateSet("Launch", "Windows", "Elements", "Sidebar", "Click", "SetField", "WaitWindow", "WaitWindowClosed", "Capture", "DialogAction", "State", "Diagnostics", "Probe", "Compare", "Events", "Key", "SendKeys", "HostState", "CapabilityOn", "CapabilityOff", "MouseMove", "MouseClick", "MouseRightClick", "MouseDoubleClick", "MouseHover", "MouseDrag", "MouseScroll")]
     [string]$Action = "Probe",
     [string]$WindowTitle = "",
     [string]$WindowAutomationId = "",
@@ -15,6 +15,14 @@ param(
     [string]$KeyName = "",
     [string]$CapabilityName = "",
     [string]$Reason = "",
+    [int]$X = [int]::MinValue,
+    [int]$Y = [int]::MinValue,
+    [int]$OffsetX = 0,
+    [int]$OffsetY = 0,
+    [int]$DeltaX = 0,
+    [int]$DeltaY = 0,
+    [int]$HoverMilliseconds = 350,
+    [int]$ScrollDelta = 120,
     [string]$OutputPath = ".\\Doc\\Assets\\Documentation\\Screenshots\\UIAcceptance\\latest\\interactive-capture.png",
     [string]$ReferencePath = "",
     [string]$DiffOutputPath = ".\\Doc\\Assets\\Documentation\\Screenshots\\UIAcceptance\\latest\\interactive-diff.png",
@@ -40,6 +48,7 @@ $modulesRoot = Join-Path $PSScriptRoot "modules"
 . (Join-Path $modulesRoot "UiAutomation.Diagnostics.ps1")
 . (Join-Path $modulesRoot "UiAutomation.Host.ps1")
 . (Join-Path $modulesRoot "UiAutomation.Capabilities.ps1")
+. (Join-Path $modulesRoot "UiAutomation.Mouse.ps1")
 . (Join-Path $modulesRoot "UiAutomation.Actions.ps1")
 
 function Write-UiObject {
@@ -70,6 +79,14 @@ try {
         KeyName = $KeyName
         CapabilityName = $CapabilityName
         Reason = $Reason
+        X = $X
+        Y = $Y
+        OffsetX = $OffsetX
+        OffsetY = $OffsetY
+        DeltaX = $DeltaX
+        DeltaY = $DeltaY
+        HoverMilliseconds = $HoverMilliseconds
+        ScrollDelta = $ScrollDelta
         OutputPath = $OutputPath
         ReferencePath = $ReferencePath
         DiffOutputPath = $DiffOutputPath

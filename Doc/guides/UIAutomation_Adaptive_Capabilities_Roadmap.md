@@ -269,6 +269,27 @@
 
 والتحقق الحالي يغطي هذا السلوك عبر regression integration فعلية.
 
+كما بدأت الآن أول slice تنفيذية من **Phase E — Mouse Layer**:
+
+- أضيفت طبقة مستقلة هنا:
+  - [scripts/modules/UiAutomation.Mouse.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Mouse.ps1:1)
+- وصارت الأداة تدعم الآن داخل نفس الاستكشاف الحر:
+  - `MouseMove`
+  - `MouseClick`
+  - `MouseRightClick`
+  - `MouseDoubleClick`
+  - `MouseHover`
+  - `MouseDrag`
+  - `MouseScroll`
+- وهذه الطبقة لا تعمل دائمًا، بل تُستدعى عند الحاجة فقط ثم تعود الجلسة إلى وضعها الخفيف
+- كما أضيفت لها تغطية regression فعلية:
+  - unit: `16/16`
+  - smoke: `10/10`
+  - integration: `28/28`
+
+هذا لا يعني أن `MouseTrace` reactive نفسها أُنجزت بعد؛
+بل يعني أن **التحكم الحر بالماوس** صار متاحًا الآن كقدرة تشغيلية يمكن أن نبني فوقها التتبع التفاعلي لاحقًا.
+
 ---
 
 ## تعريف النجاح

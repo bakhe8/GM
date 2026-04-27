@@ -139,6 +139,11 @@
 .\\scripts\\ui_explore.ps1 -Action HostState
 .\\scripts\\ui_explore.ps1 -Action CapabilityOn -CapabilityName BurstCapture -LeaseMilliseconds 3000 -Reason "suspected-flicker"
 .\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName BurstCapture -Reason "done"
+.\\scripts\\ui_explore.ps1 -Action MouseMove -WindowAutomationId "Shell.MainWindow" -AutomationId "Shell.Sidebar.Settings"
+.\\scripts\\ui_explore.ps1 -Action MouseClick -WindowAutomationId "Shell.MainWindow" -AutomationId "Shell.Sidebar.Settings"
+.\\scripts\\ui_explore.ps1 -Action MouseHover -WindowAutomationId "Shell.MainWindow" -AutomationId "Shell.Sidebar.Guarantees" -HoverMilliseconds 900
+.\\scripts\\ui_explore.ps1 -Action MouseDrag -WindowAutomationId "Shell.MainWindow" -AutomationId "Shell.GlobalSearchBox" -DeltaX 120
+.\\scripts\\ui_explore.ps1 -Action MouseScroll -WindowAutomationId "Shell.MainWindow" -ScrollDelta -120
 ```
 
 الهدف منها أن تمنحنا:
@@ -205,3 +210,12 @@
   - تحفظ كل frame على حدة
   - وتنتج **contact sheet** تلخص التسلسل
   - وتكتب `burst-sequence` observation يمكن قراءتها من `HostState`
+- كما أضيفت الآن أول طبقة ماوس حرة داخل نفس الجلسة:
+  - `MouseMove`
+  - `MouseClick`
+  - `MouseRightClick`
+  - `MouseDoubleClick`
+  - `MouseHover`
+  - `MouseDrag`
+  - `MouseScroll`
+- ويمكن استدعاؤها لحظيًا عند الحاجة فقط، ثم تواصل الأداة نفس الاستكشاف الحر من غير أي وضع دائم إضافي.

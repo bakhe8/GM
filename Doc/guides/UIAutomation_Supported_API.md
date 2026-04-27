@@ -100,6 +100,34 @@
 - `Send-UiSendKeys`
 - `Invoke-UiSidebarNavigation`
 
+### Mouse
+
+- `Get-UiCursorPosition`
+- `Move-UiMouse`
+- `Invoke-UiMouseClick`
+- `Invoke-UiMouseRightClick`
+- `Invoke-UiMouseDoubleClick`
+- `Invoke-UiMouseHover`
+- `Invoke-UiMouseDrag`
+- `Invoke-UiMouseScroll`
+
+هذه الفئة تمنحنا الآن طبقة ماوس حرة عند الحاجة فقط:
+
+- يمكن الاستهداف عبر:
+  - `AutomationId`
+  - `Name`
+  - `Text`
+  - `WindowTitle`
+  - `WindowAutomationId`
+- أو عبر `X/Y` مباشرة
+- أو انطلاقًا من موضع المؤشر الحالي عندما لا نمرر selector
+
+والمبدأ المقصود هنا مهم:
+
+- **الماوس ليس وضعًا دائمًا**
+- بل قدرة لحظية نستدعيها داخل نفس الاستكشاف الحر
+- ثم نعود مباشرة إلى الوضع الخفيف
+
 ### Capture
 
 - `Save-UiWindowScreenshot`

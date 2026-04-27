@@ -227,6 +227,124 @@ try {
         return $payload
     } | Out-Null
 
+    Invoke-RegressionStep -Name "mouse-move-settings-sidebar" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "MouseMove"
+            WindowAutomationId = "Shell.MainWindow"
+            AutomationId = "Shell.Sidebar.Settings"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Target.AutomationId -eq "Shell.Sidebar.Settings") "MouseMove did not resolve the Settings sidebar target."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "mouse-click-settings-sidebar" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "MouseClick"
+            WindowAutomationId = "Shell.MainWindow"
+            AutomationId = "Shell.Sidebar.Settings"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Button -eq "Left") "MouseClick did not report a left-button action."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "probe-settings-after-mouse-click" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "Probe"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.ShellState.CurrentWorkspaceKey -eq "Settings") "MouseClick on Settings sidebar did not switch to Settings workspace."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "mouse-hover-guarantees-sidebar" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "MouseHover"
+            WindowAutomationId = "Shell.MainWindow"
+            AutomationId = "Shell.Sidebar.Guarantees"
+            HoverMilliseconds = 150
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Target.AutomationId -eq "Shell.Sidebar.Guarantees") "MouseHover did not resolve the Guarantees sidebar target."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "mouse-doubleclick-guarantees-sidebar" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "MouseDoubleClick"
+            WindowAutomationId = "Shell.MainWindow"
+            AutomationId = "Shell.Sidebar.Guarantees"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ([int]$payload.ClickCount -eq 2) "MouseDoubleClick did not report a double-click."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "probe-guarantees-after-mouse-doubleclick" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "Probe"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.ShellState.CurrentWorkspaceKey -eq "Guarantees") "MouseDoubleClick on Guarantees sidebar did not return to Guarantees workspace."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "mouse-scroll-main-window" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "MouseScroll"
+            WindowAutomationId = "Shell.MainWindow"
+            ScrollDelta = -120
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ([int]$payload.ScrollDelta -eq -120) "MouseScroll did not echo the expected delta."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "mouse-drag-global-search" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "MouseDrag"
+            WindowAutomationId = "Shell.MainWindow"
+            AutomationId = "Shell.GlobalSearchBox"
+            DeltaX = 24
+            DeltaY = 0
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ([int]$payload.DeltaX -eq 24) "MouseDrag did not report the expected horizontal delta."
+        Assert-RegressionCondition ([int]$payload.EndPosition.X -gt [int]$payload.StartPosition.X) "MouseDrag did not move the cursor to the right."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "mouse-rightclick-main-window" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "MouseRightClick"
+            WindowAutomationId = "Shell.MainWindow"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Button -eq "Right") "MouseRightClick did not report a right-button action."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "probe-clean-after-mouse-actions" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "Probe"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ([string]::IsNullOrWhiteSpace([string]$payload.Health.ActiveDialogTitle)) "A dialog remained open after mouse actions."
+        Assert-RegressionCondition ($payload.Health.OpenWindowCount -eq 1) "Mouse actions left the session with more than one visible window."
+        return $payload
+    } | Out-Null
+
     Invoke-RegressionStep -Name "sidebar-settings" -ScriptBlock {
         $payload = Invoke-UiExploreJson -Arguments @{
             Action = "Sidebar"

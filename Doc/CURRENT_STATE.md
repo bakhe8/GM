@@ -70,9 +70,28 @@
   - وتنتج **contact sheet** تلخص التسلسل
   - وتكتب `burst-sequence` observation داخل `HostState`
   - والتحقق الحالي عليها ناجح ضمن:
-    - `tooling unit`: `15/15`
+    - `tooling unit`: `16/16`
     - `tooling smoke`: `10/10`
-    - `tooling integration`: `18/18`
+    - `tooling integration`: `28/28`
+- ثم بدأت أول slice فعلية من **Mouse Layer** داخل نفس المسار التكيفي:
+  - أضيفت طبقة:
+    - [scripts/modules/UiAutomation.Mouse.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Mouse.ps1:1)
+  - وصارت `ui_explore` تدعم الآن:
+    - `MouseMove`
+    - `MouseClick`
+    - `MouseRightClick`
+    - `MouseDoubleClick`
+    - `MouseHover`
+    - `MouseDrag`
+    - `MouseScroll`
+  - ويمكن استدعاء هذه الأفعال لحظيًا داخل نفس الاستكشاف الحر:
+    - عبر selectors مثل `AutomationId` و`Name` و`Text`
+    - أو عبر `X/Y`
+    - أو من موضع المؤشر الحالي نفسه
+  - والتحقق الحالي لهذه الطبقة ناجح ضمن:
+    - `tooling unit`: `16/16`
+    - `tooling smoke`: `10/10`
+    - `tooling integration`: `28/28`
 
 وأول خطوة تنفيذية منه بدأت فعليًا الآن:
 
@@ -153,7 +172,7 @@
     - والرجوع إلى جلسة نظيفة بعد إغلاق الحوارات الداخلية والخارجية
   - والنتيجة الحالية:
     - `10/10` في smoke
-    - `14/14` في integration
+    - `28/28` في integration
     - وتشغيل `-Suite All` يمر الآن بنجاح
     - والملخصان الحيان يُكتبان هنا:
       - [UIAcceptance/latest/tooling-regression-summary.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/latest/tooling-regression-summary.md)
@@ -174,7 +193,7 @@
     - اكتشاف الفرق بين صورتين
     - إنشاء `diff image`
   - والنتيجة الحالية:
-    - `10/10` في unit
+    - `16/16` في unit
   - كما صار runner يدعم:
     - `Smoke`
     - `Integration`

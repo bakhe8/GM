@@ -68,6 +68,28 @@ function Resolve-UiVirtualKey {
     }
 }
 
+function Test-UiMouseUsesMainWindowFlow {
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$Options
+    )
+
+    $hasAbsolutePoint = ($Options.X -ne [int]::MinValue) -and ($Options.Y -ne [int]::MinValue)
+    if ($hasAbsolutePoint) {
+        return $false
+    }
+
+    if ([string]::IsNullOrWhiteSpace($Options.WindowTitle) -and [string]::IsNullOrWhiteSpace($Options.WindowAutomationId)) {
+        return $true
+    }
+
+    if ($Options.WindowAutomationId -eq "Shell.MainWindow") {
+        return $true
+    }
+
+    return $false
+}
+
 function Invoke-UiExploreAction {
     param(
         [Parameter(Mandatory)]
@@ -221,6 +243,210 @@ function Invoke-UiExploreAction {
                 Label = $Options.Label
                 Value = $Options.Value
                 Field = Get-UiElementSummary -Element $field
+            }
+        }
+
+        "MouseMove" {
+            if (Test-UiMouseUsesMainWindowFlow -Options $Options) {
+                Assert-UiNoBlockingWindows -Process $process
+            }
+
+            $result = Move-UiMouse `
+                -ProcessId $process.Id `
+                -WindowTitle $Options.WindowTitle `
+                -WindowAutomationId $Options.WindowAutomationId `
+                -Name $Options.Name `
+                -AutomationId $Options.AutomationId `
+                -Text $Options.Text `
+                -X $Options.X `
+                -Y $Options.Y `
+                -OffsetX $Options.OffsetX `
+                -OffsetY $Options.OffsetY `
+                -PartialMatch:$Options.PartialMatch
+
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "MouseMove"
+                Window = $result.Window
+                Target = $result.Target
+                Position = $result.Position
+            }
+        }
+
+        "MouseClick" {
+            if (Test-UiMouseUsesMainWindowFlow -Options $Options) {
+                Assert-UiNoBlockingWindows -Process $process
+            }
+
+            $result = Invoke-UiMouseClick `
+                -ProcessId $process.Id `
+                -WindowTitle $Options.WindowTitle `
+                -WindowAutomationId $Options.WindowAutomationId `
+                -Name $Options.Name `
+                -AutomationId $Options.AutomationId `
+                -Text $Options.Text `
+                -X $Options.X `
+                -Y $Options.Y `
+                -OffsetX $Options.OffsetX `
+                -OffsetY $Options.OffsetY `
+                -PartialMatch:$Options.PartialMatch
+
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "MouseClick"
+                Window = $result.Window
+                Target = $result.Target
+                Position = $result.Position
+                Button = $result.Button
+                ClickCount = $result.ClickCount
+            }
+        }
+
+        "MouseRightClick" {
+            if (Test-UiMouseUsesMainWindowFlow -Options $Options) {
+                Assert-UiNoBlockingWindows -Process $process
+            }
+
+            $result = Invoke-UiMouseRightClick `
+                -ProcessId $process.Id `
+                -WindowTitle $Options.WindowTitle `
+                -WindowAutomationId $Options.WindowAutomationId `
+                -Name $Options.Name `
+                -AutomationId $Options.AutomationId `
+                -Text $Options.Text `
+                -X $Options.X `
+                -Y $Options.Y `
+                -OffsetX $Options.OffsetX `
+                -OffsetY $Options.OffsetY `
+                -PartialMatch:$Options.PartialMatch
+
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "MouseRightClick"
+                Window = $result.Window
+                Target = $result.Target
+                Position = $result.Position
+                Button = $result.Button
+                ClickCount = $result.ClickCount
+            }
+        }
+
+        "MouseDoubleClick" {
+            if (Test-UiMouseUsesMainWindowFlow -Options $Options) {
+                Assert-UiNoBlockingWindows -Process $process
+            }
+
+            $result = Invoke-UiMouseDoubleClick `
+                -ProcessId $process.Id `
+                -WindowTitle $Options.WindowTitle `
+                -WindowAutomationId $Options.WindowAutomationId `
+                -Name $Options.Name `
+                -AutomationId $Options.AutomationId `
+                -Text $Options.Text `
+                -X $Options.X `
+                -Y $Options.Y `
+                -OffsetX $Options.OffsetX `
+                -OffsetY $Options.OffsetY `
+                -PartialMatch:$Options.PartialMatch
+
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "MouseDoubleClick"
+                Window = $result.Window
+                Target = $result.Target
+                Position = $result.Position
+                Button = $result.Button
+                ClickCount = $result.ClickCount
+            }
+        }
+
+        "MouseHover" {
+            if (Test-UiMouseUsesMainWindowFlow -Options $Options) {
+                Assert-UiNoBlockingWindows -Process $process
+            }
+
+            $result = Invoke-UiMouseHover `
+                -ProcessId $process.Id `
+                -WindowTitle $Options.WindowTitle `
+                -WindowAutomationId $Options.WindowAutomationId `
+                -Name $Options.Name `
+                -AutomationId $Options.AutomationId `
+                -Text $Options.Text `
+                -X $Options.X `
+                -Y $Options.Y `
+                -OffsetX $Options.OffsetX `
+                -OffsetY $Options.OffsetY `
+                -HoverMilliseconds $Options.HoverMilliseconds `
+                -PartialMatch:$Options.PartialMatch
+
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "MouseHover"
+                Window = $result.Window
+                Target = $result.Target
+                Position = $result.Position
+                HoverMilliseconds = $result.HoverMilliseconds
+            }
+        }
+
+        "MouseDrag" {
+            if (Test-UiMouseUsesMainWindowFlow -Options $Options) {
+                Assert-UiNoBlockingWindows -Process $process
+            }
+
+            $result = Invoke-UiMouseDrag `
+                -ProcessId $process.Id `
+                -WindowTitle $Options.WindowTitle `
+                -WindowAutomationId $Options.WindowAutomationId `
+                -Name $Options.Name `
+                -AutomationId $Options.AutomationId `
+                -Text $Options.Text `
+                -X $Options.X `
+                -Y $Options.Y `
+                -OffsetX $Options.OffsetX `
+                -OffsetY $Options.OffsetY `
+                -DeltaX $Options.DeltaX `
+                -DeltaY $Options.DeltaY `
+                -PartialMatch:$Options.PartialMatch
+
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "MouseDrag"
+                Window = $result.Window
+                Target = $result.Target
+                StartPosition = $result.StartPosition
+                EndPosition = $result.EndPosition
+                DeltaX = $result.DeltaX
+                DeltaY = $result.DeltaY
+            }
+        }
+
+        "MouseScroll" {
+            if (Test-UiMouseUsesMainWindowFlow -Options $Options) {
+                Assert-UiNoBlockingWindows -Process $process
+            }
+
+            $result = Invoke-UiMouseScroll `
+                -ProcessId $process.Id `
+                -WindowTitle $Options.WindowTitle `
+                -WindowAutomationId $Options.WindowAutomationId `
+                -Name $Options.Name `
+                -AutomationId $Options.AutomationId `
+                -Text $Options.Text `
+                -X $Options.X `
+                -Y $Options.Y `
+                -OffsetX $Options.OffsetX `
+                -OffsetY $Options.OffsetY `
+                -ScrollDelta $Options.ScrollDelta `
+                -PartialMatch:$Options.PartialMatch
+
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "MouseScroll"
+                Window = $result.Window
+                Target = $result.Target
+                Position = $result.Position
+                ScrollDelta = $result.ScrollDelta
             }
         }
 
