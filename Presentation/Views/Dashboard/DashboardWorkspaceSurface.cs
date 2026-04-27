@@ -516,7 +516,7 @@ namespace GuaranteeManager
             };
             actions.Children.Add(CreateRowButton("نسخ", "Icon.Document", item, CopyReference_Click));
             actions.Children.Add(CreateRowButton("عرض", "Icon.View", item, SelectRow_Click));
-            actions.Children.Add(CreateRowButton("انتقال", item.WorkspaceIconKey, item, OpenWorkspace_Click));
+            actions.Children.Add(CreateRowButton(item.WorkspaceRowActionLabel, item.WorkspaceIconKey, item, OpenWorkspace_Click));
             Grid.SetColumn(actions, 0);
             row.Children.Add(actions);
 
@@ -593,6 +593,10 @@ namespace GuaranteeManager
                 Tag = item,
                 Style = WorkspaceSurfaceChrome.Style("RowButton")
             };
+            UiInstrumentation.Identify(
+                button,
+                UiInstrumentation.SanitizeAutomationKey($"Dashboard.RowAction.{text}", item.Reference),
+                $"{text} | {item.Reference}");
             button.Click += handler;
             return button;
         }

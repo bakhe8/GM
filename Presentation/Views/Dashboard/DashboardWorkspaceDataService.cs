@@ -342,5 +342,13 @@ namespace GuaranteeManager
             DashboardTarget.Reports => "Icon.Reports",
             _ => "Icon.Guarantees"
         };
+
+        public string WorkspaceRowActionLabel => Target switch
+        {
+            DashboardTarget.Requests => "الطلبات",
+            DashboardTarget.Notifications => "التنبيهات",
+            DashboardTarget.Reports => "التقارير",
+            _ => "الضمانات"
+        };
     }
 }
