@@ -44,6 +44,8 @@ Import-Module $modulePath -Force
 
 $repoRoot = Get-UiAcceptanceRepoRoot
 $modulesRoot = Join-Path $PSScriptRoot "modules"
+. (Join-Path $modulesRoot "UiAutomation.Core.ps1")
+. (Join-Path $modulesRoot "UiAutomation.Windows.ps1")
 . (Join-Path $modulesRoot "UiAutomation.Session.ps1")
 . (Join-Path $modulesRoot "UiAutomation.Diagnostics.ps1")
 . (Join-Path $modulesRoot "UiAutomation.Host.ps1")

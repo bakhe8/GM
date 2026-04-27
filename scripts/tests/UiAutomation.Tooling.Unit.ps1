@@ -212,6 +212,9 @@ try {
         Assert-RegressionCondition ($psrProvider.Count -eq 1) "Media provider catalog is missing Psr.ScreenTrace."
         Assert-RegressionCondition ($psrProvider[0].Kind -eq "Video") "Psr.ScreenTrace should be exposed as a video provider."
         Assert-RegressionCondition ($psrProvider[0].Availability -in @("available", "unavailable")) "Psr.ScreenTrace returned an invalid availability label."
+        Assert-RegressionCondition ([string]$psrProvider[0].ScopeModel -eq "global-session-attested") "Psr.ScreenTrace should expose global-session-attested scope."
+        Assert-RegressionCondition (-not [bool]$psrProvider[0].SupportsProcessIsolation) "Psr.ScreenTrace should not pretend to be process-isolated."
+        Assert-RegressionCondition ([bool]$psrProvider[0].SupportsForegroundAttestation) "Psr.ScreenTrace should expose foreground attestation support."
         return $providers
     } | Out-Null
 
@@ -221,7 +224,20 @@ try {
         Assert-RegressionCondition ($null -ne $state.VideoCapture) "Media session state is missing VideoCapture."
         Assert-RegressionCondition ($null -ne $state.AudioCapture) "Media session state is missing AudioCapture."
         Assert-RegressionCondition ($state.PSObject.Properties.Name -contains "RecentArtifacts") "Media session state is missing RecentArtifacts."
+        Assert-RegressionCondition ($state.VideoCapture.PSObject.Properties.Name -contains "ScopeContract") "Media session state is missing VideoCapture.ScopeContract."
+        Assert-RegressionCondition ($state.AudioCapture.PSObject.Properties.Name -contains "ScopeContract") "Media session state is missing AudioCapture.ScopeContract."
+        Assert-RegressionCondition ($null -ne $state.VideoCapture.ScopeContract.ScopeStatus) "VideoCapture scope contract is missing ScopeStatus."
         return $state
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "media-scope-view-shape" -ScriptBlock {
+        $scopeView = Get-UiMediaScopeView
+        Assert-RegressionCondition ($null -ne $scopeView) "Get-UiMediaScopeView did not return a payload."
+        Assert-RegressionCondition ($null -ne $scopeView.VideoCapture) "Media scope view is missing VideoCapture."
+        Assert-RegressionCondition ($scopeView.VideoCapture.PSObject.Properties.Name -contains "ScopeStatus") "Media scope view is missing ScopeStatus."
+        Assert-RegressionCondition ($scopeView.VideoCapture.PSObject.Properties.Name -contains "EvidenceIsolation") "Media scope view is missing EvidenceIsolation."
+        Assert-RegressionCondition ($scopeView.VideoCapture.PSObject.Properties.Name -contains "TrustedForReasoning") "Media scope view is missing TrustedForReasoning."
+        return $scopeView
     } | Out-Null
 
     Invoke-RegressionStep -Name "cursor-position-shape" -ScriptBlock {

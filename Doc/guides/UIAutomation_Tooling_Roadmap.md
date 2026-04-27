@@ -80,6 +80,9 @@
     - provider catalog واضح
     - media session قابلة للقراءة
     - single-instance handling لمزود الفيديو الحالي
+    - وعقد scope attestation يوضح صراحة:
+      - ما العملية والنافذة المستهدفتان
+      - وهل foreground المرتبطة بالالتقاط بقيت ضمن البرنامج أم لا
 
 ---
 

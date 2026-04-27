@@ -22,7 +22,41 @@ function New-UiMediaChannelStateObject {
         ArtifactStatus = "none"
         ProcessIds = @()
         LiveProcessCount = 0
+        ScopeContract = New-UiDefaultMediaScopeContract -Kind $Kind
         Notes = @()
+    }
+}
+
+function New-UiDefaultMediaScopeContract {
+    param(
+        [string]$Kind = "Video",
+        [string]$ProviderName = "",
+        [string]$ScopeModel = "unscoped",
+        [string]$ProviderScopeLevel = "unknown",
+        [bool]$SupportsProcessIsolation = $false,
+        [bool]$SupportsWindowIsolation = $false,
+        [bool]$SupportsForegroundAttestation = $false
+    )
+
+    return [pscustomobject]@{
+        Kind = $Kind
+        ProviderName = $ProviderName
+        ScopeModel = $ScopeModel
+        ProviderScopeLevel = $ProviderScopeLevel
+        SupportsProcessIsolation = $SupportsProcessIsolation
+        SupportsWindowIsolation = $SupportsWindowIsolation
+        SupportsForegroundAttestation = $SupportsForegroundAttestation
+        TargetProcessId = 0
+        TargetProcessName = ""
+        TargetMainWindowTitle = ""
+        TargetWindow = $null
+        StartSnapshot = $null
+        StopSnapshot = $null
+        ScopeStatus = "inactive"
+        EvidenceIsolation = "none"
+        TrustedForReasoning = $false
+        ContaminationDetected = $false
+        ScopeNotes = @()
     }
 }
 
@@ -64,6 +98,10 @@ function Normalize-UiMediaSessionState {
             if ($channel.PSObject.Properties.Name -notcontains $propertyName -or $null -eq $channel.$propertyName) {
                 Add-Member -InputObject $channel -NotePropertyName $propertyName -NotePropertyValue @() -Force
             }
+        }
+
+        if ($channel.PSObject.Properties.Name -notcontains "ScopeContract" -or $null -eq $channel.ScopeContract) {
+            Add-Member -InputObject $channel -NotePropertyName "ScopeContract" -NotePropertyValue (New-UiDefaultMediaScopeContract -Kind $channel.Kind -ProviderName ([string]$channel.ProviderName)) -Force
         }
 
         foreach ($propertyName in @("LiveProcessCount", "ProviderState", "ArchiveTargetPath", "ArtifactStatus")) {
@@ -145,11 +183,17 @@ function Get-UiMediaProviderCatalog {
             CommandPath = $psrPath
             OutputFormat = "zip"
             CaptureStyle = "screen-trace"
+            ScopeModel = "global-session-attested"
+            ProviderScopeLevel = "global"
+            SupportsProcessIsolation = $false
+            SupportsWindowIsolation = $false
+            SupportsForegroundAttestation = $true
             SupportsAudio = $false
             SupportsSingleFramePreview = $false
             RunningInstanceCount = $psrProcesses.Count
             Notes = @(
                 "مزود مدمج في ويندوز، مناسب كتتبع بصري خفيف عند الطلب.",
+                "ليس process-bound أو window-bound؛ لذلك نعزله عبر attestation لحالة foreground والنافذة المستهدفة.",
                 "ليس فيديو full-motion، لكنه كافٍ كبنية sidecar أولى إذا أدير بحالة واحدة صحيحة."
             )
         },
@@ -160,6 +204,11 @@ function Get-UiMediaProviderCatalog {
             CommandPath = $null
             OutputFormat = $null
             CaptureStyle = "none"
+            ScopeModel = "none"
+            ProviderScopeLevel = "none"
+            SupportsProcessIsolation = $false
+            SupportsWindowIsolation = $false
+            SupportsForegroundAttestation = $false
             SupportsAudio = $false
             SupportsSingleFramePreview = $false
             RunningInstanceCount = 0
@@ -187,6 +236,342 @@ function Get-UiPreferredMediaProvider {
     }
 
     return $providers[0]
+}
+
+function Get-UiMediaProviderByName {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Name
+    )
+
+    return (Get-UiMediaProviderCatalog | Where-Object {
+        [string]::Equals([string]$_.Name, $Name, [System.StringComparison]::OrdinalIgnoreCase)
+    } | Select-Object -First 1)
+}
+
+function Get-UiMediaTargetProcess {
+    param(
+        [int]$ProcessId = 0
+    )
+
+    if ($ProcessId -le 0) {
+        return $null
+    }
+
+    try {
+        return Get-Process -Id $ProcessId -ErrorAction Stop
+    }
+    catch {
+        return $null
+    }
+}
+
+function Get-UiMediaTargetWindowSummary {
+    param(
+        [int]$ProcessId = 0
+    )
+
+    if ($ProcessId -le 0) {
+        return $null
+    }
+
+    try {
+        $window = Resolve-UiWindow -ProcessId $ProcessId
+        if ($null -ne $window) {
+            return Get-UiElementSummary -Element $window
+        }
+    }
+    catch {
+    }
+
+    $fallback = @(Get-UiWindowsCatalog -ProcessId $ProcessId | Sort-Object {
+        if ($null -eq $_) { return 0 }
+        return [int]$_.Bounds.Width * [int]$_.Bounds.Height
+    } -Descending | Select-Object -First 1)
+
+    if ($fallback.Count -gt 0) {
+        return $fallback[0]
+    }
+
+    return $null
+}
+
+function Get-UiMediaForegroundRelation {
+    param(
+        $ForegroundSummary,
+        [int]$ProcessId = 0,
+        $TargetWindow = $null
+    )
+
+    if ($null -eq $ForegroundSummary) {
+        return "none"
+    }
+
+    if ($ProcessId -gt 0 -and [int]$ForegroundSummary.ProcessId -eq $ProcessId) {
+        return "target-process"
+    }
+
+    $windowHandle = [IntPtr]::Zero
+    try {
+        $windowHandle = [IntPtr][int64]$ForegroundSummary.NativeWindowHandle
+    }
+    catch {
+    }
+
+    if ($windowHandle -ne [IntPtr]::Zero) {
+        try {
+            $element = [System.Windows.Automation.AutomationElement]::FromHandle($windowHandle)
+            if ($null -ne $element -and (Test-UiExternalWindowRelatedToProcess -Window $element -ProcessId $ProcessId)) {
+                return "related-external"
+            }
+        }
+        catch {
+        }
+    }
+
+    return "unrelated-external"
+}
+
+function New-UiMediaScopeSnapshot {
+    param(
+        [ValidateSet("Video", "Audio")]
+        [string]$Kind = "Video",
+        [string]$ProviderName = "",
+        [string]$ScopeModel = "unscoped",
+        [string]$Phase = "start",
+        [int]$ProcessId = 0
+    )
+
+    $targetProcess = Get-UiMediaTargetProcess -ProcessId $ProcessId
+    $targetWindow = Get-UiMediaTargetWindowSummary -ProcessId $ProcessId
+    $foregroundElement = Get-UiForegroundWindowElement
+    $foregroundSummary = if ($null -ne $foregroundElement) { Get-UiElementSummary -Element $foregroundElement } else { $null }
+    $relatedWindows = @(
+        if ($ProcessId -gt 0) {
+            Get-UiWindowsCatalog -ProcessId $ProcessId -IncludeRelatedForeground | Select-Object -First 8
+        }
+    )
+
+    $relation = Get-UiMediaForegroundRelation -ForegroundSummary $foregroundSummary -ProcessId $ProcessId -TargetWindow $targetWindow
+
+    return [pscustomobject]@{
+        Kind = $Kind
+        ProviderName = $ProviderName
+        ScopeModel = $ScopeModel
+        Phase = $Phase
+        Timestamp = (Get-Date).ToString("o")
+        TargetProcessId = if ($null -ne $targetProcess) { $targetProcess.Id } else { $ProcessId }
+        TargetProcessName = if ($null -ne $targetProcess) { $targetProcess.ProcessName } else { "" }
+        TargetMainWindowTitle = if ($null -ne $targetProcess) { $targetProcess.MainWindowTitle } else { "" }
+        HasTargetWindow = $null -ne $targetWindow
+        TargetWindow = $targetWindow
+        ForegroundWindow = $foregroundSummary
+        ForegroundRelation = $relation
+        ForegroundMatchesTargetProcess = ($relation -eq "target-process")
+        ForegroundMatchesRelatedWindow = ($relation -eq "related-external")
+        RelatedWindows = [object[]]$relatedWindows
+        OpenWindowCount = $relatedWindows.Count
+    }
+}
+
+function Get-UiMediaScopeAssessment {
+    param(
+        $StartSnapshot = $null,
+        $StopSnapshot = $null
+    )
+
+    $notes = New-Object System.Collections.Generic.List[string]
+    $relations = New-Object System.Collections.Generic.List[string]
+    foreach ($snapshot in @($StartSnapshot, $StopSnapshot)) {
+        if ($null -eq $snapshot) {
+            continue
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace([string]$snapshot.ForegroundRelation)) {
+            [void]$relations.Add([string]$snapshot.ForegroundRelation)
+        }
+    }
+
+    $hasTargetWindow = ($null -ne $StartSnapshot -and [bool]$StartSnapshot.HasTargetWindow) -or ($null -ne $StopSnapshot -and [bool]$StopSnapshot.HasTargetWindow)
+    $hasTargetProcess = $relations -contains "target-process"
+    $hasRelatedExternal = $relations -contains "related-external"
+    $hasUnrelated = $relations -contains "unrelated-external"
+    $hasUnknown = $relations -contains "unknown"
+    $hasNone = $relations -contains "none"
+
+    if (-not $hasTargetWindow) {
+        [void]$notes.Add("لم تتمكن الأداة من تثبيت نافذة هدف صريحة وقت الالتقاط.")
+    }
+
+    if ($null -eq $StopSnapshot) {
+        if ($hasUnrelated) {
+            [void]$notes.Add("الالتقاط بدأ بينما نافذة foreground لا تبدو مرتبطة مباشرة بالبرنامج المستهدف.")
+            return [pscustomobject]@{
+                ScopeStatus = "monitoring-external"
+                EvidenceIsolation = "pending-contaminated"
+                TrustedForReasoning = $false
+                ContaminationDetected = $true
+                ScopeNotes = [object[]]$notes
+            }
+        }
+
+        if ($hasTargetProcess -or $hasRelatedExternal) {
+            [void]$notes.Add("الالتقاط في وضع مراقبة مرتبط بالبرنامج، لكن العزل النهائي ينتظر لحظة الإيقاف.")
+            return [pscustomobject]@{
+                ScopeStatus = "monitoring"
+                EvidenceIsolation = if ($hasRelatedExternal) { "pending-program-plus-related-window" } else { "pending-program-window" }
+                TrustedForReasoning = $false
+                ContaminationDetected = $false
+                ScopeNotes = [object[]]$notes
+            }
+        }
+
+        [void]$notes.Add("الالتقاط بدأ دون evidence كافية بعد لتأكيد foreground الصحيحة.")
+        return [pscustomobject]@{
+            ScopeStatus = "monitoring-unknown"
+            EvidenceIsolation = "pending-unknown"
+            TrustedForReasoning = $false
+            ContaminationDetected = $false
+            ScopeNotes = [object[]]$notes
+        }
+    }
+
+    if ($hasUnrelated -and ($hasTargetProcess -or $hasRelatedExternal)) {
+        [void]$notes.Add("ظهر foreground غير مرتبط بالبرنامج في جزء من زمن الالتقاط، لذلك الدليل مختلط.")
+        return [pscustomobject]@{
+            ScopeStatus = "mixed"
+            EvidenceIsolation = "contaminated"
+            TrustedForReasoning = $false
+            ContaminationDetected = $true
+            ScopeNotes = [object[]]$notes
+        }
+    }
+
+    if ($hasUnrelated) {
+        [void]$notes.Add("foreground خلال الالتقاط كانت خارج نطاق البرنامج، لذلك لا يمكن اعتبار الدليل معزولًا.")
+        return [pscustomobject]@{
+            ScopeStatus = "external"
+            EvidenceIsolation = "contaminated"
+            TrustedForReasoning = $false
+            ContaminationDetected = $true
+            ScopeNotes = [object[]]$notes
+        }
+    }
+
+    if (-not $hasTargetWindow -or $hasUnknown -or $hasNone -or $relations.Count -eq 0) {
+        [void]$notes.Add("المعطيات المتاحة لا تكفي لتأكيد عزل الالتقاط على نافذة البرنامج.")
+        return [pscustomobject]@{
+            ScopeStatus = "unknown"
+            EvidenceIsolation = "unknown"
+            TrustedForReasoning = $false
+            ContaminationDetected = $false
+            ScopeNotes = [object[]]$notes
+        }
+    }
+
+    if ($hasRelatedExternal) {
+        [void]$notes.Add("الالتقاط بقي ضمن نطاق البرنامج، لكنه مرّ أيضًا عبر نافذة خارجية مرتبطة به مثل حوار مملوك أو مزود نظام.")
+        return [pscustomobject]@{
+            ScopeStatus = "clean"
+            EvidenceIsolation = "program-plus-related-window"
+            TrustedForReasoning = $true
+            ContaminationDetected = $false
+            ScopeNotes = [object[]]$notes
+        }
+    }
+
+    [void]$notes.Add("الالتقاط بقي على نوافذ البرنامج المستهدف نفسها دون مؤشرات تلوث خارجية.")
+    return [pscustomobject]@{
+        ScopeStatus = "clean"
+        EvidenceIsolation = "program-window"
+        TrustedForReasoning = $true
+        ContaminationDetected = $false
+        ScopeNotes = [object[]]$notes
+    }
+}
+
+function New-UiMediaScopeContract {
+    param(
+        [ValidateSet("Video", "Audio")]
+        [string]$Kind = "Video",
+        $Provider = $null,
+        $StartSnapshot = $null,
+        $StopSnapshot = $null
+    )
+
+    $providerName = if ($null -ne $Provider) { [string]$Provider.Name } else { "" }
+    $scopeModel = if ($null -ne $Provider) { [string]$Provider.ScopeModel } else { "unscoped" }
+    $scopeLevel = if ($null -ne $Provider) { [string]$Provider.ProviderScopeLevel } else { "unknown" }
+    $supportsProcessIsolation = if ($null -ne $Provider) { [bool]$Provider.SupportsProcessIsolation } else { $false }
+    $supportsWindowIsolation = if ($null -ne $Provider) { [bool]$Provider.SupportsWindowIsolation } else { $false }
+    $supportsForegroundAttestation = if ($null -ne $Provider) { [bool]$Provider.SupportsForegroundAttestation } else { $false }
+    $assessment = Get-UiMediaScopeAssessment -StartSnapshot $StartSnapshot -StopSnapshot $StopSnapshot
+    $targetSource = if ($null -ne $StartSnapshot) { $StartSnapshot } else { $StopSnapshot }
+
+    return [pscustomobject]@{
+        Kind = $Kind
+        ProviderName = $providerName
+        ScopeModel = $scopeModel
+        ProviderScopeLevel = $scopeLevel
+        SupportsProcessIsolation = $supportsProcessIsolation
+        SupportsWindowIsolation = $supportsWindowIsolation
+        SupportsForegroundAttestation = $supportsForegroundAttestation
+        TargetProcessId = if ($null -ne $targetSource) { [int]$targetSource.TargetProcessId } else { 0 }
+        TargetProcessName = if ($null -ne $targetSource) { [string]$targetSource.TargetProcessName } else { "" }
+        TargetMainWindowTitle = if ($null -ne $targetSource) { [string]$targetSource.TargetMainWindowTitle } else { "" }
+        TargetWindow = if ($null -ne $targetSource) { $targetSource.TargetWindow } else { $null }
+        StartSnapshot = $StartSnapshot
+        StopSnapshot = $StopSnapshot
+        ScopeStatus = [string]$assessment.ScopeStatus
+        EvidenceIsolation = [string]$assessment.EvidenceIsolation
+        TrustedForReasoning = [bool]$assessment.TrustedForReasoning
+        ContaminationDetected = [bool]$assessment.ContaminationDetected
+        ScopeNotes = [object[]]$assessment.ScopeNotes
+    }
+}
+
+function Get-UiMediaScopeView {
+    param(
+        $SessionState = $null
+    )
+
+    if ($null -eq $SessionState) {
+        $SessionState = Get-UiMediaSessionState
+    }
+
+    $mapChannel = {
+        param($Channel)
+
+        $scope = if ($null -ne $Channel -and $null -ne $Channel.ScopeContract) {
+            $Channel.ScopeContract
+        }
+        else {
+            New-UiDefaultMediaScopeContract -Kind $(if ($null -ne $Channel) { [string]$Channel.Kind } else { "Unknown" })
+        }
+
+        return [pscustomobject]@{
+            Kind = if ($null -ne $Channel) { [string]$Channel.Kind } else { [string]$scope.Kind }
+            ProviderName = [string]$scope.ProviderName
+            ScopeModel = [string]$scope.ScopeModel
+            ProviderScopeLevel = [string]$scope.ProviderScopeLevel
+            ScopeStatus = [string]$scope.ScopeStatus
+            EvidenceIsolation = [string]$scope.EvidenceIsolation
+            TrustedForReasoning = [bool]$scope.TrustedForReasoning
+            ContaminationDetected = [bool]$scope.ContaminationDetected
+            TargetProcessId = [int]$scope.TargetProcessId
+            TargetProcessName = [string]$scope.TargetProcessName
+            TargetWindowAutomationId = if ($null -ne $scope.TargetWindow) { [string]$scope.TargetWindow.AutomationId } else { "" }
+            TargetWindowTitle = if ($null -ne $scope.TargetWindow) { [string]$scope.TargetWindow.Name } else { "" }
+            ForegroundRelationAtStart = if ($null -ne $scope.StartSnapshot) { [string]$scope.StartSnapshot.ForegroundRelation } else { "" }
+            ForegroundRelationAtStop = if ($null -ne $scope.StopSnapshot) { [string]$scope.StopSnapshot.ForegroundRelation } else { "" }
+            ScopeNotes = [object[]]$scope.ScopeNotes
+        }
+    }
+
+    return [pscustomobject]@{
+        VideoCapture = & $mapChannel $SessionState.VideoCapture
+        AudioCapture = & $mapChannel $SessionState.AudioCapture
+    }
 }
 
 function Add-UiMediaRecentEvent {
@@ -401,6 +786,8 @@ function Start-UiVideoCaptureSidecar {
 
     $effectiveLeaseMs = if ($LeaseMilliseconds -gt 0) { $LeaseMilliseconds } else { 5000 }
     $timestamp = (Get-Date).ToString("o")
+    $startScopeSnapshot = New-UiMediaScopeSnapshot -Kind "Video" -ProviderName ([string]$provider.Name) -ScopeModel ([string]$provider.ScopeModel) -Phase "start" -ProcessId $ProcessId
+    $scopeContract = New-UiMediaScopeContract -Kind "Video" -Provider $provider -StartSnapshot $startScopeSnapshot
     $sessionState.VideoCapture = [pscustomobject]@{
         Kind = "Video"
         IsActive = $true
@@ -419,19 +806,24 @@ function Start-UiVideoCaptureSidecar {
         ArtifactStatus = "pending"
         ProcessIds = @($processes | Select-Object -ExpandProperty Id)
         LiveProcessCount = $processes.Count
+        ScopeContract = $scopeContract
         Notes = @(
             "التقاط الفيديو الحالي يعتمد على Steps Recorder كتتبع بصري لحظي خفيف.",
-            "الأداة ستبقي المزود single-instance وتغلقه بهدوء عند الإيقاف أو انتهاء lease."
+            "الأداة ستبقي المزود single-instance وتغلقه بهدوء عند الإيقاف أو انتهاء lease.",
+            "العزل هنا يعتمد على attestation لنافذة البرنامج والـ foreground، لا على provider process-bound فعلية."
         )
     }
 
-        Add-UiMediaRecentEvent -SessionState $sessionState -Kind "video-started" -Summary "بدأت الأداة sidecar فيديو خفيفة عبر Steps Recorder." -Payload @{
+        Add-UiMediaRecentEvent -SessionState $sessionState -Kind "video-started" -Summary "بدأت الأداة sidecar فيديو خفيفة عبر Steps Recorder مع ربط scope بالبرنامج الحالي." -Payload @{
         ProviderName = $provider.Name
         OutputPath = $workingOutputPath
         ArchiveTargetPath = $archiveTargetPath
         LeaseMilliseconds = $effectiveLeaseMs
         ProcessId = $ProcessId
         Reason = $Reason
+        ScopeStatus = $scopeContract.ScopeStatus
+        EvidenceIsolation = $scopeContract.EvidenceIsolation
+        ForegroundRelationAtStart = $startScopeSnapshot.ForegroundRelation
     }
 
     $sessionState = Save-UiMediaSessionState -SessionState $sessionState
@@ -442,6 +834,9 @@ function Start-UiVideoCaptureSidecar {
         LeaseMilliseconds = $effectiveLeaseMs
         Reason = $Reason
         ProcessId = $ProcessId
+        ScopeStatus = $scopeContract.ScopeStatus
+        EvidenceIsolation = $scopeContract.EvidenceIsolation
+        ForegroundRelationAtStart = $startScopeSnapshot.ForegroundRelation
     }
 
     return $sessionState
@@ -457,6 +852,8 @@ function Stop-UiVideoCaptureSidecar {
     $outputPath = [string]$sessionState.VideoCapture.OutputPath
     $archiveTargetPath = [string]$sessionState.VideoCapture.ArchiveTargetPath
     $providerName = [string]$sessionState.VideoCapture.ProviderName
+    $existingScopeContract = $sessionState.VideoCapture.ScopeContract
+    $targetProcessId = if ($null -ne $existingScopeContract) { [int]$existingScopeContract.TargetProcessId } else { 0 }
 
     $cleanedCount = Stop-UiPsrProcessQuietly -Reason $Reason
 
@@ -492,6 +889,14 @@ function Stop-UiVideoCaptureSidecar {
 
     $timestamp = (Get-Date).ToString("o")
     $artifactStatus = if (-not [string]::IsNullOrWhiteSpace($artifactPath)) { "saved" } else { "missing" }
+    $provider = if (-not [string]::IsNullOrWhiteSpace($providerName)) { Get-UiMediaProviderByName -Name $providerName } else { $null }
+    $stopScopeSnapshot = if ($targetProcessId -gt 0) {
+        New-UiMediaScopeSnapshot -Kind "Video" -ProviderName $providerName -ScopeModel $(if ($null -ne $provider) { [string]$provider.ScopeModel } else { "unscoped" }) -Phase "stop" -ProcessId $targetProcessId
+    }
+    else {
+        $null
+    }
+    $scopeContract = New-UiMediaScopeContract -Kind "Video" -Provider $provider -StartSnapshot $(if ($null -ne $existingScopeContract) { $existingScopeContract.StartSnapshot } else { $null }) -StopSnapshot $stopScopeSnapshot
     $sessionState.VideoCapture = [pscustomobject]@{
         Kind = "Video"
         IsActive = $false
@@ -510,9 +915,11 @@ function Stop-UiVideoCaptureSidecar {
         ArtifactStatus = $artifactStatus
         ProcessIds = @()
         LiveProcessCount = 0
+        ScopeContract = $scopeContract
         Notes = @(
             "تم إيقاف sidecar الفيديو وعادت الأداة إلى وضعها الخفيف.",
-            $(if ($artifactStatus -eq "saved") { "المزود حفظ artifact فعلية ويمكن الرجوع إليها الآن." } else { "المزود لم يخرج artifact محفوظة هذه المرة؛ الإيقاف نجح لكن لا يوجد ملف بصري محفوظ." })
+            $(if ($artifactStatus -eq "saved") { "المزود حفظ artifact فعلية ويمكن الرجوع إليها الآن." } else { "المزود لم يخرج artifact محفوظة هذه المرة؛ الإيقاف نجح لكن لا يوجد ملف بصري محفوظ." }),
+            $(if ([bool]$scopeContract.TrustedForReasoning) { "العزل المقروء من الأداة يسمح بالاعتماد على هذا الدليل في الاستنتاج." } else { "الأداة لم تعتبر العزل كافيًا بالكامل؛ اقرأ ScopeStatus وEvidenceIsolation قبل الاعتماد على الدليل." })
         )
     }
 
@@ -523,6 +930,9 @@ function Stop-UiVideoCaptureSidecar {
             ArtifactStatus = $artifactStatus
             Reason = $Reason
             CleanedProcessCount = $cleanedCount
+            ScopeStatus = $scopeContract.ScopeStatus
+            EvidenceIsolation = $scopeContract.EvidenceIsolation
+            ContaminationDetected = $scopeContract.ContaminationDetected
         }
 
         if (-not [string]::IsNullOrWhiteSpace($artifactPath)) {
@@ -541,6 +951,9 @@ function Stop-UiVideoCaptureSidecar {
             ArtifactStatus = $artifactStatus
             Reason = $Reason
             CleanedProcessCount = $cleanedCount
+            ScopeStatus = $scopeContract.ScopeStatus
+            EvidenceIsolation = $scopeContract.EvidenceIsolation
+            ContaminationDetected = $scopeContract.ContaminationDetected
         }
     }
 
@@ -579,6 +992,7 @@ function Stop-UiAudioCaptureSidecar {
         ArtifactPath = $null
         ProcessIds = @()
         LiveProcessCount = 0
+        ScopeContract = New-UiDefaultMediaScopeContract -Kind "Audio" -ProviderName "Audio.None" -ScopeModel "none" -ProviderScopeLevel "none"
         Notes = @("لا يوجد sidecar صوت مفعلة حاليًا.")
     }
 

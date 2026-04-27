@@ -222,11 +222,21 @@
 - `MediaState` تعطي snapshot مستقلة لمزودي الوسائط أنفسهم:
   - catalog المزودات المتاحة
   - session الفيديو/الصوت الحالية
+  - `MediaScopeView` التي تلخص:
+    - العملية المستهدفة
+    - النافذة المستهدفة
+    - علاقة foreground بالبرنامج عند البداية والنهاية
+    - وهل الدليل البصري صالح للاستنتاج أم ملوث
   - وهل المزود نشط الآن أم عاد للوضع الهادئ
 - `VideoOn` و`VideoOff` تضيفان أول sidecar فيديو عند الطلب:
   - تعتمد الآن على `Psr.ScreenTrace`
   - تنظف أي instance قديمة بهدوء قبل البدء
   - وتحافظ على single-instance واضحة بدل الرسائل المزعجة من `Steps Recorder`
+  - لكنها ليست process-bound مثل التقاط صورة النافذة
+  - لذلك تسجل الآن أيضًا:
+    - `ScopeStatus`
+    - `EvidenceIsolation`
+    - `TrustedForReasoning`
   - كما تسجل بوضوح هل artifact النهائية:
     - `saved`
     - أو `missing`

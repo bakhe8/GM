@@ -1,6 +1,6 @@
 # الحالة الحالية المختصرة — GuaranteeManager
 
-**تاريخ التحديث:** 2026-04-27  
+**تاريخ التحديث:** 2026-04-28  
 **هذا الملف هو أسرع مرجع لمعرفة أين نقف الآن.**
 
 ## الجواب السريع
@@ -168,8 +168,29 @@
         - `saved`
         - أو `missing`
     - كما صارت `VideoCapture` capability موصولة فعليًا بهذه الطبقة
+  - ثم أُضيف فوق هذه الطبقة **Scoped Media Contract** نفسها:
+    - لم يعد فيديو sidecar يعلن فقط أنه بدأ أو توقف
+    - بل صار يربط نفسه أيضًا بـ:
+      - `TargetProcessId`
+      - `TargetWindow`
+      - `ForegroundRelationAtStart`
+      - `ForegroundRelationAtStop`
+      - `ScopeStatus`
+      - `EvidenceIsolation`
+      - `TrustedForReasoning`
+    - وهذا مهم جدًا لأن `Psr.ScreenTrace` ليست process-bound مثل التقاط الصورة
+    - لذلك صار لدينا الآن attestation صريحة تميز بين:
+      - `program-window`
+      - `program-plus-related-window`
+      - `contaminated`
+      - `unknown`
+    - وصارت:
+      - `HostState`
+      - `MediaState`
+      - `Probe`
+      تعرض هذا الحكم مباشرة عبر `MediaScopeView`
   - والتحقق الحالي بعد هذه الخطوة صار:
-    - `tooling unit`: `19/19`
+    - `tooling unit`: `20/20`
     - `tooling smoke`: `10/10`
     - `tooling integration`: `50/50`
     - `tooling freedom`: `9/9`

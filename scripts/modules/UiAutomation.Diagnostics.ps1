@@ -444,6 +444,7 @@ function Get-ProbePayload {
     $recentTimeline = @(Get-UiTimelineEntries -MaxCount $MaxResults)
     $capabilitySession = Invoke-UiCapabilityBrokerSweep -Persist
     $mediaSession = Invoke-UiMediaBrokerSweep -Persist
+    $mediaScopeView = Get-UiMediaScopeView -SessionState $mediaSession
     $mediaProviders = @(Get-UiMediaProviderCatalog)
     $recentCapabilityObservations = @(Get-UiCapabilityObservationEntries -MaxCount $MaxResults)
     $recentCapabilityDecisions = if ($null -ne $capabilitySession) { @($capabilitySession.RecentDecisions | Select-Object -First $MaxResults) } else { @() }
@@ -474,6 +475,7 @@ function Get-ProbePayload {
         RecentTimeline = [object[]]$recentTimeline
         CapabilitySession = $capabilitySession
         MediaSession = $mediaSession
+        MediaScopeView = $mediaScopeView
         MediaProviders = [object[]]$mediaProviders
         RecentCapabilityObservations = [object[]]$recentCapabilityObservations
         RecentCapabilityDecisions = [object[]]$recentCapabilityDecisions
@@ -489,6 +491,10 @@ function Get-ProbePayload {
                 if ($null -ne $mediaSession -and $null -ne $mediaSession.VideoCapture -and $mediaSession.VideoCapture.IsActive) { "Video" }
                 if ($null -ne $mediaSession -and $null -ne $mediaSession.AudioCapture -and $mediaSession.AudioCapture.IsActive) { "Audio" }
             ).Count
+            MediaScopeStatus = if ($null -ne $mediaScopeView -and $null -ne $mediaScopeView.VideoCapture) { [string]$mediaScopeView.VideoCapture.ScopeStatus } else { "" }
+            MediaEvidenceIsolation = if ($null -ne $mediaScopeView -and $null -ne $mediaScopeView.VideoCapture) { [string]$mediaScopeView.VideoCapture.EvidenceIsolation } else { "" }
+            MediaTrustedForReasoning = if ($null -ne $mediaScopeView -and $null -ne $mediaScopeView.VideoCapture) { [bool]$mediaScopeView.VideoCapture.TrustedForReasoning } else { $false }
+            HasScopedMediaContamination = if ($null -ne $mediaScopeView -and $null -ne $mediaScopeView.VideoCapture) { [bool]$mediaScopeView.VideoCapture.ContaminationDetected } else { $false }
             OpenWindowCount = $meaningfulWindows.Count
             RawOpenWindowCount = $windows.Count
             ActiveDialogTitle = if ($null -ne $externalForegroundWindow) { $externalForegroundWindow.Name } elseif ($null -ne $dialogWindow) { $dialogWindow.Name } else { $null }

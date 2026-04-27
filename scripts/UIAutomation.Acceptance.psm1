@@ -387,10 +387,11 @@ $script:UiSupportedApiCatalog = @(
     },
     [pscustomobject]@{
         Category = "Media"
-        Description = "إدارة مزودي الفيديو والصوت عند الطلب، مع single-instance cleanup وحالة قابلة للقراءة."
+        Description = "إدارة مزودي الفيديو والصوت عند الطلب، مع single-instance cleanup وscope attestation قابلة للقراءة."
         Commands = @(
             "Get-UiMediaSessionPath",
             "Get-UiMediaSessionState",
+            "Get-UiMediaScopeView",
             "Get-UiMediaProviderCatalog",
             "Invoke-UiMediaBrokerSweep",
             "Start-UiVideoCaptureSidecar",

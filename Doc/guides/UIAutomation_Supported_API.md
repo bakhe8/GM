@@ -139,6 +139,7 @@
 
 - `Get-UiMediaSessionPath`
 - `Get-UiMediaSessionState`
+- `Get-UiMediaScopeView`
 - `Get-UiMediaProviderCatalog`
 - `Invoke-UiMediaBrokerSweep`
 - `Start-UiVideoCaptureSidecar`
@@ -150,12 +151,22 @@
 
 - مزود فيديو يمكن تشغيله فقط عند الحاجة
 - حالة session مستقلة وقابلة للقراءة
+- scope attestation صريحة توضّح:
+  - ما العملية المستهدفة
+  - ما النافذة المقصودة
+  - وما إذا كانت foreground أثناء الالتقاط مرتبطة بالبرنامج أم لا
 - single-instance cleanup هادئ قبل أي start جديدة
 - إيقاف واضح يعيد الأداة إلى وضعها الخفيف
 
 ومهم أيضًا هنا:
 
 - `Psr.ScreenTrace` هي أول sidecar فيديو متاحة الآن على هذه البيئة
+- لكنها **ليست process-bound أو window-bound** مثل التقاط الصورة
+- لذلك نعتمد الآن على:
+  - `ScopeStatus`
+  - `EvidenceIsolation`
+  - `TrustedForReasoning`
+  بدل الادعاء أن الفيديو معزول تلقائيًا
 - `AudioCapture` ما زالت غير متاحة كمزود فعلي
 - وقد تكون artifact الفيديو:
   - `saved`

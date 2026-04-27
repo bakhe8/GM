@@ -275,6 +275,8 @@ try {
         $psrProvider = @($payload.MediaProviders | Where-Object Name -eq "Psr.ScreenTrace" | Select-Object -First 1)
         Assert-RegressionCondition ($psrProvider.Count -eq 1) "MediaState did not expose Psr.ScreenTrace."
         Assert-RegressionCondition ([string]$psrProvider[0].Availability -eq "available") "Psr.ScreenTrace should be available on this machine."
+        Assert-RegressionCondition ($null -ne $payload.MediaScopeView) "MediaState did not expose MediaScopeView."
+        Assert-RegressionCondition ($payload.MediaScopeView.VideoCapture.PSObject.Properties.Name -contains "ScopeStatus") "MediaState MediaScopeView is missing VideoCapture.ScopeStatus."
         return $payload
     } | Out-Null
 
@@ -346,6 +348,9 @@ try {
 
         Assert-RegressionCondition ($payload.MediaSession.VideoCapture.IsActive) "HostState did not report an active media video sidecar after CapabilityOn."
         Assert-RegressionCondition ([string]$payload.MediaSession.VideoCapture.ProviderName -eq "Psr.ScreenTrace") "HostState media session did not report Psr.ScreenTrace."
+        Assert-RegressionCondition ($null -ne $payload.MediaScopeView) "HostState did not expose MediaScopeView after CapabilityOn."
+        Assert-RegressionCondition ([int]$payload.MediaScopeView.VideoCapture.TargetProcessId -gt 0) "MediaScopeView did not bind VideoCapture to a target process."
+        Assert-RegressionCondition ([string]$payload.MediaScopeView.VideoCapture.ScopeStatus -in @("monitoring", "monitoring-external", "monitoring-unknown")) "MediaScopeView returned an invalid active scope status."
         return $payload
     } | Out-Null
 
@@ -364,6 +369,9 @@ try {
         }
         Assert-RegressionCondition (-not $mediaState.MediaSession.VideoCapture.IsActive) "MediaState still showed an active video sidecar after CapabilityOff."
         Assert-RegressionCondition ([string]$mediaState.MediaSession.VideoCapture.ArtifactStatus -in @("saved", "missing")) "Capability-driven video stop did not report a clear artifact status."
+        Assert-RegressionCondition ($null -ne $mediaState.MediaScopeView) "MediaState did not expose MediaScopeView after CapabilityOff."
+        Assert-RegressionCondition ([string]$mediaState.MediaScopeView.VideoCapture.ScopeStatus -in @("clean", "mixed", "external", "unknown")) "MediaScopeView returned an invalid final scope status."
+        Assert-RegressionCondition ([string]$mediaState.MediaScopeView.VideoCapture.EvidenceIsolation -in @("program-window", "program-plus-related-window", "contaminated", "unknown")) "MediaScopeView returned an invalid evidence isolation label."
         if ([string]$mediaState.MediaSession.VideoCapture.ArtifactStatus -eq "saved") {
             Assert-RegressionCondition (Test-Path -LiteralPath ([string]$mediaState.MediaSession.VideoCapture.ArtifactPath)) "Capability-driven video stop did not preserve a saved artifact."
         }

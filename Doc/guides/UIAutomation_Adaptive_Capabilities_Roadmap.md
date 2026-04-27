@@ -480,9 +480,34 @@
   - الإيقاف حصل
   - ثم يُشرح بوضوح هل خرج ملف artifact فعلية أم لا
 
+ثم أُضيفت فوق هذه الطبقة **Scoped Media Contract** نفسها، وهي خطوة حاسمة قبل اعتبار الفيديو "حاسة" يمكن الوثوق بها:
+
+- لم يعد media state يكتفي بالقول:
+  - sidecar بدأت
+  - sidecar توقفت
+- بل صار يسجل أيضًا:
+  - العملية المستهدفة
+  - النافذة المستهدفة
+  - foreground relation عند البداية
+  - foreground relation عند الإيقاف
+  - `ScopeStatus`
+  - `EvidenceIsolation`
+  - `TrustedForReasoning`
+- وهذا مهم لأن:
+  - `Psr.ScreenTrace` مزود global
+  - وليست process-bound أو window-bound مثل لقطة النافذة
+- لذلك صارت الأداة تعتمد على **attestation صريحة للعزل** بدل افتراضه
+
+وبذلك أصبح الحكم الممكن الآن أوضح:
+
+- `program-window`
+- `program-plus-related-window`
+- `contaminated`
+- `unknown`
+
 والتحقق الحالي بعد هذه الطبقة ناجح ضمن:
 
-- unit: `19/19`
+- unit: `20/20`
 - smoke: `10/10`
 - integration: `50/50`
 - freedom: `9/9`
