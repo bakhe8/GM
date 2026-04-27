@@ -2377,13 +2377,12 @@ namespace GuaranteeManager
                 "export",
                 new { _row.GuaranteeNo, _row.RootId, OutputPath = _historyDocuments.LastOutputPath ?? string.Empty });
 
-            MessageBox.Show(
-                OutputFeedbackFormatter.BuildSavedFileSuccessMessageOrFallback(
-                    $"تم تصدير سجل الضمان رقم {_row.GuaranteeNo} بنجاح.",
-                    _historyDocuments.LastOutputPath),
-                "سجل الضمان",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            string savedFile = string.IsNullOrWhiteSpace(_historyDocuments.LastOutputPath)
+                ? "تم حفظ الملف بنجاح"
+                : Path.GetFileName(_historyDocuments.LastOutputPath);
+            App.CurrentApp.GetRequiredService<IShellStatusService>().ShowSuccess(
+                $"تم تصدير سجل الضمان رقم {_row.GuaranteeNo}.",
+                $"سجل الضمان • {savedFile}");
         }
 
         private void PrintHistory()
@@ -2399,11 +2398,9 @@ namespace GuaranteeManager
                 "print",
                 new { _row.GuaranteeNo, _row.RootId });
 
-            MessageBox.Show(
+            App.CurrentApp.GetRequiredService<IShellStatusService>().ShowSuccess(
                 $"تم إرسال سجل الضمان رقم {_row.GuaranteeNo} إلى الطباعة.",
-                "سجل الضمان",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+                "سجل الضمان • الطباعة");
         }
 
         private void OpenSelectedLetter()
@@ -3206,13 +3203,12 @@ namespace GuaranteeManager
                 return;
             }
 
-            MessageBox.Show(
-                OutputFeedbackFormatter.BuildSavedFileSuccessMessageOrFallback(
-                    $"تم تصدير تقرير الضمان رقم {guarantee.GuaranteeNo} بنجاح.",
-                    _excel.LastOutputPath),
-                "الاستعلامات التشغيلية",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            string savedFile = string.IsNullOrWhiteSpace(_excel.LastOutputPath)
+                ? "تم حفظ الملف بنجاح"
+                : Path.GetFileName(_excel.LastOutputPath);
+            App.CurrentApp.GetRequiredService<IShellStatusService>().ShowSuccess(
+                $"تم تصدير تقرير الضمان رقم {guarantee.GuaranteeNo}.",
+                $"الاستعلامات التشغيلية • {savedFile}");
         }
     }
 
@@ -3395,7 +3391,9 @@ namespace GuaranteeManager
                 _workflow.RecordBankResponse(requestId, status, notes, string.IsNullOrWhiteSpace(responsePath) ? null : responsePath);
                 _onChanged();
                 ReloadRequests(requestId);
-                MessageBox.Show("تم تسجيل رد البنك وتحديث طلبات الضمان.", "طلبات الضمان", MessageBoxButton.OK, MessageBoxImage.Information);
+                App.CurrentApp.GetRequiredService<IShellStatusService>().ShowSuccess(
+                    "تم تسجيل رد البنك وتحديث طلبات الضمان.",
+                    "طلبات الضمان • داخل ملف الضمان");
             }
             catch (Exception ex)
             {
