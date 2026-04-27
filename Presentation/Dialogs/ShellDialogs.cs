@@ -2002,11 +2002,16 @@ namespace GuaranteeManager
         private readonly TextBlock _detailLine5 = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#0F172A");
         private readonly TextBlock _detailLine6 = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#0F172A");
         private readonly TextBlock _detailNote = WorkspaceSurfaceChrome.Text(11, FontWeights.Normal, "#64748B");
+        private readonly Border _nextStepCard = new();
+        private readonly TextBlock _nextStepSummary = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#0F172A");
+        private readonly TextBlock _nextStepHint = WorkspaceSurfaceChrome.Text(10.8, FontWeights.Normal, "#475569");
+        private readonly Button _nextStepActionButton = new();
         private readonly Button _openAttachmentsButton = new();
         private readonly Button _openLetterButton = new();
         private readonly Button _openResponseButton = new();
         private readonly Button _exportHistoryButton = new();
         private readonly Button _printHistoryButton = new();
+        private Action? _nextStepAction;
 
         private HistoryDialog(GuaranteeRow row, IReadOnlyList<Guarantee> history, IReadOnlyList<WorkflowRequest> requests)
         {
@@ -2026,6 +2031,9 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(_tabs, "Dialog.GuaranteeHistory.Tabs", "تبويبات سجل الضمان");
             UiInstrumentation.Identify(_versionsList, "Dialog.GuaranteeHistory.VersionsList", "قائمة إصدارات الضمان");
             UiInstrumentation.Identify(_requestsList, "Dialog.GuaranteeHistory.RequestsList", "قائمة طلبات الضمان");
+            UiInstrumentation.Identify(_nextStepSummary, "Dialog.GuaranteeHistory.NextStepSummary", "ملخص الخطوة التالية");
+            UiInstrumentation.Identify(_nextStepHint, "Dialog.GuaranteeHistory.NextStepHint", "شرح الخطوة التالية");
+            UiInstrumentation.Identify(_nextStepActionButton, "Dialog.GuaranteeHistory.NextStepButton", "زر الخطوة التالية");
             Width = 920;
             Height = 620;
             MinWidth = 820;
@@ -2299,6 +2307,7 @@ namespace GuaranteeManager
                     bankRow,
                     _detailHeadline,
                     _detailCaption,
+                    BuildNextStepCard(),
                     WorkspaceSurfaceChrome.Divider(),
                     BuildInfoLine(_detailLabel1, _detailLine1),
                     BuildInfoLine(_detailLabel2, _detailLine2),
@@ -2311,6 +2320,39 @@ namespace GuaranteeManager
             };
 
             return WorkspaceSurfaceChrome.BuildReferenceDetailPanel(content);
+        }
+
+        private UIElement BuildNextStepCard()
+        {
+            _nextStepCard.Background = WorkspaceSurfaceChrome.BrushFrom("#EFF6FF");
+            _nextStepCard.BorderBrush = WorkspaceSurfaceChrome.BrushFrom("#BFDBFE");
+            _nextStepCard.BorderThickness = new Thickness(1);
+            _nextStepCard.CornerRadius = new CornerRadius(8);
+            _nextStepCard.Padding = new Thickness(12, 10, 12, 10);
+            _nextStepCard.Margin = new Thickness(0, 10, 0, 0);
+
+            _nextStepActionButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
+            _nextStepActionButton.MinWidth = 132;
+            _nextStepActionButton.Height = 32;
+            _nextStepActionButton.HorizontalAlignment = HorizontalAlignment.Right;
+            _nextStepActionButton.Margin = new Thickness(0, 10, 0, 0);
+            _nextStepActionButton.Click += (_, _) => _nextStepAction?.Invoke();
+
+            var stack = new StackPanel();
+            stack.Children.Add(new TextBlock
+            {
+                Text = "الخطوة التالية",
+                FontSize = 11,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#2563EB"),
+                Margin = new Thickness(0, 0, 0, 6)
+            });
+            stack.Children.Add(_nextStepSummary);
+            _nextStepHint.Margin = new Thickness(0, 4, 0, 0);
+            stack.Children.Add(_nextStepHint);
+            stack.Children.Add(_nextStepActionButton);
+            _nextStepCard.Child = stack;
+            return _nextStepCard;
         }
 
         private UIElement BuildActions()
@@ -2530,6 +2572,13 @@ namespace GuaranteeManager
                 _openAttachmentsButton.IsEnabled = false;
                 _openLetterButton.IsEnabled = false;
                 _openResponseButton.IsEnabled = false;
+                ApplyNextStepState(
+                    "لا توجد خطوة تالية متاحة من السجل الآن.",
+                    "سيظهر الفعل الأقرب هنا عند توفر إصدار أو طلب يمكن مواصلة العمل منه.",
+                    string.Empty,
+                    null,
+                    false,
+                    Tone.Info);
                 return;
             }
 
@@ -2559,6 +2608,27 @@ namespace GuaranteeManager
             _openAttachmentsButton.IsEnabled = selected.AttachmentCount > 0;
             _openLetterButton.IsEnabled = false;
             _openResponseButton.IsEnabled = false;
+
+            if (selected.AttachmentCount > 0)
+            {
+                ApplyNextStepState(
+                    "الخطوة الأقرب الآن هي مراجعة مرفقات هذا الإصدار.",
+                    "سيفتح لك هذا مستندات النسخة المحددة مباشرة من نفس الحوار.",
+                    "فتح مرفقات الإصدار",
+                    OpenSelectedAttachments,
+                    true,
+                    Tone.Info);
+            }
+            else
+            {
+                ApplyNextStepState(
+                    "هذا الإصدار لا يحمل مرفقات مرتبطة به.",
+                    "إذا كنت تشارك المراجعة أو توثقها، فالتصدير هو الخطوة التالية الأقرب من هنا.",
+                    "تصدير السجل",
+                    ExportHistory,
+                    _exportHistoryButton.IsEnabled,
+                    Tone.Info);
+            }
         }
 
         private void UpdateRequestDetails()
@@ -2585,6 +2655,13 @@ namespace GuaranteeManager
                 _openAttachmentsButton.IsEnabled = false;
                 _openLetterButton.IsEnabled = false;
                 _openResponseButton.IsEnabled = false;
+                ApplyNextStepState(
+                    "لا توجد خطوة تالية متاحة من تبويب الطلبات الآن.",
+                    "عند تحديد طلب ستظهر هنا أقرب متابعة عملية أو انتقال للسجل المرتبط به.",
+                    string.Empty,
+                    null,
+                    false,
+                    Tone.Info);
                 return;
             }
 
@@ -2619,8 +2696,8 @@ namespace GuaranteeManager
                 ("الحالة", selected.StatusLabel),
                 ("تاريخ الطلب", selected.RequestDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture)),
                 ("تاريخ الرد", selected.ResponseRecordedAt?.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) ?? "---"),
-                ("الإصدار الأساس", $"v{selected.BaseVersionId.ToString("N0", CultureInfo.InvariantCulture)}"),
-                ("الإصدار الناتج", selected.ResultVersionId.HasValue ? $"v{selected.ResultVersionId.Value.ToString("N0", CultureInfo.InvariantCulture)}" : "---"),
+                ("الإصدار الأساس", ResolveVersionLabel(selected.BaseVersionId)),
+                ("الإصدار الناتج", selected.ResultVersionId.HasValue ? ResolveVersionLabel(selected.ResultVersionId.Value) : "---"),
                 !string.IsNullOrWhiteSpace(selected.ResponseNotes)
                     ? selected.ResponseNotes
                     : !string.IsNullOrWhiteSpace(selected.Notes)
@@ -2630,6 +2707,62 @@ namespace GuaranteeManager
             _openAttachmentsButton.IsEnabled = false;
             _openLetterButton.IsEnabled = selected.HasLetter;
             _openResponseButton.IsEnabled = selected.HasResponseDocument;
+
+            if (selected.HasResponseDocument)
+            {
+                ApplyNextStepState(
+                    "الخطوة الأقرب الآن هي فتح رد البنك لهذا الطلب.",
+                    "هذا يعرض النتيجة النهائية والمستند المرتبط بها قبل الانتقال لأي متابعة أخرى.",
+                    "فتح رد البنك",
+                    OpenSelectedResponse,
+                    true,
+                    Tone.Success);
+                return;
+            }
+
+            if (selected.HasLetter)
+            {
+                ApplyNextStepState(
+                    "الخطوة الأقرب الآن هي فتح خطاب الطلب.",
+                    "هذا يفتح الطلب الأصلي نفسه، وهو أفضل نقطة مراجعة قبل الرد أو التنفيذ.",
+                    "فتح خطاب الطلب",
+                    OpenSelectedLetter,
+                    true,
+                    Tone.Info);
+                return;
+            }
+
+            if (selected.ResultVersionId is int resultVersionId && TryFocusVersionAction(resultVersionId, "الإصدار الناتج", out Action? openResultVersionAction))
+            {
+                ApplyNextStepState(
+                    "لا يوجد مستند مباشر لهذا الطلب، لكن له إصدارًا ناتجًا يمكن مراجعته الآن.",
+                    "سينتقل بك الحوار إلى تبويب الإصدارات ويحدد النسخة الناتجة مباشرة.",
+                    "عرض الإصدار الناتج",
+                    openResultVersionAction,
+                    true,
+                    Tone.Success);
+                return;
+            }
+
+            if (TryFocusVersionAction(selected.BaseVersionId, "الإصدار الأساس", out Action? openBaseVersionAction))
+            {
+                ApplyNextStepState(
+                    "لا توجد مستندات مباشرة لهذا الطلب، وأقرب متابعة الآن هي مراجعة الإصدار الأساس.",
+                    "سينقلك هذا إلى النسخة التي بُني عليها الطلب لفهم السياق قبل أي متابعة.",
+                    "عرض الإصدار الأساس",
+                    openBaseVersionAction,
+                    true,
+                    Tone.Info);
+                return;
+            }
+
+            ApplyNextStepState(
+                "لا توجد وثائق مباشرة لهذا الطلب من داخل السجل.",
+                "إذا كنت توثق المراجعة أو تشاركها، فالتصدير هو الخطوة التالية الأقرب من هذا الموضع.",
+                "تصدير السجل",
+                ExportHistory,
+                _exportHistoryButton.IsEnabled,
+                Tone.Info);
         }
 
         private void ApplyDetailState(
@@ -2688,6 +2821,42 @@ namespace GuaranteeManager
             valueBlock.Text = line.Value;
         }
 
+        private string ResolveVersionLabel(int versionId)
+        {
+            Guarantee? version = _history.FirstOrDefault(item => item.Id == versionId);
+            return version?.VersionLabel ?? $"#{versionId.ToString("N0", CultureInfo.InvariantCulture)}";
+        }
+
+        private bool TryFocusVersionAction(int versionId, string label, out Action? action)
+        {
+            Guarantee? version = _history.FirstOrDefault(item => item.Id == versionId);
+            if (version == null)
+            {
+                action = null;
+                return false;
+            }
+
+            action = () =>
+            {
+                _tabs.SelectedIndex = 0;
+                FrameworkElement? row = _versionsList.Items
+                    .OfType<FrameworkElement>()
+                    .FirstOrDefault(item => item.Tag is Guarantee guarantee && guarantee.Id == versionId);
+
+                if (row != null)
+                {
+                    _versionsList.SelectedItem = row;
+                    _versionsList.ScrollIntoView(row);
+                    UpdateDetailPanel();
+                }
+
+                App.CurrentApp.GetRequiredService<IShellStatusService>().ShowInfo(
+                    $"تم فتح {label} {version.VersionLabel}.",
+                    "سجل الضمان • الانتقال داخل السجل");
+            };
+            return true;
+        }
+
         private Border BuildInfoBlock(string title, TextBlock body)
         {
             var border = new Border
@@ -2712,6 +2881,40 @@ namespace GuaranteeManager
             stack.Children.Add(body);
             border.Child = stack;
             return border;
+        }
+
+        private void ApplyNextStepState(
+            string summary,
+            string hint,
+            string actionText,
+            Action? action,
+            bool isEnabled,
+            Tone tone)
+        {
+            _nextStepSummary.Text = summary;
+            _nextStepHint.Text = hint;
+            _nextStepSummary.Foreground = TonePalette.Foreground(tone);
+            _nextStepHint.Foreground = WorkspaceSurfaceChrome.BrushFrom("#475569");
+            _nextStepCard.Background = TonePalette.Background(tone);
+            _nextStepCard.BorderBrush = TonePalette.Border(tone);
+
+            _nextStepAction = action;
+            _nextStepActionButton.Content = string.IsNullOrWhiteSpace(actionText) ? "لا يوجد إجراء مباشر" : actionText;
+            _nextStepActionButton.IsEnabled = isEnabled && action != null;
+            _nextStepActionButton.Visibility = string.IsNullOrWhiteSpace(actionText) && action == null
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+            _nextStepActionButton.ToolTip = string.IsNullOrWhiteSpace(hint) ? null : hint;
+            ToolTipService.SetShowOnDisabled(_nextStepActionButton, true);
+            _nextStepActionButton.Background = _nextStepActionButton.IsEnabled
+                ? WorkspaceSurfaceChrome.BrushFrom("#2563EB")
+                : WorkspaceSurfaceChrome.BrushFrom("#E2E8F0");
+            _nextStepActionButton.BorderBrush = _nextStepActionButton.IsEnabled
+                ? WorkspaceSurfaceChrome.BrushFrom("#2563EB")
+                : WorkspaceSurfaceChrome.BrushFrom("#CBD5E1");
+            _nextStepActionButton.Foreground = _nextStepActionButton.IsEnabled
+                ? Brushes.White
+                : WorkspaceSurfaceChrome.BrushFrom("#64748B");
         }
 
         private Guarantee? SelectedVersion => (_versionsList.SelectedItem as FrameworkElement)?.Tag as Guarantee;
