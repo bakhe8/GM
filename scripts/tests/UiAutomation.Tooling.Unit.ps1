@@ -212,6 +212,11 @@ try {
             Assert-RegressionCondition (@($definitions | Where-Object Name -eq $required).Count -eq 1) "Capability definitions are missing '$required'."
         }
 
+        $burstDefinition = @($definitions | Where-Object Name -eq "BurstCapture" | Select-Object -First 1)
+        Assert-RegressionCondition ($burstDefinition.Count -eq 1) "BurstCapture definition could not be resolved."
+        Assert-RegressionCondition ([int]$burstDefinition[0].DefaultFrameCount -ge 2) "BurstCapture definition should expose a multi-frame default."
+        Assert-RegressionCondition ([int]$burstDefinition[0].DefaultIntervalMs -ge 0) "BurstCapture definition returned an invalid interval."
+
         return $definitions
     } | Out-Null
 

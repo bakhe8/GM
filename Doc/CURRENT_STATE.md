@@ -64,6 +64,15 @@
   - `VideoCapture` — planned
   - `AudioCapture` — planned
   - `MouseTrace` — planned
+- ثم نضجت `BurstCapture` نفسها إلى أول provider layer فعلية:
+  - لم تعد لقطة مفردة بعد الفعل
+  - صارت تلتقط **عدة frames متتابعة** داخل نفس الجلسة
+  - وتنتج **contact sheet** تلخص التسلسل
+  - وتكتب `burst-sequence` observation داخل `HostState`
+  - والتحقق الحالي عليها ناجح ضمن:
+    - `tooling unit`: `15/15`
+    - `tooling smoke`: `10/10`
+    - `tooling integration`: `18/18`
 
 وأول خطوة تنفيذية منه بدأت فعليًا الآن:
 

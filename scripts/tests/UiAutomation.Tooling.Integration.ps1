@@ -166,6 +166,67 @@ try {
         return $payload
     } | Out-Null
 
+    Invoke-RegressionStep -Name "hoststate-adaptive-snapshot" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "HostState"
+        }
+
+        Assert-RegressionCondition ($null -ne $payload.CapabilityDefinitions) "HostState did not return capability definitions."
+        Assert-RegressionCondition (@($payload.CapabilityDefinitions | Where-Object Name -eq "BurstCapture").Count -eq 1) "HostState did not include BurstCapture definition."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "enable-burst-capture" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOn"
+            CapabilityName = "BurstCapture"
+            LeaseMilliseconds = 8000
+            Reason = "integration-burst-check"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Capability.Name -eq "BurstCapture") "CapabilityOn did not activate BurstCapture."
+        Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "BurstCapture").Count -eq 1) "BurstCapture was not present in the active session state."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "windows-burst-capture-evidence" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "Windows"
+            ReuseRunningSession = $true
+        }
+
+        $captures = @($payload.CapabilityCaptures)
+        Assert-RegressionCondition ($captures.Count -ge 4) "BurstCapture did not produce the expected multi-frame evidence."
+        foreach ($capture in $captures) {
+            Assert-RegressionCondition (Test-Path -LiteralPath $capture.Path) "A burst capture frame path did not exist on disk."
+        }
+
+        $hostState = Invoke-UiExploreJson -Arguments @{
+            Action = "HostState"
+        }
+        $burstSummary = @($hostState.RecentCapabilityObservations | Where-Object {
+            $_.CapabilityName -eq "BurstCapture" -and $_.Kind -eq "burst-sequence"
+        } | Select-Object -First 1)
+        Assert-RegressionCondition ($burstSummary.Count -eq 1) "HostState did not record a burst-sequence observation."
+        Assert-RegressionCondition ([int]$burstSummary[0].Payload.FrameCount -ge 4) "burst-sequence observation reported too few frames."
+        Assert-RegressionCondition (-not [string]::IsNullOrWhiteSpace([string]$burstSummary[0].Payload.ContactSheetPath)) "burst-sequence observation did not include a contact sheet path."
+        Assert-RegressionCondition (Test-Path -LiteralPath ([string]$burstSummary[0].Payload.ContactSheetPath)) "Burst contact sheet was not created on disk."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "disable-burst-capture" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOff"
+            CapabilityName = "BurstCapture"
+            Reason = "integration-burst-complete"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "BurstCapture").Count -eq 0) "BurstCapture remained active after CapabilityOff."
+        return $payload
+    } | Out-Null
+
     Invoke-RegressionStep -Name "sidebar-settings" -ScriptBlock {
         $payload = Invoke-UiExploreJson -Arguments @{
             Action = "Sidebar"

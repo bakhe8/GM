@@ -5,6 +5,9 @@ function Get-UiCapabilityDefinitions {
             Category = "Visual"
             ProviderState = "available"
             DefaultLeaseMs = 1800
+            DefaultFrameCount = 4
+            DefaultIntervalMs = 90
+            CreateContactSheet = $true
             Description = "يلتقط لقطات سريعة خفيفة أثناء نفس الاستكشاف الحر عند الحاجة."
         },
         [pscustomobject]@{
@@ -84,6 +87,25 @@ function Get-UiCapabilityObservationEntries {
         } |
         Where-Object { $null -ne $_ } |
         Select-Object -Last $MaxCount)
+}
+
+function Resolve-UiBurstCaptureProfile {
+    param(
+        [Parameter(Mandatory)]
+        $CapabilityRecord
+    )
+
+    $definition = Resolve-UiCapabilityDefinition -CapabilityName ([string]$CapabilityRecord.Name)
+    $metadata = $CapabilityRecord.Metadata
+    $frameCount = if ($null -ne $metadata -and $null -ne $metadata.FrameCount) { [int]$metadata.FrameCount } else { [int]$definition.DefaultFrameCount }
+    $intervalMs = if ($null -ne $metadata -and $null -ne $metadata.IntervalMs) { [int]$metadata.IntervalMs } else { [int]$definition.DefaultIntervalMs }
+    $createContactSheet = if ($null -ne $metadata -and $null -ne $metadata.CreateContactSheet) { [bool]$metadata.CreateContactSheet } else { [bool]$definition.CreateContactSheet }
+
+    return [pscustomobject]@{
+        FrameCount = [Math]::Max(1, $frameCount)
+        IntervalMs = [Math]::Max(0, $intervalMs)
+        CreateContactSheet = $createContactSheet
+    }
 }
 
 function Add-UiCapabilityHistoryEntry {
@@ -302,7 +324,8 @@ function Save-UiCapabilityActionCapture {
         [Parameter(Mandatory)]
         [string]$ActionName,
         [Parameter(Mandatory)]
-        [string]$CaptureReason
+        [string]$CaptureReason,
+        [string]$CaptureSuffix = ""
     )
 
     $session = Get-UiCapabilitySessionState
@@ -318,7 +341,8 @@ function Save-UiCapabilityActionCapture {
 
     $timestamp = Get-Date -Format "yyyyMMdd-HHmmss-fff"
     $safeAction = if ([string]::IsNullOrWhiteSpace($ActionName)) { "action" } else { $ActionName -replace '[^A-Za-z0-9_-]', "-" }
-    $capturePath = Join-Path $artifactRoot ($timestamp + "-" + $safeAction + ".png")
+    $safeSuffix = if ([string]::IsNullOrWhiteSpace($CaptureSuffix)) { "" } else { "-" + ($CaptureSuffix -replace '[^A-Za-z0-9_-]', "-") }
+    $capturePath = Join-Path $artifactRoot ($timestamp + "-" + $safeAction + $safeSuffix + ".png")
 
     $windows = @(Get-UiWindowsCatalog -ProcessId $Process.Id -IncludeRelatedForeground)
     $meaningfulWindows = @($windows | Where-Object {
@@ -356,6 +380,83 @@ function Save-UiCapabilityActionCapture {
     return $artifact
 }
 
+function Save-UiCapabilityBurstSequence {
+    param(
+        [Parameter(Mandatory)]
+        [System.Diagnostics.Process]$Process,
+        [Parameter(Mandatory)]
+        $CapabilityRecord,
+        [Parameter(Mandatory)]
+        [string]$ActionName,
+        [Parameter(Mandatory)]
+        [string]$CaptureReason
+    )
+
+    $profile = Resolve-UiBurstCaptureProfile -CapabilityRecord $CapabilityRecord
+    $captures = New-Object System.Collections.Generic.List[object]
+    $startedAt = Get-Date
+
+    for ($index = 1; $index -le $profile.FrameCount; $index++) {
+        $capture = Save-UiCapabilityActionCapture `
+            -Process $Process `
+            -CapabilityName ([string]$CapabilityRecord.Name) `
+            -ActionName $ActionName `
+            -CaptureReason $CaptureReason `
+            -CaptureSuffix ("f" + $index.ToString("00"))
+
+        if ($null -ne $capture) {
+            [void]$captures.Add($capture)
+        }
+
+        if ($index -lt $profile.FrameCount -and $profile.IntervalMs -gt 0) {
+            Start-Sleep -Milliseconds $profile.IntervalMs
+        }
+    }
+
+    $session = Get-UiCapabilitySessionState
+    if ($null -eq $session) {
+        return [pscustomobject]@{
+            Session = $null
+            Captures = [object[]]$captures.ToArray()
+            Burst = $null
+        }
+    }
+
+    $burstSummary = $null
+    if ($captures.Count -gt 0) {
+        $contactSheetPath = $null
+        if ($profile.CreateContactSheet -and $captures.Count -gt 1) {
+            $firstCapturePath = [string]$captures[0].Path
+            $contactSheetPath = [System.IO.Path]::ChangeExtension($firstCapturePath, $null) + "-sheet.png"
+            New-UiContactSheet -ImagePaths @($captures | ForEach-Object { $_.Path }) -DestinationPath $contactSheetPath -Columns ([Math]::Min(4, $captures.Count)) | Out-Null
+        }
+
+        $burstSummary = [pscustomobject]@{
+            Timestamp = (Get-Date).ToString("o")
+            SessionId = $session.SessionId
+            CapabilityName = [string]$CapabilityRecord.Name
+            Action = $ActionName
+            Reason = $CaptureReason
+            FrameCount = $captures.Count
+            IntervalMs = $profile.IntervalMs
+            StartedAt = $startedAt.ToString("o")
+            EndedAt = (Get-Date).ToString("o")
+            ContactSheetPath = if (-not [string]::IsNullOrWhiteSpace($contactSheetPath)) { [System.IO.Path]::GetFullPath($contactSheetPath) } else { $null }
+            FramePaths = @($captures | ForEach-Object { $_.Path })
+        }
+
+        Add-UiCapabilityObservationRecord -SessionState $session -CapabilityName ([string]$CapabilityRecord.Name) -Kind "burst-sequence" -Payload $burstSummary
+        $session.UpdatedAt = (Get-Date).ToString("o")
+        Save-UiCapabilitySessionState -SessionState $session | Out-Null
+    }
+
+    return [pscustomobject]@{
+        Session = Get-UiCapabilitySessionState
+        Captures = [object[]]$captures.ToArray()
+        Burst = $burstSummary
+    }
+}
+
 function Invoke-UiCapabilityHooksAfterAction {
     param(
         [Parameter(Mandatory)]
@@ -374,9 +475,15 @@ function Invoke-UiCapabilityHooksAfterAction {
 
     $captures = New-Object System.Collections.Generic.List[object]
     if (Test-UiCapabilityEnabled -CapabilityName "BurstCapture" -SessionState $session) {
-        $capture = Save-UiCapabilityActionCapture -Process $Process -CapabilityName "BurstCapture" -ActionName $ActionName -CaptureReason "after-action"
-        if ($null -ne $capture) {
-            [void]$captures.Add($capture)
+        $burstCapability = @($session.ActiveCapabilities | Where-Object {
+            [string]::Equals($_.Name, "BurstCapture", [System.StringComparison]::OrdinalIgnoreCase)
+        } | Select-Object -First 1)
+
+        if ($burstCapability.Count -gt 0) {
+            $burstPayload = Save-UiCapabilityBurstSequence -Process $Process -CapabilityRecord $burstCapability[0] -ActionName $ActionName -CaptureReason "after-action"
+            foreach ($capture in @($burstPayload.Captures)) {
+                [void]$captures.Add($capture)
+            }
         }
     }
 

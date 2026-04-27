@@ -258,6 +258,17 @@
 - `AudioCapture` — **planned**
 - `MouseTrace` — **planned**
 
+كما أُنجز الآن أول slice فعلية من provider layer نفسها:
+
+- `BurstCapture` لم تعد لقطة واحدة بعد الفعل
+- صارت الآن:
+  - **multi-frame timed sampling**
+  - تحفظ عدة frames متتابعة
+  - وتنتج **contact sheet** تلخص التسلسل
+  - وتكتب `burst-sequence` observation داخل session state
+
+والتحقق الحالي يغطي هذا السلوك عبر regression integration فعلية.
+
 ---
 
 ## تعريف النجاح

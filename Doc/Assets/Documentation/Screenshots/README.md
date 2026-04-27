@@ -200,3 +200,8 @@
   - active capabilities
   - recent adaptive observations
 - `CapabilityOn` و`CapabilityOff` تسمحان الآن بتفعيل قدرات لحظية مثل `BurstCapture` داخل نفس الاستكشاف الحر، ثم إطفائها من غير الخروج من الجلسة.
+- `BurstCapture` نفسها لم تعد مجرد لقطة واحدة:
+  - عند تفعيلها تلتقط الآن **عدة frames متتابعة**
+  - تحفظ كل frame على حدة
+  - وتنتج **contact sheet** تلخص التسلسل
+  - وتكتب `burst-sequence` observation يمكن قراءتها من `HostState`
