@@ -63,7 +63,7 @@
   - `AutoCaptureOnFailure` — متاحة
   - `VideoCapture` — planned
   - `AudioCapture` — planned
-  - `MouseTrace` — planned
+  - `MouseTrace` — متاحة
 - ثم نضجت `BurstCapture` نفسها إلى أول provider layer فعلية:
   - لم تعد لقطة مفردة بعد الفعل
   - صارت تلتقط **عدة frames متتابعة** داخل نفس الجلسة
@@ -92,6 +92,17 @@
     - `tooling unit`: `16/16`
     - `tooling smoke`: `10/10`
     - `tooling integration`: `28/28`
+  - كما أُنجزت أول slice فعلية من `MouseTrace` نفسها:
+    - يمكن تفعيلها لحظيًا عبر `CapabilityOn`
+    - تسجل `mouse-trace` observation خفيفة داخل نفس الجلسة
+    - تربط التتبع بالفعل نفسه من غير تشغيل recorder ثقيل
+    - وتظهر مباشرة داخل:
+      - `HostState`
+      - `RecentCapabilityObservations`
+  - والتحقق الحالي لهذه الطبقة ناجح ضمن:
+    - `tooling unit`: `16/16`
+    - `tooling smoke`: `10/10`
+    - `tooling integration`: `31/31`
 
 وأول خطوة تنفيذية منه بدأت فعليًا الآن:
 
@@ -172,7 +183,7 @@
     - والرجوع إلى جلسة نظيفة بعد إغلاق الحوارات الداخلية والخارجية
   - والنتيجة الحالية:
     - `10/10` في smoke
-    - `28/28` في integration
+    - `31/31` في integration
     - وتشغيل `-Suite All` يمر الآن بنجاح
     - والملخصان الحيان يُكتبان هنا:
       - [UIAcceptance/latest/tooling-regression-summary.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/latest/tooling-regression-summary.md)

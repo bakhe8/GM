@@ -225,6 +225,12 @@ try {
         Assert-RegressionCondition ([int]$burstDefinition[0].DefaultFrameCount -ge 2) "BurstCapture definition should expose a multi-frame default."
         Assert-RegressionCondition ([int]$burstDefinition[0].DefaultIntervalMs -ge 0) "BurstCapture definition returned an invalid interval."
 
+        $mouseTraceDefinition = @($definitions | Where-Object Name -eq "MouseTrace" | Select-Object -First 1)
+        Assert-RegressionCondition ($mouseTraceDefinition.Count -eq 1) "MouseTrace definition could not be resolved."
+        Assert-RegressionCondition ([string]$mouseTraceDefinition[0].ProviderState -eq "available") "MouseTrace should already be exposed as available."
+        Assert-RegressionCondition ([int]$mouseTraceDefinition[0].DefaultSampleCount -ge 2) "MouseTrace definition should expose a multi-sample default."
+        Assert-RegressionCondition ([int]$mouseTraceDefinition[0].DefaultIntervalMs -ge 0) "MouseTrace definition returned an invalid interval."
+
         return $definitions
     } | Out-Null
 

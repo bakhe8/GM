@@ -34,9 +34,11 @@ function Get-UiCapabilityDefinitions {
         [pscustomobject]@{
             Name = "MouseTrace"
             Category = "Input"
-            ProviderState = "planned"
+            ProviderState = "available"
             DefaultLeaseMs = 2500
-            Description = "تتبع/تعزيز استخدام الماوس أثناء المسارات الحساسة."
+            DefaultSampleCount = 4
+            DefaultIntervalMs = 40
+            Description = "تتبع خفيف لحركة وتموضع الماوس داخل نفس الاستكشاف الحر عند الحاجة."
         }
     )
 }
@@ -105,6 +107,23 @@ function Resolve-UiBurstCaptureProfile {
         FrameCount = [Math]::Max(1, $frameCount)
         IntervalMs = [Math]::Max(0, $intervalMs)
         CreateContactSheet = $createContactSheet
+    }
+}
+
+function Resolve-UiMouseTraceProfile {
+    param(
+        [Parameter(Mandatory)]
+        $CapabilityRecord
+    )
+
+    $definition = Resolve-UiCapabilityDefinition -CapabilityName ([string]$CapabilityRecord.Name)
+    $metadata = $CapabilityRecord.Metadata
+    $sampleCount = if ($null -ne $metadata -and $null -ne $metadata.SampleCount) { [int]$metadata.SampleCount } else { [int]$definition.DefaultSampleCount }
+    $intervalMs = if ($null -ne $metadata -and $null -ne $metadata.IntervalMs) { [int]$metadata.IntervalMs } else { [int]$definition.DefaultIntervalMs }
+
+    return [pscustomobject]@{
+        SampleCount = [Math]::Max(1, $sampleCount)
+        IntervalMs = [Math]::Max(0, $intervalMs)
     }
 }
 
@@ -457,6 +476,86 @@ function Save-UiCapabilityBurstSequence {
     }
 }
 
+function Save-UiMouseTraceObservation {
+    param(
+        [Parameter(Mandatory)]
+        [System.Diagnostics.Process]$Process,
+        [Parameter(Mandatory)]
+        $CapabilityRecord,
+        [Parameter(Mandatory)]
+        [string]$ActionName,
+        $Result = $null,
+        [string]$CaptureReason = "after-action",
+        [string]$ErrorMessage = ""
+    )
+
+    $session = Get-UiCapabilitySessionState
+    if ($null -eq $session) {
+        return $null
+    }
+
+    $profile = Resolve-UiMouseTraceProfile -CapabilityRecord $CapabilityRecord
+    $samples = New-Object System.Collections.Generic.List[object]
+    $startedAt = Get-Date
+
+    for ($index = 1; $index -le $profile.SampleCount; $index++) {
+        $cursor = Get-UiCursorPosition
+        [void]$samples.Add([pscustomobject]@{
+            Index = $index
+            Timestamp = (Get-Date).ToString("o")
+            X = [int]$cursor.X
+            Y = [int]$cursor.Y
+        })
+
+        if ($index -lt $profile.SampleCount -and $profile.IntervalMs -gt 0) {
+            Start-Sleep -Milliseconds $profile.IntervalMs
+        }
+    }
+
+    $sampleArray = @($samples.ToArray())
+    $firstSample = $sampleArray | Select-Object -First 1
+    $lastSample = $sampleArray | Select-Object -Last 1
+    $distinctPoints = @($sampleArray | Group-Object X, Y)
+
+    $actionSnapshot = $null
+    if ($null -ne $Result) {
+        $actionSnapshot = [ordered]@{}
+        foreach ($propertyName in @("Action", "Target", "Window", "Position", "StartPosition", "EndPosition", "Button", "ClickCount", "HoverMilliseconds", "ScrollDelta", "DeltaX", "DeltaY")) {
+            if ($Result.PSObject.Properties.Name -contains $propertyName) {
+                $actionSnapshot[$propertyName] = $Result.$propertyName
+            }
+        }
+        $actionSnapshot = [pscustomobject]$actionSnapshot
+    }
+
+    $payload = [pscustomobject]@{
+        Timestamp = (Get-Date).ToString("o")
+        SessionId = $session.SessionId
+        CapabilityName = [string]$CapabilityRecord.Name
+        Action = $ActionName
+        Reason = $CaptureReason
+        StartedAt = $startedAt.ToString("o")
+        EndedAt = (Get-Date).ToString("o")
+        SampleCount = $sampleArray.Count
+        IntervalMs = $profile.IntervalMs
+        DistinctPointCount = $distinctPoints.Count
+        FirstPosition = if ($null -ne $firstSample) { [pscustomobject]@{ X = [int]$firstSample.X; Y = [int]$firstSample.Y } } else { $null }
+        LastPosition = if ($null -ne $lastSample) { [pscustomobject]@{ X = [int]$lastSample.X; Y = [int]$lastSample.Y } } else { $null }
+        Samples = [object[]]$sampleArray
+        ActionSnapshot = $actionSnapshot
+        Error = if ([string]::IsNullOrWhiteSpace($ErrorMessage)) { $null } else { $ErrorMessage }
+    }
+
+    Add-UiCapabilityObservationRecord -SessionState $session -CapabilityName ([string]$CapabilityRecord.Name) -Kind "mouse-trace" -Payload $payload
+    $session.UpdatedAt = (Get-Date).ToString("o")
+    Save-UiCapabilitySessionState -SessionState $session | Out-Null
+
+    return [pscustomobject]@{
+        Session = Get-UiCapabilitySessionState
+        Observation = $payload
+    }
+}
+
 function Invoke-UiCapabilityHooksAfterAction {
     param(
         [Parameter(Mandatory)]
@@ -487,6 +586,16 @@ function Invoke-UiCapabilityHooksAfterAction {
         }
     }
 
+    if (Test-UiCapabilityEnabled -CapabilityName "MouseTrace" -SessionState $session) {
+        $mouseTraceCapability = @($session.ActiveCapabilities | Where-Object {
+            [string]::Equals($_.Name, "MouseTrace", [System.StringComparison]::OrdinalIgnoreCase)
+        } | Select-Object -First 1)
+
+        if ($mouseTraceCapability.Count -gt 0) {
+            Save-UiMouseTraceObservation -Process $Process -CapabilityRecord $mouseTraceCapability[0] -ActionName $ActionName -Result $Result -CaptureReason "after-action" | Out-Null
+        }
+    }
+
     Touch-UiCapabilitySession -SessionState (Get-UiCapabilitySessionState) -LastAction $ActionName -Reason "after-action" | Out-Null
 
     return [pscustomobject]@{
@@ -507,6 +616,20 @@ function Invoke-UiCapabilityHooksOnFailure {
     $session = Invoke-UiCapabilityBrokerSweep -Persist
     if ($null -eq $session -or -not $session.IsActive) {
         return $null
+    }
+
+    if (Test-UiCapabilityEnabled -CapabilityName "MouseTrace" -SessionState $session) {
+        $mouseTraceCapability = @($session.ActiveCapabilities | Where-Object {
+            [string]::Equals($_.Name, "MouseTrace", [System.StringComparison]::OrdinalIgnoreCase)
+        } | Select-Object -First 1)
+
+        if ($mouseTraceCapability.Count -gt 0) {
+            try {
+                Save-UiMouseTraceObservation -Process $(Get-UiProcess) -CapabilityRecord $mouseTraceCapability[0] -ActionName $ActionName -CaptureReason "failure" -ErrorMessage $ErrorMessage | Out-Null
+            }
+            catch {
+            }
+        }
     }
 
     if (-not (Test-UiCapabilityEnabled -CapabilityName "AutoCaptureOnFailure" -SessionState $session)) {

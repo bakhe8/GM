@@ -256,7 +256,7 @@
 - `AutoCaptureOnFailure` — **available**
 - `VideoCapture` — **planned**
 - `AudioCapture` — **planned**
-- `MouseTrace` — **planned**
+- `MouseTrace` — **available**
 
 كما أُنجز الآن أول slice فعلية من provider layer نفسها:
 
@@ -289,6 +289,30 @@
 
 هذا لا يعني أن `MouseTrace` reactive نفسها أُنجزت بعد؛
 بل يعني أن **التحكم الحر بالماوس** صار متاحًا الآن كقدرة تشغيلية يمكن أن نبني فوقها التتبع التفاعلي لاحقًا.
+
+كما أُنجزت الآن أول slice فعلية من **MouseTrace** نفسها:
+
+- لم تعد `MouseTrace` planned فقط
+- صارت الآن capability متاحة يمكن تفعيلها عبر:
+  - `CapabilityOn -CapabilityName MouseTrace`
+- وعندما تكون مفعلة:
+  - تسجل observation خفيفة بعد الفعل
+  - تحفظ `mouse-trace` payload داخل session state
+  - تربط التتبع بالفعل نفسه مثل:
+    - `MouseMove`
+    - `MouseClick`
+    - `MouseDrag`
+    - أو حتى failure hooks عندما يلزم
+- والتصميم الحالي مقصود أن يبقى:
+  - **خفيفًا**
+  - **غير دائم**
+  - **غير معتمد على فيديو أو تسجيل ثقيل**
+
+والتحقق الحالي عليها ناجح ضمن:
+
+- unit: `16/16`
+- smoke: `10/10`
+- integration: `31/31`
 
 ---
 

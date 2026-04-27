@@ -139,6 +139,9 @@
 .\\scripts\\ui_explore.ps1 -Action HostState
 .\\scripts\\ui_explore.ps1 -Action CapabilityOn -CapabilityName BurstCapture -LeaseMilliseconds 3000 -Reason "suspected-flicker"
 .\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName BurstCapture -Reason "done"
+.\\scripts\\ui_explore.ps1 -Action CapabilityOn -CapabilityName MouseTrace -LeaseMilliseconds 4000 -Reason "follow-pointer"
+.\\scripts\\ui_explore.ps1 -Action HostState
+.\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName MouseTrace -Reason "trace-complete"
 .\\scripts\\ui_explore.ps1 -Action MouseMove -WindowAutomationId "Shell.MainWindow" -AutomationId "Shell.Sidebar.Settings"
 .\\scripts\\ui_explore.ps1 -Action MouseClick -WindowAutomationId "Shell.MainWindow" -AutomationId "Shell.Sidebar.Settings"
 .\\scripts\\ui_explore.ps1 -Action MouseHover -WindowAutomationId "Shell.MainWindow" -AutomationId "Shell.Sidebar.Guarantees" -HoverMilliseconds 900
@@ -219,3 +222,7 @@
   - `MouseDrag`
   - `MouseScroll`
 - ويمكن استدعاؤها لحظيًا عند الحاجة فقط، ثم تواصل الأداة نفس الاستكشاف الحر من غير أي وضع دائم إضافي.
+- كما صارت `MouseTrace` capability خفيفة متاحة:
+  - لا تسجل فيديو
+  - ولا تفرض وضعًا دائمًا
+  - بل تحفظ observation لحظية مرتبطة بالفعل نفسه داخل `HostState`
