@@ -31,6 +31,8 @@
       [2026-04-26-uat-pass-04.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-uat-pass-04.md)
     - وأول جولة أداء بعد إغلاق `preview.2 polish` السلوكي:
       [2026-04-27-performance-pass-01.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-27-performance-pass-01.md)
+    - والجولة الثانية التي شددت الحكم على مسار popup داخل `Settings`:
+      [2026-04-27-performance-pass-02.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-27-performance-pass-02.md)
     - وجولة UAT الأوسع على بيانات مولدة من داخل `Settings`، والتي كشفت وأغلقت خلل التحديد stale بعد `reseed`:
       [2026-04-27-heavy-seed-uat-pass-01.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-27-heavy-seed-uat-pass-01.md)
 

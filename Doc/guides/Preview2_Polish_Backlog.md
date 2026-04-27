@@ -58,6 +58,12 @@
   - `Launch` ظهرت في دورة نظيفة عند ~`3617ms` ولم تعد تُصنَّف بطئًا كاذبًا
 - المرجع الكامل هنا:
   - [UIAcceptance/baselines/2026-04-27-performance-pass-01.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-27-performance-pass-01.md)
+- ثم أُنجزت `Performance Pass 02` على مسار popup داخل `Settings`:
+  - زر `أدوات` نفسه لم يعد hotspot (`866.69ms`)
+  - عنصر `توليد بيانات تجريبية` هبط إلى `1711.18ms` بدل القياسات السابقة التي وصلت إلى `~4–6s`
+  - وهذا شدد الحكم على أن بطء هذا المسار المتبقي يميل أكثر إلى **ظهور نافذة التأكيد من التطبيق نفسه**، لا إلى اكتشاف عنصر القائمة من الأداة
+  - المرجع الكامل هنا:
+    - [UIAcceptance/baselines/2026-04-27-performance-pass-02.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-27-performance-pass-02.md)
 - كما توجد جولة UAT مرتبطة مباشرة بهذا الحكم هنا:
   - [UIAcceptance/baselines/2026-04-27-heavy-seed-uat-pass-01.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-27-heavy-seed-uat-pass-01.md)
 

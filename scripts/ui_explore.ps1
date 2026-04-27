@@ -106,6 +106,57 @@ function Wait-UiWindowClosed {
     return $false
 }
 
+function Resolve-UiActionTarget {
+    param(
+        [Parameter(Mandatory)]
+        [System.Diagnostics.Process]$Process,
+        [Parameter(Mandatory)]
+        [System.Windows.Automation.AutomationElement]$Window,
+        [string]$Name = "",
+        [string]$AutomationId = "",
+        [string]$Text = "",
+        [switch]$PartialMatch,
+        [int]$InitialTimeoutSeconds = 1,
+        [int]$FallbackTimeoutSeconds = 5
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($Text)) {
+        return Get-UiButtonByText -Root $Window -Text $Text -ProcessId $Process.Id -SearchProcessFallback -PartialMatch:$PartialMatch
+    }
+
+    try {
+        return Wait-UiElement `
+            -Root $Window `
+            -Name $Name `
+            -AutomationId $AutomationId `
+            -ControlType $null `
+            -TimeoutSeconds $InitialTimeoutSeconds `
+            -PartialMatch:$PartialMatch
+    }
+    catch {
+        $processWide = @(
+            Find-UiProcessElements `
+                -ProcessId $Process.Id `
+                -Name $Name `
+                -AutomationId $AutomationId `
+                -MaxResults 6 `
+                -PartialMatch:$PartialMatch
+        )
+
+        if ($processWide.Count -gt 0) {
+            return $processWide[0]
+        }
+    }
+
+    return Wait-UiElement `
+        -Root $Window `
+        -Name $Name `
+        -AutomationId $AutomationId `
+        -ControlType $null `
+        -TimeoutSeconds $FallbackTimeoutSeconds `
+        -PartialMatch:$PartialMatch
+}
+
 function Write-UiObject {
     param($InputObject)
     $InputObject | ConvertTo-Json -Depth 10
@@ -342,23 +393,13 @@ function Invoke-UiAction {
                 Assert-UiNoBlockingWindows -Process $process
             }
             $window = Resolve-UiScopeRoot -Process $process -Title $WindowTitle -AutomationId $WindowAutomationId -PartialMatch:$PartialMatch
-            $target = if (-not [string]::IsNullOrWhiteSpace($Text)) {
-                Get-UiButtonByText -Root $window -Text $Text -ProcessId $process.Id -SearchProcessFallback -PartialMatch:$PartialMatch
-            }
-            else {
-                try {
-                    Wait-UiElement -Root $window -Name $Name -AutomationId $AutomationId -ControlType $null -TimeoutSeconds 5 -PartialMatch:$PartialMatch
-                }
-                catch {
-                    $processWide = @(Find-UiProcessElements -ProcessId $process.Id -Name $Name -AutomationId $AutomationId -MaxResults 6 -PartialMatch:$PartialMatch)
-                    if ($processWide.Count -gt 0) {
-                        $processWide[0]
-                    }
-                    else {
-                        throw
-                    }
-                }
-            }
+            $target = Resolve-UiActionTarget `
+                -Process $process `
+                -Window $window `
+                -Name $Name `
+                -AutomationId $AutomationId `
+                -Text $Text `
+                -PartialMatch:$PartialMatch
 
             $targetSummary = Get-UiElementSummary -Element $target
             Invoke-UiElement -Element $target
@@ -488,22 +529,14 @@ function Invoke-UiAction {
             Show-UiWindow -Window $window
             $windowSummary = Get-UiElementSummary -Element $window
             $targetElement = $null
-            if (-not [string]::IsNullOrWhiteSpace($Text)) {
-                $targetElement = Get-UiButtonByText -Root $window -Text $Text -ProcessId $process.Id -SearchProcessFallback -PartialMatch:$PartialMatch
-            }
-            elseif (-not [string]::IsNullOrWhiteSpace($AutomationId) -or -not [string]::IsNullOrWhiteSpace($Name)) {
-                try {
-                    $targetElement = Wait-UiElement -Root $window -Name $Name -AutomationId $AutomationId -ControlType $null -TimeoutSeconds 5 -PartialMatch:$PartialMatch
-                }
-                catch {
-                    $processWide = @(Find-UiProcessElements -ProcessId $process.Id -Name $Name -AutomationId $AutomationId -MaxResults 6 -PartialMatch:$PartialMatch)
-                    if ($processWide.Count -gt 0) {
-                        $targetElement = $processWide[0]
-                    }
-                    else {
-                        throw
-                    }
-                }
+            if (-not [string]::IsNullOrWhiteSpace($Text) -or -not [string]::IsNullOrWhiteSpace($AutomationId) -or -not [string]::IsNullOrWhiteSpace($Name)) {
+                $targetElement = Resolve-UiActionTarget `
+                    -Process $process `
+                    -Window $window `
+                    -Name $Name `
+                    -AutomationId $AutomationId `
+                    -Text $Text `
+                    -PartialMatch:$PartialMatch
             }
 
             $targetSummary = if ($null -ne $targetElement) { Get-UiElementSummary -Element $targetElement } else { $null }
@@ -536,22 +569,14 @@ function Invoke-UiAction {
             $windowSummary = Get-UiElementSummary -Element $window
             $targetElement = $null
 
-            if (-not [string]::IsNullOrWhiteSpace($Text)) {
-                $targetElement = Get-UiButtonByText -Root $window -Text $Text -ProcessId $process.Id -SearchProcessFallback -PartialMatch:$PartialMatch
-            }
-            elseif (-not [string]::IsNullOrWhiteSpace($AutomationId) -or -not [string]::IsNullOrWhiteSpace($Name)) {
-                try {
-                    $targetElement = Wait-UiElement -Root $window -Name $Name -AutomationId $AutomationId -ControlType $null -TimeoutSeconds 5 -PartialMatch:$PartialMatch
-                }
-                catch {
-                    $processWide = @(Find-UiProcessElements -ProcessId $process.Id -Name $Name -AutomationId $AutomationId -MaxResults 6 -PartialMatch:$PartialMatch)
-                    if ($processWide.Count -gt 0) {
-                        $targetElement = $processWide[0]
-                    }
-                    else {
-                        throw
-                    }
-                }
+            if (-not [string]::IsNullOrWhiteSpace($Text) -or -not [string]::IsNullOrWhiteSpace($AutomationId) -or -not [string]::IsNullOrWhiteSpace($Name)) {
+                $targetElement = Resolve-UiActionTarget `
+                    -Process $process `
+                    -Window $window `
+                    -Name $Name `
+                    -AutomationId $AutomationId `
+                    -Text $Text `
+                    -PartialMatch:$PartialMatch
             }
 
             $targetSummary = if ($null -ne $targetElement) { Get-UiElementSummary -Element $targetElement } else { $null }

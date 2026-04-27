@@ -25,6 +25,11 @@
   - النتيجة كانت رسالة `تعذر العثور على الضمان المحدد` بدل فتح `OperationalInquiryDialog`
   - أُغلق هذا بإضافة refresh مركزي بعد `seed-development-data`
   - وأُعيد التحقق حيًا: `ShellState.Reason = data-reset` ثم عاد `OperationalInquiryDialog` ليفتح بنجاح
+- ثم أُنجزت `Performance Pass 02` على مسار `Settings -> أدوات -> توليد بيانات تجريبية`:
+  - تحسن استهداف popup/menu items داخل الأداة عبر fallback process-wide أسرع
+  - زر `أدوات` هبط إلى `866.69ms` وصار ضمن الحد المقبول
+  - عنصر `توليد بيانات تجريبية` هبط إلى `1711.18ms` بدل القياسات السابقة التي وصلت إلى `~4–6s`
+  - والحكم الآن أوضح: bottleneck المتبقي هنا أقرب إلى إظهار نافذة التأكيد داخل التطبيق نفسه، لا إلى بحث الأداة عن عنصر القائمة
 
 ## الأولوية الحالية
 
@@ -106,6 +111,8 @@
   - [UIAcceptance/baselines/2026-04-26-uat-pass-04.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-uat-pass-04.md)
 - كما توجد أول جولة أداء موثقة هنا:
   - [UIAcceptance/baselines/2026-04-27-performance-pass-01.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-27-performance-pass-01.md)
+- كما توجد الجولة الثانية التي شددت الحكم على مسار popup داخل `Settings`:
+  - [UIAcceptance/baselines/2026-04-27-performance-pass-02.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-27-performance-pass-02.md)
 - كما توجد جولة UAT أوسع على بيانات مولدة من داخل `Settings` هنا:
   - [UIAcceptance/baselines/2026-04-27-heavy-seed-uat-pass-01.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-27-heavy-seed-uat-pass-01.md)
 - مجلد `UIAcceptance/latest/` يبقى generated وتشغيليًا فقط، وليس baseline رسمية
