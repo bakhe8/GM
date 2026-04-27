@@ -45,4 +45,19 @@ namespace GuaranteeManager
             return Binding.DoNothing;
         }
     }
+
+    public sealed class TrueToVisibleCollapsedConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return value is bool flag && flag
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return Binding.DoNothing;
+        }
+    }
 }
