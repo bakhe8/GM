@@ -31,6 +31,19 @@
   - والتحقق التشغيلي الحالي:
     - `Probe` نجحت
     - `All` نجحت على جلسة نظيفة
+- **Phase 3**: مكتملة
+  - صار [scripts/ui_explore.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/ui_explore.ps1:1) طبقة routing وتتبع خفيفة
+  - واستُخرجت المساعدات إلى:
+    - [scripts/modules/UiAutomation.Session.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Session.ps1:1)
+    - [scripts/modules/UiAutomation.Diagnostics.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Diagnostics.ps1:1)
+    - [scripts/modules/UiAutomation.Actions.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Actions.ps1:1)
+  - حجم `ui_explore.ps1` انخفض من نحو `597` سطرًا إلى نحو `98`
+  - والتحقق التشغيلي الحالي:
+    - `Probe`
+    - `Sidebar`
+    - `Click`
+    - `SetField`
+    - `DialogAction`
 
 ---
 
@@ -477,6 +490,8 @@ ActionResult
 
 ## المرحلة 3 — تخفيف `ui_explore.ps1`
 
+**الحالة:** مكتملة
+
 ### الهدف
 
 تحويله من ملف شبه orchestration كبير إلى:
@@ -491,8 +506,11 @@ ActionResult
    - parameter parsing
    - action dispatch
    - JSON output shaping
-2. نقل logic الثقيل إلى modules
-3. تقليص `Invoke-UiAction`
+2. نقل logic الثقيل إلى modules:
+   - [scripts/modules/UiAutomation.Session.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Session.ps1:1)
+   - [scripts/modules/UiAutomation.Diagnostics.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Diagnostics.ps1:1)
+   - [scripts/modules/UiAutomation.Actions.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Actions.ps1:1)
+3. استبدال `Invoke-UiAction` الثقيلة بنداء واحد إلى `Invoke-UiExploreAction`
 4. تقسيم المساعدات المحلية إلى:
    - session helpers
    - payload builders
@@ -502,6 +520,23 @@ ActionResult
 
 - الملف ينخفض بوضوح
 - فهم المسار من `Action` إلى التنفيذ يصبح مباشرًا
+- تبقى الأوامر التالية سليمة:
+  - `Probe`
+  - `Sidebar`
+  - `Click`
+  - `SetField`
+  - `DialogAction`
+
+### نتيجة التنفيذ
+
+- `ui_explore.ps1` انخفضت من نحو `597` سطرًا إلى نحو `98`
+- الواجهة الخارجية للأداة بقيت كما هي
+- التحقق الحي نجح في:
+  - `Probe`
+  - `Sidebar`
+  - `Click`
+  - `SetField`
+  - `DialogAction`
 
 ---
 

@@ -62,6 +62,19 @@
   - والتحقق التشغيلي بعد هذا الفصل نجح في:
     - `Probe`
     - `All` على جلسة نظيفة
+- ثم أُنجزت **Phase 3** من نفس الخارطة:
+  - صار [scripts/ui_explore.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/ui_explore.ps1:1) طبقة routing وتتبع خفيفة فقط
+  - واستُخرج منطقها إلى:
+    - [scripts/modules/UiAutomation.Session.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Session.ps1:1)
+    - [scripts/modules/UiAutomation.Diagnostics.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Diagnostics.ps1:1)
+    - [scripts/modules/UiAutomation.Actions.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Actions.ps1:1)
+  - حجم `ui_explore.ps1` هبط من نحو `597` سطرًا إلى نحو `98` سطرًا
+  - والتحقق التشغيلي بعد هذا الفصل نجح في:
+    - `Probe`
+    - `Sidebar`
+    - `Click`
+    - `SetField`
+    - `DialogAction`
 
 كما أضيف الآن مرجع حي لمراجعة نضج السطوح الأساسية الأربع مقابل التوجيه المستخرج من الأرشيف:
 

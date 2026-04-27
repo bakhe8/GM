@@ -1,0 +1,348 @@
+function Resolve-UiActionTarget {
+    param(
+        [Parameter(Mandatory)]
+        [System.Diagnostics.Process]$Process,
+        [Parameter(Mandatory)]
+        [System.Windows.Automation.AutomationElement]$Window,
+        [string]$Name = "",
+        [string]$AutomationId = "",
+        [string]$Text = "",
+        [switch]$PartialMatch,
+        [int]$InitialTimeoutSeconds = 1,
+        [int]$FallbackTimeoutSeconds = 5
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($Text)) {
+        return Get-UiButtonByText -Root $Window -Text $Text -ProcessId $Process.Id -SearchProcessFallback -PartialMatch:$PartialMatch
+    }
+
+    try {
+        return Wait-UiElement `
+            -Root $Window `
+            -Name $Name `
+            -AutomationId $AutomationId `
+            -ControlType $null `
+            -TimeoutSeconds $InitialTimeoutSeconds `
+            -PartialMatch:$PartialMatch
+    }
+    catch {
+        $processWide = @(
+            Find-UiProcessElements `
+                -ProcessId $Process.Id `
+                -Name $Name `
+                -AutomationId $AutomationId `
+                -MaxResults 6 `
+                -PartialMatch:$PartialMatch
+        )
+
+        if ($processWide.Count -gt 0) {
+            return $processWide[0]
+        }
+    }
+
+    return Wait-UiElement `
+        -Root $Window `
+        -Name $Name `
+        -AutomationId $AutomationId `
+        -ControlType $null `
+        -TimeoutSeconds $FallbackTimeoutSeconds `
+        -PartialMatch:$PartialMatch
+}
+
+function Resolve-UiVirtualKey {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Name
+    )
+
+    switch ($Name.Trim().ToLowerInvariant()) {
+        "enter" { return [byte]0x0D }
+        "escape" { return [byte]0x1B }
+        "esc" { return [byte]0x1B }
+        "tab" { return [byte]0x09 }
+        "down" { return [byte]0x28 }
+        "up" { return [byte]0x26 }
+        "left" { return [byte]0x25 }
+        "right" { return [byte]0x27 }
+        default { throw "Unsupported key '$Name'. Supported keys: Enter, Escape, Tab, Up, Down, Left, Right." }
+    }
+}
+
+function Invoke-UiExploreAction {
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$Options
+    )
+
+    $process = Get-ResolvedProcess -RepoRoot $Options.RepoRoot -ProcessId $Options.ProcessId -ReuseRunningSession:$Options.ReuseRunningSession
+
+    switch ($Options.Action) {
+        "Launch" {
+            $window = Resolve-UiWindow -ProcessId $process.Id
+            Show-UiWindow -Window $window
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                MainWindowHandle = $process.MainWindowHandle
+                Window = Get-UiElementSummary -Element $window
+            }
+        }
+
+        "Windows" {
+            $windows = Get-UiWindowsCatalog -ProcessId $process.Id -IncludeRelatedForeground
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Windows = [object[]]$windows
+            }
+        }
+
+        "Elements" {
+            $window = Resolve-UiScopeRoot -Process $process -Title $Options.WindowTitle -AutomationId $Options.WindowAutomationId -PartialMatch:$Options.PartialMatch
+            $elements = Find-UiElements -Root $window -ProcessId $process.Id -Name $Options.Name -AutomationId $Options.AutomationId -ControlType $Options.ControlType -SearchProcessFallback -PartialMatch:$Options.PartialMatch -MaxResults $Options.MaxResults
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Window = Get-UiElementSummary -Element $window
+                Elements = [object[]]$elements
+            }
+        }
+
+        "Sidebar" {
+            Assert-UiNoBlockingWindows -Process $process
+            $window = Resolve-UiWindow -ProcessId $process.Id
+            Invoke-UiSidebarNavigation -MainWindow $window -WorkspaceLabel $Options.Label
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "Sidebar"
+                Label = $Options.Label
+                Window = Get-UiElementSummary -Element $window
+            }
+        }
+
+        "Click" {
+            if ([string]::IsNullOrWhiteSpace($Options.WindowTitle) -and [string]::IsNullOrWhiteSpace($Options.WindowAutomationId)) {
+                Assert-UiNoBlockingWindows -Process $process
+            }
+            elseif ($Options.WindowAutomationId -eq "Shell.MainWindow") {
+                Assert-UiNoBlockingWindows -Process $process
+            }
+
+            $window = Resolve-UiScopeRoot -Process $process -Title $Options.WindowTitle -AutomationId $Options.WindowAutomationId -PartialMatch:$Options.PartialMatch
+            $target = Resolve-UiActionTarget -Process $process -Window $window -Name $Options.Name -AutomationId $Options.AutomationId -Text $Options.Text -PartialMatch:$Options.PartialMatch
+            $targetSummary = Get-UiElementSummary -Element $target
+            Invoke-UiElement -Element $target
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "Click"
+                Target = $targetSummary
+            }
+        }
+
+        "SetField" {
+            if ([string]::IsNullOrWhiteSpace($Options.WindowTitle) -and [string]::IsNullOrWhiteSpace($Options.WindowAutomationId)) {
+                Assert-UiNoBlockingWindows -Process $process
+            }
+            elseif ($Options.WindowAutomationId -eq "Shell.MainWindow") {
+                Assert-UiNoBlockingWindows -Process $process
+            }
+
+            $window = Resolve-UiScopeRoot -Process $process -Title $Options.WindowTitle -AutomationId $Options.WindowAutomationId -PartialMatch:$Options.PartialMatch
+            $field = if (-not [string]::IsNullOrWhiteSpace($Options.AutomationId)) {
+                Wait-UiElement -Root $window -AutomationId $Options.AutomationId -ControlType $null -TimeoutSeconds 5 -PartialMatch:$Options.PartialMatch
+            }
+            elseif (-not [string]::IsNullOrWhiteSpace($Options.Label)) {
+                Get-UiEditNearLabel -Window $window -Label $Options.Label
+            }
+            else {
+                throw "SetField requires either -Label or -AutomationId."
+            }
+
+            Set-UiElementValue -Element $field -Value $Options.Value
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "SetField"
+                Label = $Options.Label
+                Value = $Options.Value
+                Field = Get-UiElementSummary -Element $field
+            }
+        }
+
+        "WaitWindow" {
+            $window = Resolve-UiWindow -Title $Options.WindowTitle -AutomationId $Options.WindowAutomationId -ProcessId $process.Id -PartialMatch:$Options.PartialMatch
+            Show-UiWindow -Window $window
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Window = Get-UiElementSummary -Element $window
+            }
+        }
+
+        "Capture" {
+            $window = if (-not [string]::IsNullOrWhiteSpace($Options.WindowTitle) -or -not [string]::IsNullOrWhiteSpace($Options.WindowAutomationId)) {
+                Resolve-UiWindow -Title $Options.WindowTitle -AutomationId $Options.WindowAutomationId -ProcessId $process.Id -PartialMatch:$Options.PartialMatch
+            }
+            else {
+                Resolve-UiWindow -ProcessId $process.Id
+            }
+
+            $resolvedOutput = [System.IO.Path]::GetFullPath((Join-Path $Options.RepoRoot $Options.OutputPath))
+            Save-UiWindowScreenshot -Window $window -Path $resolvedOutput | Out-Null
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Capture = $resolvedOutput
+                Window = Get-UiElementSummary -Element $window
+            }
+        }
+
+        "DialogAction" {
+            $dialog = if (-not [string]::IsNullOrWhiteSpace($Options.WindowTitle) -or -not [string]::IsNullOrWhiteSpace($Options.WindowAutomationId)) {
+                Resolve-UiWindow -Title $Options.WindowTitle -AutomationId $Options.WindowAutomationId -ProcessId $process.Id -PartialMatch:$Options.PartialMatch
+            }
+            else {
+                Get-UiActiveDialog -ProcessId $process.Id
+            }
+
+            $preferredLabels = if (-not [string]::IsNullOrWhiteSpace($Options.Text) -or -not [string]::IsNullOrWhiteSpace($Options.Name)) {
+                @($Options.Text, $Options.Name, "إلغاء", "Cancel", "&Cancel", "موافق", "OK", "نعم", "Yes", "&Yes", "لا", "No", "&No")
+            }
+            else {
+                @("Yes", "&Yes", "OK", "موافق", "نعم", "إلغاء", "Cancel", "&Cancel", "لا", "No", "&No")
+            }
+
+            $resolvedLabels = @($preferredLabels | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
+            $button = Get-UiDialogActionButton -Dialog $dialog -PreferredLabels $resolvedLabels
+            $dialogSummary = Get-UiElementSummary -Element $dialog
+            $buttonSummary = Get-UiElementSummary -Element $button
+            $result = Invoke-UiDialogActionButton -Dialog $dialog -PreferredLabels $resolvedLabels -ProcessId $process.Id -CloseTimeoutSeconds 3
+            if (-not $result.Closed) {
+                throw "تم الوصول إلى زر داخل الحوار '$($dialogSummary.Name)' لكن النافذة بقيت مفتوحة بعد $(if ($null -ne $result.Attempt) { $result.Attempt } else { 0 }) محاولات. آخر أسلوب: $($result.Strategy)."
+            }
+
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "DialogAction"
+                Dialog = $dialogSummary
+                Button = if ($null -ne $result.Button) { $result.Button } else { $buttonSummary }
+                Closed = $result.Closed
+                Strategy = $result.Strategy
+                Attempt = $result.Attempt
+            }
+        }
+
+        "Events" {
+            $events = @(Get-UiRecentEvents -MaxCount $Options.MaxResults | Where-Object {
+                ([string]::IsNullOrWhiteSpace($Options.Category) -or $_.Category -eq $Options.Category) -and
+                ([string]::IsNullOrWhiteSpace($Options.EventActionName) -or $_.Action -eq $Options.EventActionName)
+            })
+
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Category = $Options.Category
+                EventActionName = $Options.EventActionName
+                Events = [object[]]$events
+            }
+        }
+
+        "Key" {
+            $window = if (-not [string]::IsNullOrWhiteSpace($Options.WindowTitle) -or -not [string]::IsNullOrWhiteSpace($Options.WindowAutomationId)) {
+                Resolve-UiScopeRoot -Process $process -Title $Options.WindowTitle -AutomationId $Options.WindowAutomationId -PartialMatch:$Options.PartialMatch
+            }
+            else {
+                Resolve-UiWindow -ProcessId $process.Id
+            }
+
+            Show-UiWindow -Window $window
+            $windowSummary = Get-UiElementSummary -Element $window
+            $targetElement = $null
+            if (-not [string]::IsNullOrWhiteSpace($Options.Text) -or -not [string]::IsNullOrWhiteSpace($Options.AutomationId) -or -not [string]::IsNullOrWhiteSpace($Options.Name)) {
+                $targetElement = Resolve-UiActionTarget -Process $process -Window $window -Name $Options.Name -AutomationId $Options.AutomationId -Text $Options.Text -PartialMatch:$Options.PartialMatch
+            }
+
+            $targetSummary = if ($null -ne $targetElement) { Get-UiElementSummary -Element $targetElement } else { $null }
+            if ($null -ne $targetElement) {
+                Invoke-UiElement -Element $targetElement
+                Start-Sleep -Milliseconds 100
+            }
+
+            $vk = Resolve-UiVirtualKey -Name $Options.KeyName
+            Send-UiVirtualKey -VirtualKey $vk
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "Key"
+                KeyName = $Options.KeyName
+                Window = $windowSummary
+                Target = $targetSummary
+            }
+        }
+
+        "SendKeys" {
+            $window = if (-not [string]::IsNullOrWhiteSpace($Options.WindowTitle) -or -not [string]::IsNullOrWhiteSpace($Options.WindowAutomationId)) {
+                Resolve-UiWindow -Title $Options.WindowTitle -AutomationId $Options.WindowAutomationId -ProcessId $process.Id -PartialMatch:$Options.PartialMatch
+            }
+            else {
+                Resolve-UiWindow -ProcessId $process.Id
+            }
+
+            Show-UiWindow -Window $window
+            $windowSummary = Get-UiElementSummary -Element $window
+            $targetElement = $null
+            if (-not [string]::IsNullOrWhiteSpace($Options.Text) -or -not [string]::IsNullOrWhiteSpace($Options.AutomationId) -or -not [string]::IsNullOrWhiteSpace($Options.Name)) {
+                $targetElement = Resolve-UiActionTarget -Process $process -Window $window -Name $Options.Name -AutomationId $Options.AutomationId -Text $Options.Text -PartialMatch:$Options.PartialMatch
+            }
+
+            $targetSummary = if ($null -ne $targetElement) { Get-UiElementSummary -Element $targetElement } else { $null }
+            if ($null -ne $targetElement) {
+                Invoke-UiElement -Element $targetElement
+                Start-Sleep -Milliseconds 100
+            }
+
+            $keysText = if (-not [string]::IsNullOrWhiteSpace($Options.Value)) { $Options.Value } else { $Options.Text }
+            if ([string]::IsNullOrWhiteSpace($keysText)) {
+                throw "SendKeys requires -Value or -Text."
+            }
+
+            Send-UiSendKeys -KeysText $keysText
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "SendKeys"
+                KeysText = $keysText
+                Window = $windowSummary
+                Target = $targetSummary
+            }
+        }
+
+        "State" {
+            return Get-ProbePayload -Process $process -RepoRoot $Options.RepoRoot -OutputPath $Options.OutputPath -MaxResults $Options.MaxResults -WithCapture
+        }
+
+        "Diagnostics" {
+            return Get-ProbePayload -Process $process -RepoRoot $Options.RepoRoot -OutputPath $Options.OutputPath -MaxResults $Options.MaxResults -WithCapture:$Options.IncludeCapture
+        }
+
+        "Probe" {
+            return Get-ProbePayload -Process $process -RepoRoot $Options.RepoRoot -OutputPath $Options.OutputPath -MaxResults $Options.MaxResults -WithCapture:$Options.IncludeCapture
+        }
+
+        "Compare" {
+            if ([string]::IsNullOrWhiteSpace($Options.ReferencePath)) {
+                throw "Compare requires -ReferencePath."
+            }
+
+            $window = if (-not [string]::IsNullOrWhiteSpace($Options.WindowTitle) -or -not [string]::IsNullOrWhiteSpace($Options.WindowAutomationId)) {
+                Resolve-UiWindow -Title $Options.WindowTitle -AutomationId $Options.WindowAutomationId -ProcessId $process.Id -PartialMatch:$Options.PartialMatch
+            }
+            else {
+                Resolve-UiWindow -ProcessId $process.Id
+            }
+
+            $resolvedCapture = [System.IO.Path]::GetFullPath((Join-Path $Options.RepoRoot $Options.OutputPath))
+            $resolvedReference = [System.IO.Path]::GetFullPath((Join-Path $Options.RepoRoot $Options.ReferencePath))
+            $resolvedDiff = [System.IO.Path]::GetFullPath((Join-Path $Options.RepoRoot $Options.DiffOutputPath))
+            Save-UiWindowScreenshot -Window $window -Path $resolvedCapture | Out-Null
+            $comparison = Compare-UiImages -ReferencePath $resolvedReference -ActualPath $resolvedCapture -DiffPath $resolvedDiff -Tolerance $Options.Tolerance -SampleStep $Options.SampleStep
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "Compare"
+                Window = Get-UiElementSummary -Element $window
+                Comparison = $comparison
+            }
+        }
+    }
+}
