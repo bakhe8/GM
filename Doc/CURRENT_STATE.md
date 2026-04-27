@@ -44,6 +44,16 @@
 - [guides/UIAutomation_Tooling_Roadmap.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UIAutomation_Tooling_Roadmap.md:1)
 - [guides/UIAutomation_Adaptive_Capabilities_Roadmap.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UIAutomation_Adaptive_Capabilities_Roadmap.md:1)
 
+ومهم جدًا الآن أن تعريفنا للأداة نفسه أصبح أوضح:
+
+- هذه الأداة **مبنية لخدمة النموذج الذكي نفسه**
+- وليست موجهة أساسًا ليستعملها بشر كأداة تشغيل يومية
+- لذلك بوابة الحكم الأساسية فيها هي:
+  - هل توسع قدرتي على الاستكشاف الحر؟
+  - هل تسمح لي بتغيير الأسلوب لحظيًا؟
+  - هل تمنع تقييدي بسيناريو أو مسار ثابت؟
+  - هل تتركني أصل إلى نفس النتيجة عبر أكثر من modality إذا احتجت؟
+
 كما بدأت الآن أول طبقة تنفيذية لمسار **adaptive capabilities** نفسه:
 
 - أضيفت جلسة قدرات حية عبر:
