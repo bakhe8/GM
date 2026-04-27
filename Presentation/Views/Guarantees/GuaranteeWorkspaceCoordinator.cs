@@ -18,6 +18,7 @@ namespace GuaranteeManager
         private readonly IExcelService _excel;
         private readonly IGuaranteeHistoryDocumentService _historyDocuments;
         private readonly IOperationalInquiryService _inquiry;
+        private readonly IShellStatusService _shellStatus;
         private readonly IUiDiagnosticsService _diagnostics;
         private readonly Action _loadFilterOptions;
         private readonly Action<int> _refreshAfterWorkflowChange;
@@ -28,6 +29,7 @@ namespace GuaranteeManager
             IExcelService excel,
             IGuaranteeHistoryDocumentService historyDocuments,
             IOperationalInquiryService inquiry,
+            IShellStatusService shellStatus,
             Action loadFilterOptions,
             Action<int> refreshAfterWorkflowChange)
         {
@@ -36,6 +38,7 @@ namespace GuaranteeManager
             _excel = excel;
             _historyDocuments = historyDocuments;
             _inquiry = inquiry;
+            _shellStatus = shellStatus;
             _diagnostics = App.CurrentApp.GetRequiredService<IUiDiagnosticsService>();
             _loadFilterOptions = loadFilterOptions;
             _refreshAfterWorkflowChange = refreshAfterWorkflowChange;
@@ -703,7 +706,7 @@ namespace GuaranteeManager
 
                 if (!string.IsNullOrWhiteSpace(result.Message))
                 {
-                    MessageBox.Show(result.Message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+                    _shellStatus.ShowSuccess(result.Message, $"الضمانات • {title}");
                 }
             }
             catch (Exception ex)
@@ -735,7 +738,9 @@ namespace GuaranteeManager
             try
             {
                 Clipboard.SetText(value);
-                MessageBox.Show($"تم نسخ {label}.", $"نسخ {label}", MessageBoxButton.OK, MessageBoxImage.Information);
+                App.CurrentApp.GetRequiredService<IShellStatusService>().ShowInfo(
+                    $"تم نسخ {label}.",
+                    "الحافظة جاهزة للاستخدام");
             }
             catch (Exception ex)
             {
@@ -753,7 +758,7 @@ namespace GuaranteeManager
                 }
 
                 onSuccess?.Invoke();
-                MessageBox.Show(successMessage, title, MessageBoxButton.OK, MessageBoxImage.Information);
+                App.CurrentApp.GetRequiredService<IShellStatusService>().ShowSuccess(successMessage, $"الضمانات • {title}");
             }
             catch (Exception ex)
             {

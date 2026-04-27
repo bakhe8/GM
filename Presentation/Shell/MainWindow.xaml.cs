@@ -39,6 +39,7 @@ namespace GuaranteeManager
                 App.CurrentApp.GetRequiredService<IOperationalInquiryService>(),
                 App.CurrentApp.GetRequiredService<IContextActionService>(),
                 App.CurrentApp.GetRequiredService<INavigationGuard>(),
+                App.CurrentApp.GetRequiredService<IShellStatusService>(),
                 App.CurrentApp.GetRequiredService<IUiDiagnosticsService>());
         }
 

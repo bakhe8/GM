@@ -1,6 +1,6 @@
 # الحالة الحالية المختصرة — GuaranteeManager
 
-**تاريخ التحديث:** 2026-04-26  
+**تاريخ التحديث:** 2026-04-27  
 **هذا الملف هو أسرع مرجع لمعرفة أين نقف الآن.**
 
 ## الجواب السريع
@@ -29,6 +29,13 @@
 
 - [guides/Focused_Surface_Review_From_Archive.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Focused_Surface_Review_From_Archive.md:1)
 - [guides/Preview2_Polish_Backlog.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Preview2_Polish_Backlog.md:1)
+
+كما أُنجزت الآن الجولات الأولى من polish على:
+
+- `لوحة التحكم`
+- `ملف الضمان`
+- `الطلبات`
+- والجزء المتكرر من `الاكتمال الصامت` داخل `الطلبات` و`الضمانات`
 
 أي أن السؤال الحالي لم يعد: "هل الشجرة نفسها منضبطة؟"  
 بل: "هل هذه baseline النظيفة تصمد تحت الاستخدام الواقعي؟"

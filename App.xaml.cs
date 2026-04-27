@@ -185,6 +185,7 @@ namespace GuaranteeManager
             ServiceCollection services = new();
 
             services.AddSingleton<IUiDiagnosticsService, UiDiagnosticsService>();
+            services.AddSingleton<IShellStatusService, ShellStatusService>();
             services.AddSingleton<IAppDialogService, AppDialogService>();
             services.AddSingleton<INavigationGuard, NavigationGuardService>();
             services.AddSingleton<SecondaryWindowManager>();

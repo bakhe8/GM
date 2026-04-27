@@ -16,17 +16,20 @@ namespace GuaranteeManager
         private readonly IDatabaseService _database;
         private readonly IWorkflowService _workflow;
         private readonly IExcelService _excel;
+        private readonly IShellStatusService _shellStatus;
         private readonly Action<int> _onChanged;
 
         public RequestsWorkspaceCoordinator(
             IDatabaseService database,
             IWorkflowService workflow,
             IExcelService excel,
+            IShellStatusService shellStatus,
             Action<int>? onChanged)
         {
             _database = database;
             _workflow = workflow;
             _excel = excel;
+            _shellStatus = shellStatus;
             _onChanged = onChanged ?? (_ => { });
         }
 
@@ -49,7 +52,7 @@ namespace GuaranteeManager
                 _workflow.RecordBankResponse(requestId, status, notes, string.IsNullOrWhiteSpace(responsePath) ? null : responsePath);
                 _onChanged(rootId);
                 reloadRequests(requestId);
-                MessageBox.Show("تم تسجيل رد البنك وتحديث قائمة الطلبات.", "الطلبات", MessageBoxButton.OK, MessageBoxImage.Information);
+                _shellStatus.ShowSuccess("تم تسجيل رد البنك.", $"الطلبات • {selectedItem.Item.GuaranteeNo}");
             }
             catch (Exception ex)
             {
@@ -177,7 +180,9 @@ namespace GuaranteeManager
             {
                 if (_excel.ExportPendingWorkflowRequestsByType(type, matching))
                 {
-                    MessageBox.Show($"تم تصدير الطلبات المعلقة من نوع {selectedItem.Item.Request.TypeLabel}.", "الطلبات", MessageBoxButton.OK, MessageBoxImage.Information);
+                    _shellStatus.ShowSuccess(
+                        $"تم تصدير الطلبات المعلقة من نوع {selectedItem.Item.Request.TypeLabel}.",
+                        $"الطلبات • {matching.Count.ToString("N0", CultureInfo.InvariantCulture)} عنصر");
                 }
             }
             catch (Exception ex)
@@ -510,7 +515,7 @@ namespace GuaranteeManager
                 _workflow.AttachResponseDocumentToClosedRequest(selectedItem.Item.Request.Id, responsePath, additionalNotes);
                 _onChanged(rootId);
                 reloadRequests(selectedItem.Item.Request.Id);
-                MessageBox.Show("تم إلحاق مستند رد البنك بهذا الطلب.", "الطلبات", MessageBoxButton.OK, MessageBoxImage.Information);
+                _shellStatus.ShowSuccess("تم إلحاق مستند رد البنك.", $"الطلبات • {selectedItem.Item.GuaranteeNo}");
             }
             catch (DeferredFilePromotionException ex)
             {
@@ -553,7 +558,7 @@ namespace GuaranteeManager
                 int rootId = guarantee.RootId ?? guarantee.Id;
                 _onChanged(rootId);
                 reloadRequests(request.Id);
-                MessageBox.Show(successMessage, title, MessageBoxButton.OK, MessageBoxImage.Information);
+                _shellStatus.ShowSuccess(successMessage, $"الطلبات • {guarantee.GuaranteeNo}");
             }
             catch (InvalidOperationException ex)
             {
@@ -581,7 +586,9 @@ namespace GuaranteeManager
             {
                 if (_excel.ExportPendingWorkflowRequestsByType(type, matching))
                 {
-                    MessageBox.Show($"تم تصدير {label}.", "الطلبات", MessageBoxButton.OK, MessageBoxImage.Information);
+                    _shellStatus.ShowSuccess(
+                        $"تم تصدير {label}.",
+                        $"الطلبات • {matching.Count.ToString("N0", CultureInfo.InvariantCulture)} عنصر");
                 }
             }
             catch (Exception ex)
@@ -590,7 +597,7 @@ namespace GuaranteeManager
             }
         }
 
-        private static void CopyText(string? text, string label)
+        private void CopyText(string? text, string label)
         {
             if (string.IsNullOrWhiteSpace(text) || text == "---")
             {
@@ -601,7 +608,9 @@ namespace GuaranteeManager
             try
             {
                 Clipboard.SetText(text);
-                MessageBox.Show($"تم نسخ {label}.", $"نسخ {label}", MessageBoxButton.OK, MessageBoxImage.Information);
+                _shellStatus.ShowInfo(
+                    $"تم نسخ {label}.",
+                    "الحافظة جاهزة للاستخدام");
             }
             catch (Exception ex)
             {

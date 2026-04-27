@@ -55,7 +55,7 @@ namespace GuaranteeManager
             _loadRequests = loadRequests;
             _closeRequested = closeRequested;
             _dataService = new RequestsWorkspaceDataService();
-            _coordinator = new RequestsWorkspaceCoordinator(database, workflow, excel, onChanged);
+            _coordinator = new RequestsWorkspaceCoordinator(database, workflow, excel, App.CurrentApp.GetRequiredService<IShellStatusService>(), onChanged);
             UiInstrumentation.Identify(this, "Requests.Workspace", "الطلبات");
             UiInstrumentation.Identify(_searchInput, "Requests.SearchBox", "بحث الطلبات");
             UiInstrumentation.Identify(_statusFilter, "Requests.Filter.Status", "حالة الطلبات");

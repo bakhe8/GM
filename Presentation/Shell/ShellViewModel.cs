@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using GuaranteeManager.Models;
 using GuaranteeManager.Services;
 using GuaranteeManager.Utils;
@@ -22,6 +23,7 @@ namespace GuaranteeManager
         private readonly GuaranteeWorkspaceCoordinator _guaranteeWorkspace;
         private readonly GuaranteeWorkspaceDataService _guaranteeData;
         private readonly INavigationGuard _navigationGuard;
+        private readonly IShellStatusService _shellStatus;
         private readonly IUiDiagnosticsService _diagnostics;
         private readonly ShellSessionCoordinator _sessionCoordinator;
         private readonly ShellWorkspaceFactory _workspaceFactory;
@@ -60,10 +62,12 @@ namespace GuaranteeManager
             IOperationalInquiryService inquiry,
             IContextActionService contextActionService,
             INavigationGuard navigationGuard,
+            IShellStatusService shellStatus,
             IUiDiagnosticsService diagnostics)
         {
             _database = database;
             _navigationGuard = navigationGuard;
+            _shellStatus = shellStatus;
             _diagnostics = diagnostics;
             _guaranteeData = new GuaranteeWorkspaceDataService(_database, contextActionService);
             _guaranteeWorkspace = new GuaranteeWorkspaceCoordinator(
@@ -72,10 +76,17 @@ namespace GuaranteeManager
                 excel,
                 historyDocuments,
                 inquiry,
+                shellStatus,
                 LoadFilterOptions,
                 RefreshAfterWorkflowChange);
             _sessionCoordinator = new ShellSessionCoordinator();
             _workspaceFactory = new ShellWorkspaceFactory(_database, workflow, _guaranteeData, new ReportsWorkspaceCoordinator(_database, excel));
+            _shellStatus.PropertyChanged += (_, _) =>
+            {
+                OnPropertyChanged(nameof(ShellStatusPrimaryText));
+                OnPropertyChanged(nameof(ShellStatusSecondaryText));
+                OnPropertyChanged(nameof(ShellStatusPrimaryBrush));
+            };
             CreateNewGuaranteeCommand = new RelayCommand(_ => CreateNewGuarantee());
             EditGuaranteeCommand = new RelayCommand(parameter => EditGuarantee(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             ApplySmartFilterCommand = new RelayCommand(_ => ApplySmartFilter());
@@ -403,6 +414,30 @@ namespace GuaranteeManager
             private set => SetProperty(ref _currentWorkspaceKey, value);
         }
 
+        public string CurrentWorkspaceDisplayTitle => CurrentWorkspaceKey switch
+        {
+            ShellWorkspaceKeys.Dashboard => "لوحة التحكم",
+            ShellWorkspaceKeys.Guarantees => "الضمانات",
+            ShellWorkspaceKeys.Requests => "الطلبات",
+            ShellWorkspaceKeys.Banks => "البنوك",
+            ShellWorkspaceKeys.Reports => "التقارير",
+            ShellWorkspaceKeys.Notifications => "التنبيهات",
+            ShellWorkspaceKeys.Settings => "الإعدادات",
+            _ => "إدارة الضمانات البنكية"
+        };
+
+        public string ShellStatusPrimaryText => _shellStatus.PrimaryText;
+
+        public string ShellStatusSecondaryText => _shellStatus.SecondaryText;
+
+        public Brush ShellStatusPrimaryBrush => _shellStatus.Tone switch
+        {
+            ShellStatusTone.Success => Brushes.White,
+            ShellStatusTone.Warning => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FDE68A")),
+            ShellStatusTone.Error => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FCA5A5")),
+            _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D7E6FF"))
+        };
+
         public string SearchText
         {
             get => _searchText;
@@ -462,9 +497,10 @@ namespace GuaranteeManager
             IOperationalInquiryService inquiry,
             IContextActionService contextActionService,
             INavigationGuard navigationGuard,
+            IShellStatusService shellStatus,
             IUiDiagnosticsService diagnostics)
         {
-            var viewModel = new ShellViewModel(database, workflow, excel, historyDocuments, inquiry, contextActionService, navigationGuard, diagnostics);
+            var viewModel = new ShellViewModel(database, workflow, excel, historyDocuments, inquiry, contextActionService, navigationGuard, shellStatus, diagnostics);
             viewModel.LoadFilterOptions();
             viewModel.Refresh();
             viewModel.ShowDashboardWorkspace();
@@ -1473,6 +1509,7 @@ namespace GuaranteeManager
         private void ActivateWorkspace(string key, FrameworkElement? content)
         {
             CurrentWorkspaceKey = key;
+            OnPropertyChanged(nameof(CurrentWorkspaceDisplayTitle));
             ActiveWorkspaceContent = content;
             _diagnostics.RecordEvent(
                 "shell.navigation",

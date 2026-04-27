@@ -373,18 +373,18 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="جاهز"
-                               Foreground="#D7E6FF"
+                    <TextBlock Text="{Binding ShellStatusPrimaryText}"
+                               Foreground="{Binding ShellStatusPrimaryBrush}"
                                FontSize="11"
                                FontWeight="SemiBold"
                                VerticalAlignment="Center" />
                     <Border Width="1" Height="12" Background="#2A4B76" Margin="10,0" />
-                    <TextBlock Text="قاعدة البيانات متصلة"
+                    <TextBlock Text="{Binding ShellStatusSecondaryText}"
                                Foreground="#94A3C8"
                                FontSize="11"
                                VerticalAlignment="Center" />
                     <Border Width="1" Height="12" Background="#2A4B76" Margin="10,0" />
-                    <TextBlock Text="إدارة الضمانات البنكية"
+                    <TextBlock Text="{Binding CurrentWorkspaceDisplayTitle}"
                                Foreground="#94A3C8"
                                FontSize="11"
                                VerticalAlignment="Center" />
