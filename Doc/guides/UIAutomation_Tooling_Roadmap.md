@@ -7,6 +7,23 @@
 
 ---
 
+## حالة التنفيذ الحالية
+
+- **Phase 0**: مثبتة عمليًا
+  - baseline الحالية موثقة
+  - مسارات الاستخدام الحرجة معروفة
+  - قياسات الأداء الأخيرة محفوظة
+- **Phase 1**: بدأت فعليًا
+  - استُخرجت طبقة `Windows/Dialog` إلى:
+    - [scripts/modules/UiAutomation.Windows.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Windows.ps1:1)
+    - [scripts/modules/UiAutomation.Dialogs.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Dialogs.ps1:1)
+  - وبقي [UIAutomation.Acceptance.psm1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/UIAutomation.Acceptance.psm1:1) كـ facade متوافقة
+  - والتحقق التشغيلي الحالي:
+    - `NewGuaranteeDiscard` نجح
+    - `All` نجحت على جلسة نظيفة
+
+---
+
 ## لماذا هذه الخطة؟
 
 الأداة لم تعد مجرد سكربت مساعد. هي الآن طبقة تشغيل وتشخيص نعتمد عليها في:

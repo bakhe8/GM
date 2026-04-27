@@ -43,6 +43,16 @@
 
 - [guides/UIAutomation_Tooling_Roadmap.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UIAutomation_Tooling_Roadmap.md:1)
 
+وأول خطوة تنفيذية منه بدأت فعليًا الآن:
+
+- استخراج طبقة `Windows/Dialog` إلى:
+  - [scripts/modules/UiAutomation.Windows.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Windows.ps1:1)
+  - [scripts/modules/UiAutomation.Dialogs.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Dialogs.ps1:1)
+- مع إبقاء [scripts/UIAutomation.Acceptance.psm1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/UIAutomation.Acceptance.psm1:1) كـ facade متوافقة
+- والتحقق التشغيلي الحالي على هذا الاستخلاص نجح في:
+  - `NewGuaranteeDiscard`
+  - `All` على جلسة نظيفة
+
 كما أضيف الآن مرجع حي لمراجعة نضج السطوح الأساسية الأربع مقابل التوجيه المستخرج من الأرشيف:
 
 - [guides/Focused_Surface_Review_From_Archive.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Focused_Surface_Review_From_Archive.md:1)
