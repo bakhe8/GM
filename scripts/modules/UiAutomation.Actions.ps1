@@ -99,15 +99,31 @@ function Invoke-UiExploreAction {
     switch ($Options.Action) {
         "HostState" {
             $sessionState = Invoke-UiCapabilityBrokerSweep -Persist
+            $mediaSession = Invoke-UiMediaBrokerSweep -Persist
             return [pscustomobject]@{
                 Action = "HostState"
                 SessionPath = Get-UiCapabilitySessionPath
                 ObservationsPath = Get-UiCapabilityObservationPath
                 CapabilitySession = $sessionState
+                MediaSessionPath = Get-UiMediaSessionPath
+                MediaSession = $mediaSession
+                MediaProviders = [object[]]@(Get-UiMediaProviderCatalog)
                 CapabilityDefinitions = [object[]]@(Get-UiCapabilityDefinitions)
                 RecentCapabilityObservations = [object[]]@(Get-UiCapabilityObservationEntries -MaxCount $Options.MaxResults)
                 RecentCapabilityDecisions = if ($null -ne $sessionState) { [object[]]@($sessionState.RecentDecisions | Select-Object -First $Options.MaxResults) } else { @() }
                 CapabilityOperatorView = Get-UiCapabilityOperatorView -SessionState $sessionState
+            }
+        }
+
+        "MediaState" {
+            $mediaSession = Invoke-UiMediaBrokerSweep -Persist
+            return [pscustomobject]@{
+                Action = "MediaState"
+                MediaSessionPath = Get-UiMediaSessionPath
+                MediaSession = $mediaSession
+                MediaProviders = [object[]]@(Get-UiMediaProviderCatalog)
+                PreferredVideoProvider = Get-UiPreferredMediaProvider -Kind "Video"
+                PreferredAudioProvider = Get-UiPreferredMediaProvider -Kind "Audio"
             }
         }
 
@@ -162,6 +178,42 @@ function Invoke-UiExploreAction {
                 ProcessId = $process.Id
                 MainWindowHandle = $process.MainWindowHandle
                 Window = Get-UiElementSummary -Element $window
+            }
+        }
+
+        "VideoOn" {
+            $sessionState = Start-UiVideoCaptureSidecar -ProcessId $process.Id -Reason $Options.Reason -LeaseMilliseconds $Options.LeaseMilliseconds
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "VideoOn"
+                MediaSession = $sessionState
+            }
+        }
+
+        "VideoOff" {
+            $sessionState = Stop-UiVideoCaptureSidecar -Reason $Options.Reason
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "VideoOff"
+                MediaSession = $sessionState
+            }
+        }
+
+        "AudioOn" {
+            $sessionState = Start-UiAudioCaptureSidecar -Reason $Options.Reason -LeaseMilliseconds $Options.LeaseMilliseconds
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "AudioOn"
+                MediaSession = $sessionState
+            }
+        }
+
+        "AudioOff" {
+            $sessionState = Stop-UiAudioCaptureSidecar -Reason $Options.Reason
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "AudioOff"
+                MediaSession = $sessionState
             }
         }
 

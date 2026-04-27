@@ -266,6 +266,110 @@ try {
         return $payload
     } | Out-Null
 
+    Invoke-RegressionStep -Name "media-state-provider-catalog" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "MediaState"
+            ReuseRunningSession = $true
+        }
+
+        $psrProvider = @($payload.MediaProviders | Where-Object Name -eq "Psr.ScreenTrace" | Select-Object -First 1)
+        Assert-RegressionCondition ($psrProvider.Count -eq 1) "MediaState did not expose Psr.ScreenTrace."
+        Assert-RegressionCondition ([string]$psrProvider[0].Availability -eq "available") "Psr.ScreenTrace should be available on this machine."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "video-sidecar-start" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "VideoOn"
+            LeaseMilliseconds = 8000
+            Reason = "integration-direct-video"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.MediaSession.VideoCapture.IsActive) "VideoOn did not activate the video sidecar."
+        Assert-RegressionCondition ([string]$payload.MediaSession.VideoCapture.ProviderName -eq "Psr.ScreenTrace") "VideoOn did not use Psr.ScreenTrace."
+        Assert-RegressionCondition ([int]$payload.MediaSession.VideoCapture.LiveProcessCount -ge 1) "VideoOn did not leave a live provider process running."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "video-sidecar-restart-cleanly" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "VideoOn"
+            LeaseMilliseconds = 8000
+            Reason = "integration-direct-video-restart"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.MediaSession.VideoCapture.IsActive) "Restarting VideoOn left the sidecar inactive."
+        Assert-RegressionCondition ([int]$payload.MediaSession.VideoCapture.LiveProcessCount -ge 1) "Restarting VideoOn did not recover a live provider process."
+        $restartEvidence = @($payload.MediaSession.RecentEvents | Where-Object {
+            ($_.Kind -eq "provider-preflight-cleanup") -or
+            ($_.Kind -eq "video-stopped" -and [string]$_.Payload.Reason -eq "restart-before-start")
+        } | Select-Object -First 1)
+        Assert-RegressionCondition ($restartEvidence.Count -eq 1) "VideoOn restart did not record a clean single-instance handoff."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "video-sidecar-stop" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "VideoOff"
+            Reason = "integration-direct-video-stop"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition (-not $payload.MediaSession.VideoCapture.IsActive) "VideoOff did not stop the video sidecar."
+        Assert-RegressionCondition ([string]$payload.MediaSession.VideoCapture.ArtifactStatus -in @("saved", "missing")) "VideoOff did not report a clear artifact status."
+        if ([string]$payload.MediaSession.VideoCapture.ArtifactStatus -eq "saved") {
+            Assert-RegressionCondition (Test-Path -LiteralPath ([string]$payload.MediaSession.VideoCapture.ArtifactPath)) "VideoOff artifact path did not exist on disk."
+        }
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "capability-video-start" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOn"
+            CapabilityName = "VideoCapture"
+            LeaseMilliseconds = 8000
+            Reason = "integration-capability-video"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Capability.Name -eq "VideoCapture") "CapabilityOn did not activate VideoCapture."
+        Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "VideoCapture").Count -eq 1) "VideoCapture was not present in the active capability session."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "hoststate-media-after-capability-video" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "HostState"
+        }
+
+        Assert-RegressionCondition ($payload.MediaSession.VideoCapture.IsActive) "HostState did not report an active media video sidecar after CapabilityOn."
+        Assert-RegressionCondition ([string]$payload.MediaSession.VideoCapture.ProviderName -eq "Psr.ScreenTrace") "HostState media session did not report Psr.ScreenTrace."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "capability-video-stop" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOff"
+            CapabilityName = "VideoCapture"
+            Reason = "integration-capability-video-stop"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "VideoCapture").Count -eq 0) "VideoCapture remained active after CapabilityOff."
+        $mediaState = Invoke-UiExploreJson -Arguments @{
+            Action = "MediaState"
+            ReuseRunningSession = $true
+        }
+        Assert-RegressionCondition (-not $mediaState.MediaSession.VideoCapture.IsActive) "MediaState still showed an active video sidecar after CapabilityOff."
+        Assert-RegressionCondition ([string]$mediaState.MediaSession.VideoCapture.ArtifactStatus -in @("saved", "missing")) "Capability-driven video stop did not report a clear artifact status."
+        if ([string]$mediaState.MediaSession.VideoCapture.ArtifactStatus -eq "saved") {
+            Assert-RegressionCondition (Test-Path -LiteralPath ([string]$mediaState.MediaSession.VideoCapture.ArtifactPath)) "Capability-driven video stop did not preserve a saved artifact."
+        }
+        return $payload
+    } | Out-Null
+
     Invoke-RegressionStep -Name "enable-mouse-trace" -ScriptBlock {
         $payload = Invoke-UiExploreJson -Arguments @{
             Action = "CapabilityOn"

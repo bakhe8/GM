@@ -74,6 +74,12 @@
     - `New-UiContactSheet`
     - `Compare-UiImages`
     - وإنتاج diff image بشكل موثوق
+  - ومع تقدم adaptive roadmap صار لدينا الآن أيضًا طبقة وسائط مستقلة:
+    - [scripts/modules/UiAutomation.Media.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Media.ps1:1)
+  - وهذه الطبقة لا تثقل الـ core دائمًا، بل تضيف:
+    - provider catalog واضح
+    - media session قابلة للقراءة
+    - single-instance handling لمزود الفيديو الحالي
 
 ---
 

@@ -143,7 +143,7 @@ try {
         $payload = @(Get-UiSupportedApi)
         Assert-RegressionCondition ($payload.Count -ge 6) "Supported API catalog returned fewer categories than expected."
         $categories = @($payload | ForEach-Object { $_.Category })
-        foreach ($required in @("Session", "Diagnostics", "Windows", "Elements", "Dialogs", "Capture")) {
+        foreach ($required in @("Session", "Diagnostics", "Windows", "Elements", "Dialogs", "Capture", "Media")) {
             Assert-RegressionCondition ($categories -contains $required) "Supported API catalog is missing category '$required'."
         }
 
@@ -205,6 +205,25 @@ try {
         return $summary
     } | Out-Null
 
+    Invoke-RegressionStep -Name "media-provider-catalog-shape" -ScriptBlock {
+        $providers = @(Get-UiMediaProviderCatalog)
+        Assert-RegressionCondition ($providers.Count -ge 2) "Media provider catalog returned fewer providers than expected."
+        $psrProvider = @($providers | Where-Object Name -eq "Psr.ScreenTrace" | Select-Object -First 1)
+        Assert-RegressionCondition ($psrProvider.Count -eq 1) "Media provider catalog is missing Psr.ScreenTrace."
+        Assert-RegressionCondition ($psrProvider[0].Kind -eq "Video") "Psr.ScreenTrace should be exposed as a video provider."
+        Assert-RegressionCondition ($psrProvider[0].Availability -in @("available", "unavailable")) "Psr.ScreenTrace returned an invalid availability label."
+        return $providers
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "media-session-state-shape" -ScriptBlock {
+        $state = Get-UiMediaSessionState
+        Assert-RegressionCondition ($null -ne $state.SessionId) "Media session state is missing SessionId."
+        Assert-RegressionCondition ($null -ne $state.VideoCapture) "Media session state is missing VideoCapture."
+        Assert-RegressionCondition ($null -ne $state.AudioCapture) "Media session state is missing AudioCapture."
+        Assert-RegressionCondition ($state.PSObject.Properties.Name -contains "RecentArtifacts") "Media session state is missing RecentArtifacts."
+        return $state
+    } | Out-Null
+
     Invoke-RegressionStep -Name "cursor-position-shape" -ScriptBlock {
         $cursor = Get-UiCursorPosition
         Assert-RegressionCondition ($null -ne $cursor) "Get-UiCursorPosition did not return a cursor payload."
@@ -239,6 +258,14 @@ try {
         Assert-RegressionCondition ([string]$mouseTraceDefinition[0].ProviderState -eq "available") "MouseTrace should already be exposed as available."
         Assert-RegressionCondition ([int]$mouseTraceDefinition[0].DefaultSampleCount -ge 2) "MouseTrace definition should expose a multi-sample default."
         Assert-RegressionCondition ([int]$mouseTraceDefinition[0].DefaultIntervalMs -ge 0) "MouseTrace definition returned an invalid interval."
+
+        $videoDefinition = @($definitions | Where-Object Name -eq "VideoCapture" | Select-Object -First 1)
+        Assert-RegressionCondition ($videoDefinition.Count -eq 1) "VideoCapture definition could not be resolved."
+        Assert-RegressionCondition ([string]$videoDefinition[0].ProviderState -in @("available", "unavailable")) "VideoCapture returned an invalid provider state."
+
+        $audioDefinition = @($definitions | Where-Object Name -eq "AudioCapture" | Select-Object -First 1)
+        Assert-RegressionCondition ($audioDefinition.Count -eq 1) "AudioCapture definition could not be resolved."
+        Assert-RegressionCondition ([string]$audioDefinition[0].ProviderState -in @("available", "unavailable")) "AudioCapture returned an invalid provider state."
 
         return $definitions
     } | Out-Null

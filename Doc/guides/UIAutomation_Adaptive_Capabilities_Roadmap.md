@@ -322,8 +322,8 @@
 - `BurstCapture` — **available**
 - `AutoCaptureOnFailure` — **available**
 - `ReactiveAssist` — **available**
-- `VideoCapture` — **planned**
-- `AudioCapture` — **planned**
+- `VideoCapture` — **available**
+- `AudioCapture` — **unavailable**
 - `MouseTrace` — **available**
 
 كما أُنجز الآن أول slice فعلية من provider layer نفسها:
@@ -445,6 +445,47 @@
 - unit: `17/17`
 - smoke: `10/10`
 - integration: `43/43`
+
+ثم أُنجزت الآن **طبقة Media Foundation** نفسها قبل فتح الفيديو/الصوت الكاملين:
+
+- أضيفت طبقة مستقلة هنا:
+  - [scripts/modules/UiAutomation.Media.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Media.ps1:1)
+- وصارت الأداة تملك الآن:
+  - `MediaState`
+  - `VideoOn`
+  - `VideoOff`
+  - catalog صريح للمزودات المتاحة
+  - media session مستقلة قابلة للقراءة
+  - single-instance cleanup هادئ قبل أي start جديدة
+- كما صارت `VideoCapture` capability نفسها موصولة فعليًا بهذه الطبقة:
+  - `CapabilityOn -CapabilityName VideoCapture`
+  - `CapabilityOff -CapabilityName VideoCapture`
+
+والمزود الأول الحالي هو:
+
+- `Psr.ScreenTrace`
+  - متاح على هذه البيئة
+  - مناسب كأساس sidecar فيديو خفيف
+  - لكنه ما زال يعتمد على سلوك `Steps Recorder` نفسه
+
+وهنا النقطة الصادقة المهمة:
+
+- الأداة لم تعد تدّعي أن مزود الفيديو "أنشأ ملفًا" دائمًا
+- بل صارت تصرح بوضوح داخل media session وevents:
+  - `ArtifactStatus = saved`
+  - أو `ArtifactStatus = missing`
+- أي أن الذكاء هنا لا يقتصر على التشغيل، بل يشمل **الصدق التشغيلي** أيضًا:
+  - sidecar بدأت
+  - single-instance ضُبطت
+  - الإيقاف حصل
+  - ثم يُشرح بوضوح هل خرج ملف artifact فعلية أم لا
+
+والتحقق الحالي بعد هذه الطبقة ناجح ضمن:
+
+- unit: `19/19`
+- smoke: `10/10`
+- integration: `50/50`
+- freedom: `9/9`
 
 ---
 

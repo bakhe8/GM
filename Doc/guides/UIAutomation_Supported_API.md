@@ -135,6 +135,33 @@
 - `New-UiContactSheet`
 - `Compare-UiImages`
 
+### Media
+
+- `Get-UiMediaSessionPath`
+- `Get-UiMediaSessionState`
+- `Get-UiMediaProviderCatalog`
+- `Invoke-UiMediaBrokerSweep`
+- `Start-UiVideoCaptureSidecar`
+- `Stop-UiVideoCaptureSidecar`
+- `Start-UiAudioCaptureSidecar`
+- `Stop-UiAudioCaptureSidecar`
+
+هذه الفئة لا تضيف “وسائط ثقيلة دائمًا”، بل تضيف **أساسًا مرنًا عند الطلب**:
+
+- مزود فيديو يمكن تشغيله فقط عند الحاجة
+- حالة session مستقلة وقابلة للقراءة
+- single-instance cleanup هادئ قبل أي start جديدة
+- إيقاف واضح يعيد الأداة إلى وضعها الخفيف
+
+ومهم أيضًا هنا:
+
+- `Psr.ScreenTrace` هي أول sidecar فيديو متاحة الآن على هذه البيئة
+- `AudioCapture` ما زالت غير متاحة كمزود فعلي
+- وقد تكون artifact الفيديو:
+  - `saved`
+  - أو `missing`
+  حسب ما إذا كان المزود نفسه أخرج ملفًا محفوظًا أم لا
+
 ### Capabilities
 
 - `Get-UiCapabilityDefinitions`

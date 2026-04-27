@@ -1,4 +1,7 @@
 function Get-UiCapabilityDefinitions {
+    $videoProvider = Get-UiPreferredMediaProvider -Kind "Video"
+    $audioProvider = Get-UiPreferredMediaProvider -Kind "Audio"
+
     return @(
         [pscustomobject]@{
             Name = "BurstCapture"
@@ -39,16 +42,26 @@ function Get-UiCapabilityDefinitions {
         [pscustomobject]@{
             Name = "VideoCapture"
             Category = "Media"
-            ProviderState = "planned"
+            ProviderState = if ($null -ne $videoProvider) { "available" } else { "unavailable" }
             DefaultLeaseMs = 4000
-            Description = "تسجيل فيديو قصير عند الطلب أو عند trigger."
+            Description = if ($null -ne $videoProvider) {
+                "تسجيل فيديو/تتبع بصري عند الطلب عبر المزود $([string]$videoProvider.Name)."
+            }
+            else {
+                "تسجيل فيديو قصير عند الطلب أو عند trigger."
+            }
         },
         [pscustomobject]@{
             Name = "AudioCapture"
             Category = "Media"
-            ProviderState = "planned"
+            ProviderState = if ($null -ne $audioProvider) { "available" } else { "unavailable" }
             DefaultLeaseMs = 4000
-            Description = "التقاط صوت قصير عند الحاجة فقط."
+            Description = if ($null -ne $audioProvider) {
+                "التقاط صوت قصير عند الحاجة عبر المزود $([string]$audioProvider.Name)."
+            }
+            else {
+                "التقاط صوت قصير عند الحاجة فقط."
+            }
         },
         [pscustomobject]@{
             Name = "MouseTrace"
@@ -237,6 +250,7 @@ function Invoke-UiCapabilityBrokerSweep {
 
     $activeCapabilities = @($SessionState.ActiveCapabilities)
     if ($activeCapabilities.Count -eq 0) {
+        $null = Invoke-UiMediaBrokerSweep -Persist
         return $SessionState
     }
 
@@ -247,6 +261,16 @@ function Invoke-UiCapabilityBrokerSweep {
         $expiresAtText = [string]$capability.ExpiresAt
         if (-not [string]::IsNullOrWhiteSpace($expiresAtText) -and [DateTimeOffset]::Parse($expiresAtText) -le $now) {
             $changed = $true
+            switch -Regex ([string]$capability.Name) {
+                "^VideoCapture$" {
+                    $null = Stop-UiVideoCaptureSidecar -Reason "capability-expired"
+                    break
+                }
+                "^AudioCapture$" {
+                    $null = Stop-UiAudioCaptureSidecar -Reason "capability-expired"
+                    break
+                }
+            }
             Add-UiCapabilityHistoryEntry -SessionState $SessionState -CapabilityName $capability.Name -Event "expired" -Reason ([string]$capability.Reason) -Metadata $capability.Metadata
             Write-UiTimelineEvent -Action "Capability.$($capability.Name)" -Stage "expired" -Success $true -Payload @{
                 CapabilityName = $capability.Name
@@ -264,6 +288,8 @@ function Invoke-UiCapabilityBrokerSweep {
         $SessionState.UpdatedAt = (Get-Date).ToString("o")
         Save-UiCapabilitySessionState -SessionState $SessionState | Out-Null
     }
+
+    $null = Invoke-UiMediaBrokerSweep -Persist
 
     return $SessionState
 }
@@ -296,7 +322,7 @@ function Enable-UiCapability {
 
     $definition = Resolve-UiCapabilityDefinition -CapabilityName $CapabilityName
     if ($definition.ProviderState -ne "available") {
-        throw "Capability '$CapabilityName' is not implemented yet. Current state: $($definition.ProviderState)."
+        throw "Capability '$CapabilityName' is not available right now. Current state: $($definition.ProviderState)."
     }
 
     $session = Start-UiCapabilitySession -ProcessId $ProcessId -Mode "free-explore" -Reason "capability-enable"
@@ -317,6 +343,17 @@ function Enable-UiCapability {
         ActivatedAt = (Get-Date).ToString("o")
         ExpiresAt = $expiresAt
         Metadata = $Metadata
+    }
+
+    switch -Regex ($definition.Name) {
+        "^VideoCapture$" {
+            $null = Start-UiVideoCaptureSidecar -ProcessId $ProcessId -Reason $Reason -LeaseMilliseconds $effectiveLeaseMs
+            break
+        }
+        "^AudioCapture$" {
+            $null = Start-UiAudioCaptureSidecar -Reason $Reason -LeaseMilliseconds $effectiveLeaseMs
+            break
+        }
     }
 
     $session.ActiveCapabilities = @($existing + $activeCapability)
@@ -356,6 +393,17 @@ function Disable-UiCapability {
 
     if ($after.Count -eq $before.Count) {
         return $session
+    }
+
+    switch -Regex ($CapabilityName) {
+        "^VideoCapture$" {
+            $null = Stop-UiVideoCaptureSidecar -Reason $Reason
+            break
+        }
+        "^AudioCapture$" {
+            $null = Stop-UiAudioCaptureSidecar -Reason $Reason
+            break
+        }
     }
 
     $session.ActiveCapabilities = $after

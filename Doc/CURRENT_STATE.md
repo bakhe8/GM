@@ -75,8 +75,8 @@
   - `BurstCapture` — متاحة
   - `AutoCaptureOnFailure` — متاحة
   - `ReactiveAssist` — متاحة
-  - `VideoCapture` — planned
-  - `AudioCapture` — planned
+  - `VideoCapture` — متاحة
+  - `AudioCapture` — غير متاحة حاليًا
   - `MouseTrace` — متاحة
 - ثم نضجت `BurstCapture` نفسها إلى أول provider layer فعلية:
   - لم تعد لقطة مفردة بعد الفعل
@@ -156,6 +156,22 @@
     - `tooling unit`: `17/17`
     - `tooling smoke`: `10/10`
     - `tooling integration`: `43/43`
+    - `tooling freedom`: `9/9`
+  - ثم أُنجزت الآن طبقة **Media Foundation** نفسها:
+    - [scripts/modules/UiAutomation.Media.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Media.ps1:1)
+    - وصارت الأداة تدعم:
+      - `MediaState`
+      - `VideoOn`
+      - `VideoOff`
+      - مع single-instance cleanup هادئ لـ `Steps Recorder`
+      - وحالة صريحة توضّح هل artifact الفيديو:
+        - `saved`
+        - أو `missing`
+    - كما صارت `VideoCapture` capability موصولة فعليًا بهذه الطبقة
+  - والتحقق الحالي بعد هذه الخطوة صار:
+    - `tooling unit`: `19/19`
+    - `tooling smoke`: `10/10`
+    - `tooling integration`: `50/50`
     - `tooling freedom`: `9/9`
 
 وأول خطوة تنفيذية منه بدأت فعليًا الآن:

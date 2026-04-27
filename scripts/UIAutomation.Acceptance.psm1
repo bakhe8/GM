@@ -124,6 +124,7 @@ function Get-UiStorageRoot {
 . (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Capture.ps1")
 . (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Diagnostics.ps1")
 . (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Host.ps1")
+. (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Media.ps1")
 . (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Capabilities.ps1")
 
 function Start-UiTargetApplication {
@@ -383,6 +384,19 @@ $script:UiSupportedApiCatalog = @(
             "Save-UiDesktopScreenshot",
             "New-UiContactSheet",
             "Compare-UiImages")
+    },
+    [pscustomobject]@{
+        Category = "Media"
+        Description = "إدارة مزودي الفيديو والصوت عند الطلب، مع single-instance cleanup وحالة قابلة للقراءة."
+        Commands = @(
+            "Get-UiMediaSessionPath",
+            "Get-UiMediaSessionState",
+            "Get-UiMediaProviderCatalog",
+            "Invoke-UiMediaBrokerSweep",
+            "Start-UiVideoCaptureSidecar",
+            "Stop-UiVideoCaptureSidecar",
+            "Start-UiAudioCaptureSidecar",
+            "Stop-UiAudioCaptureSidecar")
     },
     [pscustomobject]@{
         Category = "Capabilities"

@@ -443,6 +443,8 @@ function Get-ProbePayload {
     $recentEvents = @(Get-UiRecentEvents -MaxCount $MaxResults)
     $recentTimeline = @(Get-UiTimelineEntries -MaxCount $MaxResults)
     $capabilitySession = Invoke-UiCapabilityBrokerSweep -Persist
+    $mediaSession = Invoke-UiMediaBrokerSweep -Persist
+    $mediaProviders = @(Get-UiMediaProviderCatalog)
     $recentCapabilityObservations = @(Get-UiCapabilityObservationEntries -MaxCount $MaxResults)
     $recentCapabilityDecisions = if ($null -ne $capabilitySession) { @($capabilitySession.RecentDecisions | Select-Object -First $MaxResults) } else { @() }
     $capabilityOperatorView = Get-UiCapabilityOperatorView -SessionState $capabilitySession
@@ -471,6 +473,8 @@ function Get-ProbePayload {
         RecentEvents = [object[]]$recentEvents
         RecentTimeline = [object[]]$recentTimeline
         CapabilitySession = $capabilitySession
+        MediaSession = $mediaSession
+        MediaProviders = [object[]]$mediaProviders
         RecentCapabilityObservations = [object[]]$recentCapabilityObservations
         RecentCapabilityDecisions = [object[]]$recentCapabilityDecisions
         CapabilityOperatorView = $capabilityOperatorView
@@ -481,6 +485,10 @@ function Get-ProbePayload {
             EventCount = $recentEvents.Count
             TimelineCount = $recentTimeline.Count
             ActiveCapabilityCount = if ($null -ne $capabilitySession -and $null -ne $capabilitySession.ActiveCapabilities) { @($capabilitySession.ActiveCapabilities).Count } else { 0 }
+            ActiveMediaCount = @(
+                if ($null -ne $mediaSession -and $null -ne $mediaSession.VideoCapture -and $mediaSession.VideoCapture.IsActive) { "Video" }
+                if ($null -ne $mediaSession -and $null -ne $mediaSession.AudioCapture -and $mediaSession.AudioCapture.IsActive) { "Audio" }
+            ).Count
             OpenWindowCount = $meaningfulWindows.Count
             RawOpenWindowCount = $windows.Count
             ActiveDialogTitle = if ($null -ne $externalForegroundWindow) { $externalForegroundWindow.Name } elseif ($null -ne $dialogWindow) { $dialogWindow.Name } else { $null }

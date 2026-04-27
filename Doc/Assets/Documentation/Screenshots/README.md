@@ -148,6 +148,9 @@
 .\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName MouseTrace -Reason "trace-complete"
 .\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName ReactiveAssist -Reason "reactive-complete"
 .\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName AutoCaptureOnFailure -Reason "failure-capture-complete"
+.\\scripts\\ui_explore.ps1 -Action MediaState
+.\\scripts\\ui_explore.ps1 -Action VideoOn -LeaseMilliseconds 5000 -Reason "watch-this-branch"
+.\\scripts\\ui_explore.ps1 -Action VideoOff -Reason "enough-video"
 .\\scripts\\ui_explore.ps1 -Action MouseMove -WindowAutomationId "Shell.MainWindow" -AutomationId "Shell.Sidebar.Settings"
 .\\scripts\\ui_explore.ps1 -Action MouseClick -WindowAutomationId "Shell.MainWindow" -AutomationId "Shell.Sidebar.Settings"
 .\\scripts\\ui_explore.ps1 -Action MouseHover -WindowAutomationId "Shell.MainWindow" -AutomationId "Shell.Sidebar.Guarantees" -HoverMilliseconds 900
@@ -216,6 +219,18 @@
   - recent capability decisions
   - capability operator view
 - `CapabilityOn` و`CapabilityOff` تسمحان الآن بتفعيل قدرات لحظية مثل `BurstCapture` داخل نفس الاستكشاف الحر، ثم إطفائها من غير الخروج من الجلسة.
+- `MediaState` تعطي snapshot مستقلة لمزودي الوسائط أنفسهم:
+  - catalog المزودات المتاحة
+  - session الفيديو/الصوت الحالية
+  - وهل المزود نشط الآن أم عاد للوضع الهادئ
+- `VideoOn` و`VideoOff` تضيفان أول sidecar فيديو عند الطلب:
+  - تعتمد الآن على `Psr.ScreenTrace`
+  - تنظف أي instance قديمة بهدوء قبل البدء
+  - وتحافظ على single-instance واضحة بدل الرسائل المزعجة من `Steps Recorder`
+  - كما تسجل بوضوح هل artifact النهائية:
+    - `saved`
+    - أو `missing`
+  - حتى لا يبدو سلوك المزود غامضًا للمشغّل
 - `BurstCapture` نفسها لم تعد مجرد لقطة واحدة:
   - عند تفعيلها تلتقط الآن **عدة frames متتابعة**
   - تحفظ كل frame على حدة
