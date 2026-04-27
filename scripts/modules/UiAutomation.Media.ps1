@@ -830,6 +830,63 @@ function Get-UiMediaSessionState {
     return Update-UiMediaLiveProcessCounts -SessionState $sessionState
 }
 
+function Refresh-UiActiveMediaLeases {
+    param(
+        $SessionState = $null,
+        [switch]$Persist
+    )
+
+    if ($null -eq $SessionState) {
+        $SessionState = Get-UiMediaSessionState
+    }
+
+    if ($null -eq $SessionState) {
+        return $null
+    }
+
+    $now = [DateTimeOffset]::Now
+    $changed = $false
+    foreach ($channelName in @("VideoCapture", "AudioCapture")) {
+        $channel = $SessionState.$channelName
+        if ($null -eq $channel -or -not [bool]$channel.IsActive) {
+            continue
+        }
+
+        $expiresAtText = [string]$channel.ExpiresAt
+        if ([string]::IsNullOrWhiteSpace($expiresAtText)) {
+            continue
+        }
+
+        try {
+            $expiresAt = [DateTimeOffset]::Parse($expiresAtText)
+        }
+        catch {
+            continue
+        }
+
+        if ($expiresAt -le $now) {
+            continue
+        }
+
+        $leaseMs = [int]$channel.LeaseMilliseconds
+        if ($leaseMs -le 0) {
+            continue
+        }
+
+        $newExpiry = $now.AddMilliseconds($leaseMs).ToString("o")
+        if ($newExpiry -ne $expiresAtText) {
+            $channel.ExpiresAt = $newExpiry
+            $changed = $true
+        }
+    }
+
+    if ($Persist -and $changed) {
+        $SessionState = Save-UiMediaSessionState -SessionState $SessionState
+    }
+
+    return $SessionState
+}
+
 function Start-UiVideoCaptureSidecar {
     param(
         [int]$ProcessId = 0,

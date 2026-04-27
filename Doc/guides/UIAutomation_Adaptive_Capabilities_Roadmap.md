@@ -325,6 +325,30 @@
 - capability باسم `FaultWatch`
 - cooldown وsuppression واضحة لتفادي الإزعاج
 
+### Phase J — Exploration Heuristics
+
+الهدف:
+
+- جعل القدرات الحالية تتصرف كفريق ذكي أثناء الاستكشاف الحر
+- ترشيح modality أنسب حسب نوع الإشكال نفسه
+- ومنع انتهاء lease لقدرة مهمة بينما الجلسة ما زالت نشطة فعليًا
+
+المخرجات:
+
+- `Get-UiExplorationHeuristicDefinitions`
+- `Get-UiHeuristicStatePayload`
+- `Get-UiHeuristicOperatorView`
+- استراتيجيات:
+  - `runtime-fault`
+  - `external-window`
+  - `stubborn-control`
+  - `visual-anomaly`
+- قرارات واضحة:
+  - `triggered`
+  - `guided`
+  - `suppressed`
+- keepalive خفيف للقدرات والوسائط النشطة أثناء نفس الاستكشاف
+
 ---
 
 ## ما الذي بدأ فعليًا الآن؟
@@ -593,6 +617,29 @@
 - smoke: `10/10`
 - integration: `56/56`
 - freedom: `9/9`
+
+ثم أُنجزت الآن **Phase J — Exploration Heuristics**:
+
+- أضيفت طبقة:
+  - [scripts/modules/UiAutomation.Heuristics.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Heuristics.ps1:1)
+- وصارت الأداة تعرض:
+  - `HeuristicRecommendations`
+  - `PrimaryHeuristicRecommendation`
+  - `RecentHeuristicDecisions`
+  - `HeuristicOperatorView`
+- والاستراتيجيات الحالية هي:
+  - `runtime-fault`
+  - `external-window`
+  - `stubborn-control`
+  - `visual-anomaly`
+- كما أُضيف keepalive خفيف للقدرات والوسائط النشطة:
+  - يمدد lease أثناء نفس الاستكشاف الحي
+  - ويمنع أن تختفي capability مهمة بين خطوتين بينما الأداة ما زالت تُستخدم فعليًا
+- والتحقق الحالي لهذه الطبقة صار:
+  - unit: `27/27`
+  - smoke: `10/10`
+  - integration: `70/70`
+  - freedom: `9/9`
 
 ---
 

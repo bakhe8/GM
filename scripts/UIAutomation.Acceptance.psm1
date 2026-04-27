@@ -126,6 +126,7 @@ function Get-UiStorageRoot {
 . (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Host.ps1")
 . (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Media.ps1")
 . (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Capabilities.ps1")
+. (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Heuristics.ps1")
 
 function Start-UiTargetApplication {
     param(
@@ -340,6 +341,14 @@ $script:UiSupportedApiCatalog = @(
             "Get-UiRecentAppLogEntries",
             "Get-UiRecentFaultSignals",
             "Get-UiFaultStatePayload")
+    },
+    [pscustomobject]@{
+        Category = "Heuristics"
+        Description = "قراءة استراتيجيات الاستكشاف الحرة وتوصياتها اللحظية فوق طبقة القدرات."
+        Commands = @(
+            "Get-UiExplorationHeuristicDefinitions",
+            "Get-UiHeuristicStatePayload",
+            "Get-UiHeuristicOperatorView")
     },
     [pscustomobject]@{
         Category = "Windows"

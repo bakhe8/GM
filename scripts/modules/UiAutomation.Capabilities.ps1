@@ -40,6 +40,13 @@ function Get-UiCapabilityDefinitions {
             Description = "يراقب anomaly خفيفة أثناء الاستكشاف ويشغل evidence بصرية فقط عند الحاجة."
         },
         [pscustomobject]@{
+            Name = "ExplorationAssist"
+            Category = "Adaptive"
+            ProviderState = "available"
+            DefaultLeaseMs = 5000
+            Description = "ينسق بين القدرات الحالية ويختار modality أنسب أثناء الاستكشاف الحر بدل إلزام النموذج بأسلوب واحد."
+        },
+        [pscustomobject]@{
             Name = "FaultWatch"
             Category = "Signals"
             ProviderState = "available"
@@ -350,6 +357,70 @@ function Test-UiCapabilityEnabled {
     return @($session.ActiveCapabilities | Where-Object {
         [string]::Equals($_.Name, $CapabilityName, [System.StringComparison]::OrdinalIgnoreCase)
     }).Count -gt 0
+}
+
+function Refresh-UiActiveCapabilityLeases {
+    param(
+        $SessionState = $null,
+        [string]$LastAction = "",
+        [switch]$Persist
+    )
+
+    if ($null -eq $SessionState) {
+        $SessionState = Read-UiCapabilitySessionStateRaw
+    }
+
+    if ($null -eq $SessionState -or -not $SessionState.IsActive) {
+        return $SessionState
+    }
+
+    $now = [DateTimeOffset]::Now
+    $changed = $false
+    $activeCapabilities = @($SessionState.ActiveCapabilities)
+    foreach ($capability in $activeCapabilities) {
+        $expiresAtText = [string]$capability.ExpiresAt
+        if ([string]::IsNullOrWhiteSpace($expiresAtText)) {
+            continue
+        }
+
+        try {
+            $expiresAt = [DateTimeOffset]::Parse($expiresAtText)
+        }
+        catch {
+            continue
+        }
+
+        if ($expiresAt -le $now) {
+            continue
+        }
+
+        $leaseMs = if ([int]$capability.LeaseMilliseconds -gt 0) {
+            [int]$capability.LeaseMilliseconds
+        }
+        else {
+            [int](Resolve-UiCapabilityDefinition -CapabilityName ([string]$capability.Name)).DefaultLeaseMs
+        }
+
+        if ($leaseMs -le 0) {
+            continue
+        }
+
+        $newExpiry = $now.AddMilliseconds($leaseMs).ToString("o")
+        if ($newExpiry -ne $expiresAtText) {
+            $capability.ExpiresAt = $newExpiry
+            $changed = $true
+        }
+    }
+
+    if ($changed -or -not [string]::IsNullOrWhiteSpace($LastAction)) {
+        $null = Touch-UiCapabilitySession -SessionState $SessionState -LastAction $LastAction -Reason "keepalive"
+    }
+
+    if ($Persist -and $changed) {
+        Save-UiCapabilitySessionState -SessionState $SessionState | Out-Null
+    }
+
+    return $SessionState
 }
 
 function Enable-UiCapability {
@@ -1405,6 +1476,19 @@ function Invoke-UiCapabilityHooksAfterAction {
     }
 
     $captures = New-Object System.Collections.Generic.List[object]
+    if (Test-UiCapabilityEnabled -CapabilityName "ExplorationAssist" -SessionState $session) {
+        $explorationAssistCapability = @($session.ActiveCapabilities | Where-Object {
+            [string]::Equals($_.Name, "ExplorationAssist", [System.StringComparison]::OrdinalIgnoreCase)
+        } | Select-Object -First 1)
+
+        if ($explorationAssistCapability.Count -gt 0) {
+            $heuristicPayload = Invoke-UiExplorationAssistAfterAction -Process $Process -CapabilityRecord $explorationAssistCapability[0] -ActionName $ActionName -DurationMs $DurationMs -Result $Result
+            foreach ($capture in @($heuristicPayload.Captures)) {
+                [void]$captures.Add($capture)
+            }
+        }
+    }
+
     if (Test-UiCapabilityEnabled -CapabilityName "BurstCapture" -SessionState $session) {
         $burstCapability = @($session.ActiveCapabilities | Where-Object {
             [string]::Equals($_.Name, "BurstCapture", [System.StringComparison]::OrdinalIgnoreCase)
@@ -1477,6 +1561,8 @@ function Invoke-UiCapabilityHooksOnFailure {
         return $null
     }
 
+    $process = Get-UiProcess
+
     if (Test-UiCapabilityEnabled -CapabilityName "MouseTrace" -SessionState $session) {
         $mouseTraceCapability = @($session.ActiveCapabilities | Where-Object {
             [string]::Equals($_.Name, "MouseTrace", [System.StringComparison]::OrdinalIgnoreCase)
@@ -1492,6 +1578,19 @@ function Invoke-UiCapabilityHooksOnFailure {
     }
 
     $captures = New-Object System.Collections.Generic.List[object]
+    if (Test-UiCapabilityEnabled -CapabilityName "ExplorationAssist" -SessionState $session) {
+        $explorationAssistCapability = @($session.ActiveCapabilities | Where-Object {
+            [string]::Equals($_.Name, "ExplorationAssist", [System.StringComparison]::OrdinalIgnoreCase)
+        } | Select-Object -First 1)
+
+        if ($explorationAssistCapability.Count -gt 0) {
+            $heuristicPayload = Invoke-UiExplorationAssistOnFailure -Process $process -CapabilityRecord $explorationAssistCapability[0] -ActionName $ActionName -DurationMs $DurationMs -ErrorMessage $ErrorMessage
+            foreach ($capture in @($heuristicPayload.Captures)) {
+                [void]$captures.Add($capture)
+            }
+        }
+    }
+
     if (Test-UiCapabilityEnabled -CapabilityName "FaultWatch" -SessionState $session) {
         $faultWatchCapability = @($session.ActiveCapabilities | Where-Object {
             [string]::Equals($_.Name, "FaultWatch", [System.StringComparison]::OrdinalIgnoreCase)
@@ -1512,7 +1611,6 @@ function Invoke-UiCapabilityHooksOnFailure {
         }
     }
 
-    $process = Get-UiProcess
     if ($null -eq $process) {
         return [pscustomobject]@{
             Session = $session

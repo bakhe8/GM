@@ -248,6 +248,94 @@ try {
         return $payload
     } | Out-Null
 
+    Invoke-RegressionStep -Name "heuristicsstate-direct-shape" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "HeuristicsState"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($null -ne $payload.HeuristicDefinitions) "HeuristicsState did not return heuristic definitions."
+        Assert-RegressionCondition (@($payload.HeuristicDefinitions | Where-Object Name -eq "runtime-fault").Count -eq 1) "HeuristicsState did not include runtime-fault."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "enable-exploration-assist-early" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOn"
+            CapabilityName = "ExplorationAssist"
+            LeaseMilliseconds = 12000
+            Reason = "integration-exploration-assist-early"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Capability.Name -eq "ExplorationAssist") "CapabilityOn did not activate ExplorationAssist."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "heuristic-visual-anomaly-hover" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "MouseHover"
+            WindowAutomationId = "Shell.MainWindow"
+            AutomationId = "Shell.Sidebar.Guarantees"
+            HoverMilliseconds = 900
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition (@($payload.CapabilityCaptures).Count -ge 3) "ExplorationAssist did not create burst evidence for the visual-anomaly path."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "hoststate-heuristic-visual-anomaly" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "HostState"
+        }
+
+        $decision = @($payload.RecentHeuristicDecisions | Where-Object {
+            $_.Payload.StrategyName -eq "visual-anomaly"
+        } | Select-Object -First 1)
+        Assert-RegressionCondition ($decision.Count -eq 1) "ExplorationAssist did not record a visual-anomaly heuristic decision."
+        Assert-RegressionCondition ([string]$payload.HeuristicOperatorView.Status -in @("intervened", "guided", "cooling-down", "monitoring")) "HeuristicOperatorView returned an unexpected status."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "heuristic-stubborn-control-failure" -ScriptBlock {
+        $message = Invoke-UiExploreExpectedFailure -Arguments @{
+            Action = "Click"
+            WindowAutomationId = "Shell.MainWindow"
+            AutomationId = "Definitely.Missing.Target"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition (-not [string]::IsNullOrWhiteSpace($message)) "The stubborn-control path did not return a failure message."
+        return $message
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "hoststate-heuristic-stubborn-control" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "HostState"
+        }
+
+        $decision = @($payload.RecentHeuristicDecisions | Where-Object {
+            $_.Payload.StrategyName -eq "stubborn-control"
+        } | Select-Object -First 1)
+        Assert-RegressionCondition ($decision.Count -eq 1) "ExplorationAssist did not record a stubborn-control heuristic decision."
+        Assert-RegressionCondition ([string]$decision[0].Decision -eq "guided") "Stubborn-control should guide the next modality rather than pretending it already solved the control."
+        Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "MouseTrace").Count -ge 1) "ExplorationAssist did not arm MouseTrace after a stubborn-control failure."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "disable-exploration-assist-early" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOff"
+            CapabilityName = "ExplorationAssist"
+            Reason = "integration-exploration-assist-early-complete"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "ExplorationAssist").Count -eq 0) "ExplorationAssist remained active after the early block."
+        return $payload
+    } | Out-Null
+
     Invoke-RegressionStep -Name "faultstate-direct-shape" -ScriptBlock {
         $payload = Invoke-UiExploreJson -Arguments @{
             Action = "FaultState"
@@ -337,6 +425,54 @@ try {
         }
 
         Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "FaultWatch").Count -eq 0) "FaultWatch remained active after CapabilityOff."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "enable-exploration-assist-fault" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOn"
+            CapabilityName = "ExplorationAssist"
+            LeaseMilliseconds = 8000
+            Reason = "integration-exploration-assist-fault"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Capability.Name -eq "ExplorationAssist") "CapabilityOn did not activate ExplorationAssist for the runtime-fault path."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "heuristic-runtime-fault-direct" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "Windows"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition (@($payload.CapabilityCaptures).Count -ge 3) "ExplorationAssist did not collect evidence for the runtime-fault path."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "hoststate-heuristic-runtime-fault" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "HostState"
+        }
+
+        $decision = @($payload.RecentHeuristicDecisions | Where-Object {
+            $_.Payload.StrategyName -eq "runtime-fault"
+        } | Select-Object -First 1)
+        Assert-RegressionCondition ($decision.Count -eq 1) "ExplorationAssist did not record a runtime-fault heuristic decision."
+        Assert-RegressionCondition ([string]$decision[0].Decision -eq "triggered") "runtime-fault heuristic should intervene directly."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "disable-exploration-assist-fault" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOff"
+            CapabilityName = "ExplorationAssist"
+            Reason = "integration-exploration-assist-fault-complete"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "ExplorationAssist").Count -eq 0) "ExplorationAssist remained active after the runtime-fault block."
         return $payload
     } | Out-Null
 
@@ -981,6 +1117,19 @@ try {
         return $payload
     } | Out-Null
 
+    Invoke-RegressionStep -Name "enable-exploration-assist-external" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOn"
+            CapabilityName = "ExplorationAssist"
+            LeaseMilliseconds = 8000
+            Reason = "integration-exploration-assist-external"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Capability.Name -eq "ExplorationAssist") "CapabilityOn did not activate ExplorationAssist for the external-window path."
+        return $payload
+    } | Out-Null
+
     Invoke-RegressionStep -Name "open-history-print-window" -ScriptBlock {
         Invoke-UiExploreJson -Arguments @{
             Action = "Click"
@@ -1008,6 +1157,26 @@ try {
         $printWindow = @($payload.Windows | Where-Object { $_.Name -eq "GuaranteeManager - Print" } | Select-Object -First 1)
         Assert-RegressionCondition ($printWindow.Count -eq 1) "Windows catalog did not include the external print window."
         Assert-RegressionCondition ($printWindow[0].ProcessId -ne $payload.ProcessId) "External print window was not detected as a cross-process window."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "hoststate-heuristic-external-window" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "HostState"
+        }
+
+        $decisions = @($payload.RecentHeuristicDecisions | Where-Object {
+            $_.Payload.StrategyName -eq "external-window"
+        })
+        Assert-RegressionCondition ($decisions.Count -ge 1) "ExplorationAssist did not record an external-window heuristic decision."
+
+        $triggeredDecision = @($decisions | Where-Object {
+            [string]$_.Decision -eq "triggered"
+        } | Select-Object -First 1)
+        Assert-RegressionCondition ($triggeredDecision.Count -eq 1) "external-window heuristic did not intervene directly when the related external window first appeared."
+
+        $latestDecision = $decisions[0]
+        Assert-RegressionCondition ([string]$latestDecision.Decision -in @("triggered", "suppressed")) "external-window heuristic returned an unexpected decision state."
         return $payload
     } | Out-Null
 
@@ -1044,6 +1213,18 @@ try {
         }
 
         Assert-RegressionCondition ($payload.Closed -eq $true) "HistoryDialog did not close after the print integration path."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "disable-exploration-assist-external" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOff"
+            CapabilityName = "ExplorationAssist"
+            Reason = "integration-exploration-assist-external-complete"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "ExplorationAssist").Count -eq 0) "ExplorationAssist remained active after the external-window block."
         return $payload
     } | Out-Null
 

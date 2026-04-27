@@ -606,6 +606,10 @@ function Get-UiAssessment {
         [void]$warnings.Add("رُصدت إشارة fault حديثة من داخل التطبيق: $([string]$topSignal.Title)")
     }
 
+    if ($ProbePayload.PSObject.Properties.Name -contains "PrimaryHeuristicRecommendation" -and $null -ne $ProbePayload.PrimaryHeuristicRecommendation) {
+        [void]$observations.Add("الـ heuristic الأوضح الآن: $([string]$ProbePayload.PrimaryHeuristicRecommendation.StrategyName)")
+    }
+
     return [pscustomobject]@{
         Warnings = [object[]]$warnings
         Observations = [object[]]$observations
@@ -659,6 +663,7 @@ function Get-ProbePayload {
     $mediaScopeView = Get-UiMediaScopeView -SessionState $mediaSession
     $audioScopePolicy = Get-UiAudioScopePolicy
     $mediaProviders = @(Get-UiMediaProviderCatalog)
+    $heuristicState = Get-UiHeuristicStatePayload -ProcessId $Process.Id -MaxResults $MaxResults
     $recentCapabilityObservations = @(Get-UiCapabilityObservationEntries -MaxCount $MaxResults)
     $recentCapabilityDecisions = if ($null -ne $capabilitySession) { @($capabilitySession.RecentDecisions | Select-Object -First $MaxResults) } else { @() }
     $capabilityOperatorView = Get-UiCapabilityOperatorView -SessionState $capabilitySession
@@ -694,6 +699,11 @@ function Get-ProbePayload {
         MediaProviders = [object[]]$mediaProviders
         AppLogPath = Get-UiAppLogPath
         RecentFaultSignals = [object[]]$recentFaultSignals
+        HeuristicDefinitions = [object[]]$heuristicState.HeuristicDefinitions
+        HeuristicRecommendations = [object[]]$heuristicState.Recommendations
+        PrimaryHeuristicRecommendation = $heuristicState.PrimaryRecommendation
+        RecentHeuristicDecisions = [object[]]$heuristicState.RecentHeuristicDecisions
+        HeuristicOperatorView = $heuristicState.HeuristicOperatorView
         RecentCapabilityObservations = [object[]]$recentCapabilityObservations
         RecentCapabilityDecisions = [object[]]$recentCapabilityDecisions
         CapabilityOperatorView = $capabilityOperatorView
@@ -716,6 +726,8 @@ function Get-ProbePayload {
             AudioSystemMixFallbackAllowed = if ($null -ne $audioScopePolicy) { [bool]$audioScopePolicy.AcceptsSystemMixFallback } else { $false }
             FaultSignalCount = @($recentFaultSignals).Count
             HasTrustedFaultSignal = @($recentFaultSignals | Where-Object TrustedForReasoning).Count -gt 0
+            HeuristicRecommendationCount = @($heuristicState.Recommendations).Count
+            HasActiveHeuristicRecommendation = $null -ne $heuristicState.PrimaryRecommendation
             OpenWindowCount = $meaningfulWindows.Count
             RawOpenWindowCount = $windows.Count
             ActiveDialogTitle = if ($null -ne $externalForegroundWindow) { $externalForegroundWindow.Name } elseif ($null -ne $dialogWindow) { $dialogWindow.Name } else { $null }

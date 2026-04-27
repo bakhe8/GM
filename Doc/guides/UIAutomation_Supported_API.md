@@ -217,6 +217,29 @@
   - تراقب fault signals الحديثة من التطبيق نفسه
   - وتُطلق evidence بصرية خفيفة فقط عند fault جديدة تستحق الالتقاط
 
+### Heuristics
+
+- `Get-UiExplorationHeuristicDefinitions`
+- `Get-UiHeuristicStatePayload`
+- `Get-UiHeuristicOperatorView`
+
+هذه الفئة تضيف **عقل ترشيح** فوق القدرات الحالية، لا capability ثقيلة جديدة:
+
+- تميز بين:
+  - `runtime-fault`
+  - `external-window`
+  - `stubborn-control`
+  - `visual-anomaly`
+- وتوضح للمشغّل:
+  - ما التوصية الحالية
+  - ما آخر قرار
+  - وهل الحالة الآن:
+    - `monitoring`
+    - `guided`
+    - `intervened`
+    - `cooling-down`
+- وهي AI-first بمعنى أنها لا تفرض path واحدة، بل تساعد على اختيار modality أنسب داخل نفس الاستكشاف الحر
+
 ## ما الذي لا نعدّه API عامة؟
 
 - الدوال الموجودة فقط داخل:

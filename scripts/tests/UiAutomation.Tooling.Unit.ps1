@@ -141,9 +141,9 @@ try {
 
     $supportedApi = Invoke-RegressionStep -Name "supported-api-categories" -ScriptBlock {
         $payload = @(Get-UiSupportedApi)
-        Assert-RegressionCondition ($payload.Count -ge 6) "Supported API catalog returned fewer categories than expected."
+        Assert-RegressionCondition ($payload.Count -ge 7) "Supported API catalog returned fewer categories than expected."
         $categories = @($payload | ForEach-Object { $_.Category })
-        foreach ($required in @("Session", "Diagnostics", "Windows", "Elements", "Dialogs", "Capture", "Media")) {
+        foreach ($required in @("Session", "Diagnostics", "Heuristics", "Windows", "Elements", "Dialogs", "Capture", "Media")) {
             Assert-RegressionCondition ($categories -contains $required) "Supported API catalog is missing category '$required'."
         }
 
@@ -291,8 +291,8 @@ try {
 
     Invoke-RegressionStep -Name "capability-definitions-shape" -ScriptBlock {
         $definitions = @(Get-UiCapabilityDefinitions)
-        Assert-RegressionCondition ($definitions.Count -ge 7) "Capability definitions returned fewer items than expected."
-        foreach ($required in @("BurstCapture", "AutoCaptureOnFailure", "ReactiveAssist", "FaultWatch", "VideoCapture", "AudioCapture", "MouseTrace")) {
+        Assert-RegressionCondition ($definitions.Count -ge 8) "Capability definitions returned fewer items than expected."
+        foreach ($required in @("BurstCapture", "AutoCaptureOnFailure", "ReactiveAssist", "ExplorationAssist", "FaultWatch", "VideoCapture", "AudioCapture", "MouseTrace")) {
             Assert-RegressionCondition (@($definitions | Where-Object Name -eq $required).Count -eq 1) "Capability definitions are missing '$required'."
         }
 
@@ -309,6 +309,11 @@ try {
         Assert-RegressionCondition ($reactiveDefinition.Count -eq 1) "ReactiveAssist definition could not be resolved."
         Assert-RegressionCondition ([string]$reactiveDefinition[0].ProviderState -eq "available") "ReactiveAssist should already be exposed as available."
         Assert-RegressionCondition ([int]$reactiveDefinition[0].DefaultSlowActionMs -gt 0) "ReactiveAssist should expose a positive slow-action threshold."
+
+        $explorationAssistDefinition = @($definitions | Where-Object Name -eq "ExplorationAssist" | Select-Object -First 1)
+        Assert-RegressionCondition ($explorationAssistDefinition.Count -eq 1) "ExplorationAssist definition could not be resolved."
+        Assert-RegressionCondition ([string]$explorationAssistDefinition[0].ProviderState -eq "available") "ExplorationAssist should already be exposed as available."
+        Assert-RegressionCondition ([int]$explorationAssistDefinition[0].DefaultLeaseMs -gt 0) "ExplorationAssist should expose a positive lease."
 
         $faultWatchDefinition = @($definitions | Where-Object Name -eq "FaultWatch" | Select-Object -First 1)
         Assert-RegressionCondition ($faultWatchDefinition.Count -eq 1) "FaultWatch definition could not be resolved."
@@ -339,6 +344,26 @@ try {
         Assert-RegressionCondition ($payload.PSObject.Properties.Name -contains "RecentFaultSignals") "FaultState payload is missing RecentFaultSignals."
         Assert-RegressionCondition ($payload.PSObject.Properties.Name -contains "FaultSummary") "FaultState payload is missing FaultSummary."
         Assert-RegressionCondition ($payload.FaultSummary.SignalCount -ge 0) "FaultSummary returned an invalid signal count."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "heuristic-definitions-shape" -ScriptBlock {
+        $definitions = @(Get-UiExplorationHeuristicDefinitions)
+        Assert-RegressionCondition ($definitions.Count -ge 4) "Heuristic definitions returned fewer items than expected."
+        foreach ($required in @("runtime-fault", "external-window", "stubborn-control", "visual-anomaly")) {
+            Assert-RegressionCondition (@($definitions | Where-Object Name -eq $required).Count -eq 1) "Heuristic definitions are missing '$required'."
+        }
+
+        $runtimeFault = @($definitions | Where-Object Name -eq "runtime-fault" | Select-Object -First 1)
+        Assert-RegressionCondition ([string]$runtimeFault[0].RecommendedCapability -eq "FaultWatch") "runtime-fault should recommend FaultWatch."
+        return $definitions
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "heuristic-state-payload-shape" -ScriptBlock {
+        $payload = Get-UiHeuristicStatePayload -ProcessId 0 -MaxResults 5
+        Assert-RegressionCondition ($payload.PSObject.Properties.Name -contains "HeuristicDefinitions") "HeuristicState payload is missing HeuristicDefinitions."
+        Assert-RegressionCondition ($payload.PSObject.Properties.Name -contains "Recommendations") "HeuristicState payload is missing Recommendations."
+        Assert-RegressionCondition ($payload.PSObject.Properties.Name -contains "HeuristicOperatorView") "HeuristicState payload is missing HeuristicOperatorView."
         return $payload
     } | Out-Null
 
@@ -448,6 +473,64 @@ try {
         Assert-RegressionCondition (@($view.CoolingDownCapabilities | Where-Object Name -eq "ReactiveAssist").Count -eq 1) "Operator view did not surface ReactiveAssist as cooling-down."
         Assert-RegressionCondition ([string]$view.LastDecision.Decision -eq "suppressed") "Operator view did not surface the latest decision."
         Assert-RegressionCondition (@($view.DecisionDigest).Count -ge 1) "Operator view did not expose a decision digest."
+        return $view
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "heuristic-operator-view-shape" -ScriptBlock {
+        $module = Get-Module UIAutomation.Acceptance
+        Assert-RegressionCondition ($null -ne $module) "UIAutomation.Acceptance module was not loaded for heuristic operator view inspection."
+
+        $session = [pscustomobject]@{
+            SessionId = "unit-heuristic-view"
+            IsActive = $true
+            Mode = "free-explore"
+            Reason = "unit-heuristic"
+            ProcessId = 0
+            CreatedAt = (Get-Date).ToString("o")
+            UpdatedAt = (Get-Date).ToString("o")
+            LastTouchedAt = (Get-Date).ToString("o")
+            LastAction = "Click"
+            StopReason = $null
+            StoppedAt = $null
+            ActiveCapabilities = @(
+                [pscustomobject]@{
+                    Name = "ExplorationAssist"
+                    Category = "Adaptive"
+                    ProviderState = "available"
+                    Reason = "unit-heuristic"
+                    LeaseMilliseconds = 2500
+                    ActivatedAt = (Get-Date).AddMilliseconds(-250).ToString("o")
+                    ExpiresAt = (Get-Date).AddMilliseconds(1800).ToString("o")
+                    Metadata = $null
+                }
+            )
+            CapabilityHistory = @()
+            RecentArtifacts = @()
+            RecentObservations = @()
+            RecentDecisions = @(
+                [pscustomobject]@{
+                    Timestamp = (Get-Date).ToString("o")
+                    CapabilityName = "ExplorationAssist"
+                    Action = "Click"
+                    Decision = "guided"
+                    Summary = "اختارت heuristics مسار stubborn-control."
+                    Payload = [pscustomobject]@{
+                        StrategyName = "stubborn-control"
+                        SuggestedActions = @("MouseClick", "MouseHover")
+                    }
+                }
+            )
+        }
+
+        $view = & $module {
+            param($inputSession)
+            Get-UiHeuristicOperatorView -SessionState $inputSession
+        } $session
+
+        Assert-RegressionCondition ([string]$view.Status -eq "guided") "Heuristic operator view did not classify the synthetic session as guided."
+        Assert-RegressionCondition (-not [string]::IsNullOrWhiteSpace([string]$view.Summary)) "Heuristic operator view summary was empty."
+        Assert-RegressionCondition ($view.Active) "Heuristic operator view did not mark ExplorationAssist as active."
+        Assert-RegressionCondition (@($view.DecisionDigest).Count -ge 1) "Heuristic operator view did not expose a decision digest."
         return $view
     } | Out-Null
 

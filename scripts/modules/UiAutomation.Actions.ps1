@@ -101,6 +101,7 @@ function Invoke-UiExploreAction {
             $sessionState = Invoke-UiCapabilityBrokerSweep -Persist
             $mediaSession = Invoke-UiMediaBrokerSweep -Persist
             $processForFaults = if ($Options.ProcessId -ne 0) { $Options.ProcessId } elseif ($null -ne (Get-UiProcess)) { (Get-UiProcess).Id } else { 0 }
+            $heuristicState = Get-UiHeuristicStatePayload -ProcessId $processForFaults -MaxResults $Options.MaxResults
             return [pscustomobject]@{
                 Action = "HostState"
                 SessionPath = Get-UiCapabilitySessionPath
@@ -114,6 +115,11 @@ function Invoke-UiExploreAction {
                 AppLogPath = Get-UiAppLogPath
                 RecentFaultSignals = [object[]]@(Get-UiRecentFaultSignals -ProcessId $processForFaults -MaxCount $Options.MaxResults)
                 FaultSummary = (Get-UiFaultStatePayload -ProcessId $processForFaults -MaxResults $Options.MaxResults).FaultSummary
+                HeuristicDefinitions = [object[]]$heuristicState.HeuristicDefinitions
+                HeuristicRecommendations = [object[]]$heuristicState.Recommendations
+                PrimaryHeuristicRecommendation = $heuristicState.PrimaryRecommendation
+                RecentHeuristicDecisions = [object[]]$heuristicState.RecentHeuristicDecisions
+                HeuristicOperatorView = $heuristicState.HeuristicOperatorView
                 CapabilityDefinitions = [object[]]@(Get-UiCapabilityDefinitions)
                 RecentCapabilityObservations = [object[]]@(Get-UiCapabilityObservationEntries -MaxCount $Options.MaxResults)
                 RecentCapabilityDecisions = if ($null -ne $sessionState) { [object[]]@($sessionState.RecentDecisions | Select-Object -First $Options.MaxResults) } else { @() }
@@ -138,6 +144,11 @@ function Invoke-UiExploreAction {
         "FaultState" {
             $processForFaults = if ($Options.ProcessId -ne 0) { Get-Process -Id $Options.ProcessId -ErrorAction Stop } else { Get-UiProcess }
             return (Get-UiFaultStatePayload -ProcessId $(if ($null -ne $processForFaults) { $processForFaults.Id } else { 0 }) -MaxResults $Options.MaxResults)
+        }
+
+        "HeuristicsState" {
+            $processForHeuristics = if ($Options.ProcessId -ne 0) { Get-Process -Id $Options.ProcessId -ErrorAction Stop } else { Get-UiProcess }
+            return (Get-UiHeuristicStatePayload -ProcessId $(if ($null -ne $processForHeuristics) { $processForHeuristics.Id } else { 0 }) -MaxResults $Options.MaxResults)
         }
 
         "CapabilityOn" {

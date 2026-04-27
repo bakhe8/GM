@@ -233,6 +233,28 @@
     - `tooling smoke`: `10/10`
     - `tooling integration`: `56/56`
     - `tooling freedom`: `9/9`
+- ثم أُضيفت الآن **طبقة Exploration Heuristics**:
+  - لا كسيناريو جديد
+  - بل كمنسق AI-first فوق القدرات الحالية نفسها
+  - والاستراتيجيات الحالية فيها:
+    - `runtime-fault`
+    - `external-window`
+    - `stubborn-control`
+    - `visual-anomaly`
+  - وصارت `HostState` و`Probe` و`HeuristicsState` تعرض:
+    - `HeuristicRecommendations`
+    - `PrimaryHeuristicRecommendation`
+    - `RecentHeuristicDecisions`
+    - `HeuristicOperatorView`
+  - كما أُضيف keepalive خفيف للقدرات والوسائط النشطة:
+    - إذا كانت capability مفعلة وما زالت الأداة تُستخدم في نفس الاستكشاف
+    - تبقى lease ممتدة بهدوء بدل أن تنتهي بين خطوة وأخرى
+    - وهذا أغلق احتكاكًا حقيقيًا في `ExplorationAssist` أثناء المسارات الأطول
+  - والتحقق الحالي بعد هذه الطبقة صار:
+    - `tooling unit`: `27/27`
+    - `tooling smoke`: `10/10`
+    - `tooling integration`: `70/70`
+    - `tooling freedom`: `9/9`
 
 وأول خطوة تنفيذية منه بدأت فعليًا الآن:
 
