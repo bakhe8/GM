@@ -89,7 +89,15 @@ namespace GuaranteeManager
         public bool CanOpenResponse => Item.Request.HasResponseDocument;
         public bool CanAttachResponseDocument => Item.Request.Status != GuaranteeManager.Models.RequestStatus.Pending && !Item.Request.HasResponseDocument;
         public bool CanUseResponseAction => CanOpenResponse || CanAttachResponseDocument;
-        public string ResponseActionLabel => CanOpenResponse ? "فتح الرد" : CanAttachResponseDocument ? "إلحاق الرد" : "رد البنك";
+        public bool CanRunQueueAction => CanRegisterResponse || CanUseResponseAction;
+        public string QueueActionLabel => CanOpenResponse ? "فتح الرد" : CanAttachResponseDocument ? "إلحاق الرد" : "رد البنك";
+        public string QueueActionHint => CanOpenResponse
+            ? "يفتح مستند رد البنك المحفوظ لهذا السجل."
+            : CanAttachResponseDocument
+                ? "هذا الطلب مغلق ولا يملك مستند رد بعد، ويمكن إلحاقه من هنا."
+                : CanRegisterResponse
+                    ? "الطلب معلق ويمكن تسجيل رد البنك عليه مباشرة."
+                    : "لا يوجد إجراء استجابة متاح لهذا السجل حاليًا.";
     }
 
     public sealed class AttachmentItem

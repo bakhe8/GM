@@ -74,8 +74,8 @@ namespace GuaranteeManager
                     false,
                     false,
                     false,
-                    false,
-                    "رد البنك");
+                    "الإجراء التالي",
+                    "اختر طلبًا لعرض الإجراء المتوقع الآن.");
             }
 
             WorkflowRequestListItem item = selected.Item;
@@ -98,10 +98,10 @@ namespace GuaranteeManager
                 string.IsNullOrWhiteSpace(request.Notes) ? "لا توجد ملاحظات." : request.Notes,
                 string.IsNullOrWhiteSpace(request.ResponseNotes) ? "لا يوجد رد مسجل." : request.ResponseNotes,
                 true,
-                request.Status == RequestStatus.Pending,
                 request.HasLetter,
-                request.HasResponseDocument || (request.Status != RequestStatus.Pending && !request.HasResponseDocument),
-                request.HasResponseDocument ? "فتح الرد" : request.Status == RequestStatus.Pending ? "رد البنك" : "إلحاق الرد");
+                selected.CanRunQueueAction,
+                selected.QueueActionLabel,
+                selected.QueueActionHint);
         }
 
         private static Brush StatusBackgroundBrush(RequestStatus status) => status switch
@@ -152,8 +152,8 @@ namespace GuaranteeManager
         string Notes,
         string Response,
         bool CanOpenGuarantee,
-        bool CanRegisterResponse,
         bool CanOpenLetter,
-        bool CanOpenResponse,
-        string ResponseActionLabel);
+        bool CanRunPrimaryAction,
+        string PrimaryActionLabel,
+        string PrimaryActionHint);
 }

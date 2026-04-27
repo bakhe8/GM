@@ -39,9 +39,8 @@ namespace GuaranteeManager
         private readonly TextBlock _detailNotes = BuildMutedText(11, FontWeights.Normal);
         private readonly TextBlock _detailResponse = BuildMutedText(11, FontWeights.Normal);
         private readonly Button _openGuaranteeButton = new();
-        private readonly Button _registerButton = new();
         private readonly Button _letterButton = new();
-        private readonly Button _responseButton = new();
+        private readonly Button _primaryActionButton = new();
         private IReadOnlyList<WorkflowRequestListItem> _allRequests = Array.Empty<WorkflowRequestListItem>();
 
         public RequestsWorkspaceSurface(
@@ -93,35 +92,27 @@ namespace GuaranteeManager
         private void ConfigureButtons()
         {
             _openGuaranteeButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _openGuaranteeButton.Content = "فتح الضمان";
+            _openGuaranteeButton.Content = "فتح ملف الضمان";
             _openGuaranteeButton.FontSize = 9.5;
             _openGuaranteeButton.Click += (_, _) => OpenCurrentGuarantee();
             UiInstrumentation.Identify(_openGuaranteeButton, "Requests.Detail.OpenGuaranteeButton", "فتح الضمان");
 
-            _registerButton.Style = WorkspaceSurfaceChrome.Style("PrimaryButton");
-            _registerButton.Content = "تسجيل رد البنك";
-            _registerButton.FontSize = 9.5;
-            _registerButton.Click += (_, _) => RegisterSelectedResponse();
-            UiInstrumentation.Identify(_registerButton, "Requests.Detail.RegisterResponseButton", "تسجيل رد البنك");
+            _primaryActionButton.Style = WorkspaceSurfaceChrome.Style("PrimaryButton");
+            _primaryActionButton.Content = "الإجراء التالي";
+            _primaryActionButton.FontSize = 9.5;
+            _primaryActionButton.Click += (_, _) => UseResponseAction();
+            UiInstrumentation.Identify(_primaryActionButton, "Requests.Detail.PrimaryActionButton", "الإجراء التالي");
 
             _letterButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             _letterButton.Content = "فتح الخطاب";
             _letterButton.FontSize = 9.5;
             _letterButton.Click += (_, _) => OpenLetter();
             UiInstrumentation.Identify(_letterButton, "Requests.Detail.OpenLetterButton", "فتح الخطاب");
-
-            _responseButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _responseButton.Content = "فتح الرد";
-            _responseButton.FontSize = 9.5;
-            _responseButton.Click += (_, _) => UseResponseAction();
-            UiInstrumentation.Identify(_responseButton, "Requests.Detail.OpenResponseButton", "فتح الرد");
         }
 
         private Grid BuildToolbar()
         {
             var toolbar = new Grid { FlowDirection = FlowDirection.LeftToRight };
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -142,15 +133,10 @@ namespace GuaranteeManager
             Grid.SetColumn(refreshButton, 2);
             toolbar.Children.Add(refreshButton);
 
-            var createRequestButton = CreateToolbarMenuButton("إنشاء طلب", "Requests.Toolbar.CreateRequest");
-            createRequestButton.ContextMenu = BuildCreateRequestMenu();
-            Grid.SetColumn(createRequestButton, 4);
-            toolbar.Children.Add(createRequestButton);
-
-            var exportButton = CreateToolbarMenuButton("تصدير الطلبات", "Requests.Toolbar.ExportRequests");
-            exportButton.ContextMenu = BuildExportMenu();
-            Grid.SetColumn(exportButton, 6);
-            toolbar.Children.Add(exportButton);
+            var moreButton = CreateToolbarMenuButton("أدوات إضافية", "Requests.Toolbar.MoreTools");
+            moreButton.ContextMenu = BuildOverflowMenu();
+            Grid.SetColumn(moreButton, 4);
+            toolbar.Children.Add(moreButton);
 
             _statusFilter.Style = WorkspaceSurfaceChrome.Style("FilterComboBox");
             _statusFilter.Items.Add(new RequestStatusFilterOption("كل الحالات", null));
@@ -162,12 +148,12 @@ namespace GuaranteeManager
             _statusFilter.DisplayMemberPath = nameof(RequestStatusFilterOption.Label);
             _statusFilter.SelectedIndex = 0;
             _statusFilter.SelectionChanged += (_, _) => ApplyFilters();
-            Grid.SetColumn(_statusFilter, 8);
+            Grid.SetColumn(_statusFilter, 6);
             toolbar.Children.Add(_statusFilter);
 
             _searchInput.TextChanged += (_, _) => ApplyFilters();
             var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث برقم الضمان، البنك، المورد، أو نوع الطلب...");
-            Grid.SetColumn(searchBox, 10);
+            Grid.SetColumn(searchBox, 8);
             toolbar.Children.Add(searchBox);
 
             return toolbar;
@@ -407,7 +393,7 @@ namespace GuaranteeManager
 
             grid.Children.Add(new TextBlock
             {
-                Text = "إجراءات سريعة",
+                Text = "الخطوة التالية",
                 FontSize = 12,
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
@@ -419,17 +405,13 @@ namespace GuaranteeManager
             actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
             actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
             Grid.SetRow(actions, 1);
-            actions.Children.Add(_openGuaranteeButton);
-            Grid.SetColumn(_responseButton, 2);
-            actions.Children.Add(_responseButton);
-            Grid.SetColumn(_letterButton, 4);
+            actions.Children.Add(_primaryActionButton);
+            Grid.SetColumn(_letterButton, 2);
             actions.Children.Add(_letterButton);
-            Grid.SetColumn(_registerButton, 6);
-            actions.Children.Add(_registerButton);
+            Grid.SetColumn(_openGuaranteeButton, 4);
+            actions.Children.Add(_openGuaranteeButton);
             grid.Children.Add(actions);
 
             border.Child = grid;
@@ -523,10 +505,9 @@ namespace GuaranteeManager
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(10, 0, 0, 0)
             };
-            actions.Children.Add(CreateRowButton("تسجيل", "Icon.NewTransaction", item, RegisterFromRow_Click, item.CanRegisterResponse));
-            actions.Children.Add(CreateRowButton("رد", "Icon.Document", item, OpenResponseFromRow_Click, item.CanUseResponseAction));
+            actions.Children.Add(CreateRowButton(item.QueueActionLabel, "Icon.Document", item, OpenResponseFromRow_Click, item.CanRunQueueAction, item.QueueActionHint));
             actions.Children.Add(CreateRowButton("خطاب", "Icon.Document", item, OpenLetterFromRow_Click, item.CanOpenLetter));
-            actions.Children.Add(CreateRowButton("عرض", "Icon.View", item, SelectRowFromButton_Click, true));
+            actions.Children.Add(CreateRowButton("تفاصيل", "Icon.View", item, SelectRowFromButton_Click, true, "يعرض تفاصيل الطلب الحالي في اللوحة اليمنى."));
             actions.Children.Add(CreateMoreButton(item));
             Grid.SetColumn(actions, 0);
             row.Children.Add(actions);
@@ -589,15 +570,17 @@ namespace GuaranteeManager
             return bankCell;
         }
 
-        private static Button CreateRowButton(string text, string iconKey, RequestListDisplayItem item, RoutedEventHandler handler, bool isEnabled)
+        private static Button CreateRowButton(string text, string iconKey, RequestListDisplayItem item, RoutedEventHandler handler, bool isEnabled, string? toolTip = null)
         {
             var button = new Button
             {
                 Content = BuildRowButtonContent(text, iconKey),
                 Tag = item,
                 Style = WorkspaceSurfaceChrome.Style("RowButton"),
-                IsEnabled = isEnabled
+                IsEnabled = isEnabled,
+                ToolTip = toolTip
             };
+            ToolTipService.SetShowOnDisabled(button, true);
             UiInstrumentation.Identify(
                 button,
                 UiInstrumentation.SanitizeAutomationKey($"Requests.RowAction.{text}", item.GuaranteeNo),
@@ -655,23 +638,17 @@ namespace GuaranteeManager
                 }
             });
 
-            string responseTooltip = item.CanOpenResponse
-                ? "يفتح مستند رد البنك المحفوظ لهذا السجل."
-                : item.CanAttachResponseDocument
-                    ? "هذا الطلب مغلق ولا يملك مستند رد بعد، ويمكن إلحاقه من هنا."
-                    : "لا يوجد مستند رد بنك محفوظ لهذا السجل.";
-
             menu.Items.Add(BuildMenuItem("سجل الضمان", "يفتح سجل الإصدارات والطلبات للضمان المرتبط بهذا الطلب.", (_, _) => _coordinator.OpenHistory(item)));
             menu.Items.Add(BuildMenuItem("فتح الضمان الحالي", "يفتح ملف الضمان الحالي المرتبط بهذا الطلب مع التركيز على قسم الطلبات.", (_, _) => _coordinator.OpenCurrentGuarantee(item)));
             menu.Items.Add(BuildMenuItem(
-                "تسجيل استجابة البنك",
-                item.CanRegisterResponse ? "الطلب معلق ويمكن تسجيل رد البنك عليه مباشرة." : "هذا الطلب ليس معلقًا، لذلك لا يمكن تسجيل رد جديد عليه.",
+                item.QueueActionLabel,
+                item.QueueActionHint,
                 (_, _) =>
                 {
                     SelectItem(item);
-                    RegisterSelectedResponse();
+                    UseResponseAction();
                 },
-                item.CanRegisterResponse));
+                item.CanRunQueueAction));
             menu.Items.Add(BuildMenuItem(
                 "خطاب الطلب",
                 item.CanOpenLetter ? "يفتح خطاب الطلب الخارجي لهذا السجل." : "لا يوجد خطاب طلب محفوظ لهذا السجل.",
@@ -681,15 +658,6 @@ namespace GuaranteeManager
                     OpenLetter();
                 },
                 item.CanOpenLetter));
-            menu.Items.Add(BuildMenuItem(
-                "رد البنك",
-                responseTooltip,
-                (_, _) =>
-                {
-                    SelectItem(item);
-                    UseResponseAction();
-                },
-                item.CanUseResponseAction));
             menu.Items.Add(new Separator());
             menu.Items.Add(BuildMenuItem("تصدير المعلقات من نفس النوع", "يصدر كل الطلبات المعلقة من نفس نوع الطلب المحدد حاليًا.", (_, _) => _coordinator.ExportPendingSameType(item, _allRequests)));
             menu.Items.Add(BuildMenuItem("تصدير التمديدات المعلقة", "يصدر جميع طلبات التمديد المعلقة الحالية.", (_, _) => _coordinator.ExportPendingExtensions(_allRequests)));
@@ -743,11 +711,11 @@ namespace GuaranteeManager
             return button;
         }
 
-        private ContextMenu BuildCreateRequestMenu()
+        private ContextMenu BuildOverflowMenu()
         {
             var menu = new ContextMenu
             {
-                MinWidth = 196,
+                MinWidth = 220,
                 FlowDirection = FlowDirection.RightToLeft,
                 Background = Brushes.White,
                 BorderBrush = WorkspaceSurfaceChrome.BrushFrom("#D8E1EE"),
@@ -765,44 +733,21 @@ namespace GuaranteeManager
                 }
             });
 
-            menu.Items.Add(BuildMenuItem("طلب تمديد", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب تمديد جديد.", (_, _) => _coordinator.CreateExtensionFromEligible(ReloadAndFocusNewRequest)));
-            menu.Items.Add(BuildMenuItem("طلب تخفيض", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب تخفيض جديد.", (_, _) => _coordinator.CreateReductionFromEligible(ReloadAndFocusNewRequest)));
-            menu.Items.Add(BuildMenuItem("طلب إفراج", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب إفراج جديد.", (_, _) => _coordinator.CreateReleaseFromEligible(ReloadAndFocusNewRequest)));
-            menu.Items.Add(BuildMenuItem("طلب تسييل", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب تسييل جديد.", (_, _) => _coordinator.CreateLiquidationFromEligible(ReloadAndFocusNewRequest)));
-            menu.Items.Add(BuildMenuItem("طلب تحقق", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب تحقق جديد.", (_, _) => _coordinator.CreateVerificationFromEligible(ReloadAndFocusNewRequest)));
-            menu.Items.Add(BuildMenuItem("طلب استبدال", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب استبدال جديد.", (_, _) => _coordinator.CreateReplacementFromEligible(ReloadAndFocusNewRequest)));
-            menu.Items.Add(BuildMenuItem("طلب نقض", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب نقض جديد.", (_, _) => _coordinator.CreateAnnulmentFromEligible(ReloadAndFocusNewRequest)));
-            return menu;
-        }
-
-        private ContextMenu BuildExportMenu()
-        {
-            var menu = new ContextMenu
-            {
-                MinWidth = 208,
-                FlowDirection = FlowDirection.RightToLeft,
-                Background = Brushes.White,
-                BorderBrush = WorkspaceSurfaceChrome.BrushFrom("#D8E1EE"),
-                BorderThickness = new Thickness(1)
-            };
-
-            menu.Resources.Add(typeof(MenuItem), new Style(typeof(MenuItem))
-            {
-                Setters =
-                {
-                    new Setter(MenuItem.FontSizeProperty, 11d),
-                    new Setter(MenuItem.FontWeightProperty, FontWeights.SemiBold),
-                    new Setter(MenuItem.ForegroundProperty, WorkspaceSurfaceChrome.BrushFrom("#1F2937")),
-                    new Setter(MenuItem.PaddingProperty, new Thickness(10, 5, 10, 5))
-                }
-            });
-
-            menu.Items.Add(BuildMenuItem("تصدير التمديدات المعلقة", "يصدر جميع طلبات التمديد المعلقة الحالية.", (_, _) => _coordinator.ExportPendingExtensions(_allRequests)));
-            menu.Items.Add(BuildMenuItem("تصدير التخفيضات المعلقة", "يصدر جميع طلبات التخفيض المعلقة الحالية.", (_, _) => _coordinator.ExportPendingReductions(_allRequests)));
-            menu.Items.Add(BuildMenuItem("تصدير الإفراجات المعلقة", "يصدر جميع طلبات الإفراج المعلقة الحالية.", (_, _) => _coordinator.ExportPendingReleases(_allRequests)));
-            menu.Items.Add(BuildMenuItem("تصدير طلبات التسييل المعلقة", "يصدر جميع طلبات التسييل المعلقة الحالية.", (_, _) => _coordinator.ExportPendingLiquidations(_allRequests)));
-            menu.Items.Add(BuildMenuItem("تصدير طلبات التحقق المعلقة", "يصدر جميع طلبات التحقق المعلقة الحالية.", (_, _) => _coordinator.ExportPendingVerifications(_allRequests)));
-            menu.Items.Add(BuildMenuItem("تصدير طلبات الاستبدال المعلقة", "يصدر جميع طلبات الاستبدال المعلقة الحالية.", (_, _) => _coordinator.ExportPendingReplacements(_allRequests)));
+            menu.Items.Add(BuildSubmenu("إنشاء طلب", "مسارات إنشاء الطلبات من الضمانات المؤهلة.",
+                BuildMenuItem("طلب تمديد", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب تمديد جديد.", (_, _) => _coordinator.CreateExtensionFromEligible(ReloadAndFocusNewRequest)),
+                BuildMenuItem("طلب تخفيض", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب تخفيض جديد.", (_, _) => _coordinator.CreateReductionFromEligible(ReloadAndFocusNewRequest)),
+                BuildMenuItem("طلب إفراج", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب إفراج جديد.", (_, _) => _coordinator.CreateReleaseFromEligible(ReloadAndFocusNewRequest)),
+                BuildMenuItem("طلب تسييل", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب تسييل جديد.", (_, _) => _coordinator.CreateLiquidationFromEligible(ReloadAndFocusNewRequest)),
+                BuildMenuItem("طلب تحقق", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب تحقق جديد.", (_, _) => _coordinator.CreateVerificationFromEligible(ReloadAndFocusNewRequest)),
+                BuildMenuItem("طلب استبدال", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب استبدال جديد.", (_, _) => _coordinator.CreateReplacementFromEligible(ReloadAndFocusNewRequest)),
+                BuildMenuItem("طلب نقض", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب نقض جديد.", (_, _) => _coordinator.CreateAnnulmentFromEligible(ReloadAndFocusNewRequest))));
+            menu.Items.Add(BuildSubmenu("تصدير الطلبات", "أدوات تصدير المعلقات حسب النوع.",
+                BuildMenuItem("تصدير التمديدات المعلقة", "يصدر جميع طلبات التمديد المعلقة الحالية.", (_, _) => _coordinator.ExportPendingExtensions(_allRequests)),
+                BuildMenuItem("تصدير التخفيضات المعلقة", "يصدر جميع طلبات التخفيض المعلقة الحالية.", (_, _) => _coordinator.ExportPendingReductions(_allRequests)),
+                BuildMenuItem("تصدير الإفراجات المعلقة", "يصدر جميع طلبات الإفراج المعلقة الحالية.", (_, _) => _coordinator.ExportPendingReleases(_allRequests)),
+                BuildMenuItem("تصدير طلبات التسييل المعلقة", "يصدر جميع طلبات التسييل المعلقة الحالية.", (_, _) => _coordinator.ExportPendingLiquidations(_allRequests)),
+                BuildMenuItem("تصدير طلبات التحقق المعلقة", "يصدر جميع طلبات التحقق المعلقة الحالية.", (_, _) => _coordinator.ExportPendingVerifications(_allRequests)),
+                BuildMenuItem("تصدير طلبات الاستبدال المعلقة", "يصدر جميع طلبات الاستبدال المعلقة الحالية.", (_, _) => _coordinator.ExportPendingReplacements(_allRequests))));
             return menu;
         }
 
@@ -817,6 +762,22 @@ namespace GuaranteeManager
             ToolTipService.SetShowOnDisabled(item, true);
             item.Click += handler;
             return item;
+        }
+
+        private static MenuItem BuildSubmenu(string header, string tooltip, params MenuItem[] items)
+        {
+            var parent = new MenuItem
+            {
+                Header = header,
+                ToolTip = tooltip
+            };
+
+            foreach (MenuItem item in items)
+            {
+                parent.Items.Add(item);
+            }
+
+            return parent;
         }
 
         private static UIElement BuildRowButtonContent(string text, string iconKey)
@@ -858,12 +819,6 @@ namespace GuaranteeManager
         private void SelectRowFromButton_Click(object sender, RoutedEventArgs e)
         {
             SelectRowFromSender(sender);
-        }
-
-        private void RegisterFromRow_Click(object sender, RoutedEventArgs e)
-        {
-            SelectRowFromSender(sender);
-            RegisterSelectedResponse();
         }
 
         private void OpenLetterFromRow_Click(object sender, RoutedEventArgs e)
@@ -941,10 +896,10 @@ namespace GuaranteeManager
             _detailNotes.Text = state.Notes;
             _detailResponse.Text = state.Response;
             _openGuaranteeButton.IsEnabled = state.CanOpenGuarantee;
-            _registerButton.IsEnabled = state.CanRegisterResponse;
             _letterButton.IsEnabled = state.CanOpenLetter;
-            _responseButton.IsEnabled = state.CanOpenResponse;
-            _responseButton.Content = state.ResponseActionLabel;
+            _primaryActionButton.IsEnabled = state.CanRunPrimaryAction;
+            _primaryActionButton.Content = state.PrimaryActionLabel;
+            _primaryActionButton.ToolTip = state.PrimaryActionHint;
         }
 
         private void RegisterSelectedResponse()
@@ -971,11 +926,6 @@ namespace GuaranteeManager
         private void UseResponseAction()
         {
             _coordinator.HandleResponseAction(SelectedItem, ReloadRequests);
-        }
-
-        private void OpenResponse()
-        {
-            _coordinator.OpenResponse(SelectedRequest);
         }
 
         private static Grid BuildInfoLine(string label, TextBlock value)
