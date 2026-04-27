@@ -31,6 +31,10 @@
 
 وليس كفجوة parity من القديم إلى الجديد.
 
+Backlog الـ polish الحالية محفوظة هنا:
+
+- [Doc/guides/Preview2_Polish_Backlog.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Preview2_Polish_Backlog.md:1)
+
 ## الأولوية الحالية
 
 الأولوية الحالية للمشروع لم تعد سد فجوات القديم، بل:
