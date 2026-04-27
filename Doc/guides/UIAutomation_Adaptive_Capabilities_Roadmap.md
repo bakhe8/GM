@@ -359,6 +359,16 @@
   - لماذا trigger حصلت
   - لماذا suppression حصلت
   - ولماذا بقيت الأداة هادئة
+  - وما الخطوة التالية الأنسب داخل نفس الاستكشاف
+
+كما صار `CapabilityOperatorView` نفسه أوضح للمشغّل:
+
+- `Summary`
+- `SecondarySummary`
+- `Guidance`
+- `CoolingDownCapabilities`
+- `Signals`
+- `DecisionDigest`
 
 كما صار السلوك أكثر هدوءًا وموثوقية:
 
@@ -373,7 +383,7 @@
 
 والتحقق الحالي لهذه الأساسات ناجح ضمن:
 
-- unit: `16/16`
+- unit: `17/17`
 - smoke: `10/10`
 - integration: `43/43`
 

@@ -245,3 +245,10 @@
   - وهذا يظهر عبر:
     - `RecentCapabilityDecisions`
     - `CapabilityOperatorView`
+  - وصار `CapabilityOperatorView` نفسه أقرب إلى view تشغيلية خفيفة:
+    - `Summary`
+    - `SecondarySummary`
+    - `Guidance`
+    - `CoolingDownCapabilities`
+    - `Signals`
+    - `DecisionDigest`

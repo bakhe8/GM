@@ -128,11 +128,19 @@
     - لماذا trigger حصلت
     - لماذا suppression حصلت
     - ولماذا بقيت القدرة quiet
+    - وما الذي يجب على المشغّل فهمه أو فعله الآن
+  - وصار `CapabilityOperatorView` نفسه أوضح:
+    - `Summary`
+    - `SecondarySummary`
+    - `Guidance`
+    - `CoolingDownCapabilities`
+    - `Signals`
+    - `DecisionDigest`
   - كما صار لدينا cooldown حقيقي يهدئ التفعيل المتكرر:
     - `ReactiveAssist` لا تعيد burst عند anomaly نفسها بسرعة
     - `AutoCaptureOnFailure` لا تكرر failure bundle بشكل مزعج عند نفس الخطأ المتكرر
   - والتحقق الحالي لهذه الطبقة ناجح ضمن:
-    - `tooling unit`: `16/16`
+    - `tooling unit`: `17/17`
     - `tooling smoke`: `10/10`
     - `tooling integration`: `43/43`
 

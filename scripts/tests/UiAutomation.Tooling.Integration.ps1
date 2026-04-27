@@ -466,6 +466,9 @@ try {
         Assert-RegressionCondition ([int]$trace[0].Payload.CaptureCount -ge 3) "ReactiveAssist observation did not report burst evidence."
         Assert-RegressionCondition ($null -ne $payload.CapabilityOperatorView) "HostState did not expose CapabilityOperatorView."
         Assert-RegressionCondition (-not [string]::IsNullOrWhiteSpace([string]$payload.CapabilityOperatorView.Summary)) "CapabilityOperatorView summary was empty."
+        Assert-RegressionCondition ([string]$payload.CapabilityOperatorView.Status -eq "intervened") "CapabilityOperatorView should report an intervened state after a reactive trigger."
+        Assert-RegressionCondition (-not [string]::IsNullOrWhiteSpace([string]$payload.CapabilityOperatorView.SecondarySummary)) "CapabilityOperatorView did not expose a secondary summary after a reactive trigger."
+        Assert-RegressionCondition (-not [string]::IsNullOrWhiteSpace([string]$payload.CapabilityOperatorView.Guidance)) "CapabilityOperatorView did not expose operator guidance after a reactive trigger."
         return $payload
     } | Out-Null
 
@@ -493,6 +496,9 @@ try {
 
         Assert-RegressionCondition ($decision.Count -eq 1) "ReactiveAssist did not record a suppressed decision after the repeated hover."
         Assert-RegressionCondition ([string]$decision[0].Summary -like "*تجنب الإزعاج المتكرر*") "ReactiveAssist suppressed decision did not explain the cooldown behavior."
+        Assert-RegressionCondition ([string]$payload.CapabilityOperatorView.Status -eq "cooling-down") "CapabilityOperatorView should report a cooling-down state after repeated anomaly suppression."
+        Assert-RegressionCondition (@($payload.CapabilityOperatorView.CoolingDownCapabilities | Where-Object Name -eq "ReactiveAssist").Count -eq 1) "CapabilityOperatorView did not expose ReactiveAssist as a cooling-down capability."
+        Assert-RegressionCondition ([string]$payload.CapabilityOperatorView.Guidance -like "*واصل نفس المسار*") "CapabilityOperatorView guidance did not stay operator-friendly during cooldown."
         return $payload
     } | Out-Null
 
@@ -544,6 +550,8 @@ try {
 
         Assert-RegressionCondition ($bundle.Count -eq 1) "AutoCaptureOnFailure did not record a failure-bundle observation after the invalid key action."
         Assert-RegressionCondition ([int]$bundle[0].Payload.CaptureCount -ge 3) "failure-bundle did not report a multi-frame failure evidence set."
+        Assert-RegressionCondition ([string]$payload.CapabilityOperatorView.Status -eq "intervened") "CapabilityOperatorView should report an intervened state after a captured failure."
+        Assert-RegressionCondition ([string]$payload.CapabilityOperatorView.LastDecision.CapabilityName -eq "AutoCaptureOnFailure") "CapabilityOperatorView did not surface AutoCaptureOnFailure as the last decision after the captured failure."
         foreach ($capturePath in @($bundle[0].Payload.CapturePaths)) {
             Assert-RegressionCondition (Test-Path -LiteralPath ([string]$capturePath)) "A failure-bundle capture path did not exist on disk."
         }
@@ -572,6 +580,8 @@ try {
 
         Assert-RegressionCondition ($decision.Count -eq 1) "AutoCaptureOnFailure did not record a suppressed decision after the repeated failure."
         Assert-RegressionCondition ([string]$decision[0].Summary -like "*تكرر الفشل نفسه سريعًا*") "AutoCaptureOnFailure suppressed decision did not explain the calmer failure behavior."
+        Assert-RegressionCondition ([string]$payload.CapabilityOperatorView.Status -eq "cooling-down") "CapabilityOperatorView should report a cooling-down state after repeated failure suppression."
+        Assert-RegressionCondition (@($payload.CapabilityOperatorView.CoolingDownCapabilities | Where-Object Name -eq "AutoCaptureOnFailure").Count -eq 1) "CapabilityOperatorView did not expose AutoCaptureOnFailure as a cooling-down capability."
         return $payload
     } | Out-Null
 

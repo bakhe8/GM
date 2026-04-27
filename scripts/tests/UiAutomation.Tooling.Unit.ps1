@@ -285,6 +285,73 @@ try {
         }
     } | Out-Null
 
+    Invoke-RegressionStep -Name "capability-operator-view-shape" -ScriptBlock {
+        $module = Get-Module UIAutomation.Acceptance
+        Assert-RegressionCondition ($null -ne $module) "UIAutomation.Acceptance module was not loaded for operator view inspection."
+
+        $session = [pscustomobject]@{
+            SessionId = "unit-operator-view"
+            IsActive = $true
+            Mode = "free-explore"
+            Reason = "unit-operator"
+            ProcessId = 0
+            CreatedAt = (Get-Date).ToString("o")
+            UpdatedAt = (Get-Date).ToString("o")
+            LastTouchedAt = (Get-Date).ToString("o")
+            LastAction = "MouseHover"
+            StopReason = $null
+            StoppedAt = $null
+            ActiveCapabilities = @(
+                [pscustomobject]@{
+                    Name = "ReactiveAssist"
+                    Category = "Adaptive"
+                    ProviderState = "available"
+                    Reason = "unit-reactive"
+                    LeaseMilliseconds = 2500
+                    ActivatedAt = (Get-Date).AddMilliseconds(-400).ToString("o")
+                    ExpiresAt = (Get-Date).AddMilliseconds(1800).ToString("o")
+                    Metadata = $null
+                }
+            )
+            CapabilityHistory = @()
+            RecentArtifacts = @()
+            RecentObservations = @()
+            RecentDecisions = @(
+                [pscustomobject]@{
+                    Timestamp = (Get-Date).ToString("o")
+                    CapabilityName = "ReactiveAssist"
+                    Action = "MouseHover"
+                    Decision = "suppressed"
+                    Summary = "رُصدت anomaly لكن ReactiveAssist تجاهلت التفعيل مؤقتًا لتجنب الإزعاج المتكرر."
+                    Payload = $null
+                },
+                [pscustomobject]@{
+                    Timestamp = (Get-Date).AddMilliseconds(-300).ToString("o")
+                    CapabilityName = "ReactiveAssist"
+                    Action = "MouseHover"
+                    Decision = "triggered"
+                    Summary = "فعّلت ReactiveAssist evidence بصرية خفيفة لأن anomaly الحالية تستحق متابعة."
+                    Payload = $null
+                }
+            )
+        }
+
+        $view = & $module {
+            param($inputSession)
+            Get-UiCapabilityOperatorView -SessionState $inputSession
+        } $session
+
+        Assert-RegressionCondition ([string]$view.Status -eq "cooling-down") "Operator view did not classify the synthetic session as cooling-down."
+        Assert-RegressionCondition (-not [string]::IsNullOrWhiteSpace([string]$view.Summary)) "Operator view summary was empty."
+        Assert-RegressionCondition (-not [string]::IsNullOrWhiteSpace([string]$view.SecondarySummary)) "Operator view secondary summary was empty."
+        Assert-RegressionCondition (-not [string]::IsNullOrWhiteSpace([string]$view.Guidance)) "Operator view guidance was empty."
+        Assert-RegressionCondition ([int]$view.Signals.ActiveCapabilityCount -eq 1) "Operator view did not report the active capability count."
+        Assert-RegressionCondition (@($view.CoolingDownCapabilities | Where-Object Name -eq "ReactiveAssist").Count -eq 1) "Operator view did not surface ReactiveAssist as cooling-down."
+        Assert-RegressionCondition ([string]$view.LastDecision.Decision -eq "suppressed") "Operator view did not surface the latest decision."
+        Assert-RegressionCondition (@($view.DecisionDigest).Count -ge 1) "Operator view did not expose a decision digest."
+        return $view
+    } | Out-Null
+
     Invoke-RegressionStep -Name "capability-observations-read-maxcount" -ScriptBlock {
         $entries = @(Get-UiCapabilityObservationEntries -MaxCount 3)
         Assert-RegressionCondition ($entries.Count -le 3) "Get-UiCapabilityObservationEntries exceeded the requested MaxCount."

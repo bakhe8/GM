@@ -486,6 +486,61 @@ function Get-UiCapabilityCooldownState {
     }
 }
 
+function ConvertTo-UiCapabilityDurationLabel {
+    param(
+        [Nullable[int]]$DurationMs
+    )
+
+    if ($null -eq $DurationMs) {
+        return $null
+    }
+
+    $durationValue = [int]$DurationMs
+    if ($durationValue -lt 0) {
+        return $null
+    }
+
+    if ($durationValue -lt 1000) {
+        return "$durationValue ms"
+    }
+
+    $seconds = [math]::Round($durationValue / 1000, 1)
+    if ($seconds -lt 60) {
+        return "$seconds s"
+    }
+
+    $minutes = [math]::Floor($seconds / 60)
+    $remainingSeconds = [math]::Round($seconds - ($minutes * 60), 1)
+    return "$minutes m $remainingSeconds s"
+}
+
+function Get-UiCapabilityOperatorStatus {
+    param(
+        [bool]$SessionIsActive,
+        [object[]]$ActiveCapabilities,
+        [object[]]$CoolingDownCapabilities,
+        $TopDecision = $null
+    )
+
+    if (-not $SessionIsActive) {
+        return "stopped"
+    }
+
+    if (@($CoolingDownCapabilities).Count -gt 0) {
+        return "cooling-down"
+    }
+
+    if ($null -ne $TopDecision -and [string]::Equals([string]$TopDecision.Decision, "triggered", [System.StringComparison]::OrdinalIgnoreCase)) {
+        return "intervened"
+    }
+
+    if (@($ActiveCapabilities).Count -gt 0) {
+        return "monitoring"
+    }
+
+    return "calm"
+}
+
 function Get-UiCapabilityOperatorView {
     param(
         $SessionState = $null
@@ -499,25 +554,157 @@ function Get-UiCapabilityOperatorView {
         return [pscustomobject]@{
             Status = "idle"
             Summary = "لا توجد جلسة قدرات حية الآن."
+            SecondarySummary = "ابدأ الجلسة فقط عندما تحتاج دعمًا لحظيًا إضافيًا."
+            Guidance = "استخدم CapabilityOn فقط عندما تحتاج evidence أو تتبعًا إضافيًا."
             ActiveCapabilities = @()
+            CoolingDownCapabilities = @()
+            Signals = [pscustomobject]@{
+                ActiveCapabilityCount = 0
+                CoolingDownCount = 0
+                RecentDecisionCount = 0
+            }
+            LastDecision = $null
+            DecisionDigest = @()
             RecentDecisions = @()
         }
     }
 
-    $activeCapabilities = @($SessionState.ActiveCapabilities | ForEach-Object { $_.Name })
+    $now = [DateTimeOffset]::Now
+    $activeCapabilities = New-Object System.Collections.Generic.List[object]
+    foreach ($capability in @($SessionState.ActiveCapabilities)) {
+        $definition = Resolve-UiCapabilityDefinition -CapabilityName ([string]$capability.Name)
+        $remainingMs = 0
+        if (-not [string]::IsNullOrWhiteSpace([string]$capability.ExpiresAt)) {
+            $remainingMs = [Math]::Max(0, [int][Math]::Ceiling(([DateTimeOffset]::Parse([string]$capability.ExpiresAt) - $now).TotalMilliseconds))
+        }
+
+        $recentDecision = @($SessionState.RecentDecisions | Where-Object {
+            [string]::Equals([string]$_.CapabilityName, [string]$capability.Name, [System.StringComparison]::OrdinalIgnoreCase)
+        } | Select-Object -First 1)
+
+        $cooldownMs = 0
+        switch -Regex ([string]$capability.Name) {
+            "^ReactiveAssist$" { $cooldownMs = [int](Resolve-UiReactiveAssistProfile -CapabilityRecord $capability).CooldownMs; break }
+            "^AutoCaptureOnFailure$" { $cooldownMs = [int](Resolve-UiFailureCaptureProfile -CapabilityRecord $capability).CooldownMs; break }
+            default { $cooldownMs = 0 }
+        }
+
+        $cooldownState = if ($cooldownMs -gt 0) {
+            Get-UiCapabilityCooldownState -SessionState $SessionState -CapabilityName ([string]$capability.Name) -CooldownMs $cooldownMs
+        }
+        else {
+            [pscustomobject]@{
+                IsActive = $false
+                RemainingMs = 0
+                LastDecision = $null
+            }
+        }
+
+        $state = if ($cooldownState.IsActive -and $recentDecision.Count -gt 0 -and [string]$recentDecision[0].Decision -eq "suppressed") {
+            "cooling-down"
+        }
+        elseif ($recentDecision.Count -gt 0 -and [string]$recentDecision[0].Decision -eq "triggered") {
+            "recently-triggered"
+        }
+        else {
+            "active"
+        }
+
+        $stateSummary = switch ($state) {
+            "cooling-down" { "تركت الأداة هذه القدرة تهدأ مؤقتًا كي لا تكرر نفس evidence." ; break }
+            "recently-triggered" { "تدخلت هذه القدرة قبل لحظات وقدمت evidence أوضح." ; break }
+            default { "هذه القدرة جاهزة الآن وتعمل فقط عند الحاجة." }
+        }
+
+        [void]$activeCapabilities.Add([pscustomobject]@{
+            Name = [string]$capability.Name
+            Category = [string]$definition.Category
+            State = $state
+            StateSummary = $stateSummary
+            Reason = [string]$capability.Reason
+            LeaseRemainingMs = $remainingMs
+            LeaseRemainingLabel = ConvertTo-UiCapabilityDurationLabel -DurationMs $remainingMs
+            CooldownRemainingMs = [int]$cooldownState.RemainingMs
+            CooldownRemainingLabel = ConvertTo-UiCapabilityDurationLabel -DurationMs ([int]$cooldownState.RemainingMs)
+            LastDecision = if ($recentDecision.Count -gt 0) { $recentDecision[0] } else { $null }
+            Description = [string]$definition.Description
+        })
+    }
+
+    $activeCapabilityArray = @($activeCapabilities.ToArray())
+    $coolingDownCapabilities = @($activeCapabilityArray | Where-Object { $_.State -eq "cooling-down" })
     $recentDecisions = @($SessionState.RecentDecisions | Select-Object -First 5)
-    $status = if ($activeCapabilities.Count -gt 0) { "active" } else { "calm" }
-    $summary = if ($activeCapabilities.Count -gt 0) {
-        "القدرات النشطة الآن: $($activeCapabilities -join '، ')"
+    $topDecision = if ($recentDecisions.Count -gt 0) { $recentDecisions[0] } else { $null }
+    $status = Get-UiCapabilityOperatorStatus `
+        -SessionIsActive ([bool]$SessionState.IsActive) `
+        -ActiveCapabilities $activeCapabilityArray `
+        -CoolingDownCapabilities $coolingDownCapabilities `
+        -TopDecision $topDecision
+
+    $summary = ""
+    $secondarySummary = ""
+    $guidance = ""
+    switch ($status) {
+        "stopped" {
+            $summary = "جلسة القدرات متوقفة الآن؛ لن تتدخل الأداة لحظيًا حتى تعيد تفعيل ما تحتاجه."
+            $secondarySummary = "لا توجد أي قدرة تعمل في الخلفية حاليًا."
+            $guidance = "أعد تشغيل CapabilityOn فقط عندما تحتاج evidence أو تتبعًا إضافيًا داخل نفس الاستكشاف."
+            break
+        }
+        "cooling-down" {
+            $names = @($coolingDownCapabilities | ForEach-Object { $_.Name })
+            $summary = "الأداة رأت anomaly مهمة قبل لحظات ثم دخلت تهدئة مؤقتة كي لا تكرر evidence بشكل مزعج."
+            $secondarySummary = "التهدئة الجارية الآن: $($names -join '، ')"
+            $guidance = "واصل نفس المسار طبيعيًا؛ إذا استمرت الغرابة بعد انتهاء cooldown سنرى evidence جديدة بوضوح أكبر."
+            break
+        }
+        "intervened" {
+            $decisionSummary = if ($null -ne $topDecision) { [string]$topDecision.Summary } else { "التقطت الأداة evidence مفيدة قبل لحظات." }
+            $summary = "الأداة تدخلت في اللحظة المناسبة وقدمت evidence أوضح دون أن توقف الاستكشاف."
+            $secondarySummary = $decisionSummary
+            $guidance = "راجع آخر artifact فقط إذا بقي السلوك غير واضح، ثم واصل نفس المسار ولا تغيّر أسلوبك بلا حاجة."
+            break
+        }
+        "monitoring" {
+            $names = @($activeCapabilityArray | ForEach-Object { $_.Name })
+            $summary = "الأداة الآن في وضع مراقبة خفيف: $($names -join '، ')"
+            $secondarySummary = "لا يوجد تدخل مزعج الآن؛ القدرات النشطة ستعمل فقط إذا احتاج المسار الحالي ذلك."
+            $guidance = "تابع الاستكشاف بحرية؛ شغّل قدرة إضافية فقط إذا شعرت أن evidence الحالية لا تكفي."
+            break
+        }
+        default {
+            $summary = "الوضع الآن خفيف وهادئ؛ لا توجد قدرات إضافية تعمل في الخلفية."
+            $secondarySummary = "الاستكشاف يمكن أن يستمر كما هو من غير أي عبء تشخيصي إضافي."
+            $guidance = "ابق على هذا الإيقاع، وفعّل capability فقط عند لحظة احتياج حقيقية."
+        }
     }
-    else {
-        "الوضع الآن خفيف وهادئ؛ لا توجد قدرات نشطة حاليًا."
-    }
+
+    $decisionDigest = @($recentDecisions | ForEach-Object {
+        [pscustomobject]@{
+            CapabilityName = [string]$_.CapabilityName
+            Decision = [string]$_.Decision
+            Action = [string]$_.Action
+            Summary = [string]$_.Summary
+            Headline = ("$([string]$_.CapabilityName) -> $([string]$_.Decision): $([string]$_.Summary)")
+        }
+    })
 
     return [pscustomobject]@{
         Status = $status
         Summary = $summary
-        ActiveCapabilities = [object[]]$activeCapabilities
+        SecondarySummary = $secondarySummary
+        Guidance = $guidance
+        ActiveCapabilities = [object[]]$activeCapabilityArray
+        CoolingDownCapabilities = [object[]]$coolingDownCapabilities
+        Signals = [pscustomobject]@{
+            ActiveCapabilityCount = $activeCapabilityArray.Count
+            CoolingDownCount = $coolingDownCapabilities.Count
+            RecentDecisionCount = $recentDecisions.Count
+            SessionMode = [string]$SessionState.Mode
+            LastAction = [string]$SessionState.LastAction
+        }
+        LastDecision = $topDecision
+        DecisionDigest = [object[]]$decisionDigest
         RecentDecisions = [object[]]$recentDecisions
     }
 }
