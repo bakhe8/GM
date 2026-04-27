@@ -6,6 +6,7 @@ param(
     [string]$Name = "",
     [string]$Label = "",
     [string]$Text = "",
+    [AllowEmptyString()]
     [string]$Value = "",
     [string]$AutomationId = "",
     [string]$ControlType = "",

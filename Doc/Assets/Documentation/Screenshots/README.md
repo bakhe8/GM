@@ -122,6 +122,7 @@
 ```powershell
 .\scripts\ui_explore.ps1 -Action Windows
 .\scripts\ui_explore.ps1 -Action Sidebar -Label "الضمانات"
+.\\scripts\\ui_explore.ps1 -Action Sidebar -AutomationId "Shell.Sidebar.Guarantees"
 .\\scripts\\ui_explore.ps1 -Action WaitWindow -WindowAutomationId "Dialog.NewGuarantee"
 .\\scripts\\ui_explore.ps1 -Action WaitWindowClosed -WindowAutomationId "Dialog.NewGuarantee"
 .\scripts\ui_explore.ps1 -Action Elements -WindowTitle "إجراء جديد" -ControlType "ControlType.Edit"
@@ -184,6 +185,8 @@
 - `DialogAction` لم تعد تعتبر "الضغط على الزر" نجاحًا بحد ذاته؛ هي الآن تنتظر جاهزية الزر، ثم تتحقق من إغلاق الحوار فعليًا، وتعيد المحاولة بأسلوب بديل إذا لزم.
 - `WaitWindowClosed` صارت متاحة الآن عندما نريد assert صريحة على اختفاء نافذة داخلية أو خارجية بعد الفعل.
 - يمكن استخدام `SetField` إما عبر `Label` أو مباشرة عبر `AutomationId` إذا كان الحقل معروف الهوية.
+- `SetField` تدعم الآن أيضًا القيمة الفارغة عندما نريد تفريغ الحقل نفسه بدل الالتفاف عبر `SendKeys`.
+- `Sidebar` يمكن توجيهها الآن إما عبر `Label` أو عبر `AutomationId` ثابتة، وهذا يفيد خصوصًا عندما تكون بيئة التنفيذ نفسها حساسة للترميز العربي.
 - التصوير والـ contact sheet لم يعودا يحمّلان مكتبات الرسوم إلا عند الحاجة الفعلية لهما.
 - الأداة لم تعد تسمح بالتنقل العام أو النقر على النافذة الرئيسية بينما توجد رسالة أو حوار مفتوح فوق التطبيق؛ ستطلب أولًا حسم الحوار عبر `DialogAction` أو استهدافه صراحة.
 - `Windows` و`Probe` لا يكتفيان الآن بنوافذ عملية التطبيق فقط؛ بل يعرضان أيضًا النوافذ الأصلية المرتبطة به مثل `GuaranteeManager - Print` عندما تظهر.

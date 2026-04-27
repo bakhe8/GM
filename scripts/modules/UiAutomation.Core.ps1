@@ -548,6 +548,7 @@ function Set-UiElementValue {
         [Parameter(Mandatory)]
         [System.Windows.Automation.AutomationElement]$Element,
         [Parameter(Mandatory)]
+        [AllowEmptyString()]
         [string]$Value
     )
 

@@ -108,11 +108,16 @@ function Invoke-UiExploreAction {
         "Sidebar" {
             Assert-UiNoBlockingWindows -Process $process
             $window = Resolve-UiWindow -ProcessId $process.Id
-            Invoke-UiSidebarNavigation -MainWindow $window -WorkspaceLabel $Options.Label
+            if ([string]::IsNullOrWhiteSpace($Options.Label) -and [string]::IsNullOrWhiteSpace($Options.AutomationId)) {
+                throw "Sidebar requires either -Label or -AutomationId."
+            }
+
+            Invoke-UiSidebarNavigation -MainWindow $window -WorkspaceLabel $Options.Label -SidebarAutomationId $Options.AutomationId
             return [pscustomobject]@{
                 ProcessId = $process.Id
                 Action = "Sidebar"
                 Label = $Options.Label
+                AutomationId = $Options.AutomationId
                 Window = Get-UiElementSummary -Element $window
             }
         }

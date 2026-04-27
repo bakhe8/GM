@@ -166,14 +166,36 @@ function Invoke-UiSidebarNavigation {
     param(
         [Parameter(Mandatory)]
         [System.Windows.Automation.AutomationElement]$MainWindow,
-        [Parameter(Mandatory)]
-        [string]$WorkspaceLabel
+        [string]$WorkspaceLabel = "",
+        [string]$SidebarAutomationId = "",
+        [string]$WorkspaceKey = ""
     )
 
     $previousState = Get-UiShellStateSnapshot
-    $button = Get-UiSidebarButton -MainWindow $MainWindow -Label $WorkspaceLabel
+    $button = if (-not [string]::IsNullOrWhiteSpace($SidebarAutomationId)) {
+        Wait-UiElement -Root $MainWindow -AutomationId $SidebarAutomationId -ControlType $null -TimeoutSeconds 5
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($WorkspaceLabel)) {
+        Get-UiSidebarButton -MainWindow $MainWindow -Label $WorkspaceLabel
+    }
+    else {
+        throw "Invoke-UiSidebarNavigation requires either -WorkspaceLabel or -SidebarAutomationId."
+    }
+
     Invoke-UiElement -Element $button
-    $targetWorkspaceKey = Get-UiWorkspaceKeyForLabel -WorkspaceLabel $WorkspaceLabel
+    $targetWorkspaceKey = if (-not [string]::IsNullOrWhiteSpace($WorkspaceKey)) {
+        $WorkspaceKey
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($WorkspaceLabel)) {
+        Get-UiWorkspaceKeyForLabel -WorkspaceLabel $WorkspaceLabel
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($SidebarAutomationId)) {
+        Get-UiWorkspaceKeyForSidebarAutomationId -SidebarAutomationId $SidebarAutomationId
+    }
+    else {
+        ""
+    }
+
     if ([string]::IsNullOrWhiteSpace($targetWorkspaceKey)) {
         Start-Sleep -Milliseconds 200
         return
@@ -187,6 +209,24 @@ function Invoke-UiSidebarNavigation {
 
     if (-not $ready) {
         Start-Sleep -Milliseconds 200
+    }
+}
+
+function Get-UiWorkspaceKeyForSidebarAutomationId {
+    param(
+        [Parameter(Mandatory)]
+        [string]$SidebarAutomationId
+    )
+
+    switch ($SidebarAutomationId.Trim()) {
+        "Shell.Sidebar.Dashboard" { return "Dashboard" }
+        "Shell.Sidebar.Guarantees" { return "Guarantees" }
+        "Shell.Sidebar.Requests" { return "Requests" }
+        "Shell.Sidebar.Banks" { return "Banks" }
+        "Shell.Sidebar.Reports" { return "Reports" }
+        "Shell.Sidebar.Notifications" { return "Notifications" }
+        "Shell.Sidebar.Settings" { return "Settings" }
+        default { return "" }
     }
 }
 
