@@ -65,6 +65,45 @@ function Invoke-UiExploreJson {
     return ConvertFrom-UiExploreOutput -OutputLines @($output)
 }
 
+function Invoke-UiExploreExpectedFailure {
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$Arguments
+    )
+
+    $invokeParameters = @{}
+    foreach ($key in $Arguments.Keys) {
+        $value = $Arguments[$key]
+        if ($value -is [bool] -or $value -is [System.Management.Automation.SwitchParameter]) {
+            $invokeParameters[$key] = [bool]$value
+            continue
+        }
+
+        if ($null -eq $value) {
+            continue
+        }
+
+        $stringValue = [string]$value
+        if ([string]::IsNullOrWhiteSpace($stringValue)) {
+            continue
+        }
+
+        $invokeParameters[$key] = $stringValue
+    }
+
+    try {
+        & $uiExplorePath @invokeParameters | Out-Null
+        throw "Expected ui_explore to fail, but it succeeded."
+    }
+    catch {
+        if ($_.Exception.Message -eq "Expected ui_explore to fail, but it succeeded.") {
+            throw
+        }
+
+        return $_.Exception.Message
+    }
+}
+
 function Assert-RegressionCondition {
     param(
         [Parameter(Mandatory)]
@@ -382,6 +421,115 @@ try {
         }
 
         Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "MouseTrace").Count -eq 0) "MouseTrace remained active after CapabilityOff."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "enable-reactive-assist" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOn"
+            CapabilityName = "ReactiveAssist"
+            LeaseMilliseconds = 8000
+            Reason = "integration-reactive-assist"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Capability.Name -eq "ReactiveAssist") "CapabilityOn did not activate ReactiveAssist."
+        Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "ReactiveAssist").Count -eq 1) "ReactiveAssist was not present in the active session state."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "reactive-hover-guarantees-sidebar" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "MouseHover"
+            WindowAutomationId = "Shell.MainWindow"
+            AutomationId = "Shell.Sidebar.Guarantees"
+            HoverMilliseconds = 900
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Target.AutomationId -eq "Shell.Sidebar.Guarantees") "Reactive hover did not resolve the Guarantees sidebar target."
+        Assert-RegressionCondition (@($payload.CapabilityCaptures).Count -ge 3) "ReactiveAssist did not escalate to a burst evidence set on a slow hover."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "hoststate-reactive-trigger-after-hover" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "HostState"
+        }
+
+        $trace = @($payload.RecentCapabilityObservations | Where-Object {
+            $_.CapabilityName -eq "ReactiveAssist" -and $_.Kind -eq "reactive-trigger" -and $_.Payload.Action -eq "MouseHover"
+        } | Select-Object -First 1)
+
+        Assert-RegressionCondition ($trace.Count -eq 1) "ReactiveAssist did not record a reactive-trigger observation after the slow hover."
+        Assert-RegressionCondition (@($trace[0].Payload.Reasons | Where-Object Kind -eq "slow-action").Count -ge 1) "ReactiveAssist did not explain the hover anomaly as a slow action."
+        Assert-RegressionCondition ([int]$trace[0].Payload.CaptureCount -ge 3) "ReactiveAssist observation did not report burst evidence."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "disable-reactive-assist" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOff"
+            CapabilityName = "ReactiveAssist"
+            Reason = "integration-reactive-assist-complete"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "ReactiveAssist").Count -eq 0) "ReactiveAssist remained active after CapabilityOff."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "enable-autocapture-on-failure" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOn"
+            CapabilityName = "AutoCaptureOnFailure"
+            LeaseMilliseconds = 8000
+            Reason = "integration-failure-capture"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Capability.Name -eq "AutoCaptureOnFailure") "CapabilityOn did not activate AutoCaptureOnFailure."
+        Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "AutoCaptureOnFailure").Count -eq 1) "AutoCaptureOnFailure was not present in the active session state."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "expected-failure-invalid-key" -ScriptBlock {
+        $message = Invoke-UiExploreExpectedFailure -Arguments @{
+            Action = "Key"
+            KeyName = "Bogus"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($message.Contains("Unsupported key 'Bogus'")) "The expected failure did not return the invalid-key message."
+        return $message
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "hoststate-failure-bundle-after-invalid-key" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "HostState"
+        }
+
+        $bundle = @($payload.RecentCapabilityObservations | Where-Object {
+            $_.CapabilityName -eq "AutoCaptureOnFailure" -and $_.Kind -eq "failure-bundle" -and $_.Payload.Action -eq "Key"
+        } | Select-Object -First 1)
+
+        Assert-RegressionCondition ($bundle.Count -eq 1) "AutoCaptureOnFailure did not record a failure-bundle observation after the invalid key action."
+        Assert-RegressionCondition ([int]$bundle[0].Payload.CaptureCount -ge 3) "failure-bundle did not report a multi-frame failure evidence set."
+        foreach ($capturePath in @($bundle[0].Payload.CapturePaths)) {
+            Assert-RegressionCondition (Test-Path -LiteralPath ([string]$capturePath)) "A failure-bundle capture path did not exist on disk."
+        }
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "disable-autocapture-on-failure" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOff"
+            CapabilityName = "AutoCaptureOnFailure"
+            Reason = "integration-failure-capture-complete"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "AutoCaptureOnFailure").Count -eq 0) "AutoCaptureOnFailure remained active after CapabilityOff."
         return $payload
     } | Out-Null
 

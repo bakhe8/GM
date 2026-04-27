@@ -109,7 +109,7 @@ try {
 
     if ($Action -notin @("HostState", "CapabilityOn", "CapabilityOff") -and $null -ne $processForHooks) {
         try {
-            $hookPayload = Invoke-UiCapabilityHooksAfterAction -Process $processForHooks -RepoRoot $repoRoot -ActionName $Action -Result $result
+            $hookPayload = Invoke-UiCapabilityHooksAfterAction -Process $processForHooks -RepoRoot $repoRoot -ActionName $Action -DurationMs $traceStopwatch.Elapsed.TotalMilliseconds -Result $result
             if ($null -ne $hookPayload) {
                 Add-Member -InputObject $result -NotePropertyName "CapabilitySession" -NotePropertyValue $hookPayload.Session -Force
                 Add-Member -InputObject $result -NotePropertyName "CapabilityCaptures" -NotePropertyValue ([object[]]@($hookPayload.Captures)) -Force
@@ -140,7 +140,7 @@ catch {
     $failureHooks = $null
     $failureCapturePaths = @()
     try {
-        $failureHooks = Invoke-UiCapabilityHooksOnFailure -RepoRoot $repoRoot -ActionName $Action -ErrorMessage $_.Exception.Message
+        $failureHooks = Invoke-UiCapabilityHooksOnFailure -RepoRoot $repoRoot -ActionName $Action -DurationMs $traceStopwatch.Elapsed.TotalMilliseconds -ErrorMessage $_.Exception.Message
         if ($null -ne $failureHooks -and $null -ne $failureHooks.Captures) {
             $failureCapturePaths = @($failureHooks.Captures | ForEach-Object { $_.Path })
         }

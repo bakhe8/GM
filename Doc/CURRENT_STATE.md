@@ -61,6 +61,7 @@
 - والقدرات الأولى الحالية هي:
   - `BurstCapture` — متاحة
   - `AutoCaptureOnFailure` — متاحة
+  - `ReactiveAssist` — متاحة
   - `VideoCapture` — planned
   - `AudioCapture` — planned
   - `MouseTrace` — متاحة
@@ -103,6 +104,22 @@
     - `tooling unit`: `16/16`
     - `tooling smoke`: `10/10`
     - `tooling integration`: `31/31`
+- ثم أُنجزت أول slice فعلية من **ReactiveAssist**:
+  - يمكن تفعيلها لحظيًا عبر `CapabilityOn`
+  - تراقب anomaly خفيفة خلال الـ lease نفسها
+  - وتطلق burst evidence فقط عند الحاجة، لا بشكل دائم
+  - كما تسجل `reactive-trigger` observation داخل:
+    - `HostState`
+    - `RecentCapabilityObservations`
+- كما أصبحت `AutoCaptureOnFailure` أذكى:
+  - لم تعد مجرد لقطة فشل واحدة
+  - صارت تنتج:
+    - multi-frame failure evidence
+    - و`failure-bundle` observation مرتبطة بالفعل نفسه والخطأ نفسه
+- والتحقق الحالي لهذه الطبقة ناجح ضمن:
+  - `tooling unit`: `16/16`
+  - `tooling smoke`: `10/10`
+  - `tooling integration`: `39/39`
 
 وأول خطوة تنفيذية منه بدأت فعليًا الآن:
 
@@ -183,7 +200,7 @@
     - والرجوع إلى جلسة نظيفة بعد إغلاق الحوارات الداخلية والخارجية
   - والنتيجة الحالية:
     - `10/10` في smoke
-    - `31/31` في integration
+    - `39/39` في integration
     - وتشغيل `-Suite All` يمر الآن بنجاح
     - والملخصان الحيان يُكتبان هنا:
       - [UIAcceptance/latest/tooling-regression-summary.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/latest/tooling-regression-summary.md)

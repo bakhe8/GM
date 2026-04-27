@@ -254,6 +254,7 @@
 
 - `BurstCapture` — **available**
 - `AutoCaptureOnFailure` — **available**
+- `ReactiveAssist` — **available**
 - `VideoCapture` — **planned**
 - `AudioCapture` — **planned**
 - `MouseTrace` — **available**
@@ -313,6 +314,33 @@
 - unit: `16/16`
 - smoke: `10/10`
 - integration: `31/31`
+
+كما أُنجزت الآن أول slice فعلية من **ReactiveAssist**:
+
+- يمكن تفعيلها عبر:
+  - `CapabilityOn -CapabilityName ReactiveAssist`
+- وهي لا تعمل دائمًا، بل تراقب فقط أثناء lease القصيرة
+- ثم إذا رأت anomaly خفيفة مثل:
+  - بطء يتجاوز threshold القدرة نفسها
+  - أو نافذة خارجية/حوار ظاهر أثناء المسار
+- فإنها:
+  - تسجل `reactive-trigger` observation
+  - وتشغل burst evidence خفيفة عند الحاجة فقط
+  - ثم تعود الجلسة إلى سلوكها الطبيعي
+
+كما أصبحت `AutoCaptureOnFailure` أذكى من قبل:
+
+- لم تعد تكتفي بلقطة وحيدة
+- صارت تنتج:
+  - multi-frame failure evidence
+  - `failure-bundle` observation
+  - ومسارات captures المرتبطة بالخطأ نفسه
+
+والتحقق الحالي لهذه الطبقة ناجح ضمن:
+
+- unit: `16/16`
+- smoke: `10/10`
+- integration: `39/39`
 
 ---
 

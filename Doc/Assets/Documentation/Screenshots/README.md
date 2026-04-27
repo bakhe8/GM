@@ -139,9 +139,13 @@
 .\\scripts\\ui_explore.ps1 -Action HostState
 .\\scripts\\ui_explore.ps1 -Action CapabilityOn -CapabilityName BurstCapture -LeaseMilliseconds 3000 -Reason "suspected-flicker"
 .\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName BurstCapture -Reason "done"
+.\\scripts\\ui_explore.ps1 -Action CapabilityOn -CapabilityName ReactiveAssist -LeaseMilliseconds 4000 -Reason "watch-for-anomaly"
 .\\scripts\\ui_explore.ps1 -Action CapabilityOn -CapabilityName MouseTrace -LeaseMilliseconds 4000 -Reason "follow-pointer"
 .\\scripts\\ui_explore.ps1 -Action HostState
+.\\scripts\\ui_explore.ps1 -Action CapabilityOn -CapabilityName AutoCaptureOnFailure -LeaseMilliseconds 4000 -Reason "catch-failure"
 .\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName MouseTrace -Reason "trace-complete"
+.\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName ReactiveAssist -Reason "reactive-complete"
+.\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName AutoCaptureOnFailure -Reason "failure-capture-complete"
 .\\scripts\\ui_explore.ps1 -Action MouseMove -WindowAutomationId "Shell.MainWindow" -AutomationId "Shell.Sidebar.Settings"
 .\\scripts\\ui_explore.ps1 -Action MouseClick -WindowAutomationId "Shell.MainWindow" -AutomationId "Shell.Sidebar.Settings"
 .\\scripts\\ui_explore.ps1 -Action MouseHover -WindowAutomationId "Shell.MainWindow" -AutomationId "Shell.Sidebar.Guarantees" -HoverMilliseconds 900
@@ -226,3 +230,9 @@
   - لا تسجل فيديو
   - ولا تفرض وضعًا دائمًا
   - بل تحفظ observation لحظية مرتبطة بالفعل نفسه داخل `HostState`
+- كما صارت `ReactiveAssist` capability متاحة:
+  - تراقب anomaly خفيفة أثناء الـ lease فقط
+  - وتشغل burst evidence عند الحاجة بدل أن تعمل دائمًا
+- كما أصبحت `AutoCaptureOnFailure` أذكى:
+  - تنتج الآن multi-frame evidence
+  - وتكتب `failure-bundle` observation بدل الاقتصار على لقطة واحدة

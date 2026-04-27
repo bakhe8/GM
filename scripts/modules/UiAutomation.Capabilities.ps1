@@ -15,7 +15,24 @@ function Get-UiCapabilityDefinitions {
             Category = "Visual"
             ProviderState = "available"
             DefaultLeaseMs = 3000
+            DefaultFrameCount = 3
+            DefaultIntervalMs = 80
+            CreateContactSheet = $true
             Description = "يلتقط لقطة تلقائية عند فشل الفعل أثناء الاستكشاف."
+        },
+        [pscustomobject]@{
+            Name = "ReactiveAssist"
+            Category = "Adaptive"
+            ProviderState = "available"
+            DefaultLeaseMs = 3200
+            DefaultSlowActionMs = 850
+            DefaultFrameCount = 3
+            DefaultIntervalMs = 70
+            CreateContactSheet = $true
+            TriggerOnSlowAction = $true
+            TriggerOnExternalWindow = $true
+            TriggerOnDialog = $true
+            Description = "يراقب anomaly خفيفة أثناء الاستكشاف ويشغل evidence بصرية فقط عند الحاجة."
         },
         [pscustomobject]@{
             Name = "VideoCapture"
@@ -124,6 +141,34 @@ function Resolve-UiMouseTraceProfile {
     return [pscustomobject]@{
         SampleCount = [Math]::Max(1, $sampleCount)
         IntervalMs = [Math]::Max(0, $intervalMs)
+    }
+}
+
+function Resolve-UiReactiveAssistProfile {
+    param(
+        [Parameter(Mandatory)]
+        $CapabilityRecord
+    )
+
+    $definition = Resolve-UiCapabilityDefinition -CapabilityName ([string]$CapabilityRecord.Name)
+    $metadata = $CapabilityRecord.Metadata
+
+    $slowActionMs = if ($null -ne $metadata -and $null -ne $metadata.SlowActionMs) { [int]$metadata.SlowActionMs } else { [int]$definition.DefaultSlowActionMs }
+    $frameCount = if ($null -ne $metadata -and $null -ne $metadata.FrameCount) { [int]$metadata.FrameCount } else { [int]$definition.DefaultFrameCount }
+    $intervalMs = if ($null -ne $metadata -and $null -ne $metadata.IntervalMs) { [int]$metadata.IntervalMs } else { [int]$definition.DefaultIntervalMs }
+    $createContactSheet = if ($null -ne $metadata -and $null -ne $metadata.CreateContactSheet) { [bool]$metadata.CreateContactSheet } else { [bool]$definition.CreateContactSheet }
+    $triggerOnSlowAction = if ($null -ne $metadata -and $null -ne $metadata.TriggerOnSlowAction) { [bool]$metadata.TriggerOnSlowAction } else { [bool]$definition.TriggerOnSlowAction }
+    $triggerOnExternalWindow = if ($null -ne $metadata -and $null -ne $metadata.TriggerOnExternalWindow) { [bool]$metadata.TriggerOnExternalWindow } else { [bool]$definition.TriggerOnExternalWindow }
+    $triggerOnDialog = if ($null -ne $metadata -and $null -ne $metadata.TriggerOnDialog) { [bool]$metadata.TriggerOnDialog } else { [bool]$definition.TriggerOnDialog }
+
+    return [pscustomobject]@{
+        SlowActionMs = [Math]::Max(0, $slowActionMs)
+        FrameCount = [Math]::Max(1, $frameCount)
+        IntervalMs = [Math]::Max(0, $intervalMs)
+        CreateContactSheet = $createContactSheet
+        TriggerOnSlowAction = $triggerOnSlowAction
+        TriggerOnExternalWindow = $triggerOnExternalWindow
+        TriggerOnDialog = $triggerOnDialog
     }
 }
 
@@ -556,6 +601,192 @@ function Save-UiMouseTraceObservation {
     }
 }
 
+function Get-UiCapabilityWindowHealth {
+    param(
+        [Parameter(Mandatory)]
+        [System.Diagnostics.Process]$Process
+    )
+
+    $windows = @(Get-UiWindowsCatalog -ProcessId $Process.Id -IncludeRelatedForeground)
+    $meaningfulWindows = @($windows | Where-Object {
+        $_.AutomationId -eq "Shell.MainWindow" -or -not [string]::IsNullOrWhiteSpace($_.Name)
+    })
+
+    $dialogSummary = $null
+    try {
+        $dialog = Get-UiActiveDialog -ProcessId $Process.Id
+        if ($null -ne $dialog) {
+            $dialogSummary = Get-UiElementSummary -Element $dialog
+        }
+    }
+    catch {
+    }
+
+    $externalForegroundWindow = $meaningfulWindows |
+        Where-Object { $_.AutomationId -ne "Shell.MainWindow" -and $_.ProcessId -ne $Process.Id } |
+        Select-Object -First 1
+
+    return [pscustomobject]@{
+        OpenWindowCount = $meaningfulWindows.Count
+        ActiveDialogTitle = if ($null -ne $externalForegroundWindow) { [string]$externalForegroundWindow.Name } elseif ($null -ne $dialogSummary) { [string]$dialogSummary.Name } else { $null }
+        ExternalForegroundWindow = $externalForegroundWindow
+        Dialog = $dialogSummary
+        Windows = [object[]]$meaningfulWindows
+    }
+}
+
+function Add-UiFailureBundleObservation {
+    param(
+        [Parameter(Mandatory)]
+        $SessionState,
+        [Parameter(Mandatory)]
+        [string]$CapabilityName,
+        [Parameter(Mandatory)]
+        [string]$ActionName,
+        [Parameter(Mandatory)]
+        [string]$ErrorMessage,
+        [object[]]$Captures = @(),
+        $Health = $null
+    )
+
+    $shellState = Get-UiShellStateSnapshot
+    $payload = [pscustomobject]@{
+        Timestamp = (Get-Date).ToString("o")
+        SessionId = $SessionState.SessionId
+        CapabilityName = $CapabilityName
+        Action = $ActionName
+        Error = $ErrorMessage
+        CaptureCount = @($Captures).Count
+        CapturePaths = @($Captures | ForEach-Object { $_.Path })
+        Health = if ($null -ne $Health) {
+            [pscustomobject]@{
+                OpenWindowCount = $Health.OpenWindowCount
+                ActiveDialogTitle = $Health.ActiveDialogTitle
+                ExternalWindowTitle = if ($null -ne $Health.ExternalForegroundWindow) { [string]$Health.ExternalForegroundWindow.Name } else { $null }
+            }
+        }
+        else {
+            $null
+        }
+        ShellState = $shellState
+    }
+
+    Add-UiCapabilityObservationRecord -SessionState $SessionState -CapabilityName $CapabilityName -Kind "failure-bundle" -Payload $payload
+    $SessionState.UpdatedAt = (Get-Date).ToString("o")
+    Save-UiCapabilitySessionState -SessionState $SessionState | Out-Null
+    return $payload
+}
+
+function Invoke-UiReactiveAssistAfterAction {
+    param(
+        [Parameter(Mandatory)]
+        [System.Diagnostics.Process]$Process,
+        [Parameter(Mandatory)]
+        $CapabilityRecord,
+        [Parameter(Mandatory)]
+        [string]$ActionName,
+        [double]$DurationMs = 0,
+        $Result = $null
+    )
+
+    $session = Get-UiCapabilitySessionState
+    if ($null -eq $session) {
+        return $null
+    }
+
+    $profile = Resolve-UiReactiveAssistProfile -CapabilityRecord $CapabilityRecord
+    $health = Get-UiCapabilityWindowHealth -Process $Process
+    $thresholds = Get-UiLatencyThresholds -ActionName $ActionName
+    $reasons = New-Object System.Collections.Generic.List[object]
+
+    if ($profile.TriggerOnSlowAction -and $DurationMs -ge [double]$profile.SlowActionMs) {
+        [void]$reasons.Add([pscustomobject]@{
+            Kind = "slow-action"
+            ActualMs = [math]::Round($DurationMs, 2)
+            ThresholdMs = [int]$profile.SlowActionMs
+            CalibratedSlowMs = [int]$thresholds.SlowMs
+        })
+    }
+
+    if ($profile.TriggerOnExternalWindow -and $null -ne $health.ExternalForegroundWindow) {
+        [void]$reasons.Add([pscustomobject]@{
+            Kind = "external-window"
+            WindowTitle = [string]$health.ExternalForegroundWindow.Name
+            WindowAutomationId = [string]$health.ExternalForegroundWindow.AutomationId
+        })
+    }
+
+    if ($profile.TriggerOnDialog -and -not [string]::IsNullOrWhiteSpace([string]$health.ActiveDialogTitle)) {
+        [void]$reasons.Add([pscustomobject]@{
+            Kind = "dialog-visible"
+            Title = [string]$health.ActiveDialogTitle
+        })
+    }
+
+    if ($reasons.Count -eq 0) {
+        return [pscustomobject]@{
+            Session = $session
+            Captures = @()
+            Observation = $null
+        }
+    }
+
+    $captures = New-Object System.Collections.Generic.List[object]
+    $burstSummary = $null
+    $suppressedBecauseBurstCaptureActive = $false
+    if (Test-UiCapabilityEnabled -CapabilityName "BurstCapture" -SessionState $session) {
+        $suppressedBecauseBurstCaptureActive = $true
+    }
+    else {
+        $reactiveCapabilityRecord = [pscustomobject]@{
+            Name = [string]$CapabilityRecord.Name
+            Metadata = [pscustomobject]@{
+                FrameCount = $profile.FrameCount
+                IntervalMs = $profile.IntervalMs
+                CreateContactSheet = $profile.CreateContactSheet
+            }
+        }
+
+        $burstPayload = Save-UiCapabilityBurstSequence -Process $Process -CapabilityRecord $reactiveCapabilityRecord -ActionName $ActionName -CaptureReason "reactive-anomaly"
+        foreach ($capture in @($burstPayload.Captures)) {
+            [void]$captures.Add($capture)
+        }
+        $burstSummary = $burstPayload.Burst
+    }
+
+    $session = Get-UiCapabilitySessionState
+    if ($null -eq $session) {
+        return $null
+    }
+
+    $payload = [pscustomobject]@{
+        Timestamp = (Get-Date).ToString("o")
+        SessionId = $session.SessionId
+        CapabilityName = [string]$CapabilityRecord.Name
+        Action = $ActionName
+        DurationMs = [math]::Round($DurationMs, 2)
+        Reasons = [object[]]@($reasons.ToArray())
+        Health = [pscustomobject]@{
+            OpenWindowCount = $health.OpenWindowCount
+            ActiveDialogTitle = $health.ActiveDialogTitle
+            ExternalWindowTitle = if ($null -ne $health.ExternalForegroundWindow) { [string]$health.ExternalForegroundWindow.Name } else { $null }
+        }
+        SuppressedBecauseBurstCaptureActive = $suppressedBecauseBurstCaptureActive
+        CaptureCount = $captures.Count
+        ContactSheetPath = if ($null -ne $burstSummary) { $burstSummary.ContactSheetPath } else { $null }
+    }
+
+    Add-UiCapabilityObservationRecord -SessionState $session -CapabilityName ([string]$CapabilityRecord.Name) -Kind "reactive-trigger" -Payload $payload
+    $session.UpdatedAt = (Get-Date).ToString("o")
+    Save-UiCapabilitySessionState -SessionState $session | Out-Null
+
+    return [pscustomobject]@{
+        Session = Get-UiCapabilitySessionState
+        Captures = [object[]]$captures.ToArray()
+        Observation = $payload
+    }
+}
+
 function Invoke-UiCapabilityHooksAfterAction {
     param(
         [Parameter(Mandatory)]
@@ -564,6 +795,7 @@ function Invoke-UiCapabilityHooksAfterAction {
         [string]$RepoRoot,
         [Parameter(Mandatory)]
         [string]$ActionName,
+        [double]$DurationMs = 0,
         $Result = $null
     )
 
@@ -596,6 +828,19 @@ function Invoke-UiCapabilityHooksAfterAction {
         }
     }
 
+    if (Test-UiCapabilityEnabled -CapabilityName "ReactiveAssist" -SessionState $session) {
+        $reactiveAssistCapability = @($session.ActiveCapabilities | Where-Object {
+            [string]::Equals($_.Name, "ReactiveAssist", [System.StringComparison]::OrdinalIgnoreCase)
+        } | Select-Object -First 1)
+
+        if ($reactiveAssistCapability.Count -gt 0) {
+            $reactivePayload = Invoke-UiReactiveAssistAfterAction -Process $Process -CapabilityRecord $reactiveAssistCapability[0] -ActionName $ActionName -DurationMs $DurationMs -Result $Result
+            foreach ($capture in @($reactivePayload.Captures)) {
+                [void]$captures.Add($capture)
+            }
+        }
+    }
+
     Touch-UiCapabilitySession -SessionState (Get-UiCapabilitySessionState) -LastAction $ActionName -Reason "after-action" | Out-Null
 
     return [pscustomobject]@{
@@ -610,6 +855,7 @@ function Invoke-UiCapabilityHooksOnFailure {
         [string]$RepoRoot,
         [Parameter(Mandatory)]
         [string]$ActionName,
+        [double]$DurationMs = 0,
         [string]$ErrorMessage = ""
     )
 
@@ -647,10 +893,25 @@ function Invoke-UiCapabilityHooksOnFailure {
         }
     }
 
-    $capture = Save-UiCapabilityActionCapture -Process $process -CapabilityName "AutoCaptureOnFailure" -ActionName $ActionName -CaptureReason "failure"
+    $failureCapability = @($session.ActiveCapabilities | Where-Object {
+        [string]::Equals($_.Name, "AutoCaptureOnFailure", [System.StringComparison]::OrdinalIgnoreCase)
+    } | Select-Object -First 1)
+
+    $captures = @()
+    if ($failureCapability.Count -gt 0) {
+        $failurePayload = Save-UiCapabilityBurstSequence -Process $process -CapabilityRecord $failureCapability[0] -ActionName $ActionName -CaptureReason "failure"
+        $captures = @($failurePayload.Captures)
+    }
+
+    $health = Get-UiCapabilityWindowHealth -Process $process
+    $session = Get-UiCapabilitySessionState
+    if ($null -ne $session) {
+        Add-UiFailureBundleObservation -SessionState $session -CapabilityName "AutoCaptureOnFailure" -ActionName $ActionName -ErrorMessage $ErrorMessage -Captures $captures -Health $health | Out-Null
+    }
+
     Touch-UiCapabilitySession -SessionState (Get-UiCapabilitySessionState) -LastAction $ActionName -Reason "failure" | Out-Null
     return [pscustomobject]@{
         Session = Get-UiCapabilitySessionState
-        Captures = if ($null -ne $capture) { @($capture) } else { @() }
+        Captures = @($captures)
     }
 }

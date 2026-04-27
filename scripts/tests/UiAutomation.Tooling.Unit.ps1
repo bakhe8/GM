@@ -215,8 +215,8 @@ try {
 
     Invoke-RegressionStep -Name "capability-definitions-shape" -ScriptBlock {
         $definitions = @(Get-UiCapabilityDefinitions)
-        Assert-RegressionCondition ($definitions.Count -ge 5) "Capability definitions returned fewer items than expected."
-        foreach ($required in @("BurstCapture", "AutoCaptureOnFailure", "VideoCapture", "AudioCapture", "MouseTrace")) {
+        Assert-RegressionCondition ($definitions.Count -ge 6) "Capability definitions returned fewer items than expected."
+        foreach ($required in @("BurstCapture", "AutoCaptureOnFailure", "ReactiveAssist", "VideoCapture", "AudioCapture", "MouseTrace")) {
             Assert-RegressionCondition (@($definitions | Where-Object Name -eq $required).Count -eq 1) "Capability definitions are missing '$required'."
         }
 
@@ -224,6 +224,15 @@ try {
         Assert-RegressionCondition ($burstDefinition.Count -eq 1) "BurstCapture definition could not be resolved."
         Assert-RegressionCondition ([int]$burstDefinition[0].DefaultFrameCount -ge 2) "BurstCapture definition should expose a multi-frame default."
         Assert-RegressionCondition ([int]$burstDefinition[0].DefaultIntervalMs -ge 0) "BurstCapture definition returned an invalid interval."
+
+        $failureDefinition = @($definitions | Where-Object Name -eq "AutoCaptureOnFailure" | Select-Object -First 1)
+        Assert-RegressionCondition ($failureDefinition.Count -eq 1) "AutoCaptureOnFailure definition could not be resolved."
+        Assert-RegressionCondition ([int]$failureDefinition[0].DefaultFrameCount -ge 2) "AutoCaptureOnFailure should expose a multi-frame default."
+
+        $reactiveDefinition = @($definitions | Where-Object Name -eq "ReactiveAssist" | Select-Object -First 1)
+        Assert-RegressionCondition ($reactiveDefinition.Count -eq 1) "ReactiveAssist definition could not be resolved."
+        Assert-RegressionCondition ([string]$reactiveDefinition[0].ProviderState -eq "available") "ReactiveAssist should already be exposed as available."
+        Assert-RegressionCondition ([int]$reactiveDefinition[0].DefaultSlowActionMs -gt 0) "ReactiveAssist should expose a positive slow-action threshold."
 
         $mouseTraceDefinition = @($definitions | Where-Object Name -eq "MouseTrace" | Select-Object -First 1)
         Assert-RegressionCondition ($mouseTraceDefinition.Count -eq 1) "MouseTrace definition could not be resolved."
