@@ -215,6 +215,10 @@ try {
         Assert-RegressionCondition ([string]$psrProvider[0].ScopeModel -eq "global-session-attested") "Psr.ScreenTrace should expose global-session-attested scope."
         Assert-RegressionCondition (-not [bool]$psrProvider[0].SupportsProcessIsolation) "Psr.ScreenTrace should not pretend to be process-isolated."
         Assert-RegressionCondition ([bool]$psrProvider[0].SupportsForegroundAttestation) "Psr.ScreenTrace should expose foreground attestation support."
+        $audioProvider = @($providers | Where-Object Name -eq "Audio.None" | Select-Object -First 1)
+        Assert-RegressionCondition ($audioProvider.Count -eq 1) "Media provider catalog is missing Audio.None."
+        Assert-RegressionCondition ([string]$audioProvider[0].ScopeModel -eq "planned-per-app-attested") "Audio.None should describe the planned scoped-audio model."
+        Assert-RegressionCondition (-not [bool]$audioProvider[0].SupportsSystemMixCapture) "Audio.None should not imply system-mix capture support."
         return $providers
     } | Out-Null
 
@@ -237,7 +241,21 @@ try {
         Assert-RegressionCondition ($scopeView.VideoCapture.PSObject.Properties.Name -contains "ScopeStatus") "Media scope view is missing ScopeStatus."
         Assert-RegressionCondition ($scopeView.VideoCapture.PSObject.Properties.Name -contains "EvidenceIsolation") "Media scope view is missing EvidenceIsolation."
         Assert-RegressionCondition ($scopeView.VideoCapture.PSObject.Properties.Name -contains "TrustedForReasoning") "Media scope view is missing TrustedForReasoning."
+        Assert-RegressionCondition ($null -ne $scopeView.AudioCapture) "Media scope view is missing AudioCapture."
+        Assert-RegressionCondition ([string]$scopeView.AudioCapture.SourcePolicy -eq "per-app-attested-required") "Audio scope view did not expose the expected source policy."
+        Assert-RegressionCondition ([string]$scopeView.AudioCapture.ScopeStatus -in @("unavailable", "blocked")) "Audio scope view should remain unavailable or blocked without a provider."
         return $scopeView
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "audio-scope-policy-shape" -ScriptBlock {
+        $policy = Get-UiAudioScopePolicy
+        Assert-RegressionCondition ($null -ne $policy) "Get-UiAudioScopePolicy did not return a payload."
+        Assert-RegressionCondition ([string]$policy.PolicyName -eq "AIFirstScopedAudio") "Audio scope policy returned an unexpected policy name."
+        Assert-RegressionCondition ([string]$policy.ProviderReadiness -eq "unavailable") "Audio scope policy should remain unavailable until a provider is wired."
+        Assert-RegressionCondition ([string]$policy.DesiredScopeModel -eq "per-app-attested") "Audio scope policy returned an unexpected desired scope model."
+        Assert-RegressionCondition (-not [bool]$policy.AcceptsSystemMixFallback) "Audio scope policy should reject system-mix fallback."
+        Assert-RegressionCondition (-not [string]::IsNullOrWhiteSpace([string]$policy.StartBlockedReason)) "Audio scope policy should explain why start is blocked."
+        return $policy
     } | Out-Null
 
     Invoke-RegressionStep -Name "cursor-position-shape" -ScriptBlock {

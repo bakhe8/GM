@@ -189,10 +189,24 @@
       - `MediaState`
       - `Probe`
       تعرض هذا الحكم مباشرة عبر `MediaScopeView`
+  - ثم أُضيفت الآن **Scoped Audio Contract** قبل أي provider صوت فعلية:
+    - `AudioCapture` ما زالت غير متاحة تشغيليًا
+    - لكن الأداة صارت تصرح مسبقًا بسياسة السمع المقبولة:
+      - `per-app-attested`
+      - بلا `system-mix fallback`
+    - وصارت:
+      - `MediaState`
+      - `HostState`
+      - `Probe`
+      تعرض `AudioScopePolicy` مباشرة
+    - وإذا طُلب `AudioOn` الآن:
+      - تُحجب البداية بصراحة
+      - ويُسجل `audio-start-blocked`
+      - وتبقى hearing evidence غير موثوقة بدل أي غموض صامت
   - والتحقق الحالي بعد هذه الخطوة صار:
-    - `tooling unit`: `20/20`
+    - `tooling unit`: `21/21`
     - `tooling smoke`: `10/10`
-    - `tooling integration`: `50/50`
+    - `tooling integration`: `51/51`
     - `tooling freedom`: `9/9`
 
 وأول خطوة تنفيذية منه بدأت فعليًا الآن:

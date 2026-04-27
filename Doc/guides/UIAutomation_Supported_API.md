@@ -140,6 +140,7 @@
 - `Get-UiMediaSessionPath`
 - `Get-UiMediaSessionState`
 - `Get-UiMediaScopeView`
+- `Get-UiAudioScopePolicy`
 - `Get-UiMediaProviderCatalog`
 - `Invoke-UiMediaBrokerSweep`
 - `Start-UiVideoCaptureSidecar`
@@ -168,6 +169,15 @@
   - `TrustedForReasoning`
   بدل الادعاء أن الفيديو معزول تلقائيًا
 - `AudioCapture` ما زالت غير متاحة كمزود فعلي
+- لكن عندنا الآن **Scoped Audio Contract** قبل المزود:
+  - `Get-UiAudioScopePolicy`
+  - تشرح أن السياسة المستهدفة هي:
+    - `per-app-attested`
+    - بدون `system-mix fallback`
+  - وإذا طُلب `AudioOn` الآن فالأداة:
+    - ترفض البدء بصراحة
+    - وتسجل `audio-start-blocked`
+    - وتوضح لماذا hearing evidence غير موثوقة بعد
 - وقد تكون artifact الفيديو:
   - `saved`
   - أو `missing`

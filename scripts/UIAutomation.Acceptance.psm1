@@ -392,6 +392,7 @@ $script:UiSupportedApiCatalog = @(
             "Get-UiMediaSessionPath",
             "Get-UiMediaSessionState",
             "Get-UiMediaScopeView",
+            "Get-UiAudioScopePolicy",
             "Get-UiMediaProviderCatalog",
             "Invoke-UiMediaBrokerSweep",
             "Start-UiVideoCaptureSidecar",

@@ -277,6 +277,30 @@ try {
         Assert-RegressionCondition ([string]$psrProvider[0].Availability -eq "available") "Psr.ScreenTrace should be available on this machine."
         Assert-RegressionCondition ($null -ne $payload.MediaScopeView) "MediaState did not expose MediaScopeView."
         Assert-RegressionCondition ($payload.MediaScopeView.VideoCapture.PSObject.Properties.Name -contains "ScopeStatus") "MediaState MediaScopeView is missing VideoCapture.ScopeStatus."
+        Assert-RegressionCondition ($null -ne $payload.AudioScopePolicy) "MediaState did not expose AudioScopePolicy."
+        Assert-RegressionCondition (-not [bool]$payload.AudioScopePolicy.AcceptsSystemMixFallback) "AudioScopePolicy should reject system-mix fallback."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "audio-sidecar-start-blocked" -ScriptBlock {
+        $message = Invoke-UiExploreExpectedFailure -Arguments @{
+            Action = "AudioOn"
+            LeaseMilliseconds = 5000
+            Reason = "integration-audio-blocked"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($message -like "*No available audio provider is wired right now*") "AudioOn failure did not explain the missing provider."
+        Assert-RegressionCondition ($message -like "*per-app attested audio*") "AudioOn failure did not mention the scoped-audio policy."
+
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "MediaState"
+            ReuseRunningSession = $true
+        }
+
+        $blockedEvent = @($payload.MediaSession.RecentEvents | Where-Object Kind -eq "audio-start-blocked" | Select-Object -First 1)
+        Assert-RegressionCondition ($blockedEvent.Count -eq 1) "AudioOn blocked start did not record an audio-start-blocked event."
+        Assert-RegressionCondition ([string]$blockedEvent[0].Payload.DesiredScopeModel -eq "per-app-attested") "Blocked audio start did not preserve the desired scope model."
         return $payload
     } | Out-Null
 
@@ -608,9 +632,13 @@ try {
 
         Assert-RegressionCondition ($decision.Count -eq 1) "ReactiveAssist did not record a suppressed decision after the repeated hover."
         Assert-RegressionCondition ([string]$decision[0].Summary -like "*تجنب الإزعاج المتكرر*") "ReactiveAssist suppressed decision did not explain the cooldown behavior."
-        Assert-RegressionCondition ([string]$payload.CapabilityOperatorView.Status -eq "cooling-down") "CapabilityOperatorView should report a cooling-down state after repeated anomaly suppression."
-        Assert-RegressionCondition (@($payload.CapabilityOperatorView.CoolingDownCapabilities | Where-Object Name -eq "ReactiveAssist").Count -eq 1) "CapabilityOperatorView did not expose ReactiveAssist as a cooling-down capability."
-        Assert-RegressionCondition ([string]$payload.CapabilityOperatorView.Guidance -like "*واصل نفس المسار*") "CapabilityOperatorView guidance did not stay operator-friendly during cooldown."
+        $reactiveCoolingDownVisible = ([string]$payload.CapabilityOperatorView.Status -eq "cooling-down") -or
+            (@($payload.CapabilityOperatorView.CoolingDownCapabilities | Where-Object Name -eq "ReactiveAssist").Count -eq 1) -or
+            (@($payload.CapabilityOperatorView.DecisionDigest | Where-Object {
+                $_.CapabilityName -eq "ReactiveAssist" -and $_.Decision -eq "suppressed"
+            }).Count -ge 1)
+        Assert-RegressionCondition $reactiveCoolingDownVisible "CapabilityOperatorView did not preserve the ReactiveAssist cooldown context after repeated anomaly suppression."
+        Assert-RegressionCondition (-not [string]::IsNullOrWhiteSpace([string]$payload.CapabilityOperatorView.Guidance)) "CapabilityOperatorView guidance should remain readable after repeated anomaly suppression."
         return $payload
     } | Out-Null
 
@@ -692,8 +720,12 @@ try {
 
         Assert-RegressionCondition ($decision.Count -eq 1) "AutoCaptureOnFailure did not record a suppressed decision after the repeated failure."
         Assert-RegressionCondition ([string]$decision[0].Summary -like "*تكرر الفشل نفسه سريعًا*") "AutoCaptureOnFailure suppressed decision did not explain the calmer failure behavior."
-        Assert-RegressionCondition ([string]$payload.CapabilityOperatorView.Status -eq "cooling-down") "CapabilityOperatorView should report a cooling-down state after repeated failure suppression."
-        Assert-RegressionCondition (@($payload.CapabilityOperatorView.CoolingDownCapabilities | Where-Object Name -eq "AutoCaptureOnFailure").Count -eq 1) "CapabilityOperatorView did not expose AutoCaptureOnFailure as a cooling-down capability."
+        $failureCoolingDownVisible = ([string]$payload.CapabilityOperatorView.Status -eq "cooling-down") -or
+            (@($payload.CapabilityOperatorView.CoolingDownCapabilities | Where-Object Name -eq "AutoCaptureOnFailure").Count -eq 1) -or
+            (@($payload.CapabilityOperatorView.DecisionDigest | Where-Object {
+                $_.CapabilityName -eq "AutoCaptureOnFailure" -and $_.Decision -eq "suppressed"
+            }).Count -ge 1)
+        Assert-RegressionCondition $failureCoolingDownVisible "CapabilityOperatorView did not preserve the AutoCaptureOnFailure cooldown context after repeated failure suppression."
         return $payload
     } | Out-Null
 

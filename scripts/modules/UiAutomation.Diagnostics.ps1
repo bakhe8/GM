@@ -445,6 +445,7 @@ function Get-ProbePayload {
     $capabilitySession = Invoke-UiCapabilityBrokerSweep -Persist
     $mediaSession = Invoke-UiMediaBrokerSweep -Persist
     $mediaScopeView = Get-UiMediaScopeView -SessionState $mediaSession
+    $audioScopePolicy = Get-UiAudioScopePolicy
     $mediaProviders = @(Get-UiMediaProviderCatalog)
     $recentCapabilityObservations = @(Get-UiCapabilityObservationEntries -MaxCount $MaxResults)
     $recentCapabilityDecisions = if ($null -ne $capabilitySession) { @($capabilitySession.RecentDecisions | Select-Object -First $MaxResults) } else { @() }
@@ -476,6 +477,7 @@ function Get-ProbePayload {
         CapabilitySession = $capabilitySession
         MediaSession = $mediaSession
         MediaScopeView = $mediaScopeView
+        AudioScopePolicy = $audioScopePolicy
         MediaProviders = [object[]]$mediaProviders
         RecentCapabilityObservations = [object[]]$recentCapabilityObservations
         RecentCapabilityDecisions = [object[]]$recentCapabilityDecisions
@@ -495,6 +497,8 @@ function Get-ProbePayload {
             MediaEvidenceIsolation = if ($null -ne $mediaScopeView -and $null -ne $mediaScopeView.VideoCapture) { [string]$mediaScopeView.VideoCapture.EvidenceIsolation } else { "" }
             MediaTrustedForReasoning = if ($null -ne $mediaScopeView -and $null -ne $mediaScopeView.VideoCapture) { [bool]$mediaScopeView.VideoCapture.TrustedForReasoning } else { $false }
             HasScopedMediaContamination = if ($null -ne $mediaScopeView -and $null -ne $mediaScopeView.VideoCapture) { [bool]$mediaScopeView.VideoCapture.ContaminationDetected } else { $false }
+            AudioProviderReadiness = if ($null -ne $audioScopePolicy) { [string]$audioScopePolicy.ProviderReadiness } else { "" }
+            AudioSystemMixFallbackAllowed = if ($null -ne $audioScopePolicy) { [bool]$audioScopePolicy.AcceptsSystemMixFallback } else { $false }
             OpenWindowCount = $meaningfulWindows.Count
             RawOpenWindowCount = $windows.Count
             ActiveDialogTitle = if ($null -ne $externalForegroundWindow) { $externalForegroundWindow.Name } elseif ($null -ne $dialogWindow) { $dialogWindow.Name } else { $null }

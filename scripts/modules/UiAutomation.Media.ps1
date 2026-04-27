@@ -46,17 +46,30 @@ function New-UiDefaultMediaScopeContract {
         SupportsProcessIsolation = $SupportsProcessIsolation
         SupportsWindowIsolation = $SupportsWindowIsolation
         SupportsForegroundAttestation = $SupportsForegroundAttestation
+        SourcePolicy = if ($Kind -eq "Audio") { "per-app-attested-required" } else { "" }
+        AcceptsSystemMixFallback = if ($Kind -eq "Audio") { $false } else { $false }
+        SupportsPerAppAudioIsolation = $false
+        SupportsSystemMixCapture = $false
+        SupportsDeviceLoopbackCapture = $false
         TargetProcessId = 0
         TargetProcessName = ""
         TargetMainWindowTitle = ""
         TargetWindow = $null
         StartSnapshot = $null
         StopSnapshot = $null
-        ScopeStatus = "inactive"
-        EvidenceIsolation = "none"
+        ScopeStatus = if ($Kind -eq "Audio") { "unavailable" } else { "inactive" }
+        EvidenceIsolation = if ($Kind -eq "Audio") { "no-provider" } else { "none" }
         TrustedForReasoning = $false
         ContaminationDetected = $false
-        ScopeNotes = @()
+        ScopeNotes = if ($Kind -eq "Audio") {
+            @(
+                "لا يوجد مزود صوت فعلي حتى الآن، لذلك لا توجد hearing evidence قابلة للاعتماد.",
+                "السياسة المقصودة للصوت هي per-app attested audio، لا system mix عام."
+            )
+        }
+        else {
+            @()
+        }
     }
 }
 
@@ -102,6 +115,34 @@ function Normalize-UiMediaSessionState {
 
         if ($channel.PSObject.Properties.Name -notcontains "ScopeContract" -or $null -eq $channel.ScopeContract) {
             Add-Member -InputObject $channel -NotePropertyName "ScopeContract" -NotePropertyValue (New-UiDefaultMediaScopeContract -Kind $channel.Kind -ProviderName ([string]$channel.ProviderName)) -Force
+        }
+        else {
+            $defaultScopeContract = New-UiDefaultMediaScopeContract -Kind $channel.Kind -ProviderName ([string]$channel.ProviderName) -ScopeModel ([string]$channel.ScopeContract.ScopeModel) -ProviderScopeLevel ([string]$channel.ScopeContract.ProviderScopeLevel) -SupportsProcessIsolation ([bool]$channel.ScopeContract.SupportsProcessIsolation) -SupportsWindowIsolation ([bool]$channel.ScopeContract.SupportsWindowIsolation) -SupportsForegroundAttestation ([bool]$channel.ScopeContract.SupportsForegroundAttestation)
+            foreach ($scopeProperty in $defaultScopeContract.PSObject.Properties) {
+                if ($channel.ScopeContract.PSObject.Properties.Name -notcontains $scopeProperty.Name) {
+                    Add-Member -InputObject $channel.ScopeContract -NotePropertyName $scopeProperty.Name -NotePropertyValue $scopeProperty.Value -Force
+                }
+            }
+
+            if ([string]::Equals([string]$channel.Kind, "Audio", [System.StringComparison]::OrdinalIgnoreCase) -and
+                [string]::IsNullOrWhiteSpace([string]$channel.ProviderName)) {
+                $audioDefaults = New-UiDefaultMediaScopeContract -Kind "Audio" -ProviderName "Audio.None" -ScopeModel "planned-per-app-attested" -ProviderScopeLevel "none"
+                foreach ($propertyName in @("ProviderName", "ScopeModel", "ProviderScopeLevel", "SourcePolicy", "AcceptsSystemMixFallback", "SupportsPerAppAudioIsolation", "SupportsSystemMixCapture", "SupportsDeviceLoopbackCapture")) {
+                    $channel.ScopeContract.$propertyName = $audioDefaults.$propertyName
+                }
+
+                if ([string]$channel.ScopeContract.ScopeStatus -eq "inactive") {
+                    $channel.ScopeContract.ScopeStatus = "unavailable"
+                }
+
+                if ([string]$channel.ScopeContract.EvidenceIsolation -eq "none") {
+                    $channel.ScopeContract.EvidenceIsolation = "no-provider"
+                }
+
+                if (@($channel.ScopeContract.ScopeNotes).Count -eq 0) {
+                    $channel.ScopeContract.ScopeNotes = [object[]]$audioDefaults.ScopeNotes
+                }
+            }
         }
 
         foreach ($propertyName in @("LiveProcessCount", "ProviderState", "ArchiveTargetPath", "ArtifactStatus")) {
@@ -204,17 +245,21 @@ function Get-UiMediaProviderCatalog {
             CommandPath = $null
             OutputFormat = $null
             CaptureStyle = "none"
-            ScopeModel = "none"
+            ScopeModel = "planned-per-app-attested"
             ProviderScopeLevel = "none"
             SupportsProcessIsolation = $false
             SupportsWindowIsolation = $false
             SupportsForegroundAttestation = $false
             SupportsAudio = $false
+            SupportsPerAppAudioIsolation = $false
+            SupportsSystemMixCapture = $false
+            SupportsDeviceLoopbackCapture = $false
             SupportsSingleFramePreview = $false
             RunningInstanceCount = 0
             Notes = @(
                 "لا يوجد provider صوت موصول رسميًا حتى الآن.",
-                "سيبقى AudioCapture غير متاح حتى نوصل sidecar صوت مستقلة."
+                "سيبقى AudioCapture غير متاح حتى نوصل sidecar صوت مستقلة.",
+                "السياسة المستهدفة مستقبلًا هي per-app attested audio من دون system-mix fallback افتراضي."
             )
         }
     )
@@ -247,6 +292,32 @@ function Get-UiMediaProviderByName {
     return (Get-UiMediaProviderCatalog | Where-Object {
         [string]::Equals([string]$_.Name, $Name, [System.StringComparison]::OrdinalIgnoreCase)
     } | Select-Object -First 1)
+}
+
+function Get-UiAudioScopePolicy {
+    $preferredProvider = Get-UiPreferredMediaProvider -Kind "Audio"
+    $catalogProvider = Get-UiMediaProviderByName -Name $(if ($null -ne $preferredProvider) { [string]$preferredProvider.Name } else { "Audio.None" })
+    $providerName = if ($null -ne $catalogProvider) { [string]$catalogProvider.Name } else { "Audio.None" }
+    $providerReadiness = if ($null -ne $preferredProvider) { "available" } else { "unavailable" }
+
+    return [pscustomobject]@{
+        PolicyName = "AIFirstScopedAudio"
+        ProviderReadiness = $providerReadiness
+        CurrentProviderName = $providerName
+        DesiredCaptureSource = "per-app-audio"
+        DesiredScopeModel = "per-app-attested"
+        RequiresTargetProcessBinding = $true
+        RequiresForegroundAttestation = $true
+        AcceptsSystemMixFallback = $false
+        AcceptsDesktopMixFallback = $false
+        TrustedForReasoning = $false
+        StartBlockedReason = if ($providerReadiness -eq "available") { "" } else { "لا يوجد مزود صوت يحقق سياسة per-app attested audio حتى الآن." }
+        Notes = @(
+            "الصوت المقبول مستقبلاً يجب أن يرتبط بالتطبيق نفسه، لا بخليط النظام العام.",
+            "Foreground وحدها لا تكفي للصوت؛ نحتاج provider تقبل binding على process/session قبل أن نعتبر hearing evidence موثوقة.",
+            $(if ($providerReadiness -eq "available") { "يوجد provider صوت متاح مبدئيًا، لكن يجب التحقق من نطاقه قبل الثقة به." } else { "حتى الآن لا يوجد provider صوت فعلي، لذلك تبقى hearing evidence غير متاحة." })
+        )
+    }
 }
 
 function Get-UiMediaTargetProcess {
@@ -554,6 +625,11 @@ function Get-UiMediaScopeView {
             ProviderName = [string]$scope.ProviderName
             ScopeModel = [string]$scope.ScopeModel
             ProviderScopeLevel = [string]$scope.ProviderScopeLevel
+            SourcePolicy = [string]$scope.SourcePolicy
+            AcceptsSystemMixFallback = [bool]$scope.AcceptsSystemMixFallback
+            SupportsPerAppAudioIsolation = [bool]$scope.SupportsPerAppAudioIsolation
+            SupportsSystemMixCapture = [bool]$scope.SupportsSystemMixCapture
+            SupportsDeviceLoopbackCapture = [bool]$scope.SupportsDeviceLoopbackCapture
             ScopeStatus = [string]$scope.ScopeStatus
             EvidenceIsolation = [string]$scope.EvidenceIsolation
             TrustedForReasoning = [bool]$scope.TrustedForReasoning
@@ -966,7 +1042,73 @@ function Start-UiAudioCaptureSidecar {
         [int]$LeaseMilliseconds = 0
     )
 
-    throw "No available audio provider is wired right now."
+    $policy = Get-UiAudioScopePolicy
+    $sessionState = Get-UiMediaSessionState
+    $timestamp = (Get-Date).ToString("o")
+    $sessionState.AudioCapture = [pscustomobject]@{
+        Kind = "Audio"
+        IsActive = $false
+        ProviderName = [string]$policy.CurrentProviderName
+        ProviderState = [string]$policy.ProviderReadiness
+        Mode = "blocked-no-provider"
+        Reason = $Reason
+        StartedAt = $sessionState.AudioCapture.StartedAt
+        UpdatedAt = $timestamp
+        StoppedAt = $timestamp
+        LeaseMilliseconds = 0
+        ExpiresAt = $null
+        OutputPath = $null
+        ArchiveTargetPath = $null
+        ArtifactPath = $null
+        ArtifactStatus = "blocked"
+        ProcessIds = @()
+        LiveProcessCount = 0
+        ScopeContract = [pscustomobject]@{
+            Kind = "Audio"
+            ProviderName = [string]$policy.CurrentProviderName
+            ScopeModel = "planned-per-app-attested"
+            ProviderScopeLevel = "none"
+            SupportsProcessIsolation = $false
+            SupportsWindowIsolation = $false
+            SupportsForegroundAttestation = $false
+            SourcePolicy = "per-app-attested-required"
+            AcceptsSystemMixFallback = $false
+            SupportsPerAppAudioIsolation = $false
+            SupportsSystemMixCapture = $false
+            SupportsDeviceLoopbackCapture = $false
+            TargetProcessId = 0
+            TargetProcessName = ""
+            TargetMainWindowTitle = ""
+            TargetWindow = $null
+            StartSnapshot = $null
+            StopSnapshot = $null
+            ScopeStatus = "blocked"
+            EvidenceIsolation = "no-provider"
+            TrustedForReasoning = $false
+            ContaminationDetected = $false
+            ScopeNotes = [object[]]@(
+                "تم حجب بدء sidecar الصوت لأن سياسة السمع الحالية تتطلب مزود per-app attested غير موصول بعد.",
+                [string]$policy.StartBlockedReason
+            )
+        }
+        Notes = @(
+            "لم تبدأ sidecar الصوت لأن الأداة لا تملك مزودًا يحقق سياسة السمع الحالية.",
+            [string]$policy.StartBlockedReason
+        )
+    }
+
+    Add-UiMediaRecentEvent -SessionState $sessionState -Kind "audio-start-blocked" -Summary "رفضت الأداة بدء sidecar صوت لأن سياسة السمع الحالية لا تملك مزودًا موثوقًا بعد." -Payload @{
+        Reason = $Reason
+        LeaseMilliseconds = $LeaseMilliseconds
+        PolicyName = $policy.PolicyName
+        ProviderReadiness = $policy.ProviderReadiness
+        StartBlockedReason = $policy.StartBlockedReason
+        DesiredScopeModel = $policy.DesiredScopeModel
+        AcceptsSystemMixFallback = $policy.AcceptsSystemMixFallback
+    }
+
+    $null = Save-UiMediaSessionState -SessionState $sessionState
+    throw "No available audio provider is wired right now. $($policy.StartBlockedReason)"
 }
 
 function Stop-UiAudioCaptureSidecar {

@@ -505,11 +505,26 @@
 - `contaminated`
 - `unknown`
 
+وبنفس الروح أُضيفت الآن **Scoped Audio Contract** قبل أي sidecar صوت فعلية:
+
+- لا نضيف السمع أولًا ثم نسأل لاحقًا من أين جاء
+- بل نثبت مسبقًا:
+  - ما source policy المقبولة
+  - هل نقبل `system mix` أم لا
+  - وما الذي يجعل hearing evidence صالحة للاستنتاج
+- والسياسة الحالية صريحة:
+  - نريد `per-app-attested audio`
+  - ولا نقبل `system-mix fallback` افتراضيًا
+- لذلك:
+  - `AudioCapture` ما زالت غير متاحة كمزود
+  - لكن `AudioScopePolicy` صارت معروضة داخل الحالة
+  - و`AudioOn` إذا طُلبت الآن تُحجب بوضوح مع `audio-start-blocked`
+
 والتحقق الحالي بعد هذه الطبقة ناجح ضمن:
 
-- unit: `20/20`
+- unit: `21/21`
 - smoke: `10/10`
-- integration: `50/50`
+- integration: `51/51`
 - freedom: `9/9`
 
 ---

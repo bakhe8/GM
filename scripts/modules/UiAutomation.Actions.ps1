@@ -108,6 +108,7 @@ function Invoke-UiExploreAction {
                 MediaSessionPath = Get-UiMediaSessionPath
                 MediaSession = $mediaSession
                 MediaScopeView = Get-UiMediaScopeView -SessionState $mediaSession
+                AudioScopePolicy = Get-UiAudioScopePolicy
                 MediaProviders = [object[]]@(Get-UiMediaProviderCatalog)
                 CapabilityDefinitions = [object[]]@(Get-UiCapabilityDefinitions)
                 RecentCapabilityObservations = [object[]]@(Get-UiCapabilityObservationEntries -MaxCount $Options.MaxResults)
@@ -123,6 +124,7 @@ function Invoke-UiExploreAction {
                 MediaSessionPath = Get-UiMediaSessionPath
                 MediaSession = $mediaSession
                 MediaScopeView = Get-UiMediaScopeView -SessionState $mediaSession
+                AudioScopePolicy = Get-UiAudioScopePolicy
                 MediaProviders = [object[]]@(Get-UiMediaProviderCatalog)
                 PreferredVideoProvider = Get-UiPreferredMediaProvider -Kind "Video"
                 PreferredAudioProvider = Get-UiPreferredMediaProvider -Kind "Audio"
