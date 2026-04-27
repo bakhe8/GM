@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("Launch", "Windows", "Elements", "Sidebar", "Click", "SetField", "WaitWindow", "Capture", "DialogAction", "State", "Diagnostics", "Probe", "Compare", "Events", "Key", "SendKeys")]
+    [ValidateSet("Launch", "Windows", "Elements", "Sidebar", "Click", "SetField", "WaitWindow", "WaitWindowClosed", "Capture", "DialogAction", "State", "Diagnostics", "Probe", "Compare", "Events", "Key", "SendKeys")]
     [string]$Action = "Probe",
     [string]$WindowTitle = "",
     [string]$WindowAutomationId = "",

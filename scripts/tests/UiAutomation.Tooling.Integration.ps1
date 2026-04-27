@@ -11,9 +11,9 @@ $uiExplorePath = Join-Path $repoRoot "scripts\ui_explore.ps1"
 $resolvedOutputRoot = [System.IO.Path]::GetFullPath((Join-Path $repoRoot $OutputRoot))
 New-Item -ItemType Directory -Force -Path $resolvedOutputRoot | Out-Null
 
-$summaryPath = Join-Path $resolvedOutputRoot "tooling-regression-summary.md"
-$failureCapturePath = Join-Path $resolvedOutputRoot "tooling-regression-failure.png"
-$relativeFailureCapturePath = ".\Doc\Assets\Documentation\Screenshots\UIAcceptance\latest\tooling-regression-failure.png"
+$summaryPath = Join-Path $resolvedOutputRoot "tooling-integration-summary.md"
+$failureCapturePath = Join-Path $resolvedOutputRoot "tooling-integration-failure.png"
+$relativeFailureCapturePath = ".\Doc\Assets\Documentation\Screenshots\UIAcceptance\latest\tooling-integration-failure.png"
 if (Test-Path -LiteralPath $failureCapturePath) {
     Remove-Item -LiteralPath $failureCapturePath -Force
 }
@@ -120,7 +120,7 @@ function Invoke-RegressionStep {
 
 function Write-RegressionSummary {
     $lines = New-Object System.Collections.Generic.List[string]
-    [void]$lines.Add("# UI Tooling Regression Summary")
+    [void]$lines.Add("# UI Tooling Integration Summary")
     [void]$lines.Add("")
     [void]$lines.Add("- Date: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")")
     [void]$lines.Add("- ReuseRunningSession: $ReuseRunningSession")
@@ -143,7 +143,7 @@ function Write-RegressionSummary {
         [void]$lines.Add($failureMessage)
         if (Test-Path -LiteralPath $failureCapturePath) {
             [void]$lines.Add("")
-            [void]$lines.Add("- Failure capture: [tooling-regression-failure.png](./tooling-regression-failure.png)")
+            [void]$lines.Add("- Failure capture: [tooling-integration-failure.png](./tooling-integration-failure.png)")
         }
     }
 
@@ -155,16 +155,66 @@ try {
         Get-Process GuaranteeManager -ErrorAction SilentlyContinue | Stop-Process -Force
     }
 
-    $probe = Invoke-RegressionStep -Name "probe-main-window" -ScriptBlock {
+    Invoke-RegressionStep -Name "probe-clean-launch" -ScriptBlock {
         $payload = Invoke-UiExploreJson -Arguments @{
             Action = "Probe"
             ReuseRunningSession = $ReuseRunningSession
         }
 
         Assert-RegressionCondition ($payload.MainWindow.AutomationId -eq "Shell.MainWindow") "Probe did not return Shell.MainWindow."
-        Assert-RegressionCondition ($payload.Health.OpenWindowCount -ge 1) "Probe did not report any open application window."
+        Assert-RegressionCondition ($payload.Health.OpenWindowCount -eq 1) "Clean launch did not start from a single main window."
         return $payload
-    }
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "sidebar-settings" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "Sidebar"
+            Label = "الإعدادات"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Action -eq "Sidebar") "Sidebar action payload was not returned for Settings."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "open-settings-tools-menu" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "Click"
+            WindowAutomationId = "Shell.MainWindow"
+            AutomationId = "Settings.Toolbar.ToolsMenu"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Target.AutomationId -eq "Settings.Toolbar.ToolsMenu") "Failed to target Settings tools menu button."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "popup-click-copy-path-summary" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "Click"
+            Name = "نسخ ملخص المسارات"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Target.ControlType -eq "ControlType.MenuItem") "Popup targeting did not resolve the Settings menu item."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "observe-settings-quiet-status" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "Elements"
+            WindowAutomationId = "Shell.MainWindow"
+            AutomationId = "Shell.Status.Primary"
+            MaxResults = 1
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Elements.Count -ge 1) "Could not read Shell.Status.Primary after popup action."
+        $status = $payload.Elements[0]
+        $message = @($status.HelpText, $status.ItemStatus, $status.Name) -join " "
+        Assert-RegressionCondition ($message.Contains("تم نسخ ملخص مسارات التشغيل.")) "Settings popup action did not produce the expected quiet status message."
+        return $payload
+    } | Out-Null
 
     Invoke-RegressionStep -Name "sidebar-guarantees" -ScriptBlock {
         $payload = Invoke-UiExploreJson -Arguments @{
@@ -173,114 +223,138 @@ try {
             ReuseRunningSession = $true
         }
 
-        Assert-RegressionCondition ($payload.Action -eq "Sidebar") "Sidebar action payload was not returned."
+        Assert-RegressionCondition ($payload.Action -eq "Sidebar") "Sidebar action payload was not returned for Guarantees."
         return $payload
     } | Out-Null
 
-    Invoke-RegressionStep -Name "probe-guarantees-workspace" -ScriptBlock {
-        $payload = Invoke-UiExploreJson -Arguments @{
-            Action = "Probe"
-            ReuseRunningSession = $true
-        }
-
-        Assert-RegressionCondition ($payload.ShellState.CurrentWorkspaceKey -eq "Guarantees") "ShellState did not switch to Guarantees after sidebar navigation."
-        return $payload
-    } | Out-Null
-
-    Invoke-RegressionStep -Name "elements-global-search" -ScriptBlock {
-        $payload = Invoke-UiExploreJson -Arguments @{
-            Action = "Elements"
-            WindowAutomationId = "Shell.MainWindow"
-            AutomationId = "Shell.GlobalSearchBox"
-            MaxResults = 5
-            ReuseRunningSession = $true
-        }
-
-        Assert-RegressionCondition ($payload.Elements.Count -ge 1) "Elements query did not return Shell.GlobalSearchBox."
-        Assert-RegressionCondition ($payload.Elements[0].AutomationId -eq "Shell.GlobalSearchBox") "Elements query returned an unexpected first element."
-        return $payload
-    } | Out-Null
-
-    Invoke-RegressionStep -Name "open-new-guarantee-dialog" -ScriptBlock {
+    Invoke-RegressionStep -Name "open-guarantee-history" -ScriptBlock {
         Invoke-UiExploreJson -Arguments @{
             Action = "Click"
             WindowAutomationId = "Shell.MainWindow"
-            AutomationId = "Guarantees.Toolbar.CreateNew"
+            AutomationId = "GuaranteeDetailPanel.Action.History"
             ReuseRunningSession = $true
         } | Out-Null
 
         $payload = Invoke-UiExploreJson -Arguments @{
             Action = "WaitWindow"
-            WindowAutomationId = "Dialog.NewGuarantee"
+            WindowAutomationId = "Dialog.GuaranteeHistory"
             ReuseRunningSession = $true
         }
 
-        Assert-RegressionCondition ($payload.Window.AutomationId -eq "Dialog.NewGuarantee") "WaitWindow did not resolve Dialog.NewGuarantee."
+        Assert-RegressionCondition ($payload.Window.AutomationId -eq "Dialog.GuaranteeHistory") "WaitWindow did not resolve HistoryDialog."
         return $payload
     } | Out-Null
 
-    Invoke-RegressionStep -Name "set-guarantee-number" -ScriptBlock {
-        $payload = Invoke-UiExploreJson -Arguments @{
-            Action = "SetField"
-            WindowAutomationId = "Dialog.NewGuarantee"
-            AutomationId = "Dialog.NewGuarantee.GuaranteeNoInput"
-            Value = "REG-SMOKE-001"
-            ReuseRunningSession = $true
-        }
-
-        Assert-RegressionCondition ($payload.Field.AutomationId -eq "Dialog.NewGuarantee.GuaranteeNoInput") "SetField did not target the guarantee number input."
-        return $payload
-    } | Out-Null
-
-    Invoke-RegressionStep -Name "trigger-discard-confirmation" -ScriptBlock {
+    Invoke-RegressionStep -Name "close-history-and-wait" -ScriptBlock {
         Invoke-UiExploreJson -Arguments @{
             Action = "Click"
-            WindowAutomationId = "Dialog.NewGuarantee"
-            AutomationId = "Dialog.NewGuarantee.CancelButton"
+            WindowAutomationId = "Dialog.GuaranteeHistory"
+            AutomationId = "Dialog.GuaranteeHistory.CloseFooterButton"
+            ReuseRunningSession = $true
+        } | Out-Null
+
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "WaitWindowClosed"
+            WindowAutomationId = "Dialog.GuaranteeHistory"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Closed -eq $true) "HistoryDialog did not close within the expected wait window."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "reopen-history-for-print" -ScriptBlock {
+        Invoke-UiExploreJson -Arguments @{
+            Action = "Click"
+            WindowAutomationId = "Shell.MainWindow"
+            AutomationId = "GuaranteeDetailPanel.Action.History"
             ReuseRunningSession = $true
         } | Out-Null
 
         $payload = Invoke-UiExploreJson -Arguments @{
             Action = "WaitWindow"
-            WindowTitle = "تأكيد الإغلاق"
+            WindowAutomationId = "Dialog.GuaranteeHistory"
             ReuseRunningSession = $true
         }
 
-        Assert-RegressionCondition ($payload.Window.Name -eq "تأكيد الإغلاق") "Discard confirmation did not appear."
+        Assert-RegressionCondition ($payload.Window.AutomationId -eq "Dialog.GuaranteeHistory") "HistoryDialog did not reopen for print integration."
         return $payload
     } | Out-Null
 
-    Invoke-RegressionStep -Name "dialogaction-yes" -ScriptBlock {
+    Invoke-RegressionStep -Name "open-history-print-window" -ScriptBlock {
+        Invoke-UiExploreJson -Arguments @{
+            Action = "Click"
+            WindowAutomationId = "Dialog.GuaranteeHistory"
+            AutomationId = "Dialog.GuaranteeHistory.PrintButton"
+            ReuseRunningSession = $true
+        } | Out-Null
+
         $payload = Invoke-UiExploreJson -Arguments @{
-            Action = "DialogAction"
-            Text = "Yes"
+            Action = "WaitWindow"
+            WindowTitle = "GuaranteeManager - Print"
             ReuseRunningSession = $true
         }
 
-        Assert-RegressionCondition ($payload.Closed -eq $true) "DialogAction did not close the confirmation dialog."
+        Assert-RegressionCondition ($payload.Window.Name -eq "GuaranteeManager - Print") "WaitWindow did not resolve the external print window."
         return $payload
     } | Out-Null
 
-    Invoke-RegressionStep -Name "probe-clean-session" -ScriptBlock {
+    Invoke-RegressionStep -Name "windows-include-external-print" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "Windows"
+            ReuseRunningSession = $true
+        }
+
+        $printWindow = @($payload.Windows | Where-Object { $_.Name -eq "GuaranteeManager - Print" } | Select-Object -First 1)
+        Assert-RegressionCondition ($printWindow.Count -eq 1) "Windows catalog did not include the external print window."
+        Assert-RegressionCondition ($printWindow[0].ProcessId -ne $payload.ProcessId) "External print window was not detected as a cross-process window."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "close-print-and-wait" -ScriptBlock {
+        Invoke-UiExploreJson -Arguments @{
+            Action = "Click"
+            WindowTitle = "GuaranteeManager - Print"
+            Name = "Cancel"
+            ReuseRunningSession = $true
+        } | Out-Null
+
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "WaitWindowClosed"
+            WindowTitle = "GuaranteeManager - Print"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Closed -eq $true) "External print window did not close within the expected wait window."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "close-history-after-print" -ScriptBlock {
+        Invoke-UiExploreJson -Arguments @{
+            Action = "Click"
+            WindowAutomationId = "Dialog.GuaranteeHistory"
+            AutomationId = "Dialog.GuaranteeHistory.CloseFooterButton"
+            ReuseRunningSession = $true
+        } | Out-Null
+
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "WaitWindowClosed"
+            WindowAutomationId = "Dialog.GuaranteeHistory"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Closed -eq $true) "HistoryDialog did not close after the print integration path."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "probe-clean-after-integration" -ScriptBlock {
         $payload = Invoke-UiExploreJson -Arguments @{
             Action = "Probe"
             ReuseRunningSession = $true
         }
 
-        Assert-RegressionCondition ([string]::IsNullOrWhiteSpace([string]$payload.Health.ActiveDialogTitle)) "A dialog remained open after confirming discard."
-        Assert-RegressionCondition ($payload.Health.OpenWindowCount -eq 1) "Session did not return to a single main window after dialog closure."
-        return $payload
-    } | Out-Null
-
-    Invoke-RegressionStep -Name "events-shell-navigation" -ScriptBlock {
-        $payload = Invoke-UiExploreJson -Arguments @{
-            Action = "Events"
-            Category = "shell.navigation"
-            MaxResults = 10
-            ReuseRunningSession = $true
-        }
-
-        Assert-RegressionCondition ($payload.Events.Count -ge 1) "Events query did not return shell.navigation records."
+        Assert-RegressionCondition ([string]::IsNullOrWhiteSpace([string]$payload.Health.ActiveDialogTitle)) "A dialog remained open after integration flow."
+        Assert-RegressionCondition ($payload.Health.OpenWindowCount -eq 1) "Session did not return to a single main window after integration flow."
         return $payload
     } | Out-Null
 }
@@ -303,7 +377,7 @@ finally {
 }
 
 if ($suiteFailed) {
-    throw "UI tooling regression suite failed. See $summaryPath"
+    throw "UI tooling integration suite failed. See $summaryPath"
 }
 
 [pscustomobject]@{

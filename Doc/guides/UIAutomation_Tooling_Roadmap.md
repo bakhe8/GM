@@ -628,7 +628,7 @@ ActionResult
 
 ## المرحلة 6 — اختبار الأداة نفسها
 
-**الحالة:** بدأت عمليًا
+**الحالة:** توسعت عمليًا
 
 ### الهدف
 
@@ -673,22 +673,27 @@ ActionResult
 
 - أضفنا:
   - [scripts/tests/UiAutomation.Tooling.Smoke.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/tests/UiAutomation.Tooling.Smoke.ps1:1)
+  - [scripts/tests/UiAutomation.Tooling.Integration.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/tests/UiAutomation.Tooling.Integration.ps1:1)
   - [scripts/run_ui_tooling_regression.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/run_ui_tooling_regression.ps1:1)
+  - action عامة جديدة: `WaitWindowClosed`
 - وتغطي الجولة الحالية:
   - `Probe`
   - `Sidebar`
   - `Elements`
   - `WaitWindow`
+  - `WaitWindowClosed`
   - `SetField`
   - `DialogAction`
   - `Events`
+  - `popup/menu resolution`
+  - `external window detection`
 - والتحقق الحي الحالي:
-  - `10/10` خطوات ناجحة
-
-- launch
-- sidebar
-- new guarantee discard
-- settings tools popup
+  - smoke: `10/10`
+  - integration: `14/14`
+  - وتشغيل `-Suite All` يمر بنجاح
+- والمخرجات المرجعية الحالية:
+  - [UIAcceptance/latest/tooling-regression-summary.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/latest/tooling-regression-summary.md)
+  - [UIAcceptance/latest/tooling-integration-summary.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/latest/tooling-integration-summary.md)
 
 ### بوابة النجاح
 

@@ -89,22 +89,31 @@
     - `Probe`
     - `Sidebar`
     - `All` على جلسة نظيفة
-- ثم بدأت **Phase 6** عمليًا كأول regression smoke suite للأداة نفسها:
+- ثم اتسعت **Phase 6** عمليًا من smoke أولية إلى regression tooling أوضح:
   - أضفنا:
     - [scripts/tests/UiAutomation.Tooling.Smoke.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/tests/UiAutomation.Tooling.Smoke.ps1:1)
+    - [scripts/tests/UiAutomation.Tooling.Integration.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/tests/UiAutomation.Tooling.Integration.ps1:1)
     - [scripts/run_ui_tooling_regression.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/run_ui_tooling_regression.ps1:1)
+  - كما أضيفت action عامة جديدة داخل الأداة:
+    - `WaitWindowClosed`
   - والجولة الحالية تتحقق فعليًا من:
     - `Probe`
     - `Sidebar`
     - `Elements`
     - `WaitWindow`
+    - `WaitWindowClosed`
     - `SetField`
     - `DialogAction`
-    - والرجوع إلى جلسة نظيفة بعد إغلاق الحوار
+    - popup/menu resolution داخل `Settings`
+    - external window detection عبر `GuaranteeManager - Print`
+    - والرجوع إلى جلسة نظيفة بعد إغلاق الحوارات الداخلية والخارجية
   - والنتيجة الحالية:
-    - `10/10` خطوات ناجحة
-    - والملخص الحي يُكتب هنا:
+    - `10/10` في smoke
+    - `14/14` في integration
+    - وتشغيل `-Suite All` يمر الآن بنجاح
+    - والملخصان الحيان يُكتبان هنا:
       - [UIAcceptance/latest/tooling-regression-summary.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/latest/tooling-regression-summary.md)
+      - [UIAcceptance/latest/tooling-integration-summary.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/latest/tooling-integration-summary.md)
 
 كما أضيف الآن مرجع حي لمراجعة نضج السطوح الأساسية الأربع مقابل التوجيه المستخرج من الأرشيف:
 

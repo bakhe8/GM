@@ -79,6 +79,47 @@ function Wait-UiWindowClosed {
     return $false
 }
 
+function Wait-UiWindowMatchClosed {
+    param(
+        [Parameter(Mandatory)]
+        [System.Diagnostics.Process]$Process,
+        [string]$Title = "",
+        [string]$AutomationId = "",
+        [int]$TimeoutSeconds = 5,
+        [switch]$PartialMatch
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Title) -and [string]::IsNullOrWhiteSpace($AutomationId)) {
+        throw "Wait-UiWindowMatchClosed requires either -Title or -AutomationId."
+    }
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        $matches = @(Get-UiWindowsCatalog -ProcessId $Process.Id -IncludeRelatedForeground | Where-Object {
+            $titleMatches = $true
+            if (-not [string]::IsNullOrWhiteSpace($Title)) {
+                if ($PartialMatch) {
+                    $titleMatches = $_.Name -like "*$Title*"
+                }
+                else {
+                    $titleMatches = [string]::Equals($_.Name, $Title, [System.StringComparison]::OrdinalIgnoreCase)
+                }
+            }
+            $automationMatches = [string]::IsNullOrWhiteSpace($AutomationId) -or
+                [string]::Equals($_.AutomationId, $AutomationId, [System.StringComparison]::OrdinalIgnoreCase)
+            $titleMatches -and $automationMatches
+        })
+
+        if ($matches.Count -eq 0) {
+            return $true
+        }
+
+        Start-Sleep -Milliseconds 200
+    }
+
+    return $false
+}
+
 function Resolve-UiScopeRoot {
     param(
         [Parameter(Mandatory)]

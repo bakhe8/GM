@@ -174,6 +174,34 @@ function Invoke-UiExploreAction {
             }
         }
 
+        "WaitWindowClosed" {
+            $closed = Wait-UiWindowMatchClosed `
+                -Process $process `
+                -Title $Options.WindowTitle `
+                -AutomationId $Options.WindowAutomationId `
+                -TimeoutSeconds 10 `
+                -PartialMatch:$Options.PartialMatch
+
+            if (-not $closed) {
+                $windowLabel = if (-not [string]::IsNullOrWhiteSpace($Options.WindowAutomationId)) {
+                    "automation id '$($Options.WindowAutomationId)'"
+                }
+                else {
+                    "title '$($Options.WindowTitle)'"
+                }
+
+                throw "النافذة المستهدفة ($windowLabel) بقيت مفتوحة بعد مهلة الانتظار."
+            }
+
+            return [pscustomobject]@{
+                ProcessId = $process.Id
+                Action = "WaitWindowClosed"
+                WindowTitle = $Options.WindowTitle
+                WindowAutomationId = $Options.WindowAutomationId
+                Closed = $closed
+            }
+        }
+
         "Capture" {
             $window = if (-not [string]::IsNullOrWhiteSpace($Options.WindowTitle) -or -not [string]::IsNullOrWhiteSpace($Options.WindowAutomationId)) {
                 Resolve-UiWindow -Title $Options.WindowTitle -AutomationId $Options.WindowAutomationId -ProcessId $process.Id -PartialMatch:$Options.PartialMatch

@@ -50,6 +50,13 @@
 .\scripts\run_ui_tooling_regression.ps1
 ```
 
+ولتشغيل التكاملات الأوسع أو كل suites معًا:
+
+```powershell
+.\scripts\run_ui_tooling_regression.ps1 -Suite Integration
+.\scripts\run_ui_tooling_regression.ps1 -Suite All
+```
+
 وللاستكشاف العام غير المرتبط بسيناريو ثابت:
 
 ```powershell
@@ -103,6 +110,7 @@
 .\scripts\ui_explore.ps1 -Action Windows
 .\scripts\ui_explore.ps1 -Action Sidebar -Label "الضمانات"
 .\\scripts\\ui_explore.ps1 -Action WaitWindow -WindowAutomationId "Dialog.NewGuarantee"
+.\\scripts\\ui_explore.ps1 -Action WaitWindowClosed -WindowAutomationId "Dialog.NewGuarantee"
 .\scripts\ui_explore.ps1 -Action Elements -WindowTitle "إجراء جديد" -ControlType "ControlType.Edit"
 .\\scripts\\ui_explore.ps1 -Action Elements -WindowAutomationId "Dialog.NewGuarantee" -AutomationId "Dialog.NewGuarantee.GuaranteeNoInput"
 .\scripts\ui_explore.ps1 -Action SetField -WindowTitle "إجراء جديد" -Label "رقم الضمان" -Value "TEST-001"
@@ -161,6 +169,7 @@
 
 - يمكن استخدام `DialogAction` بلا عنوان نافذة عندما نريد التعامل مع نافذة التأكيد النشطة مباشرة.
 - `DialogAction` لم تعد تعتبر "الضغط على الزر" نجاحًا بحد ذاته؛ هي الآن تنتظر جاهزية الزر، ثم تتحقق من إغلاق الحوار فعليًا، وتعيد المحاولة بأسلوب بديل إذا لزم.
+- `WaitWindowClosed` صارت متاحة الآن عندما نريد assert صريحة على اختفاء نافذة داخلية أو خارجية بعد الفعل.
 - يمكن استخدام `SetField` إما عبر `Label` أو مباشرة عبر `AutomationId` إذا كان الحقل معروف الهوية.
 - التصوير والـ contact sheet لم يعودا يحمّلان مكتبات الرسوم إلا عند الحاجة الفعلية لهما.
 - الأداة لم تعد تسمح بالتنقل العام أو النقر على النافذة الرئيسية بينما توجد رسالة أو حوار مفتوح فوق التطبيق؛ ستطلب أولًا حسم الحوار عبر `DialogAction` أو استهدافه صراحة.
