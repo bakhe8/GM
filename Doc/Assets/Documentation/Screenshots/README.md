@@ -56,6 +56,12 @@
 - `UIAcceptance/latest/tooling-regression-summary.md`
 - `UIAcceptance/latest/tooling-integration-summary.md`
 
+وتغطي unit suite الآن أيضًا:
+
+- إنشاء `contact sheet`
+- مقارنة صورتين صناعيًا
+- إنتاج `diff image` موثوقة بعد فصل طبقة `Capture`
+
 ولتشغيل التكاملات الأوسع أو كل suites معًا:
 
 ```powershell

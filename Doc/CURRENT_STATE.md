@@ -89,6 +89,19 @@
     - `Probe`
     - `Sidebar`
     - `All` على جلسة نظيفة
+- ثم أُنجزت **Phase 5** من نفس الخارطة:
+  - انتقلت طبقة `Capture & Visual Evidence` من [scripts/UIAutomation.Acceptance.psm1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/UIAutomation.Acceptance.psm1:1) إلى:
+    - [scripts/modules/UiAutomation.Capture.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Capture.ps1:1)
+  - وهذا يشمل الآن:
+    - `Save-UiWindowScreenshot`
+    - `Save-UiDesktopScreenshot`
+    - `New-UiContactSheet`
+    - `Compare-UiImages`
+    - وتحميل `System.Drawing` عند الحاجة فقط
+  - كما توسعت unit regression لتتحقق الآن من:
+    - إنشاء contact sheet
+    - اكتشاف الفرق بين صورتين
+    - إنتاج diff image بشكل موثوق
 - ثم اتسعت **Phase 6** عمليًا من smoke أولية إلى regression tooling أوضح:
   - أضفنا:
     - [scripts/tests/UiAutomation.Tooling.Smoke.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/tests/UiAutomation.Tooling.Smoke.ps1:1)
@@ -126,8 +139,11 @@
     - ملف المعايرة
     - قراءة timeline
     - شكل performance summary
+    - إنشاء `contact sheet`
+    - اكتشاف الفرق بين صورتين
+    - إنشاء `diff image`
   - والنتيجة الحالية:
-    - `8/8` في unit
+    - `10/10` في unit
   - كما صار runner يدعم:
     - `Smoke`
     - `Integration`

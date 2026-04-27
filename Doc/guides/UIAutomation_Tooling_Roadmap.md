@@ -56,6 +56,19 @@
     - `Probe`
     - `Sidebar`
     - `All` على جلسة نظيفة
+- **Phase 5**: مكتملة
+  - استُخرجت طبقة `Capture & Visual Evidence` إلى:
+    - [scripts/modules/UiAutomation.Capture.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Capture.ps1:1)
+  - وصار [UIAutomation.Acceptance.psm1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/UIAutomation.Acceptance.psm1:1) يحمّل الآن:
+    - `UiAutomation.Core.ps1`
+    - `UiAutomation.Windows.ps1`
+    - `UiAutomation.Dialogs.ps1`
+    - `UiAutomation.Capture.ps1`
+    - `UiAutomation.Diagnostics.ps1`
+  - كما اتسعت unit regression لتغطي:
+    - `New-UiContactSheet`
+    - `Compare-UiImages`
+    - وإنتاج diff image بشكل موثوق
 
 ---
 
@@ -599,6 +612,8 @@ ActionResult
 
 ## المرحلة 5 — طبقة Capture & Visual Evidence
 
+**الحالة:** مكتملة
+
 ### الهدف
 
 أن يصبح التصوير مكونًا مستقلاً، ويُستخدم بذكاء عند الحاجة.
@@ -623,6 +638,21 @@ ActionResult
 - `Probe -IncludeCapture`
 
 كلها تعمل بنفس السلوك الحالي أو أفضل
+
+### نتيجة التنفيذ
+
+- انتقلت دوال:
+  - `Save-UiWindowScreenshot`
+  - `Save-UiDesktopScreenshot`
+  - `New-UiContactSheet`
+  - `Compare-UiImages`
+  من `UIAutomation.Acceptance.psm1` إلى:
+  - [scripts/modules/UiAutomation.Capture.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Capture.ps1:1)
+- وبقي الـ facade متوافقًا من الخارج مع نفس أوامر الـ API العامة
+- كما أصبحت unit regression تغطي:
+  - إنشاء `contact sheet`
+  - اكتشاف الفرق بين صورتين
+  - إنشاء `diff image`
 
 ---
 

@@ -1,9 +1,14 @@
 param(
-    [string]$OutputRoot = ".\Doc\Assets\Documentation\Screenshots\UIAcceptance\latest"
+    [string]$OutputRoot = ".\Doc\Assets\Documentation\Screenshots\UIAcceptance\latest",
+    [switch]$ReuseRunningSession = $false
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+if (-not ("System.Drawing.Color" -as [type])) {
+    Add-Type -AssemblyName System.Drawing
+}
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $modulePath = Join-Path $repoRoot "scripts\UIAutomation.Acceptance.psm1"
@@ -95,6 +100,42 @@ function Write-RegressionSummary {
     [System.IO.File]::WriteAllLines($summaryPath, $lines)
 }
 
+function New-TestBitmap {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path,
+        [Parameter(Mandatory)]
+        [System.Drawing.Color]$Color,
+        [int]$Width = 12,
+        [int]$Height = 12
+    )
+
+    if (-not ("System.Drawing.Bitmap" -as [type])) {
+        Add-Type -AssemblyName System.Drawing
+    }
+
+    $directory = Split-Path -Parent $Path
+    if (-not (Test-Path -LiteralPath $directory)) {
+        New-Item -ItemType Directory -Force -Path $directory | Out-Null
+    }
+
+    $bitmap = New-Object System.Drawing.Bitmap $Width, $Height
+    try {
+        for ($y = 0; $y -lt $Height; $y++) {
+            for ($x = 0; $x -lt $Width; $x++) {
+                $bitmap.SetPixel($x, $y, $Color)
+            }
+        }
+
+        $bitmap.Save($Path, [System.Drawing.Imaging.ImageFormat]::Png)
+    }
+    finally {
+        $bitmap.Dispose()
+    }
+
+    return $Path
+}
+
 try {
     Import-Module $modulePath -Force
 
@@ -162,6 +203,28 @@ try {
         Assert-RegressionCondition ($null -ne $summary.Actions) "Performance summary is missing grouped actions."
         Assert-RegressionCondition ($summary.TotalActions -ge 0) "Performance summary returned an invalid total action count."
         return $summary
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "contact-sheet-generation" -ScriptBlock {
+        $artifactsRoot = Join-Path $resolvedOutputRoot "tooling-unit-artifacts"
+        $firstImage = New-TestBitmap -Path (Join-Path $artifactsRoot "sheet-a.png") -Color ([System.Drawing.Color]::FromArgb(255, 52, 152, 219))
+        $secondImage = New-TestBitmap -Path (Join-Path $artifactsRoot "sheet-b.png") -Color ([System.Drawing.Color]::FromArgb(255, 46, 204, 113))
+        $sheetPath = Join-Path $artifactsRoot "sheet-output.png"
+        $created = New-UiContactSheet -ImagePaths @($firstImage, $secondImage) -DestinationPath $sheetPath -Columns 2
+        Assert-RegressionCondition (Test-Path -LiteralPath $created) "New-UiContactSheet did not create the destination image."
+        return $created
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "compare-images-detect-difference" -ScriptBlock {
+        $artifactsRoot = Join-Path $resolvedOutputRoot "tooling-unit-artifacts"
+        $referencePath = New-TestBitmap -Path (Join-Path $artifactsRoot "compare-reference.png") -Color ([System.Drawing.Color]::FromArgb(255, 52, 152, 219))
+        $actualPath = New-TestBitmap -Path (Join-Path $artifactsRoot "compare-actual.png") -Color ([System.Drawing.Color]::FromArgb(255, 231, 76, 60))
+        $diffPath = Join-Path $artifactsRoot "compare-diff.png"
+        $comparison = Compare-UiImages -ReferencePath $referencePath -ActualPath $actualPath -DiffPath $diffPath -Tolerance 5 -SampleStep 1
+        Assert-RegressionCondition ($comparison.ChangedPixels -gt 0) "Compare-UiImages did not detect the intentional color difference."
+        Assert-RegressionCondition ($comparison.DifferenceRatio -gt 0) "Compare-UiImages returned a zero difference ratio for different images."
+        Assert-RegressionCondition (Test-Path -LiteralPath $diffPath) "Compare-UiImages did not create the diff image."
+        return $comparison
     } | Out-Null
 }
 catch {
