@@ -377,7 +377,7 @@ function Invoke-UiAction {
             }
             $window = Resolve-UiScopeRoot -Process $process -Title $WindowTitle -AutomationId $WindowAutomationId -PartialMatch:$PartialMatch
             $field = if (-not [string]::IsNullOrWhiteSpace($AutomationId)) {
-                Wait-UiElement -Root $window -AutomationId $AutomationId -ControlType ([System.Windows.Automation.ControlType]::Edit) -TimeoutSeconds 5 -PartialMatch:$PartialMatch
+                Wait-UiElement -Root $window -AutomationId $AutomationId -ControlType $null -TimeoutSeconds 5 -PartialMatch:$PartialMatch
             }
             elseif (-not [string]::IsNullOrWhiteSpace($Label)) {
                 Get-UiEditNearLabel -Window $window -Label $Label

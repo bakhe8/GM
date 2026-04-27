@@ -475,6 +475,10 @@ namespace GuaranteeManager
         private readonly TextBox _notesInput = BuildTextBox();
         private readonly TextBlock _attachmentsLabel = new();
         private readonly List<string> _attachmentPaths = new();
+        private readonly Border _consequenceCard = new();
+        private readonly TextBlock _consequenceSummary = new();
+        private readonly TextBlock _consequencePrimary = new();
+        private readonly TextBlock _consequenceSecondary = new();
 
         private NewGuaranteeInput? _input;
         private bool _isDirty;
@@ -499,6 +503,9 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(_referenceNumberInput, "Dialog.NewGuarantee.ReferenceNumberInput", "رقم المرجع");
             UiInstrumentation.Identify(_notesInput, "Dialog.NewGuarantee.NotesInput", "ملاحظات");
             UiInstrumentation.Identify(_attachmentsLabel, "Dialog.NewGuarantee.AttachmentsSummary", "ملخص المرفقات");
+            UiInstrumentation.Identify(_consequenceSummary, "Dialog.NewGuarantee.ConsequenceSummary", "معاينة أثر الحفظ");
+            UiInstrumentation.Identify(_consequencePrimary, "Dialog.NewGuarantee.ConsequencePrimary", "تفاصيل أثر الحفظ");
+            UiInstrumentation.Identify(_consequenceSecondary, "Dialog.NewGuarantee.ConsequenceSecondary", "ملاحظات أثر الحفظ");
             Width = 520;
             Height = 640;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -549,6 +556,7 @@ namespace GuaranteeManager
             fields.Children.Add(BuildField("نوع المرجع", _referenceTypeInput));
             fields.Children.Add(BuildField("رقم المرجع", _referenceNumberInput));
             fields.Children.Add(BuildField("ملاحظات", _notesInput));
+            fields.Children.Add(BuildConsequenceSection());
 
             var attachmentPanel = new StackPanel { Margin = new Thickness(0, 4, 0, 8) };
             attachmentPanel.Children.Add(BuildLabel("المرفقات"));
@@ -600,6 +608,7 @@ namespace GuaranteeManager
 
             Content = root;
             WireDirtyTracking();
+            RefreshConsequencePreview();
             Closing += OnClosing;
         }
 
@@ -728,6 +737,7 @@ namespace GuaranteeManager
         private void MarkDirty()
         {
             _isDirty = true;
+            RefreshConsequencePreview();
         }
 
         private void OnClosing(object? sender, CancelEventArgs e)
@@ -793,6 +803,151 @@ namespace GuaranteeManager
             };
         }
 
+        private FrameworkElement BuildConsequenceSection()
+        {
+            var panel = new StackPanel { Margin = new Thickness(0, 4, 0, 10) };
+            panel.Children.Add(BuildLabel("أثر الحفظ"));
+
+            ConfigureConsequenceText(_consequenceSummary, 12, FontWeights.SemiBold, "#0F172A");
+            ConfigureConsequenceText(_consequencePrimary, 11, FontWeights.Normal, "#334155");
+            ConfigureConsequenceText(_consequenceSecondary, 10.8, FontWeights.Normal, "#64748B");
+            _consequencePrimary.Margin = new Thickness(0, 4, 0, 0);
+            _consequenceSecondary.Margin = new Thickness(0, 4, 0, 0);
+
+            _consequenceCard.CornerRadius = new CornerRadius(8);
+            _consequenceCard.BorderThickness = new Thickness(1);
+            _consequenceCard.Padding = new Thickness(12, 10, 12, 10);
+            _consequenceCard.Margin = new Thickness(0, 4, 0, 0);
+            _consequenceCard.Child = new StackPanel
+            {
+                Children =
+                {
+                    _consequenceSummary,
+                    _consequencePrimary,
+                    _consequenceSecondary
+                }
+            };
+
+            panel.Children.Add(_consequenceCard);
+            return panel;
+        }
+
+        private void RefreshConsequencePreview()
+        {
+            string guaranteeNo = _guaranteeNoInput.Text.Trim();
+            string supplier = _supplierInput.Text.Trim();
+            string beneficiary = _beneficiaryInput.Text.Trim();
+            string bank = GetComboText(_bankInput);
+            string guaranteeType = GetComboText(_typeInput);
+            string amountText = _amountInput.Text.Replace(",", string.Empty, StringComparison.Ordinal).Trim();
+            string expiryText = _expiryInput.Text.Trim();
+            string referenceNumber = _referenceNumberInput.Text.Trim();
+            GuaranteeReferenceType referenceType = (_referenceTypeInput.SelectedItem as ReferenceTypeOption)?.Value ?? GuaranteeReferenceType.None;
+
+            var missing = new List<string>();
+            if (string.IsNullOrWhiteSpace(guaranteeNo))
+            {
+                missing.Add("رقم الضمان");
+            }
+
+            if (string.IsNullOrWhiteSpace(supplier))
+            {
+                missing.Add("المورد");
+            }
+
+            if (string.IsNullOrWhiteSpace(bank))
+            {
+                missing.Add("البنك");
+            }
+
+            if (string.IsNullOrWhiteSpace(guaranteeType))
+            {
+                missing.Add("نوع الضمان");
+            }
+
+            bool amountValid = decimal.TryParse(amountText, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal amount) && amount > 0;
+            bool expiryValid = DateTime.TryParse(expiryText, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime expiryDate);
+
+            if (missing.Count > 0 || !amountValid || !expiryValid)
+            {
+                var blockers = new List<string>();
+                if (missing.Count > 0)
+                {
+                    blockers.Add($"أكمل: {string.Join("، ", missing)}");
+                }
+
+                if (!amountValid)
+                {
+                    blockers.Add("المبلغ يجب أن يكون أكبر من صفر.");
+                }
+
+                if (!expiryValid)
+                {
+                    blockers.Add("تاريخ الانتهاء غير صالح بعد.");
+                }
+
+                SetConsequenceState(
+                    "الحفظ لن يكتمل بعد.",
+                    blockers.FirstOrDefault() ?? "أكمل البيانات الأساسية أولًا.",
+                    blockers.Count > 1 ? string.Join(" ", blockers.Skip(1)) : "عند اكتمال البيانات سيُنشأ الضمان مباشرة كإصدار أول.",
+                    warningState: true);
+                return;
+            }
+
+            string effectiveBeneficiary = string.IsNullOrWhiteSpace(beneficiary) ? supplier : beneficiary;
+            string referenceSummary = BuildReferenceSummary(referenceType, referenceNumber);
+            string attachmentSummary = _attachmentPaths.Count == 0
+                ? "بدون مرفقات إضافية"
+                : $"{_attachmentPaths.Count.ToString("N0", CultureInfo.InvariantCulture)} مرفق سيُحفظ";
+            string beneficiarySummary = string.IsNullOrWhiteSpace(beneficiary)
+                ? $"سيُستخدم المورد كمستفيد: {effectiveBeneficiary}"
+                : $"المستفيد: {effectiveBeneficiary}";
+
+            SetConsequenceState(
+                "سيُنشأ ضمان جديد كإصدار أول (v1).",
+                $"{guaranteeNo} • {bank} • {guaranteeType} • {amount.ToString("N2", CultureInfo.InvariantCulture)} ريال • {expiryDate:yyyy/MM/dd}",
+                $"{beneficiarySummary} • {referenceSummary} • {attachmentSummary}",
+                warningState: false);
+        }
+
+        private void SetConsequenceState(string summary, string primary, string secondary, bool warningState)
+        {
+            ApplyConsequenceText(_consequenceSummary, summary);
+            ApplyConsequenceText(_consequencePrimary, primary);
+            ApplyConsequenceText(_consequenceSecondary, secondary);
+
+            _consequenceCard.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(warningState ? "#FFFBEB" : "#EFF6FF"));
+            _consequenceCard.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(warningState ? "#FCD34D" : "#BFDBFE"));
+            _consequenceSummary.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(warningState ? "#92400E" : "#1D4ED8"));
+        }
+
+        private static void ConfigureConsequenceText(TextBlock textBlock, double fontSize, FontWeight fontWeight, string colorHex)
+        {
+            textBlock.FontSize = fontSize;
+            textBlock.FontWeight = fontWeight;
+            textBlock.TextWrapping = TextWrapping.Wrap;
+            textBlock.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colorHex));
+        }
+
+        private static void ApplyConsequenceText(TextBlock textBlock, string value)
+        {
+            string resolved = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+            textBlock.Text = resolved;
+            System.Windows.Automation.AutomationProperties.SetHelpText(textBlock, resolved);
+            System.Windows.Automation.AutomationProperties.SetItemStatus(textBlock, resolved);
+        }
+
+        private static string BuildReferenceSummary(GuaranteeReferenceType referenceType, string referenceNumber)
+        {
+            string number = referenceNumber?.Trim() ?? string.Empty;
+            return referenceType switch
+            {
+                GuaranteeReferenceType.Contract when !string.IsNullOrWhiteSpace(number) => $"عقد: {number}",
+                GuaranteeReferenceType.PurchaseOrder when !string.IsNullOrWhiteSpace(number) => $"أمر شراء: {number}",
+                _ => "بدون مرجع"
+            };
+        }
+
         private sealed record ReferenceTypeOption(GuaranteeReferenceType Value, string Label);
     }
 
@@ -816,6 +971,10 @@ namespace GuaranteeManager
         private readonly StackPanel _newAttachmentsList = new() { Margin = new Thickness(0, 8, 0, 0) };
         private readonly List<string> _newAttachmentPaths = new();
         private readonly HashSet<int> _removedAttachmentIds = new();
+        private readonly Border _consequenceCard = new();
+        private readonly TextBlock _consequenceSummary = new();
+        private readonly TextBlock _consequencePrimary = new();
+        private readonly TextBlock _consequenceSecondary = new();
 
         private EditGuaranteeInput? _input;
         private bool _isDirty;
@@ -844,6 +1003,9 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(_notesInput, "Dialog.EditGuarantee.NotesInput", "ملاحظات");
             UiInstrumentation.Identify(_existingAttachmentsLabel, "Dialog.EditGuarantee.ExistingAttachmentsSummary", "ملخص المرفقات الحالية");
             UiInstrumentation.Identify(_newAttachmentsLabel, "Dialog.EditGuarantee.NewAttachmentsSummary", "ملخص المرفقات الجديدة");
+            UiInstrumentation.Identify(_consequenceSummary, "Dialog.EditGuarantee.ConsequenceSummary", "معاينة أثر الحفظ");
+            UiInstrumentation.Identify(_consequencePrimary, "Dialog.EditGuarantee.ConsequencePrimary", "تفاصيل أثر الحفظ");
+            UiInstrumentation.Identify(_consequenceSecondary, "Dialog.EditGuarantee.ConsequenceSecondary", "ملاحظات أثر الحفظ");
             Width = 560;
             Height = 760;
             MinHeight = 680;
@@ -907,6 +1069,7 @@ namespace GuaranteeManager
             fields.Children.Add(BuildField("نوع المرجع", _referenceTypeInput));
             fields.Children.Add(BuildField("رقم المرجع", _referenceNumberInput));
             fields.Children.Add(BuildField("ملاحظات", _notesInput));
+            fields.Children.Add(BuildConsequenceSection());
             fields.Children.Add(BuildExistingAttachmentsSection());
             fields.Children.Add(BuildNewAttachmentsSection());
 
@@ -944,6 +1107,7 @@ namespace GuaranteeManager
             RefreshExistingAttachmentsState();
             RefreshNewAttachmentsState();
             WireDirtyTracking();
+            RefreshConsequencePreview();
             Closing += OnClosing;
         }
 
@@ -1264,6 +1428,7 @@ namespace GuaranteeManager
         private void MarkDirty()
         {
             _isDirty = true;
+            RefreshConsequencePreview();
         }
 
         private void OnClosing(object? sender, CancelEventArgs e)
@@ -1327,6 +1492,211 @@ namespace GuaranteeManager
                 Padding = new Thickness(8, 0, 8, 0),
                 IsEditable = true
             };
+        }
+
+        private FrameworkElement BuildConsequenceSection()
+        {
+            var panel = new StackPanel { Margin = new Thickness(0, 4, 0, 10) };
+            panel.Children.Add(BuildLabel("أثر الحفظ"));
+
+            ConfigureConsequenceText(_consequenceSummary, 12, FontWeights.SemiBold, "#0F172A");
+            ConfigureConsequenceText(_consequencePrimary, 11, FontWeights.Normal, "#334155");
+            ConfigureConsequenceText(_consequenceSecondary, 10.8, FontWeights.Normal, "#64748B");
+            _consequencePrimary.Margin = new Thickness(0, 4, 0, 0);
+            _consequenceSecondary.Margin = new Thickness(0, 4, 0, 0);
+
+            _consequenceCard.CornerRadius = new CornerRadius(8);
+            _consequenceCard.BorderThickness = new Thickness(1);
+            _consequenceCard.Padding = new Thickness(12, 10, 12, 10);
+            _consequenceCard.Margin = new Thickness(0, 4, 0, 0);
+            _consequenceCard.Child = new StackPanel
+            {
+                Children =
+                {
+                    _consequenceSummary,
+                    _consequencePrimary,
+                    _consequenceSecondary
+                }
+            };
+
+            panel.Children.Add(_consequenceCard);
+            return panel;
+        }
+
+        private void RefreshConsequencePreview()
+        {
+            string guaranteeNo = _guaranteeNoInput.Text.Trim();
+            string supplier = _supplierInput.Text.Trim();
+            string beneficiary = _beneficiaryInput.Text.Trim();
+            string bank = GetComboText(_bankInput);
+            string guaranteeType = GetComboText(_typeInput);
+            string amountText = _amountInput.Text.Replace(",", string.Empty, StringComparison.Ordinal).Trim();
+            string expiryText = _expiryInput.Text.Trim();
+            string referenceNumber = _referenceNumberInput.Text.Trim();
+            string notes = _notesInput.Text.Trim();
+            GuaranteeReferenceType referenceType = (_referenceTypeInput.SelectedItem as ReferenceTypeOption)?.Value ?? GuaranteeReferenceType.None;
+
+            var missing = new List<string>();
+            if (string.IsNullOrWhiteSpace(guaranteeNo))
+            {
+                missing.Add("رقم الضمان");
+            }
+
+            if (string.IsNullOrWhiteSpace(supplier))
+            {
+                missing.Add("المورد");
+            }
+
+            if (string.IsNullOrWhiteSpace(bank))
+            {
+                missing.Add("البنك");
+            }
+
+            if (string.IsNullOrWhiteSpace(guaranteeType))
+            {
+                missing.Add("نوع الضمان");
+            }
+
+            bool amountValid = decimal.TryParse(amountText, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal amount) && amount > 0;
+            bool expiryValid = DateTime.TryParse(expiryText, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime expiryDate);
+
+            if (missing.Count > 0 || !amountValid || !expiryValid)
+            {
+                var blockers = new List<string>();
+                if (missing.Count > 0)
+                {
+                    blockers.Add($"أكمل: {string.Join("، ", missing)}");
+                }
+
+                if (!amountValid)
+                {
+                    blockers.Add("المبلغ يجب أن يكون أكبر من صفر.");
+                }
+
+                if (!expiryValid)
+                {
+                    blockers.Add("تاريخ الانتهاء غير صالح بعد.");
+                }
+
+                SetConsequenceState(
+                    "الحفظ لن يكتمل بعد.",
+                    blockers.FirstOrDefault() ?? "أكمل البيانات الأساسية أولًا.",
+                    blockers.Count > 1 ? string.Join(" ", blockers.Skip(1)) : "لن يُنشأ إصدار جديد حتى تصبح القيم صالحة.",
+                    warningState: true);
+                return;
+            }
+
+            string effectiveBeneficiary = string.IsNullOrWhiteSpace(beneficiary) ? supplier : beneficiary;
+            string currentBeneficiary = string.IsNullOrWhiteSpace(_currentGuarantee.Beneficiary) ? _currentGuarantee.Supplier : _currentGuarantee.Beneficiary;
+
+            var changeLabels = new List<string>();
+            if (!string.Equals(guaranteeNo, _currentGuarantee.GuaranteeNo, StringComparison.Ordinal))
+            {
+                changeLabels.Add("رقم الضمان");
+            }
+
+            if (!string.Equals(supplier, _currentGuarantee.Supplier, StringComparison.Ordinal))
+            {
+                changeLabels.Add("المورد");
+            }
+
+            if (!string.Equals(effectiveBeneficiary, currentBeneficiary, StringComparison.Ordinal))
+            {
+                changeLabels.Add("المستفيد");
+            }
+
+            if (!string.Equals(bank, _currentGuarantee.Bank, StringComparison.Ordinal))
+            {
+                changeLabels.Add("البنك");
+            }
+
+            if (!string.Equals(guaranteeType, _currentGuarantee.GuaranteeType, StringComparison.Ordinal))
+            {
+                changeLabels.Add("نوع الضمان");
+            }
+
+            if (amount != _currentGuarantee.Amount)
+            {
+                changeLabels.Add("المبلغ");
+            }
+
+            if (expiryDate.Date != _currentGuarantee.ExpiryDate.Date)
+            {
+                changeLabels.Add("تاريخ الانتهاء");
+            }
+
+            if (referenceType != _currentGuarantee.ReferenceType || !string.Equals(referenceNumber, _currentGuarantee.ReferenceNumber, StringComparison.Ordinal))
+            {
+                changeLabels.Add("المرجع");
+            }
+
+            if (!string.Equals(notes, _currentGuarantee.Notes?.Trim() ?? string.Empty, StringComparison.Ordinal))
+            {
+                changeLabels.Add("الملاحظات");
+            }
+
+            int addedAttachments = _newAttachmentPaths.Count;
+            int removedAttachments = _removedAttachmentIds.Count;
+            if (addedAttachments > 0 || removedAttachments > 0)
+            {
+                changeLabels.Add("المرفقات");
+            }
+
+            if (changeLabels.Count == 0)
+            {
+                SetConsequenceState(
+                    "لا توجد تغييرات جديدة ستُحفظ الآن.",
+                    $"الإصدار الحالي {(_currentGuarantee.VersionLabel)} سيبقى كما هو.",
+                    "غيّر حقلًا واحدًا على الأقل أو أضف/أزل مرفقًا قبل حفظ التعديل.",
+                    warningState: false,
+                    neutralState: true);
+                return;
+            }
+
+            string changedFieldsSummary = changeLabels.Count <= 3
+                ? string.Join("، ", changeLabels)
+                : $"{string.Join("، ", changeLabels.Take(3))} + {changeLabels.Count - 3} أخرى";
+            string attachmentSummary = addedAttachments == 0 && removedAttachments == 0
+                ? "المرفقات ستبقى كما هي"
+                : $"المرفقات: +{addedAttachments.ToString("N0", CultureInfo.InvariantCulture)} / -{removedAttachments.ToString("N0", CultureInfo.InvariantCulture)}";
+
+            SetConsequenceState(
+                $"سيُنشأ إصدار جديد v{_currentGuarantee.VersionNumber + 1} لهذا الضمان.",
+                $"أبرز التغييرات: {changedFieldsSummary}.",
+                $"{attachmentSummary} • الإصدار الحالي {_currentGuarantee.VersionLabel} سيبقى محفوظًا في السجل.",
+                warningState: false,
+                neutralState: false);
+        }
+
+        private void SetConsequenceState(string summary, string primary, string secondary, bool warningState, bool neutralState = false)
+        {
+            ApplyConsequenceText(_consequenceSummary, summary);
+            ApplyConsequenceText(_consequencePrimary, primary);
+            ApplyConsequenceText(_consequenceSecondary, secondary);
+
+            string background = neutralState ? "#F8FAFC" : warningState ? "#FFFBEB" : "#EFF6FF";
+            string border = neutralState ? "#D8E1EE" : warningState ? "#FCD34D" : "#BFDBFE";
+            string summaryColor = neutralState ? "#334155" : warningState ? "#92400E" : "#1D4ED8";
+
+            _consequenceCard.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(background));
+            _consequenceCard.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(border));
+            _consequenceSummary.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(summaryColor));
+        }
+
+        private static void ConfigureConsequenceText(TextBlock textBlock, double fontSize, FontWeight fontWeight, string colorHex)
+        {
+            textBlock.FontSize = fontSize;
+            textBlock.FontWeight = fontWeight;
+            textBlock.TextWrapping = TextWrapping.Wrap;
+            textBlock.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colorHex));
+        }
+
+        private static void ApplyConsequenceText(TextBlock textBlock, string value)
+        {
+            string resolved = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+            textBlock.Text = resolved;
+            System.Windows.Automation.AutomationProperties.SetHelpText(textBlock, resolved);
+            System.Windows.Automation.AutomationProperties.SetItemStatus(textBlock, resolved);
         }
 
         private sealed record ReferenceTypeOption(GuaranteeReferenceType Value, string Label);
