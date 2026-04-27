@@ -3294,6 +3294,9 @@ namespace GuaranteeManager
         private readonly IWorkflowService _workflow;
         private readonly Action _onChanged;
         private readonly ListBox _list = new();
+        private readonly Button _registerButton = new();
+        private readonly Button _letterButton = new();
+        private readonly Button _responseButton = new();
         private readonly TextBlock _summary = new()
         {
             FontSize = 12,
@@ -3320,6 +3323,7 @@ namespace GuaranteeManager
 
             var root = new DockPanel { Margin = new Thickness(16) };
             _list.DisplayMemberPath = nameof(RequestDisplayItem.Display);
+            _list.SelectionChanged += (_, _) => UpdateActionAvailability();
             DockPanel.SetDock(_summary, Dock.Top);
             root.Children.Add(_summary);
             root.Children.Add(BuildActions());
@@ -3352,15 +3356,32 @@ namespace GuaranteeManager
             };
             DockPanel.SetDock(actions, Dock.Bottom);
 
-            var registerButton = new Button { Content = "تسجيل رد", Width = 94, Height = 32, Margin = new Thickness(8, 0, 0, 0) };
-            registerButton.Click += (_, _) => RegisterSelectedResponse();
-            var letterButton = new Button { Content = "فتح الخطاب", Width = 94, Height = 32, Margin = new Thickness(8, 0, 0, 0) };
-            letterButton.Click += (_, _) => OpenLetter();
-            var responseButton = new Button { Content = "فتح الرد", Width = 94, Height = 32 };
-            responseButton.Click += (_, _) => OpenResponse();
-            actions.Children.Add(registerButton);
-            actions.Children.Add(letterButton);
-            actions.Children.Add(responseButton);
+            _registerButton.Content = "تسجيل رد";
+            _registerButton.Width = 94;
+            _registerButton.Height = 32;
+            _registerButton.Margin = new Thickness(8, 0, 0, 0);
+            _registerButton.Click += (_, _) => RegisterSelectedResponse();
+            UiInstrumentation.Identify(_registerButton, "Dialog.GuaranteeRequests.RegisterResponseButton", "تسجيل رد");
+            ToolTipService.SetShowOnDisabled(_registerButton, true);
+
+            _letterButton.Content = "فتح الخطاب";
+            _letterButton.Width = 94;
+            _letterButton.Height = 32;
+            _letterButton.Margin = new Thickness(8, 0, 0, 0);
+            _letterButton.Click += (_, _) => OpenLetter();
+            UiInstrumentation.Identify(_letterButton, "Dialog.GuaranteeRequests.OpenLetterButton", "فتح الخطاب");
+            ToolTipService.SetShowOnDisabled(_letterButton, true);
+
+            _responseButton.Content = "فتح الرد";
+            _responseButton.Width = 94;
+            _responseButton.Height = 32;
+            _responseButton.Click += (_, _) => OpenResponse();
+            UiInstrumentation.Identify(_responseButton, "Dialog.GuaranteeRequests.OpenResponseButton", "فتح الرد");
+            ToolTipService.SetShowOnDisabled(_responseButton, true);
+
+            actions.Children.Add(_registerButton);
+            actions.Children.Add(_letterButton);
+            actions.Children.Add(_responseButton);
             return actions;
         }
 
@@ -3392,6 +3413,8 @@ namespace GuaranteeManager
             _summary.Text = requests.Count == 0
                 ? "لا توجد طلبات مرتبطة بهذا الضمان."
                 : $"{requests.Count.ToString("N0", CultureInfo.InvariantCulture)} طلب مرتبط بهذا الضمان";
+
+            UpdateActionAvailability();
         }
 
         private void RegisterSelectedResponse()
@@ -3436,6 +3459,36 @@ namespace GuaranteeManager
             {
                 _workflow.OpenResponseDocument(request);
             }
+        }
+
+        private void UpdateActionAvailability()
+        {
+            WorkflowRequest? request = SelectedRequest;
+            bool hasSelection = request != null;
+            bool canRegisterResponse = request?.Status == RequestStatus.Pending;
+            bool canOpenLetter = request?.HasLetter == true;
+            bool canOpenResponse = request?.HasResponseDocument == true;
+
+            _registerButton.IsEnabled = canRegisterResponse;
+            _registerButton.ToolTip = !hasSelection
+                ? "اختر طلباً أولاً."
+                : canRegisterResponse
+                    ? "يسجل رد البنك للطلب المحدد."
+                    : "هذا الطلب ليس معلقاً، لذلك لا يحتاج إلى تسجيل رد جديد.";
+
+            _letterButton.IsEnabled = canOpenLetter;
+            _letterButton.ToolTip = !hasSelection
+                ? "اختر طلباً أولاً."
+                : canOpenLetter
+                    ? "يفتح خطاب الطلب المرتبط بهذا السجل."
+                    : "لا يوجد خطاب محفوظ لهذا الطلب.";
+
+            _responseButton.IsEnabled = canOpenResponse;
+            _responseButton.ToolTip = !hasSelection
+                ? "اختر طلباً أولاً."
+                : canOpenResponse
+                    ? "يفتح مستند رد البنك المسجل لهذا الطلب."
+                    : "لا يوجد مستند رد بنك محفوظ لهذا الطلب.";
         }
     }
 }
