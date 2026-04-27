@@ -2917,30 +2917,50 @@ namespace GuaranteeManager
             openHistoryButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             UiInstrumentation.Identify(openHistoryButton, "Dialog.OperationalInquiry.OpenHistoryButton", "فتح سجل الضمان");
             openHistoryButton.IsEnabled = _result.CanOpenHistory;
+            openHistoryButton.ToolTip = _result.CanOpenHistory
+                ? "يفتح سجل الضمان المرتبط بهذا الجواب."
+                : "لا يوجد سجل ضمان مرتبط بهذا الجواب التشغيلي.";
+            ToolTipService.SetShowOnDisabled(openHistoryButton, true);
             openHistoryButton.Click += (_, _) => OpenHistory();
 
             Button attachmentsButton = WorkspaceSurfaceChrome.ActionButton("مرفقات الإصدار", "White", "#D8E1EE", "#1F2937");
             attachmentsButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             UiInstrumentation.Identify(attachmentsButton, "Dialog.OperationalInquiry.OpenAttachmentsButton", "فتح مرفقات الإصدار");
             attachmentsButton.IsEnabled = hasAttachments;
+            attachmentsButton.ToolTip = hasAttachments
+                ? "يفتح مرفقات الإصدار الحالي للضمان."
+                : "لا توجد مرفقات مرتبطة بالإصدار الحالي لهذا الضمان.";
+            ToolTipService.SetShowOnDisabled(attachmentsButton, true);
             attachmentsButton.Click += (_, _) => OpenAttachments();
 
             Button openLetterButton = WorkspaceSurfaceChrome.ActionButton("خطاب الطلب", "White", "#D8E1EE", "#1F2937");
             openLetterButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             UiInstrumentation.Identify(openLetterButton, "Dialog.OperationalInquiry.OpenLetterButton", "فتح خطاب الطلب");
             openLetterButton.IsEnabled = _result.CanOpenRequestLetter;
+            openLetterButton.ToolTip = _result.CanOpenRequestLetter
+                ? "يفتح خطاب الطلب المرتبط بهذا الجواب."
+                : "لا يوجد خطاب طلب مرتبط بالسجل أو الطلب الذي استند إليه هذا الجواب.";
+            ToolTipService.SetShowOnDisabled(openLetterButton, true);
             openLetterButton.Click += (_, _) => OpenLetter();
 
             Button openResponseButton = WorkspaceSurfaceChrome.ActionButton("رد البنك", "White", "#D8E1EE", "#1F2937");
             openResponseButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             UiInstrumentation.Identify(openResponseButton, "Dialog.OperationalInquiry.OpenResponseButton", "فتح رد البنك");
             openResponseButton.IsEnabled = _result.CanOpenResponseDocument;
+            openResponseButton.ToolTip = _result.CanOpenResponseDocument
+                ? "يفتح مستند رد البنك المرتبط بهذا الجواب."
+                : "لا يوجد مستند رد بنك مرتبط بالسجل أو الطلب الذي استند إليه هذا الجواب.";
+            ToolTipService.SetShowOnDisabled(openResponseButton, true);
             openResponseButton.Click += (_, _) => OpenResponse();
 
             Button exportButton = WorkspaceSurfaceChrome.ActionButton("تقرير الضمان", "White", "#D8E1EE", "#1F2937");
             exportButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             UiInstrumentation.Identify(exportButton, "Dialog.OperationalInquiry.ExportReportButton", "تصدير تقرير الضمان");
             exportButton.IsEnabled = guarantee != null;
+            exportButton.ToolTip = guarantee != null
+                ? "يصدر تقرير الضمان الحالي."
+                : "لا يوجد ضمان محدد حاليًا لتصدير تقريره.";
+            ToolTipService.SetShowOnDisabled(exportButton, true);
             exportButton.Click += (_, _) => ExportGuaranteeReport();
 
             Button closeButton = WorkspaceSurfaceChrome.ActionButton("إغلاق", "#2563EB", "#2563EB", "White");
