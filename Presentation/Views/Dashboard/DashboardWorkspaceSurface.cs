@@ -19,6 +19,7 @@ namespace GuaranteeManager
         private readonly string _lastFileGuaranteeNo;
         private readonly string _lastFileSummary;
         private readonly Action _resumeLastFile;
+        private readonly Action<int, GuaranteeFileFocusArea, int?> _openGuaranteeContext;
         private readonly Action _showGuarantees;
         private readonly Action _showRequests;
         private readonly Action _showNotifications;
@@ -29,7 +30,7 @@ namespace GuaranteeManager
         private readonly TextBox _searchInput = new();
         private readonly ComboBox _scopeFilter = new();
         private readonly TextBlock _summary = BuildMutedText(12, FontWeights.SemiBold);
-        private readonly TextBlock _guaranteeCountValue = BuildMetricValue();
+        private readonly TextBlock _guaranteeCountValue = BuildMetricValue(22);
         private readonly TextBlock _portfolioAmountValue = BuildMetricValue();
         private readonly TextBlock _pendingValue = BuildMetricValue();
         private readonly TextBlock _attentionValue = BuildMetricValue();
@@ -48,9 +49,9 @@ namespace GuaranteeManager
         private readonly TextBlock _detailWorkspace = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailAction = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailNote = BuildMutedText(11, FontWeights.Normal);
+        private readonly Button _primaryActionButton = new();
         private readonly Button _openWorkspaceButton = new();
         private readonly Button _copyReferenceButton = new();
-        private readonly Button _openGuaranteesButton = new();
         private readonly Button _resumeLastFileButton = new();
 
         private List<Guarantee> _guarantees = new();
@@ -64,6 +65,7 @@ namespace GuaranteeManager
             string lastFileGuaranteeNo,
             string lastFileSummary,
             Action resumeLastFile,
+            Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
             Action showGuarantees,
             Action showRequests,
             Action showNotifications,
@@ -79,6 +81,7 @@ namespace GuaranteeManager
             _lastFileGuaranteeNo = lastFileGuaranteeNo;
             _lastFileSummary = lastFileSummary;
             _resumeLastFile = resumeLastFile;
+            _openGuaranteeContext = openGuaranteeContext;
             _showGuarantees = showGuarantees;
             _showRequests = showRequests;
             _showNotifications = showNotifications;
@@ -110,7 +113,12 @@ namespace GuaranteeManager
 
         private void ConfigureActionButtons()
         {
-            _openWorkspaceButton.Style = WorkspaceSurfaceChrome.Style("PrimaryButton");
+            _primaryActionButton.Style = WorkspaceSurfaceChrome.Style("PrimaryButton");
+            _primaryActionButton.FontSize = 9.5;
+            _primaryActionButton.Click += (_, _) => OpenSelectedPrimaryAction();
+            UiInstrumentation.Identify(_primaryActionButton, "Dashboard.Detail.PrimaryActionButton", "الخطوة التالية");
+
+            _openWorkspaceButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             _openWorkspaceButton.FontSize = 9.5;
             _openWorkspaceButton.Click += (_, _) => OpenSelectedWorkspace();
             UiInstrumentation.Identify(_openWorkspaceButton, "Dashboard.Detail.OpenWorkspaceButton", "فتح المساحة");
@@ -127,12 +135,6 @@ namespace GuaranteeManager
             _copyReferenceButton.FontSize = 9.5;
             _copyReferenceButton.Click += (_, _) => _coordinator.CopyReference(SelectedItem);
             UiInstrumentation.Identify(_copyReferenceButton, "Dashboard.Detail.CopyReferenceButton", "نسخ المرجع");
-
-            _openGuaranteesButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _openGuaranteesButton.Content = "فتح الضمانات";
-            _openGuaranteesButton.FontSize = 9.5;
-            _openGuaranteesButton.Click += (_, _) => _showGuarantees();
-            UiInstrumentation.Identify(_openGuaranteesButton, "Dashboard.Detail.OpenGuaranteesButton", "فتح الضمانات");
         }
 
         private Grid BuildLayout()
@@ -408,7 +410,7 @@ namespace GuaranteeManager
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             grid.Children.Add(new TextBlock
             {
-                Text = "إجراءات سريعة",
+                Text = "الخطوة التالية",
                 FontSize = 12,
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
@@ -420,7 +422,7 @@ namespace GuaranteeManager
             actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
             actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            actions.Children.Add(_openGuaranteesButton);
+            actions.Children.Add(_primaryActionButton);
             Grid.SetColumn(_copyReferenceButton, 2);
             actions.Children.Add(_copyReferenceButton);
             Grid.SetColumn(_openWorkspaceButton, 4);
@@ -675,6 +677,14 @@ namespace GuaranteeManager
                 _showReports);
         }
 
+        private void OpenSelectedPrimaryAction()
+        {
+            _coordinator.RunPrimaryAction(
+                SelectedItem,
+                _openGuaranteeContext,
+                _showGuarantees);
+        }
+
         private void UpdateDetails()
         {
             ApplyDetailState(_dataService.BuildDetailState(
@@ -711,7 +721,11 @@ namespace GuaranteeManager
             _detailWorkspace.Text = state.Workspace;
             _detailAction.Text = state.Action;
             _detailNote.Text = state.Note;
+            _primaryActionButton.Content = state.PrimaryActionButtonLabel;
             _openWorkspaceButton.Content = state.WorkspaceButtonLabel;
+            _primaryActionButton.IsEnabled = state.CanRunPrimaryAction;
+            _openWorkspaceButton.IsEnabled = state.CanOpenWorkspace;
+            _copyReferenceButton.IsEnabled = state.CanRunPrimaryAction;
         }
 
         private static FrameworkElement BuildInfoBlock(string title, TextBlock value)
@@ -729,11 +743,11 @@ namespace GuaranteeManager
             return panel;
         }
 
-        private static TextBlock BuildMetricValue()
+        private static TextBlock BuildMetricValue(double fontSize = 27)
         {
             return new TextBlock
             {
-                FontSize = 27,
+                FontSize = fontSize,
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                 Margin = new Thickness(0, 4, 0, 0),

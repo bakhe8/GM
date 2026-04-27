@@ -576,13 +576,61 @@ namespace GuaranteeManager
             GuaranteeFileDialog.ShowFor(this, target);
         }
 
+        private void OpenGuaranteeContextFromDashboard(int rootId, GuaranteeFileFocusArea area, int? requestIdToFocus)
+        {
+            if (!CanNavigateToWorkspace(ShellWorkspaceKeys.Guarantees))
+            {
+                return;
+            }
+
+            ResetGuaranteeFilters();
+
+            Guarantee? guarantee = _database.GetCurrentGuaranteeByRootId(rootId);
+            if (guarantee == null)
+            {
+                ShowGuaranteesWorkspace();
+                return;
+            }
+
+            GuaranteeRow? row = Guarantees.FirstOrDefault(item => item.RootId == rootId)
+                                ?? Guarantees.FirstOrDefault(item => item.Id == guarantee.Id);
+
+            if (row == null)
+            {
+                RefreshAfterWorkflowChange(rootId);
+                row = Guarantees.FirstOrDefault(item => item.RootId == rootId)
+                      ?? Guarantees.FirstOrDefault(item => item.Id == guarantee.Id);
+            }
+
+            if (row == null)
+            {
+                ShowGuaranteesWorkspace();
+                return;
+            }
+
+            SelectedGuarantee = row;
+            OpenGuaranteeFile(row);
+            FocusGuaranteeSection(area, requestIdToFocus);
+            _diagnostics.RecordEvent(
+                "dashboard.action",
+                "open-guarantee-context",
+                new
+                {
+                    rootId,
+                    FocusArea = area.ToString(),
+                    requestIdToFocus
+                });
+            WriteDiagnosticsState("dashboard-open-guarantee-context");
+        }
+
         private void ApplySmartFilter()
         {
-            SearchText = string.Empty;
-            SelectedBank = AllBanksLabel;
-            SelectedGuaranteeType = AllTypesLabel;
-            SelectedTimeStatus = TimeStatusOptions.FirstOrDefault(option => option.Value == GuaranteeTimeStatus.ExpiringSoon)
-                ?? FilterOption.AllTimeStatuses;
+            SetGuaranteeFilters(
+                string.Empty,
+                AllBanksLabel,
+                AllTypesLabel,
+                TimeStatusOptions.FirstOrDefault(option => option.Value == GuaranteeTimeStatus.ExpiringSoon)
+                ?? FilterOption.AllTimeStatuses);
         }
 
         private void OpenHistory(GuaranteeRow? row)
@@ -982,6 +1030,7 @@ namespace GuaranteeManager
                     LastFileGuaranteeNo,
                     LastFileSummary,
                     ResumeLastFile,
+                    OpenGuaranteeContextFromDashboard,
                     ShowGuaranteesWorkspace,
                     ShowRequestsWorkspace,
                     ShowNotificationsWorkspace,
@@ -1363,6 +1412,33 @@ namespace GuaranteeManager
         private void RememberLastFile(GuaranteeRow row)
         {
             SetLastFileState(_sessionCoordinator.RememberLastFile(row));
+        }
+
+        private void ResetGuaranteeFilters()
+        {
+            SetGuaranteeFilters(
+                string.Empty,
+                AllBanksLabel,
+                AllTypesLabel,
+                FilterOption.AllTimeStatuses);
+        }
+
+        private void SetGuaranteeFilters(
+            string searchText,
+            string selectedBank,
+            string selectedGuaranteeType,
+            FilterOption selectedTimeStatus)
+        {
+            bool changed = false;
+            changed |= SetProperty(ref _searchText, searchText ?? string.Empty, nameof(SearchText));
+            changed |= SetProperty(ref _selectedBank, string.IsNullOrWhiteSpace(selectedBank) ? AllBanksLabel : selectedBank, nameof(SelectedBank));
+            changed |= SetProperty(ref _selectedGuaranteeType, string.IsNullOrWhiteSpace(selectedGuaranteeType) ? AllTypesLabel : selectedGuaranteeType, nameof(SelectedGuaranteeType));
+            changed |= SetProperty(ref _selectedTimeStatus, selectedTimeStatus, nameof(SelectedTimeStatus));
+
+            if (changed)
+            {
+                Refresh();
+            }
         }
 
         private void SetLastFileState(ShellLastFileState state)

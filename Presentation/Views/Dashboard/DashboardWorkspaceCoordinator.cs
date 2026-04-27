@@ -1,5 +1,6 @@
 using System;
 using System.Windows;
+using GuaranteeManager.Models;
 using MessageBox = GuaranteeManager.Services.AppMessageBox;
 
 namespace GuaranteeManager
@@ -50,6 +51,25 @@ namespace GuaranteeManager
                     showGuarantees();
                     break;
             }
+        }
+
+        public void RunPrimaryAction(
+            DashboardWorkItem? item,
+            Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
+            Action showGuarantees)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            if (item.RootGuaranteeId > 0)
+            {
+                openGuaranteeContext(item.RootGuaranteeId, item.PrimaryFocusArea, item.RequestId);
+                return;
+            }
+
+            showGuarantees();
         }
     }
 }

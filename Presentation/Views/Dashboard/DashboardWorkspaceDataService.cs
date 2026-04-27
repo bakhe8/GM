@@ -77,11 +77,11 @@ namespace GuaranteeManager
                 summary);
         }
 
-        public DashboardWorkspaceDetailState BuildDetailState(
-            DashboardWorkItem? selected,
-            bool hasLastFile,
-            string lastFileGuaranteeNo,
-            string lastFileSummary)
+    public DashboardWorkspaceDetailState BuildDetailState(
+        DashboardWorkItem? selected,
+        bool hasLastFile,
+        string lastFileGuaranteeNo,
+        string lastFileSummary)
         {
             if (selected == null)
             {
@@ -99,13 +99,16 @@ namespace GuaranteeManager
                 "---",
                 "---",
                 "---",
-                "---",
-                "---",
-                "---",
-                hasLastFile
+                    "---",
+                    "---",
+                    "---",
+                    hasLastFile
                     ? $"آخر ملف تم العمل عليه: {lastFileGuaranteeNo} | {lastFileSummary}"
                     : "لا يوجد ملف حديث بعد. ابدأ بفتح الضمانات أو اختيار عنصر من أعمال اليوم.",
-                "فتح المساحة");
+                    "فتح الملف عند اختيار عنصر",
+                    "فتح المساحة",
+                    false,
+                    false);
             }
 
             return new DashboardWorkspaceDetailState(
@@ -126,7 +129,10 @@ namespace GuaranteeManager
                 selected.WorkspaceLabel,
                 selected.NextAction,
                 selected.Note,
-                selected.WorkspaceButtonLabel);
+                selected.PrimaryActionLabel,
+                selected.WorkspaceButtonLabel,
+                selected.RootGuaranteeId > 0,
+                true);
         }
 
         private static DashboardWorkItem BuildPendingRequestItem(WorkflowRequestListItem item)
@@ -142,6 +148,9 @@ namespace GuaranteeManager
             return new DashboardWorkItem(
                 DashboardScope.PendingRequests,
                 DashboardTarget.Requests,
+                item.RootGuaranteeId,
+                item.Request.Id,
+                GuaranteeFileFocusArea.Requests,
                 "طلبات معلقة",
                 label,
                 rank,
@@ -156,6 +165,7 @@ namespace GuaranteeManager
                 item.Request.RequestDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
                 $"أُنشئ بتاريخ {item.Request.RequestDate:yyyy/MM/dd}",
                 $"{item.Request.TypeLabel} | {item.Supplier}",
+                "متابعة الطلب الآن",
                 "الطلبات",
                 "فتح الطلبات",
                 $"مراجعة {item.Request.TypeLabel} وتسجيل رد البنك",
@@ -176,6 +186,9 @@ namespace GuaranteeManager
             return new DashboardWorkItem(
                 DashboardScope.ExpiredFollowUp,
                 DashboardTarget.Notifications,
+                item.RootId ?? item.Id,
+                null,
+                GuaranteeFileFocusArea.Actions,
                 "منتهية تحتاج متابعة",
                 label,
                 rank,
@@ -190,6 +203,7 @@ namespace GuaranteeManager
                 item.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
                 $"متأخر {daysLate.ToString("N0", CultureInfo.InvariantCulture)} يوماً",
                 item.GuaranteeType,
+                "راجع الإجراء الآن",
                 "التنبيهات",
                 "فتح التنبيهات",
                 "مراجعة ملف الضمان واتخاذ قرار تشغيل",
@@ -213,6 +227,9 @@ namespace GuaranteeManager
             return new DashboardWorkItem(
                 DashboardScope.ExpiringSoon,
                 DashboardTarget.Notifications,
+                item.RootId ?? item.Id,
+                null,
+                GuaranteeFileFocusArea.Actions,
                 "قريبة الانتهاء",
                 label,
                 rank,
@@ -227,6 +244,7 @@ namespace GuaranteeManager
                 item.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
                 $"خلال {daysLeft.ToString("N0", CultureInfo.InvariantCulture)} يوم",
                 item.GuaranteeType,
+                "راجع التمديد الآن",
                 "التنبيهات",
                 "فتح التنبيهات",
                 "التأكد من الحاجة إلى تمديد",
@@ -267,7 +285,10 @@ namespace GuaranteeManager
         string Workspace,
         string Action,
         string Note,
-        string WorkspaceButtonLabel);
+        string PrimaryActionButtonLabel,
+        string WorkspaceButtonLabel,
+        bool CanRunPrimaryAction,
+        bool CanOpenWorkspace);
 
     public enum DashboardScope
     {
@@ -287,6 +308,9 @@ namespace GuaranteeManager
     public sealed record DashboardWorkItem(
         DashboardScope Scope,
         DashboardTarget Target,
+        int RootGuaranteeId,
+        int? RequestId,
+        GuaranteeFileFocusArea PrimaryFocusArea,
         string CategoryLabel,
         string PriorityLabel,
         int PriorityRank,
@@ -301,6 +325,7 @@ namespace GuaranteeManager
         string DueLabel,
         string DueDetail,
         string Subtitle,
+        string PrimaryActionLabel,
         string WorkspaceLabel,
         string WorkspaceButtonLabel,
         string NextAction,
