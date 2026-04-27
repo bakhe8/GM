@@ -3317,6 +3317,7 @@ namespace GuaranteeManager
         private readonly Button _registerButton = new();
         private readonly Button _letterButton = new();
         private readonly Button _responseButton = new();
+        private readonly Button _closeButton = new();
         private readonly TextBlock _summary = new()
         {
             FontSize = 12,
@@ -3340,6 +3341,14 @@ namespace GuaranteeManager
             FontFamily = new FontFamily("Segoe UI, Tahoma");
             Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
             DialogWindowSupport.Attach(this, nameof(RequestsDialog));
+            PreviewKeyDown += (_, eventArgs) =>
+            {
+                if (eventArgs.Key == Key.Escape)
+                {
+                    Close();
+                    eventArgs.Handled = true;
+                }
+            };
 
             var root = new DockPanel { Margin = new Thickness(16) };
             _list.DisplayMemberPath = nameof(RequestDisplayItem.Display);
@@ -3399,9 +3408,18 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(_responseButton, "Dialog.GuaranteeRequests.OpenResponseButton", "فتح الرد");
             ToolTipService.SetShowOnDisabled(_responseButton, true);
 
+            _closeButton.Content = "إغلاق";
+            _closeButton.Width = 94;
+            _closeButton.Height = 32;
+            _closeButton.Margin = new Thickness(8, 0, 0, 0);
+            _closeButton.IsCancel = true;
+            _closeButton.Click += (_, _) => Close();
+            UiInstrumentation.Identify(_closeButton, "Dialog.GuaranteeRequests.CloseButton", "إغلاق طلبات الضمان");
+
             actions.Children.Add(_registerButton);
             actions.Children.Add(_letterButton);
             actions.Children.Add(_responseButton);
+            actions.Children.Add(_closeButton);
             return actions;
         }
 

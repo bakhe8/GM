@@ -485,6 +485,7 @@ function Invoke-UiAction {
             }
 
             Show-UiWindow -Window $window
+            $windowSummary = Get-UiElementSummary -Element $window
             $targetElement = $null
             if (-not [string]::IsNullOrWhiteSpace($Text)) {
                 $targetElement = Get-UiButtonByText -Root $window -Text $Text -ProcessId $process.Id -SearchProcessFallback -PartialMatch:$PartialMatch
@@ -503,6 +504,8 @@ function Invoke-UiAction {
                     }
                 }
             }
+
+            $targetSummary = if ($null -ne $targetElement) { Get-UiElementSummary -Element $targetElement } else { $null }
 
             if ($null -ne $targetElement) {
                 Invoke-UiElement -Element $targetElement
@@ -515,8 +518,8 @@ function Invoke-UiAction {
                 ProcessId = $process.Id
                 Action = "Key"
                 KeyName = $KeyName
-                Window = Get-UiElementSummary -Element $window
-                Target = if ($null -ne $targetElement) { Get-UiElementSummary -Element $targetElement } else { $null }
+                Window = $windowSummary
+                Target = $targetSummary
             }
         }
 
@@ -529,6 +532,7 @@ function Invoke-UiAction {
             }
 
             Show-UiWindow -Window $window
+            $windowSummary = Get-UiElementSummary -Element $window
             $targetElement = $null
 
             if (-not [string]::IsNullOrWhiteSpace($Text)) {
@@ -548,6 +552,8 @@ function Invoke-UiAction {
                     }
                 }
             }
+
+            $targetSummary = if ($null -ne $targetElement) { Get-UiElementSummary -Element $targetElement } else { $null }
 
             if ($null -ne $targetElement) {
                 Invoke-UiElement -Element $targetElement
@@ -564,8 +570,8 @@ function Invoke-UiAction {
                 ProcessId = $process.Id
                 Action = "SendKeys"
                 KeysText = $keysText
-                Window = Get-UiElementSummary -Element $window
-                Target = if ($null -ne $targetElement) { Get-UiElementSummary -Element $targetElement } else { $null }
+                Window = $windowSummary
+                Target = $targetSummary
             }
         }
 
