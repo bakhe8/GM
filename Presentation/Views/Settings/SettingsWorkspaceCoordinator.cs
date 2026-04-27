@@ -51,6 +51,7 @@ namespace GuaranteeManager
             {
                 Process.Start(new ProcessStartInfo(targetPath) { UseShellExecute = true });
                 _diagnostics.RecordEvent("settings.operation", "open-path", new { item.Label, targetPath });
+                _shellStatus.ShowInfo("تم فتح المسار.", $"الإعدادات • {item.Label}");
             }
             catch (Exception ex)
             {
@@ -70,6 +71,7 @@ namespace GuaranteeManager
             {
                 Clipboard.SetText(item.Path);
                 _diagnostics.RecordEvent("settings.operation", "copy-path", new { item.Label, item.Path });
+                _shellStatus.ShowSuccess("تم نسخ المسار.", $"الإعدادات • {item.Label}");
             }
             catch (Exception ex)
             {

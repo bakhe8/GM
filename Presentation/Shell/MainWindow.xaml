@@ -373,24 +373,24 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding ShellStatusPrimaryText}"
+                    <TextBlock x:Name="ShellStatusPrimaryBlock"
+                               Text="{Binding ShellStatusPrimaryText}"
                                Foreground="{Binding ShellStatusPrimaryBrush}"
                                FontSize="11"
                                FontWeight="SemiBold"
                                VerticalAlignment="Center"
                                automation:AutomationProperties.AutomationId="Shell.Status.Primary"
-                               automation:AutomationProperties.Name="حالة البرنامج الرئيسية"
-                               automation:AutomationProperties.HelpText="{Binding ShellStatusPrimaryText}"
-                               automation:AutomationProperties.ItemStatus="{Binding ShellStatusPrimaryText}" />
+                               automation:AutomationProperties.HelpText="جاهز"
+                               automation:AutomationProperties.ItemStatus="جاهز" />
                     <Border Width="1" Height="12" Background="#2A4B76" Margin="10,0" />
-                    <TextBlock Text="{Binding ShellStatusSecondaryText}"
+                    <TextBlock x:Name="ShellStatusSecondaryBlock"
+                               Text="{Binding ShellStatusSecondaryText}"
                                Foreground="#94A3C8"
                                FontSize="11"
                                VerticalAlignment="Center"
                                automation:AutomationProperties.AutomationId="Shell.Status.Secondary"
-                               automation:AutomationProperties.Name="حالة البرنامج الثانوية"
-                               automation:AutomationProperties.HelpText="{Binding ShellStatusSecondaryText}"
-                               automation:AutomationProperties.ItemStatus="{Binding ShellStatusSecondaryText}" />
+                               automation:AutomationProperties.HelpText="قاعدة البيانات متصلة"
+                               automation:AutomationProperties.ItemStatus="قاعدة البيانات متصلة" />
                     <Border Width="1" Height="12" Background="#2A4B76" Margin="10,0" />
                     <TextBlock Text="{Binding CurrentWorkspaceDisplayTitle}"
                                Foreground="#94A3C8"

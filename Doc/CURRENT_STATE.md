@@ -39,6 +39,16 @@
 2. **Real-data validation**
 3. **Performance and usability polish**
 
+ومع اكتمال طبقات الأداة الحالية، صار التحول المطلوب الآن أوضح:
+
+- التطوير الرئيسي ينتقل إلى **البرنامج الأصلي**
+- والأداة تدخل **وضع support blocker-driven**
+- والمرجع التنفيذي لهذا الانتقال هنا:
+  - [guides/Program_Transition_Plan.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Program_Transition_Plan.md:1)
+- وبدأت الآن أول جولة تنفيذ فعلية من هذا الانتقال على `Settings`:
+  - أُغلقت فجوة صمت صغيرة في `نسخ المسار` و`فتح المسار` عبر الشريط السفلي
+  - كما صارت حالة النجاح الهادئ نفسها قابلة للقراءة من الأداة عبر `Shell.Status.Primary`
+
 وبشكل موازٍ، صار لدينا الآن مسار هندسي واضح لتطوير الأداة نفسها بدل تركها تكبر بطريقة عضوية فقط:
 
 - [guides/UIAutomation_Tooling_Roadmap.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UIAutomation_Tooling_Roadmap.md:1)

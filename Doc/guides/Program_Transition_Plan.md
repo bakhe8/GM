@@ -1,0 +1,215 @@
+# Program Transition Plan
+
+**تاريخ الإنشاء:** 2026-04-28  
+**الغرض:** تثبيت نقطة التحول من تطوير الأداة نفسها إلى تطوير البرنامج الأصلي، مع إبقاء الأداة في وضع خدمة العمل لا قيادة العمل.
+
+## الهدف
+
+نصل خلال الجولات القادمة إلى هذا الوضع:
+
+- الأداة **كافية وموثوقة ومرنة**
+- تطويرها يصبح **blocker-driven فقط**
+- 80% من الجهد ينتقل إلى **البرنامج الأصلي**
+- 20% أو أقل يبقى للأداة فقط عندما تمنعنا فعليًا
+
+## تعريف النجاح
+
+سنعتبر التحول ناجحًا عندما تتحقق هذه الشروط:
+
+1. تنفيذ **3 جولات تطوير فعلية** على البرنامج الأصلي
+2. في كل جولة:
+   - نستخدم الأداة كما هي
+   - لا نطورها إلا إذا منعتنا من الوصول إلى فهم أو إصلاح
+3. لا تظهر فجوة tooling جديدة تمنع:
+   - الاستكشاف الحر
+   - جمع evidence
+   - التمييز بين bug في البرنامج وbug في الأداة
+4. تصبح نتائج الجولات:
+   - bugs أو polish في البرنامج
+   - لا backlog جديدة مفتوحة على الأداة إلا إذا كانت blocker
+
+## القاعدة الحاكمة من الآن
+
+أي تطوير جديد للأداة بعد هذه النقطة يجب أن يقع في واحدة فقط من الحالات التالية:
+
+1. **Blocker**
+   - الأداة منعت الاستكشاف أو التحقق أو الإصلاح
+2. **Reliability**
+   - الأداة أعطت حكمًا غير صحيح أو evidence مضللة
+3. **Evidence Gap**
+   - ظهر احتياج تشخيصي لا يمكن تلبيته بالصور/الـ burst/الماوس/fault sensing الحالية
+
+إذا لم يكن الطلب واحدًا من هذه الثلاثة:
+
+- لا نطوّر الأداة الآن
+- ونكمل مباشرة في البرنامج الأصلي
+
+## أول 3 أسطح نبدأ بها
+
+### 1. Settings
+
+**لماذا أولًا؟**
+
+- لأنها تمس:
+  - `backup / restore`
+  - `seed-development-data`
+  - أدوات التشغيل
+  - popup/menu flows
+- ولأن آخر الجولات أثبتت أن هنا hotspot حقيقية في الأداء والتدفق
+
+**الملفات المرجعية الأساسية**
+
+- [SettingsWorkspaceSurface.cs](c:/Users/Bakheet/Documents/Projects/Work/my_work/Presentation/Views/Settings/SettingsWorkspaceSurface.cs:1)
+- [SettingsWorkspaceCoordinator.cs](c:/Users/Bakheet/Documents/Projects/Work/my_work/Presentation/Views/Settings/SettingsWorkspaceCoordinator.cs:1)
+
+### 2. Requests
+
+**لماذا ثانيًا؟**
+
+- لأنها surface تشغيل يومي مباشر
+- وفيها أكثر المسارات التي تمزج:
+  - queue work
+  - response workflows
+  - file opening
+  - attach/open response behavior
+
+**الملفات المرجعية الأساسية**
+
+- [RequestsWorkspaceSurface.cs](c:/Users/Bakheet/Documents/Projects/Work/my_work/Presentation/Views/Requests/RequestsWorkspaceSurface.cs:1)
+- [RequestsWorkspaceCoordinator.cs](c:/Users/Bakheet/Documents/Projects/Work/my_work/Presentation/Views/Requests/RequestsWorkspaceCoordinator.cs:1)
+
+### 3. Guarantee Operational Path
+
+**المقصود هنا**
+
+- `GuaranteeDetailPanel`
+- `HistoryDialog`
+- `OperationalInquiryDialog`
+
+**لماذا ثالثًا؟**
+
+- لأنها تمثل قلب القرار والسياق في البرنامج
+- وتمس:
+  - history
+  - inquiry
+  - reports
+  - print/external windows
+  - next-step guidance
+
+**الملفات المرجعية الأساسية**
+
+- [GuaranteeDetailPanel.xaml](c:/Users/Bakheet/Documents/Projects/Work/my_work/Presentation/Views/Guarantees/GuaranteeDetailPanel.xaml:1)
+- [ShellDialogs.cs](c:/Users/Bakheet/Documents/Projects/Work/my_work/Presentation/Dialogs/ShellDialogs.cs:1)
+
+## أول جولة تطوير فعلية
+
+### الجولة 1 — Settings-first
+
+**الهدف**
+
+إغلاق أول bug/polish حقيقي في `Settings` من التطبيق نفسه، لا من الأداة.
+
+**المسار**
+
+1. تشغيل UAT مركزة على:
+   - `نسخ ملخص المسارات`
+   - `إنشاء نسخة احتياطية`
+   - `استرجاع نسخة احتياطية`
+   - `توليد بيانات تجريبية`
+2. تصنيف ما يظهر إلى:
+   - `bug`
+   - `polish`
+   - `tooling blocker`
+3. إصلاح **عنصر واحد إلى عنصرين كحد أقصى** من البرنامج نفسه
+4. إعادة التحقق
+5. عدم لمس الأداة إلا إذا ظهر blocker واضح
+
+**مخرج الجولة**
+
+- إصلاح فعلي في `Settings`
+- أو تأكيد موثق أن السطح مستقر بما يكفي وننتقل لما بعده
+
+### الجولة 2 — Requests-first
+
+**الهدف**
+
+إغلاق أول bug/polish تشغيلية حقيقية في `Requests`.
+
+**المسار**
+
+1. اختبار:
+   - `رد البنك`
+   - `فتح الرد`
+   - `إلحاق الرد`
+   - `فتح الضمان`
+2. التركيز على:
+   - وضوح الفعل التالي
+   - حالات الملف المفقود/المغلق
+   - ثبات التدفق داخل queue
+3. إصلاح bug/polish واحد أو اثنين
+
+### الجولة 3 — Guarantee Operational Path
+
+**الهدف**
+
+إغلاق أول bug/polish حقيقي في `HistoryDialog` أو `OperationalInquiryDialog` أو مسار خارجي مرتبط بهما.
+
+**المسار**
+
+1. اختبار:
+   - `فتح السجل`
+   - `تقرير الضمان`
+   - `الطباعة`
+   - `الجواب التشغيلي`
+   - `next-step guidance`
+2. التركيز على:
+   - الانتقال من الفهم إلى الفعل
+   - النوافذ الخارجية
+   - الأدلة السياقية
+3. إصلاح bug/polish واحد أو اثنين
+
+## ما الذي نفعله بعد كل جولة؟
+
+بعد كل جولة:
+
+1. نسجل النتيجة:
+   - هل المشكلة من البرنامج؟
+   - هل المشكلة من الأداة؟
+2. إذا كانت من الأداة:
+   - هل هي blocker حقيقي؟
+   - إن لم تكن blocker، نؤجلها
+3. إذا كانت من البرنامج:
+   - نصلحها مباشرة
+4. نعيد التحقق مرة واحدة
+
+## ما الذي لا نفعله الآن؟
+
+- لا نبدأ حاسة جديدة للأداة
+- لا نفتح backlog جديدة للأداة بدافع “قد تكون مفيدة لاحقًا”
+- لا نعود إلى refactor كبير في tooling
+- لا نحول كل ملاحظة صغيرة إلى مشروع مستقل
+
+## القرار التنفيذي
+
+ابتداءً من الآن:
+
+- **المشروع الأساسي هو البرنامج**
+- **الأداة تدخل وضع support**
+- وأول surface نبدأ بها هي:
+  - `Settings`
+
+## أول مخرج فعلي
+
+بدأت الجولة الأولى من `Settings` فعليًا، وخرجت بأول إصلاح حقيقي من البرنامج نفسه:
+
+- `نسخ المسار` و`فتح المسار` صارا يعلنان نجاحهما عبر الشريط السفلي بهدوء بدل الصمت الكامل
+- كما صارت حالة الشريط السفلي **مقروءة للأداة أيضًا** عبر `AutomationId = Shell.Status.Primary`
+  - لم نكتفِ بإظهار النص بصريًا
+  - بل صححنا أيضًا قابلية الأداة لقراءته أثناء الاستكشاف الحر
+
+وهذا هو النوع الصحيح من الجولات القادمة:
+
+- نبدأ من Surface في البرنامج
+- نثبت الفجوة حيًا
+- نصلح التطبيق أولًا
+- ولا نلمس الأداة إلا إذا أثبتت الجولة أن هناك blocker أو مشكلة reliability فعلية
