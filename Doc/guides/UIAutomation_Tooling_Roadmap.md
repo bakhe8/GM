@@ -201,6 +201,7 @@ scripts/
     UiAutomation.Dialogs.Tests.ps1
     UiAutomation.Diagnostics.Tests.ps1
     UiAutomation.Smoke.Tests.ps1
+    UiAutomation.Freedom.Tests.ps1
   UIAutomation.Acceptance.psm1
   ui_explore.ps1
   run_ui_acceptance.ps1
@@ -779,10 +780,13 @@ ActionResult
   - [UIAutomation_Supported_API.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UIAutomation_Supported_API.md:1)
 - كما أضفنا suite خفيفة للأجزاء الثابتة:
   - [scripts/tests/UiAutomation.Tooling.Unit.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/tests/UiAutomation.Tooling.Unit.ps1:1)
+- ثم أضفنا suite مستقلة لقياس حرية الاستكشاف نفسها:
+  - [scripts/tests/UiAutomation.Tooling.Freedom.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/tests/UiAutomation.Tooling.Freedom.ps1:1)
 - والـ runner الحالي يدعم الآن:
   - `Smoke`
   - `Integration`
   - `Unit`
+  - `Freedom`
   - `All`
 
 ---

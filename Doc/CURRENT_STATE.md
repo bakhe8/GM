@@ -53,6 +53,9 @@
   - هل تسمح لي بتغيير الأسلوب لحظيًا؟
   - هل تمنع تقييدي بسيناريو أو مسار ثابت؟
   - هل تتركني أصل إلى نفس النتيجة عبر أكثر من modality إذا احتجت؟
+- وهذا لم يعد مبدأً نظريًا فقط:
+  - أضيفت الآن [scripts/tests/UiAutomation.Tooling.Freedom.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/tests/UiAutomation.Tooling.Freedom.ps1:1)
+  - لتقيس هذا المعنى مباشرة عبر regression مخصصة
 
 كما بدأت الآن أول طبقة تنفيذية لمسار **adaptive capabilities** نفسه:
 
@@ -153,6 +156,7 @@
     - `tooling unit`: `17/17`
     - `tooling smoke`: `10/10`
     - `tooling integration`: `43/43`
+    - `tooling freedom`: `9/9`
 
 وأول خطوة تنفيذية منه بدأت فعليًا الآن:
 

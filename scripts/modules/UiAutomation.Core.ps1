@@ -423,6 +423,27 @@ function Get-UiTopLevelAncestor {
     return $last
 }
 
+function Test-UiElementHasAncestorControlType {
+    param(
+        [Parameter(Mandatory)]
+        [System.Windows.Automation.AutomationElement]$Element,
+        [Parameter(Mandatory)]
+        [System.Windows.Automation.ControlType]$ControlType
+    )
+
+    $walker = [System.Windows.Automation.TreeWalker]::ControlViewWalker
+    $current = $walker.GetParent($Element)
+    while ($current -ne $null) {
+        if ($current.Current.ControlType -eq $ControlType) {
+            return $true
+        }
+
+        $current = $walker.GetParent($current)
+    }
+
+    return $false
+}
+
 function Send-UiVirtualKey {
     param(
         [Parameter(Mandatory)]
@@ -433,6 +454,39 @@ function Send-UiVirtualKey {
     Start-Sleep -Milliseconds 50
     [GuaranteeManager.UiAcceptance.NativeMethods]::keybd_event($VirtualKey, 0, 0x0002, [UIntPtr]::Zero)
     Start-Sleep -Milliseconds 150
+}
+
+function ConvertTo-UiSendKeysLiteral {
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [string]$Value
+    )
+
+    if ([string]::IsNullOrEmpty($Value)) {
+        return ""
+    }
+
+    $builder = New-Object System.Text.StringBuilder
+    foreach ($character in $Value.ToCharArray()) {
+        $escaped = switch ($character) {
+            '+' { '{+}'; break }
+            '^' { '{^}'; break }
+            '%' { '{%}'; break }
+            '~' { '{~}'; break }
+            '(' { '{(}'; break }
+            ')' { '{)}'; break }
+            '[' { '{[}'; break }
+            ']' { '{]}'; break }
+            '{' { '{{}'; break }
+            '}' { '{}}'; break }
+            default { [string]$character }
+        }
+
+        [void]$builder.Append($escaped)
+    }
+
+    return $builder.ToString()
 }
 
 function Wait-UiElement {
@@ -551,6 +605,26 @@ function Set-UiElementValue {
         [AllowEmptyString()]
         [string]$Value
     )
+
+    $isTextBox = [string]::Equals([string]$Element.Current.ClassName, "TextBox", [System.StringComparison]::OrdinalIgnoreCase)
+    $isComboTextBox = $isTextBox -and (Test-UiElementHasAncestorControlType -Element $Element -ControlType ([System.Windows.Automation.ControlType]::ComboBox))
+    if ($isTextBox -and -not $isComboTextBox) {
+        $window = Get-UiTopLevelAncestor -Element $Element
+        if ($null -ne $window -and $window.Current.NativeWindowHandle -ne 0) {
+            Show-UiWindow -Window $window
+        }
+
+        $Element.SetFocus()
+        Start-Sleep -Milliseconds 80
+        Send-UiSendKeys -KeysText "^a{BACKSPACE}"
+        Start-Sleep -Milliseconds 80
+        if (-not [string]::IsNullOrEmpty($Value)) {
+            Send-UiSendKeys -KeysText (ConvertTo-UiSendKeysLiteral -Value $Value)
+        }
+
+        Start-Sleep -Milliseconds 220
+        return
+    }
 
     $pattern = $null
     if ($Element.TryGetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern, [ref]$pattern)) {

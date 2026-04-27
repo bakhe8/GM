@@ -55,6 +55,7 @@
 - `UIAcceptance/latest/tooling-unit-summary.md`
 - `UIAcceptance/latest/tooling-regression-summary.md`
 - `UIAcceptance/latest/tooling-integration-summary.md`
+- `UIAcceptance/latest/tooling-freedom-summary.md`
 
 وتغطي unit suite الآن أيضًا:
 
@@ -67,6 +68,7 @@
 ```powershell
 .\scripts\run_ui_tooling_regression.ps1 -Suite Integration
 .\scripts\run_ui_tooling_regression.ps1 -Suite Unit
+.\scripts\run_ui_tooling_regression.ps1 -Suite Freedom
 .\scripts\run_ui_tooling_regression.ps1 -Suite All
 ```
 
@@ -252,3 +254,13 @@
     - `CoolingDownCapabilities`
     - `Signals`
     - `DecisionDigest`
+- وصار عندنا الآن **Freedom regression** مستقلة:
+  - لا تختبر فقط أن الأوامر تعمل
+  - بل تختبر أن الوصول لنفس النتيجة ما زال ممكنًا عبر أكثر من modality
+  - مثل:
+    - `Label`
+    - `AutomationId`
+    - `MouseClick`
+    - `Click + Escape`
+    - evidence يدوية عبر `BurstCapture`
+    - evidence تكيفية عبر `ReactiveAssist`
