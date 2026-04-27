@@ -44,6 +44,12 @@
 .\scripts\run_ui_acceptance.ps1 -Scenario All
 ```
 
+ولفحص الأداة نفسها regression smoke:
+
+```powershell
+.\scripts\run_ui_tooling_regression.ps1
+```
+
 وللاستكشاف العام غير المرتبط بسيناريو ثابت:
 
 ```powershell

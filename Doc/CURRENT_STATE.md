@@ -89,6 +89,22 @@
     - `Probe`
     - `Sidebar`
     - `All` على جلسة نظيفة
+- ثم بدأت **Phase 6** عمليًا كأول regression smoke suite للأداة نفسها:
+  - أضفنا:
+    - [scripts/tests/UiAutomation.Tooling.Smoke.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/tests/UiAutomation.Tooling.Smoke.ps1:1)
+    - [scripts/run_ui_tooling_regression.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/run_ui_tooling_regression.ps1:1)
+  - والجولة الحالية تتحقق فعليًا من:
+    - `Probe`
+    - `Sidebar`
+    - `Elements`
+    - `WaitWindow`
+    - `SetField`
+    - `DialogAction`
+    - والرجوع إلى جلسة نظيفة بعد إغلاق الحوار
+  - والنتيجة الحالية:
+    - `10/10` خطوات ناجحة
+    - والملخص الحي يُكتب هنا:
+      - [UIAcceptance/latest/tooling-regression-summary.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/latest/tooling-regression-summary.md)
 
 كما أضيف الآن مرجع حي لمراجعة نضج السطوح الأساسية الأربع مقابل التوجيه المستخرج من الأرشيف:
 

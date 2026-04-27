@@ -628,6 +628,8 @@ ActionResult
 
 ## المرحلة 6 — اختبار الأداة نفسها
 
+**الحالة:** بدأت عمليًا
+
 ### الهدف
 
 تحويل الخبرة المتراكمة إلى regression suite.
@@ -658,6 +660,30 @@ ActionResult
 #### C. اختبارات smoke تشغيلية
 
 مثل:
+
+- `Probe` على جلسة نظيفة
+- التنقل إلى `الضمانات`
+- فتح `إجراء جديد`
+- إدخال قيمة
+- إظهار `تأكيد الإغلاق`
+- حسم التأكيد عبر `DialogAction`
+- التأكد من عودة الجلسة إلى نافذة رئيسية واحدة
+
+### أول تنفيذ فعلي
+
+- أضفنا:
+  - [scripts/tests/UiAutomation.Tooling.Smoke.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/tests/UiAutomation.Tooling.Smoke.ps1:1)
+  - [scripts/run_ui_tooling_regression.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/run_ui_tooling_regression.ps1:1)
+- وتغطي الجولة الحالية:
+  - `Probe`
+  - `Sidebar`
+  - `Elements`
+  - `WaitWindow`
+  - `SetField`
+  - `DialogAction`
+  - `Events`
+- والتحقق الحي الحالي:
+  - `10/10` خطوات ناجحة
 
 - launch
 - sidebar
