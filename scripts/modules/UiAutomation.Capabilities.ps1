@@ -30,7 +30,7 @@ function Get-UiCapabilityDefinitions {
             ProviderState = "available"
             DefaultLeaseMs = 3200
             DefaultSlowActionMs = 850
-            DefaultCooldownMs = 2200
+            DefaultCooldownMs = 3200
             DefaultFrameCount = 3
             DefaultIntervalMs = 70
             CreateContactSheet = $true
@@ -38,6 +38,20 @@ function Get-UiCapabilityDefinitions {
             TriggerOnExternalWindow = $true
             TriggerOnDialog = $true
             Description = "يراقب anomaly خفيفة أثناء الاستكشاف ويشغل evidence بصرية فقط عند الحاجة."
+        },
+        [pscustomobject]@{
+            Name = "FaultWatch"
+            Category = "Signals"
+            ProviderState = "available"
+            DefaultLeaseMs = 4200
+            DefaultLookbackSeconds = 45
+            DefaultCooldownMs = 2600
+            DefaultFrameCount = 3
+            DefaultIntervalMs = 85
+            CreateContactSheet = $true
+            TriggerOnRuntimeFault = $true
+            TriggerOnProcessExit = $true
+            Description = "يراقب إشارات fault الواضحة من سجل التطبيق وأحداث التشغيل بدل الاعتماد على صوت النظام."
         },
         [pscustomobject]@{
             Name = "VideoCapture"
@@ -186,6 +200,34 @@ function Resolve-UiReactiveAssistProfile {
         TriggerOnSlowAction = $triggerOnSlowAction
         TriggerOnExternalWindow = $triggerOnExternalWindow
         TriggerOnDialog = $triggerOnDialog
+    }
+}
+
+function Resolve-UiFaultWatchProfile {
+    param(
+        [Parameter(Mandatory)]
+        $CapabilityRecord
+    )
+
+    $definition = Resolve-UiCapabilityDefinition -CapabilityName ([string]$CapabilityRecord.Name)
+    $metadata = $CapabilityRecord.Metadata
+
+    $lookbackSeconds = if ($null -ne $metadata -and $null -ne $metadata.LookbackSeconds) { [int]$metadata.LookbackSeconds } else { [int]$definition.DefaultLookbackSeconds }
+    $cooldownMs = if ($null -ne $metadata -and $null -ne $metadata.CooldownMs) { [int]$metadata.CooldownMs } else { [int]$definition.DefaultCooldownMs }
+    $frameCount = if ($null -ne $metadata -and $null -ne $metadata.FrameCount) { [int]$metadata.FrameCount } else { [int]$definition.DefaultFrameCount }
+    $intervalMs = if ($null -ne $metadata -and $null -ne $metadata.IntervalMs) { [int]$metadata.IntervalMs } else { [int]$definition.DefaultIntervalMs }
+    $createContactSheet = if ($null -ne $metadata -and $null -ne $metadata.CreateContactSheet) { [bool]$metadata.CreateContactSheet } else { [bool]$definition.CreateContactSheet }
+    $triggerOnRuntimeFault = if ($null -ne $metadata -and $null -ne $metadata.TriggerOnRuntimeFault) { [bool]$metadata.TriggerOnRuntimeFault } else { [bool]$definition.TriggerOnRuntimeFault }
+    $triggerOnProcessExit = if ($null -ne $metadata -and $null -ne $metadata.TriggerOnProcessExit) { [bool]$metadata.TriggerOnProcessExit } else { [bool]$definition.TriggerOnProcessExit }
+
+    return [pscustomobject]@{
+        LookbackSeconds = [Math]::Max(5, $lookbackSeconds)
+        CooldownMs = [Math]::Max(0, $cooldownMs)
+        FrameCount = [Math]::Max(1, $frameCount)
+        IntervalMs = [Math]::Max(0, $intervalMs)
+        CreateContactSheet = $createContactSheet
+        TriggerOnRuntimeFault = $triggerOnRuntimeFault
+        TriggerOnProcessExit = $triggerOnProcessExit
     }
 }
 
@@ -633,6 +675,7 @@ function Get-UiCapabilityOperatorView {
         $cooldownMs = 0
         switch -Regex ([string]$capability.Name) {
             "^ReactiveAssist$" { $cooldownMs = [int](Resolve-UiReactiveAssistProfile -CapabilityRecord $capability).CooldownMs; break }
+            "^FaultWatch$" { $cooldownMs = [int](Resolve-UiFaultWatchProfile -CapabilityRecord $capability).CooldownMs; break }
             "^AutoCaptureOnFailure$" { $cooldownMs = [int](Resolve-UiFailureCaptureProfile -CapabilityRecord $capability).CooldownMs; break }
             default { $cooldownMs = 0 }
         }
@@ -1055,6 +1098,154 @@ function Add-UiFailureBundleObservation {
     return $payload
 }
 
+function Invoke-UiFaultWatchAfterAction {
+    param(
+        [int]$ProcessId = 0,
+        [Parameter(Mandatory)]
+        $CapabilityRecord,
+        [Parameter(Mandatory)]
+        [string]$ActionName,
+        [double]$DurationMs = 0,
+        [string]$CaptureReason = "after-action",
+        [string]$ErrorMessage = ""
+    )
+
+    $session = Get-UiCapabilitySessionState
+    if ($null -eq $session) {
+        return $null
+    }
+
+    if ($ProcessId -le 0) {
+        $ProcessId = [int]$session.ProcessId
+    }
+
+    $profile = Resolve-UiFaultWatchProfile -CapabilityRecord $CapabilityRecord
+    $signals = @(Get-UiRecentFaultSignals -ProcessId $ProcessId -MaxCount 8 -LookbackSeconds $profile.LookbackSeconds -IncludeProcessExit:$profile.TriggerOnProcessExit)
+    if (-not $profile.TriggerOnRuntimeFault) {
+        $signals = @($signals | Where-Object { [string]$_.Kind -eq "process-exited" })
+    }
+
+    if ($signals.Count -eq 0) {
+        Add-UiCapabilityDecisionRecord -SessionState $session -CapabilityName ([string]$CapabilityRecord.Name) -ActionName $ActionName -Decision "quiet" -Summary "لم تظهر إشارات fault جديدة تستحق التدخل بعد هذا الفعل." -Payload ([pscustomobject]@{
+            DurationMs = [math]::Round($DurationMs, 2)
+            ProcessId = $ProcessId
+        }) | Out-Null
+        Save-UiCapabilitySessionState -SessionState $session | Out-Null
+        return [pscustomobject]@{
+            Session = $session
+            Captures = @()
+            Observation = $null
+        }
+    }
+
+    $signalKey = (@($signals | ForEach-Object { [string]$_.Signature } | Select-Object -First 4) -join "|")
+    $latestSignalTimestamp = [string](($signals | Select-Object -First 1).Timestamp)
+    $cooldown = Get-UiCapabilityCooldownState -SessionState $session -CapabilityName ([string]$CapabilityRecord.Name) -CooldownMs $profile.CooldownMs -ActionName $ActionName
+    $lastTriggered = @(Get-UiRecentCapabilityDecision -SessionState $session -CapabilityName ([string]$CapabilityRecord.Name) -ActionName $ActionName -DecisionKinds @("triggered") | Select-Object -First 1)
+    $sameSignalKey = $lastTriggered.Count -gt 0 -and [string]$lastTriggered[0].Payload.SignalKey -eq $signalKey
+    $sameSignalTimestamp = $sameSignalKey -and [string]$lastTriggered[0].Payload.LatestSignalTimestamp -eq $latestSignalTimestamp
+    if ($sameSignalTimestamp -and -not $cooldown.IsActive) {
+        Add-UiCapabilityDecisionRecord -SessionState $session -CapabilityName ([string]$CapabilityRecord.Name) -ActionName $ActionName -Decision "quiet" -Summary "لا توجد إشارة fault جديدة؛ الإشارة الحالية سبق التقاطها وتفسيرها بالفعل." -Payload ([pscustomobject]@{
+            SignalKey = $signalKey
+            LatestSignalTimestamp = $latestSignalTimestamp
+            SignalCount = $signals.Count
+        }) | Out-Null
+        Save-UiCapabilitySessionState -SessionState $session | Out-Null
+        return [pscustomobject]@{
+            Session = $session
+            Captures = @()
+            Observation = $null
+        }
+    }
+    if ($cooldown.IsActive -and $sameSignalKey) {
+        Add-UiCapabilityDecisionRecord -SessionState $session -CapabilityName ([string]$CapabilityRecord.Name) -ActionName $ActionName -Decision "suppressed" -Summary "ظهرت نفس إشارات fault مجددًا، لذلك تجاهلت الأداة إعادة evidence مؤقتًا حتى لا تصبح مزعجة." -Payload ([pscustomobject]@{
+            RemainingMs = $cooldown.RemainingMs
+            SignalKey = $signalKey
+            LatestSignalTimestamp = $latestSignalTimestamp
+            SignalCount = $signals.Count
+        }) | Out-Null
+        Save-UiCapabilitySessionState -SessionState $session | Out-Null
+        return [pscustomobject]@{
+            Session = $session
+            Captures = @()
+            Observation = $null
+        }
+    }
+
+    $captures = New-Object System.Collections.Generic.List[object]
+    $burstSummary = $null
+    $usedExistingBurstFlow = $false
+    if (Test-UiCapabilityEnabled -CapabilityName "BurstCapture" -SessionState $session) {
+        $usedExistingBurstFlow = $true
+    }
+    else {
+        $targetProcess = Get-UiMediaTargetProcess -ProcessId $ProcessId
+        $faultCaptureRecord = [pscustomobject]@{
+            Name = [string]$CapabilityRecord.Name
+            Metadata = [pscustomobject]@{
+                FrameCount = $profile.FrameCount
+                IntervalMs = $profile.IntervalMs
+                CreateContactSheet = $profile.CreateContactSheet
+            }
+        }
+
+        if ($null -ne $targetProcess) {
+            $burstPayload = Save-UiCapabilityBurstSequence -Process $targetProcess -CapabilityRecord $faultCaptureRecord -ActionName $ActionName -CaptureReason "fault-signal"
+            foreach ($capture in @($burstPayload.Captures)) {
+                [void]$captures.Add($capture)
+            }
+            $burstSummary = $burstPayload.Burst
+        }
+    }
+
+    $topSignal = $signals | Select-Object -First 1
+    $sessionForDecision = Get-UiCapabilitySessionState
+    Add-UiCapabilityDecisionRecord -SessionState $sessionForDecision -CapabilityName ([string]$CapabilityRecord.Name) -ActionName $ActionName -Decision "triggered" -Summary "رُصدت إشارة fault واضحة من داخل البرنامج، لذلك جُمعت evidence مباشرة من المصدر بدل انتظار صوت النظام." -Payload ([pscustomobject]@{
+        SignalKey = $signalKey
+        LatestSignalTimestamp = $latestSignalTimestamp
+        SignalCount = $signals.Count
+        TopSignalKind = if ($null -ne $topSignal) { [string]$topSignal.Kind } else { "" }
+        TopSignalTitle = if ($null -ne $topSignal) { [string]$topSignal.Title } else { "" }
+        CaptureCount = $captures.Count
+        UsedExistingBurstFlow = $usedExistingBurstFlow
+    }) | Out-Null
+    Save-UiCapabilitySessionState -SessionState $sessionForDecision | Out-Null
+
+    $session = Get-UiCapabilitySessionState
+    if ($null -eq $session) {
+        return $null
+    }
+
+    $payload = [pscustomobject]@{
+        Timestamp = (Get-Date).ToString("o")
+        SessionId = $session.SessionId
+        CapabilityName = [string]$CapabilityRecord.Name
+        Action = $ActionName
+        Reason = $CaptureReason
+        DurationMs = [math]::Round($DurationMs, 2)
+        SignalCount = $signals.Count
+        Signals = [object[]]$signals
+        TrustedSignalCount = @($signals | Where-Object TrustedForReasoning).Count
+        SignalKey = $signalKey
+        Error = if ([string]::IsNullOrWhiteSpace($ErrorMessage)) { $null } else { $ErrorMessage }
+        CaptureCount = $captures.Count
+        ContactSheetPath = if ($null -ne $burstSummary) { $burstSummary.ContactSheetPath } else { $null }
+        UsedExistingBurstFlow = $usedExistingBurstFlow
+        ProcessId = $ProcessId
+        ProcessRunning = $null -ne (Get-Process -Id $ProcessId -ErrorAction SilentlyContinue)
+    }
+
+    Add-UiCapabilityObservationRecord -SessionState $session -CapabilityName ([string]$CapabilityRecord.Name) -Kind "fault-signal" -Payload $payload
+    $session.UpdatedAt = (Get-Date).ToString("o")
+    Save-UiCapabilitySessionState -SessionState $session | Out-Null
+
+    return [pscustomobject]@{
+        Session = Get-UiCapabilitySessionState
+        Captures = [object[]]$captures.ToArray()
+        Observation = $payload
+    }
+}
+
 function Invoke-UiReactiveAssistAfterAction {
     param(
         [Parameter(Mandatory)]
@@ -1250,6 +1441,19 @@ function Invoke-UiCapabilityHooksAfterAction {
         }
     }
 
+    if (Test-UiCapabilityEnabled -CapabilityName "FaultWatch" -SessionState $session) {
+        $faultWatchCapability = @($session.ActiveCapabilities | Where-Object {
+            [string]::Equals($_.Name, "FaultWatch", [System.StringComparison]::OrdinalIgnoreCase)
+        } | Select-Object -First 1)
+
+        if ($faultWatchCapability.Count -gt 0) {
+            $faultPayload = Invoke-UiFaultWatchAfterAction -ProcessId $Process.Id -CapabilityRecord $faultWatchCapability[0] -ActionName $ActionName -DurationMs $DurationMs -CaptureReason "after-action"
+            foreach ($capture in @($faultPayload.Captures)) {
+                [void]$captures.Add($capture)
+            }
+        }
+    }
+
     Touch-UiCapabilitySession -SessionState (Get-UiCapabilitySessionState) -LastAction $ActionName -Reason "after-action" | Out-Null
 
     return [pscustomobject]@{
@@ -1287,10 +1491,24 @@ function Invoke-UiCapabilityHooksOnFailure {
         }
     }
 
+    $captures = New-Object System.Collections.Generic.List[object]
+    if (Test-UiCapabilityEnabled -CapabilityName "FaultWatch" -SessionState $session) {
+        $faultWatchCapability = @($session.ActiveCapabilities | Where-Object {
+            [string]::Equals($_.Name, "FaultWatch", [System.StringComparison]::OrdinalIgnoreCase)
+        } | Select-Object -First 1)
+
+        if ($faultWatchCapability.Count -gt 0) {
+            $faultPayload = Invoke-UiFaultWatchAfterAction -ProcessId ([int]$session.ProcessId) -CapabilityRecord $faultWatchCapability[0] -ActionName $ActionName -DurationMs $DurationMs -CaptureReason "failure" -ErrorMessage $ErrorMessage
+            foreach ($capture in @($faultPayload.Captures)) {
+                [void]$captures.Add($capture)
+            }
+        }
+    }
+
     if (-not (Test-UiCapabilityEnabled -CapabilityName "AutoCaptureOnFailure" -SessionState $session)) {
         return [pscustomobject]@{
             Session = $session
-            Captures = @()
+            Captures = [object[]]$captures.ToArray()
         }
     }
 
@@ -1298,7 +1516,7 @@ function Invoke-UiCapabilityHooksOnFailure {
     if ($null -eq $process) {
         return [pscustomobject]@{
             Session = $session
-            Captures = @()
+            Captures = [object[]]$captures.ToArray()
         }
     }
 
@@ -1306,7 +1524,7 @@ function Invoke-UiCapabilityHooksOnFailure {
         [string]::Equals($_.Name, "AutoCaptureOnFailure", [System.StringComparison]::OrdinalIgnoreCase)
     } | Select-Object -First 1)
 
-    $captures = @()
+    $failureCaptures = @()
     if ($failureCapability.Count -gt 0) {
         $profile = Resolve-UiFailureCaptureProfile -CapabilityRecord $failureCapability[0]
         $cooldown = Get-UiCapabilityCooldownState -SessionState $session -CapabilityName "AutoCaptureOnFailure" -CooldownMs $profile.CooldownMs -ActionName $ActionName
@@ -1319,11 +1537,11 @@ function Invoke-UiCapabilityHooksOnFailure {
         }
         else {
             $failurePayload = Save-UiCapabilityBurstSequence -Process $process -CapabilityRecord $failureCapability[0] -ActionName $ActionName -CaptureReason "failure"
-            $captures = @($failurePayload.Captures)
+            $failureCaptures = @($failurePayload.Captures)
             $sessionForDecision = Get-UiCapabilitySessionState
             Add-UiCapabilityDecisionRecord -SessionState $sessionForDecision -CapabilityName "AutoCaptureOnFailure" -ActionName $ActionName -Decision "triggered" -Summary "فعّلت AutoCaptureOnFailure evidence متعددة لأن الفشل الحالي يستحق دليلًا أوضح." -Payload ([pscustomobject]@{
                 Error = $ErrorMessage
-                CaptureCount = $captures.Count
+                CaptureCount = $failureCaptures.Count
             }) | Out-Null
             Save-UiCapabilitySessionState -SessionState $sessionForDecision | Out-Null
         }
@@ -1332,12 +1550,15 @@ function Invoke-UiCapabilityHooksOnFailure {
     $health = Get-UiCapabilityWindowHealth -Process $process
     $session = Get-UiCapabilitySessionState
     if ($null -ne $session) {
-        Add-UiFailureBundleObservation -SessionState $session -CapabilityName "AutoCaptureOnFailure" -ActionName $ActionName -ErrorMessage $ErrorMessage -Captures $captures -Health $health | Out-Null
+        Add-UiFailureBundleObservation -SessionState $session -CapabilityName "AutoCaptureOnFailure" -ActionName $ActionName -ErrorMessage $ErrorMessage -Captures $failureCaptures -Health $health | Out-Null
     }
 
     Touch-UiCapabilitySession -SessionState (Get-UiCapabilitySessionState) -LastAction $ActionName -Reason "failure" | Out-Null
+    foreach ($capture in @($failureCaptures)) {
+        [void]$captures.Add($capture)
+    }
     return [pscustomobject]@{
         Session = Get-UiCapabilitySessionState
-        Captures = @($captures)
+        Captures = [object[]]$captures.ToArray()
     }
 }

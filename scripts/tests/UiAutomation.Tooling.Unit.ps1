@@ -258,6 +258,29 @@ try {
         return $policy
     } | Out-Null
 
+    Invoke-RegressionStep -Name "app-log-path-shape" -ScriptBlock {
+        $path = Get-UiAppLogPath
+        Assert-RegressionCondition (-not [string]::IsNullOrWhiteSpace($path)) "Get-UiAppLogPath returned an empty path."
+        Assert-RegressionCondition ($path -like "*log_*.txt") "Get-UiAppLogPath returned an unexpected filename."
+        return $path
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "simple-logger-line-parse" -ScriptBlock {
+        $module = Get-Module UIAutomation.Acceptance
+        Assert-RegressionCondition ($null -ne $module) "UIAutomation.Acceptance module was not loaded for log-line parsing."
+
+        $parsed = & $module {
+            param($line)
+            ConvertFrom-UiSimpleLoggerLine -Line $line
+        } "2026-04-28 09:33:22 [ERROR] [App_DispatcherUnhandledException] [App Startup] Sample failure message"
+
+        Assert-RegressionCondition ($null -ne $parsed) "ConvertFrom-UiSimpleLoggerLine returned null."
+        Assert-RegressionCondition ([string]$parsed.Level -eq "ERROR") "ConvertFrom-UiSimpleLoggerLine did not parse the level."
+        Assert-RegressionCondition ([string]$parsed.Caller -eq "App_DispatcherUnhandledException") "ConvertFrom-UiSimpleLoggerLine did not parse the caller."
+        Assert-RegressionCondition ([string]$parsed.Message -like "*Sample failure message") "ConvertFrom-UiSimpleLoggerLine did not parse the message tail."
+        return $parsed
+    } | Out-Null
+
     Invoke-RegressionStep -Name "cursor-position-shape" -ScriptBlock {
         $cursor = Get-UiCursorPosition
         Assert-RegressionCondition ($null -ne $cursor) "Get-UiCursorPosition did not return a cursor payload."
@@ -268,8 +291,8 @@ try {
 
     Invoke-RegressionStep -Name "capability-definitions-shape" -ScriptBlock {
         $definitions = @(Get-UiCapabilityDefinitions)
-        Assert-RegressionCondition ($definitions.Count -ge 6) "Capability definitions returned fewer items than expected."
-        foreach ($required in @("BurstCapture", "AutoCaptureOnFailure", "ReactiveAssist", "VideoCapture", "AudioCapture", "MouseTrace")) {
+        Assert-RegressionCondition ($definitions.Count -ge 7) "Capability definitions returned fewer items than expected."
+        foreach ($required in @("BurstCapture", "AutoCaptureOnFailure", "ReactiveAssist", "FaultWatch", "VideoCapture", "AudioCapture", "MouseTrace")) {
             Assert-RegressionCondition (@($definitions | Where-Object Name -eq $required).Count -eq 1) "Capability definitions are missing '$required'."
         }
 
@@ -287,6 +310,12 @@ try {
         Assert-RegressionCondition ([string]$reactiveDefinition[0].ProviderState -eq "available") "ReactiveAssist should already be exposed as available."
         Assert-RegressionCondition ([int]$reactiveDefinition[0].DefaultSlowActionMs -gt 0) "ReactiveAssist should expose a positive slow-action threshold."
 
+        $faultWatchDefinition = @($definitions | Where-Object Name -eq "FaultWatch" | Select-Object -First 1)
+        Assert-RegressionCondition ($faultWatchDefinition.Count -eq 1) "FaultWatch definition could not be resolved."
+        Assert-RegressionCondition ([string]$faultWatchDefinition[0].ProviderState -eq "available") "FaultWatch should already be exposed as available."
+        Assert-RegressionCondition ([int]$faultWatchDefinition[0].DefaultLookbackSeconds -ge 10) "FaultWatch should expose a meaningful lookback window."
+        Assert-RegressionCondition ([int]$faultWatchDefinition[0].DefaultCooldownMs -gt 0) "FaultWatch should expose a positive cooldown."
+
         $mouseTraceDefinition = @($definitions | Where-Object Name -eq "MouseTrace" | Select-Object -First 1)
         Assert-RegressionCondition ($mouseTraceDefinition.Count -eq 1) "MouseTrace definition could not be resolved."
         Assert-RegressionCondition ([string]$mouseTraceDefinition[0].ProviderState -eq "available") "MouseTrace should already be exposed as available."
@@ -302,6 +331,15 @@ try {
         Assert-RegressionCondition ([string]$audioDefinition[0].ProviderState -in @("available", "unavailable")) "AudioCapture returned an invalid provider state."
 
         return $definitions
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "fault-state-payload-shape" -ScriptBlock {
+        $payload = Get-UiFaultStatePayload -ProcessId 0 -MaxResults 5
+        Assert-RegressionCondition ($null -ne $payload.DiagnosticsPaths) "FaultState payload is missing DiagnosticsPaths."
+        Assert-RegressionCondition ($payload.PSObject.Properties.Name -contains "RecentFaultSignals") "FaultState payload is missing RecentFaultSignals."
+        Assert-RegressionCondition ($payload.PSObject.Properties.Name -contains "FaultSummary") "FaultState payload is missing FaultSummary."
+        Assert-RegressionCondition ($payload.FaultSummary.SignalCount -ge 0) "FaultSummary returned an invalid signal count."
+        return $payload
     } | Out-Null
 
     Invoke-RegressionStep -Name "capability-session-lifecycle" -ScriptBlock {

@@ -6,7 +6,14 @@ function Get-UiDiagnosticsPaths {
         LogsRoot = $logsRoot
         ShellStatePath = Join-Path $logsRoot "ui-shell-state.json"
         EventLogPath = Join-Path $logsRoot "ui-events.jsonl"
+        AppLogPath = Get-UiAppLogPath
     }
+}
+
+function Get-UiAppLogPath {
+    $storageRoot = Get-UiStorageRoot
+    $logsRoot = Join-Path $storageRoot "Logs"
+    return Join-Path $logsRoot ("log_{0}.txt" -f (Get-Date -Format "yyyyMMdd"))
 }
 
 function Get-UiAcceptanceArtifactsRoot {
@@ -388,6 +395,178 @@ function Get-UiRecentEvents {
         ForEach-Object { $_ | ConvertFrom-Json })
 }
 
+function ConvertFrom-UiSimpleLoggerLine {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Line
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Line)) {
+        return $null
+    }
+
+    $match = [regex]::Match($Line, '^(?<Timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) \[(?<Level>[A-Z]+)\s*\] \[(?<Caller>[^\]]+)\](?<Message>.*)$')
+    if (-not $match.Success) {
+        return $null
+    }
+
+    $parsedTimestamp = $null
+    try {
+        $parsedTimestamp = [DateTimeOffset]::new([DateTime]::ParseExact($match.Groups["Timestamp"].Value, "yyyy-MM-dd HH:mm:ss", $null))
+    }
+    catch {
+    }
+
+    return [pscustomobject]@{
+        Timestamp = $match.Groups["Timestamp"].Value
+        ParsedTimestamp = $parsedTimestamp
+        Level = $match.Groups["Level"].Value.Trim()
+        Caller = $match.Groups["Caller"].Value.Trim()
+        Message = $match.Groups["Message"].Value.Trim()
+        RawLine = $Line
+    }
+}
+
+function Get-UiRecentAppLogEntries {
+    param(
+        [int]$MaxCount = 20,
+        [int]$LookbackSeconds = 0,
+        [switch]$ErrorsOnly
+    )
+
+    $path = Get-UiAppLogPath
+    if (-not (Test-Path -LiteralPath $path)) {
+        return @()
+    }
+
+    $tailWindow = [Math]::Max($MaxCount * 4, 40)
+    $lines = @(Get-Content -Path $path -Tail $tailWindow -Encoding UTF8 -ErrorAction SilentlyContinue |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+
+    $entries = @($lines |
+        ForEach-Object { ConvertFrom-UiSimpleLoggerLine -Line $_ } |
+        Where-Object { $null -ne $_ })
+
+    if ($ErrorsOnly) {
+        $entries = @($entries | Where-Object {
+            [string]::Equals([string]$_.Level, "ERROR", [System.StringComparison]::OrdinalIgnoreCase)
+        })
+    }
+
+    if ($LookbackSeconds -gt 0) {
+        $cutoff = [DateTimeOffset]::Now.AddSeconds(-1 * $LookbackSeconds)
+        $entries = @($entries | Where-Object {
+            $null -eq $_.ParsedTimestamp -or $_.ParsedTimestamp -ge $cutoff
+        })
+    }
+
+    return @($entries | Select-Object -Last $MaxCount)
+}
+
+function Get-UiRecentFaultSignals {
+    param(
+        [int]$ProcessId = 0,
+        [int]$MaxCount = 12,
+        [int]$LookbackSeconds = 45,
+        [switch]$IncludeProcessExit = $true
+    )
+
+    $signals = New-Object System.Collections.Generic.List[object]
+    $cutoff = [DateTimeOffset]::Now.AddSeconds(-1 * [Math]::Max(1, $LookbackSeconds))
+
+    $recentEvents = @(Get-UiRecentEvents -MaxCount ([Math]::Max($MaxCount * 4, 32)))
+    foreach ($eventRecord in $recentEvents) {
+        if (-not [string]::Equals([string]$eventRecord.Category, "runtime.fault", [System.StringComparison]::OrdinalIgnoreCase)) {
+            continue
+        }
+
+        $eventTimestamp = $null
+        try {
+            $eventTimestamp = [DateTimeOffset]::Parse([string]$eventRecord.Timestamp)
+        }
+        catch {
+        }
+
+        if ($null -ne $eventTimestamp -and $eventTimestamp -lt $cutoff) {
+            continue
+        }
+
+        $payload = $eventRecord.Payload
+        $title = if ($null -ne $payload -and $payload.PSObject.Properties.Name -contains "Title") { [string]$payload.Title } else { [string]$eventRecord.Action }
+        $message = if ($null -ne $payload -and $payload.PSObject.Properties.Name -contains "Message") { [string]$payload.Message } else { "" }
+        $severity = if ($null -ne $payload -and $payload.PSObject.Properties.Name -contains "Severity") { [string]$payload.Severity } else { "Error" }
+        $exceptionType = if ($null -ne $payload -and $payload.PSObject.Properties.Name -contains "ExceptionType") { [string]$payload.ExceptionType } else { "" }
+        $isTerminating = if ($null -ne $payload -and $payload.PSObject.Properties.Name -contains "IsTerminating") { [bool]$payload.IsTerminating } else { $false }
+        $signature = "runtime-fault::{0}::{1}::{2}::{3}" -f ([string]$eventRecord.Action), $title, $exceptionType, $isTerminating
+
+        [void]$signals.Add([pscustomobject]@{
+            Timestamp = if ($null -ne $eventTimestamp) { $eventTimestamp.ToString("o") } else { [string]$eventRecord.Timestamp }
+            Kind = "runtime-fault-event"
+            Severity = $severity
+            Title = $title
+            Message = $message
+            Signature = $signature
+            Action = [string]$eventRecord.Action
+            ExceptionType = $exceptionType
+            IsTerminating = $isTerminating
+            TrustedForReasoning = $true
+            Scope = "program-diagnostics"
+            Source = "ui-events.jsonl"
+        })
+    }
+
+    $recentLogErrors = @(Get-UiRecentAppLogEntries -ErrorsOnly -MaxCount ([Math]::Max($MaxCount * 4, 32)) -LookbackSeconds $LookbackSeconds)
+    foreach ($entry in $recentLogErrors) {
+        $signature = "logger-error::{0}::{1}" -f ([string]$entry.Caller), ([string]$entry.Message)
+        [void]$signals.Add([pscustomobject]@{
+            Timestamp = if ($null -ne $entry.ParsedTimestamp) { $entry.ParsedTimestamp.ToString("o") } else { [string]$entry.Timestamp }
+            Kind = "logger-error"
+            Severity = "Error"
+            Title = if ([string]::IsNullOrWhiteSpace([string]$entry.Caller)) { "سجل التطبيق" } else { [string]$entry.Caller }
+            Message = [string]$entry.Message
+            Signature = $signature
+            Action = [string]$entry.Caller
+            ExceptionType = ""
+            IsTerminating = $false
+            TrustedForReasoning = $true
+            Scope = "program-log"
+            Source = "log_yyyyMMdd.txt"
+        })
+    }
+
+    if ($IncludeProcessExit -and $ProcessId -gt 0) {
+        $process = Get-Process -Id $ProcessId -ErrorAction SilentlyContinue
+        if ($null -eq $process) {
+            [void]$signals.Add([pscustomobject]@{
+                Timestamp = (Get-Date).ToString("o")
+                Kind = "process-exited"
+                Severity = "Error"
+                Title = "توقفت العملية المستهدفة"
+                Message = "عملية التطبيق التي كانت الأداة تراقبها لم تعد موجودة."
+                Signature = "process-exited::$ProcessId"
+                Action = "process-exited"
+                ExceptionType = ""
+                IsTerminating = $true
+                TrustedForReasoning = $true
+                Scope = "process-liveness"
+                Source = "process-state"
+            })
+        }
+    }
+
+    return @($signals |
+        Group-Object Signature |
+        ForEach-Object {
+            $_.Group | Sort-Object {
+                try { [DateTimeOffset]::Parse([string]$_.Timestamp) } catch { [DateTimeOffset]::MinValue }
+            } -Descending | Select-Object -First 1
+        } |
+        Sort-Object {
+            try { [DateTimeOffset]::Parse([string]$_.Timestamp) } catch { [DateTimeOffset]::MinValue }
+        } -Descending |
+        Select-Object -First $MaxCount)
+}
+
 function Get-UiAssessment {
     param(
         [Parameter(Mandatory)]
@@ -398,6 +577,11 @@ function Get-UiAssessment {
     $observations = New-Object System.Collections.Generic.List[string]
     $performance = $ProbePayload.PerformanceSummary
     $health = $ProbePayload.Health
+    [object[]]$recentFaultSignals = @()
+    if ($ProbePayload.PSObject.Properties.Name -contains "RecentFaultSignals" -and $null -ne $ProbePayload.RecentFaultSignals) {
+        $recentFaultSignals = [object[]]@($ProbePayload.RecentFaultSignals | ForEach-Object { $_ })
+    }
+    $recentFaultSignalCount = @($recentFaultSignals | ForEach-Object { $_ }).Count
 
     if (-not $health.HasShellState) {
         [void]$warnings.Add("لا توجد لقطة تشخيصية حية من الـ Shell حاليًا.")
@@ -417,10 +601,38 @@ function Get-UiAssessment {
         }
     }
 
+    if ($recentFaultSignalCount -gt 0) {
+        $topSignal = $recentFaultSignals[0]
+        [void]$warnings.Add("رُصدت إشارة fault حديثة من داخل التطبيق: $([string]$topSignal.Title)")
+    }
+
     return [pscustomobject]@{
         Warnings = [object[]]$warnings
         Observations = [object[]]$observations
         HumanNotes = if ($null -ne $ProbePayload.Calibration) { [object[]]$ProbePayload.Calibration.notes } else { @() }
+    }
+}
+
+function Get-UiFaultStatePayload {
+    param(
+        [int]$ProcessId = 0,
+        [int]$MaxResults = 20
+    )
+
+    [object[]]$recentFaultSignals = @(Get-UiRecentFaultSignals -ProcessId $ProcessId -MaxCount $MaxResults)
+    $processRunning = if ($ProcessId -gt 0) { $null -ne (Get-Process -Id $ProcessId -ErrorAction SilentlyContinue) } else { $null -ne (Get-UiProcess) }
+
+    return [pscustomobject]@{
+        ProcessId = $ProcessId
+        DiagnosticsPaths = Get-UiDiagnosticsPaths
+        AppLogPath = Get-UiAppLogPath
+        RecentFaultSignals = [object[]]$recentFaultSignals
+        FaultSummary = [pscustomobject]@{
+            SignalCount = @($recentFaultSignals).Count
+            TrustedSignalCount = @($recentFaultSignals | Where-Object TrustedForReasoning).Count
+            ProcessRunning = $processRunning
+            LatestSignal = if (@($recentFaultSignals).Count -gt 0) { $recentFaultSignals[0] } else { $null }
+        }
     }
 }
 
@@ -450,6 +662,7 @@ function Get-ProbePayload {
     $recentCapabilityObservations = @(Get-UiCapabilityObservationEntries -MaxCount $MaxResults)
     $recentCapabilityDecisions = if ($null -ne $capabilitySession) { @($capabilitySession.RecentDecisions | Select-Object -First $MaxResults) } else { @() }
     $capabilityOperatorView = Get-UiCapabilityOperatorView -SessionState $capabilitySession
+    [object[]]$recentFaultSignals = @(Get-UiRecentFaultSignals -ProcessId $Process.Id -MaxCount $MaxResults)
     $calibration = Get-UiCalibrationProfile
     $performanceSummary = Get-UiPerformanceSummary -MaxCount $MaxResults
     $meaningfulWindows = @($windows | Where-Object {
@@ -479,6 +692,8 @@ function Get-ProbePayload {
         MediaScopeView = $mediaScopeView
         AudioScopePolicy = $audioScopePolicy
         MediaProviders = [object[]]$mediaProviders
+        AppLogPath = Get-UiAppLogPath
+        RecentFaultSignals = [object[]]$recentFaultSignals
         RecentCapabilityObservations = [object[]]$recentCapabilityObservations
         RecentCapabilityDecisions = [object[]]$recentCapabilityDecisions
         CapabilityOperatorView = $capabilityOperatorView
@@ -499,6 +714,8 @@ function Get-ProbePayload {
             HasScopedMediaContamination = if ($null -ne $mediaScopeView -and $null -ne $mediaScopeView.VideoCapture) { [bool]$mediaScopeView.VideoCapture.ContaminationDetected } else { $false }
             AudioProviderReadiness = if ($null -ne $audioScopePolicy) { [string]$audioScopePolicy.ProviderReadiness } else { "" }
             AudioSystemMixFallbackAllowed = if ($null -ne $audioScopePolicy) { [bool]$audioScopePolicy.AcceptsSystemMixFallback } else { $false }
+            FaultSignalCount = @($recentFaultSignals).Count
+            HasTrustedFaultSignal = @($recentFaultSignals | Where-Object TrustedForReasoning).Count -gt 0
             OpenWindowCount = $meaningfulWindows.Count
             RawOpenWindowCount = $windows.Count
             ActiveDialogTitle = if ($null -ne $externalForegroundWindow) { $externalForegroundWindow.Name } elseif ($null -ne $dialogWindow) { $dialogWindow.Name } else { $null }

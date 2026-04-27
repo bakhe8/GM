@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("Launch", "Windows", "Elements", "Sidebar", "Click", "SetField", "WaitWindow", "WaitWindowClosed", "Capture", "DialogAction", "State", "Diagnostics", "Probe", "Compare", "Events", "Key", "SendKeys", "HostState", "MediaState", "CapabilityOn", "CapabilityOff", "VideoOn", "VideoOff", "AudioOn", "AudioOff", "MouseMove", "MouseClick", "MouseRightClick", "MouseDoubleClick", "MouseHover", "MouseDrag", "MouseScroll")]
+    [ValidateSet("Launch", "Windows", "Elements", "Sidebar", "Click", "SetField", "WaitWindow", "WaitWindowClosed", "Capture", "DialogAction", "State", "Diagnostics", "Probe", "Compare", "Events", "Key", "SendKeys", "HostState", "MediaState", "FaultState", "CapabilityOn", "CapabilityOff", "VideoOn", "VideoOff", "AudioOn", "AudioOff", "MouseMove", "MouseClick", "MouseRightClick", "MouseDoubleClick", "MouseHover", "MouseDrag", "MouseScroll")]
     [string]$Action = "Probe",
     [string]$WindowTitle = "",
     [string]$WindowAutomationId = "",
@@ -110,7 +110,7 @@ try {
         Get-UiProcess
     }
 
-    if ($Action -notin @("HostState", "MediaState", "CapabilityOn", "CapabilityOff") -and $null -ne $processForHooks) {
+    if ($Action -notin @("HostState", "MediaState", "FaultState", "CapabilityOn", "CapabilityOff") -and $null -ne $processForHooks) {
         try {
             $hookPayload = Invoke-UiCapabilityHooksAfterAction -Process $processForHooks -RepoRoot $repoRoot -ActionName $Action -DurationMs $traceStopwatch.Elapsed.TotalMilliseconds -Result $result
             if ($null -ne $hookPayload) {

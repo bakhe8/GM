@@ -54,9 +54,13 @@
 ### Diagnostics
 
 - `Get-UiDiagnosticsPaths`
+- `Get-UiAppLogPath`
 - `Get-UiTimelinePath`
 - `Get-UiCalibrationPath`
 - `Get-UiCalibrationProfile`
+- `Get-UiRecentAppLogEntries`
+- `Get-UiRecentFaultSignals`
+- `Get-UiFaultStatePayload`
 - `Get-UiTimelineEntries`
 - `Get-UiPerformanceSummary`
 - `Write-UiTimelineEvent`
@@ -177,11 +181,24 @@
   - وإذا طُلب `AudioOn` الآن فالأداة:
     - ترفض البدء بصراحة
     - وتسجل `audio-start-blocked`
-    - وتوضح لماذا hearing evidence غير موثوقة بعد
+  - وتوضح لماذا hearing evidence غير موثوقة بعد
 - وقد تكون artifact الفيديو:
   - `saved`
   - أو `missing`
   حسب ما إذا كان المزود نفسه أخرج ملفًا محفوظًا أم لا
+
+ومهم أيضًا:
+
+- إذا كان مقصدنا هو التقاط "أثر يشبه صوت الخطأ" عند runtime issue
+- فالأولوية الحالية ليست لمزود صوت عام
+- بل لـ:
+  - `Get-UiRecentFaultSignals`
+  - `Get-UiFaultStatePayload`
+- لأنهما يعتمدان على:
+  - `runtime.fault`
+  - app log errors
+  - process exit signals
+- أي على evidence scoped إلى البرنامج نفسه بدل side effect عامة من ويندوز
 
 ### Capabilities
 
@@ -191,6 +208,14 @@
 - `Enable-UiCapability`
 - `Disable-UiCapability`
 - `Invoke-UiCapabilityBrokerSweep`
+
+ومن القدرات التكيفية المهمة الآن:
+
+- `FaultWatch`
+  - ليست "سمعًا" بالمعنى الحرفي
+  - لكنها حاسة fault أوضح للنموذج
+  - تراقب fault signals الحديثة من التطبيق نفسه
+  - وتُطلق evidence بصرية خفيفة فقط عند fault جديدة تستحق الالتقاط
 
 ## ما الذي لا نعدّه API عامة؟
 

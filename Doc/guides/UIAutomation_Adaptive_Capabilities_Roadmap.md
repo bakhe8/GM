@@ -141,6 +141,15 @@
      - النتيجة نفسها يمكن الوصول إليها بأكثر من modality
      - والأداة لا تعيدنا تدريجيًا إلى path واحدة مقيدة
 
+13. **تفضيل الإشارة المباشرة على الأثر الجانبي**
+   - إذا كان الهدف فهم fault أو crash أو runtime issue
+   - فالأولوية ليست لصوت النظام أو أي side effect عام على سطح المكتب
+   - بل لإشارة صريحة من التطبيق نفسه أو log موثوق scoped
+   - لذلك نفضّل:
+     - `runtime.fault`
+     - و`FaultWatch`
+   - على أي hearing fallback غير معزولة
+
 ---
 
 ## البنية المستهدفة
@@ -301,6 +310,20 @@
 - unit coverage
 - integration coverage
 - budgets للزمن والتكلفة
+
+### Phase I — Fault-Signal Sensing
+
+الهدف:
+
+- بناء بديل أوضح من السمع العام عندما تظهر أخطاء التشغيل عبر أصوات ويندوز أو تنبيهات جانبية
+
+المخرجات:
+
+- `runtime.fault` events من التطبيق نفسه
+- `RecentFaultSignals`
+- `FaultState`
+- capability باسم `FaultWatch`
+- cooldown وsuppression واضحة لتفادي الإزعاج
 
 ---
 
@@ -525,6 +548,50 @@
 - unit: `21/21`
 - smoke: `10/10`
 - integration: `51/51`
+- freedom: `9/9`
+
+ثم أُنجزت الآن **Phase I — Fault-Signal Sensing** كبديل أوضح من السمع العام:
+
+- صار التطبيق نفسه يسجل `runtime.fault` عند faults الجوهرية داخل:
+  - startup failures
+  - dispatcher unhandled exceptions
+  - app-domain terminating faults
+- وصارت الأداة تقرأ أيضًا:
+  - `ERROR` من app log
+  - وخروج العملية إذا ماتت العملية المستهدفة
+- ثم تجمع هذا كله داخل:
+  - `RecentFaultSignals`
+  - `FaultSummary`
+  - `FaultState`
+- كما أضيفت capability:
+  - `FaultWatch`
+  - تراقب fault signals الحديثة
+  - وتطلق evidence بصرية خفيفة فقط عند fault جديدة
+  - مع suppression وcooldown عندما تتكرر الإشارة نفسها
+
+وهذا مهم جدًا لأن:
+
+- صوت ويندوز العام ليس process-bound
+- ولا window-bound
+- ولا يضمن أن الإشارة تخص برنامجنا وحده
+
+أما `FaultWatch` فتعتمد على:
+
+- إشارة من التطبيق نفسه
+- أو log scoped
+- أو process exit موثوق
+
+وبذلك تصبح "الحاسة" هنا:
+
+- أوضح
+- أكثر عزلة
+- وأكثر فائدة للنموذج الذكي من hearing fallback غامضة
+
+والتحقق الحالي بعد هذه الخطوة صار:
+
+- unit: `24/24`
+- smoke: `10/10`
+- integration: `56/56`
 - freedom: `9/9`
 
 ---

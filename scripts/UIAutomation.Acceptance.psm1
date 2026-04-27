@@ -140,6 +140,24 @@ function Start-UiTargetApplication {
         return $existing
     }
 
+    if (-not $ReuseRunningSession -and $null -ne $existing) {
+        try {
+            Stop-Process -Id $existing.Id -Force -ErrorAction Stop
+        }
+        catch {
+        }
+
+        $deadline = (Get-Date).AddSeconds(10)
+        while ((Get-Date) -lt $deadline) {
+            $probe = Get-Process -Id $existing.Id -ErrorAction SilentlyContinue
+            if ($null -eq $probe) {
+                break
+            }
+
+            Start-Sleep -Milliseconds 150
+        }
+    }
+
     $exeCandidates = @(Get-ChildItem -Path (Join-Path $RepoRoot "bin") -Recurse -Filter "GuaranteeManager.exe" -ErrorAction SilentlyContinue |
         Where-Object { $_.FullName -like "*\Debug\*" } |
         Sort-Object LastWriteTime -Descending)
@@ -310,6 +328,7 @@ $script:UiSupportedApiCatalog = @(
         Description = "قراءة التشخيص، السجل الزمني، ومقاييس الأداء."
         Commands = @(
             "Get-UiDiagnosticsPaths",
+            "Get-UiAppLogPath",
             "Get-UiTimelinePath",
             "Get-UiCalibrationPath",
             "Get-UiCalibrationProfile",
@@ -317,7 +336,10 @@ $script:UiSupportedApiCatalog = @(
             "Get-UiPerformanceSummary",
             "Write-UiTimelineEvent",
             "Get-UiShellStateSnapshot",
-            "Get-UiRecentEvents")
+            "Get-UiRecentEvents",
+            "Get-UiRecentAppLogEntries",
+            "Get-UiRecentFaultSignals",
+            "Get-UiFaultStatePayload")
     },
     [pscustomobject]@{
         Category = "Windows"

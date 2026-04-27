@@ -100,6 +100,7 @@ function Invoke-UiExploreAction {
         "HostState" {
             $sessionState = Invoke-UiCapabilityBrokerSweep -Persist
             $mediaSession = Invoke-UiMediaBrokerSweep -Persist
+            $processForFaults = if ($Options.ProcessId -ne 0) { $Options.ProcessId } elseif ($null -ne (Get-UiProcess)) { (Get-UiProcess).Id } else { 0 }
             return [pscustomobject]@{
                 Action = "HostState"
                 SessionPath = Get-UiCapabilitySessionPath
@@ -110,6 +111,9 @@ function Invoke-UiExploreAction {
                 MediaScopeView = Get-UiMediaScopeView -SessionState $mediaSession
                 AudioScopePolicy = Get-UiAudioScopePolicy
                 MediaProviders = [object[]]@(Get-UiMediaProviderCatalog)
+                AppLogPath = Get-UiAppLogPath
+                RecentFaultSignals = [object[]]@(Get-UiRecentFaultSignals -ProcessId $processForFaults -MaxCount $Options.MaxResults)
+                FaultSummary = (Get-UiFaultStatePayload -ProcessId $processForFaults -MaxResults $Options.MaxResults).FaultSummary
                 CapabilityDefinitions = [object[]]@(Get-UiCapabilityDefinitions)
                 RecentCapabilityObservations = [object[]]@(Get-UiCapabilityObservationEntries -MaxCount $Options.MaxResults)
                 RecentCapabilityDecisions = if ($null -ne $sessionState) { [object[]]@($sessionState.RecentDecisions | Select-Object -First $Options.MaxResults) } else { @() }
@@ -129,6 +133,11 @@ function Invoke-UiExploreAction {
                 PreferredVideoProvider = Get-UiPreferredMediaProvider -Kind "Video"
                 PreferredAudioProvider = Get-UiPreferredMediaProvider -Kind "Audio"
             }
+        }
+
+        "FaultState" {
+            $processForFaults = if ($Options.ProcessId -ne 0) { Get-Process -Id $Options.ProcessId -ErrorAction Stop } else { Get-UiProcess }
+            return (Get-UiFaultStatePayload -ProcessId $(if ($null -ne $processForFaults) { $processForFaults.Id } else { 0 }) -MaxResults $Options.MaxResults)
         }
 
         "CapabilityOn" {

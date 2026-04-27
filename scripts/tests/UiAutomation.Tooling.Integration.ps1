@@ -189,6 +189,39 @@ function Write-RegressionSummary {
     [System.IO.File]::WriteAllLines($summaryPath, $lines)
 }
 
+function Add-SyntheticRuntimeFaultEvent {
+    param(
+        [Parameter(Mandatory)]
+        [string]$EventLogPath,
+        [Parameter(Mandatory)]
+        [string]$ActionName,
+        [Parameter(Mandatory)]
+        [string]$Title,
+        [string]$Message = "Synthetic integration fault"
+    )
+
+    $directory = Split-Path -Parent $EventLogPath
+    if (-not (Test-Path -LiteralPath $directory)) {
+        New-Item -ItemType Directory -Force -Path $directory | Out-Null
+    }
+
+    $record = [ordered]@{
+        Timestamp = (Get-Date).ToString("o")
+        Category = "runtime.fault"
+        Action = $ActionName
+        Payload = [ordered]@{
+            Severity = "Error"
+            Title = $Title
+            Message = $Message
+            IsTerminating = $false
+            ExceptionType = "Synthetic.IntegrationFault"
+            ExceptionMessage = $Message
+        }
+    } | ConvertTo-Json -Depth 8 -Compress
+
+    Add-Content -Path $EventLogPath -Value $record -Encoding UTF8
+}
+
 try {
     if (-not $ReuseRunningSession) {
         Get-Process GuaranteeManager -ErrorAction SilentlyContinue | Stop-Process -Force
@@ -212,6 +245,98 @@ try {
 
         Assert-RegressionCondition ($null -ne $payload.CapabilityDefinitions) "HostState did not return capability definitions."
         Assert-RegressionCondition (@($payload.CapabilityDefinitions | Where-Object Name -eq "BurstCapture").Count -eq 1) "HostState did not include BurstCapture definition."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "faultstate-direct-shape" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "FaultState"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($null -ne $payload.FaultSummary) "FaultState did not return FaultSummary."
+        Assert-RegressionCondition ($payload.FaultSummary.SignalCount -ge 0) "FaultState returned an invalid signal count."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "enable-fault-watch" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOn"
+            CapabilityName = "FaultWatch"
+            LeaseMilliseconds = 8000
+            Reason = "integration-fault-watch"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Capability.Name -eq "FaultWatch") "CapabilityOn did not activate FaultWatch."
+        Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "FaultWatch").Count -eq 1) "FaultWatch was not present in the active session state."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "fault-watch-detects-runtime-fault-event" -ScriptBlock {
+        $faultState = Invoke-UiExploreJson -Arguments @{
+            Action = "FaultState"
+            ReuseRunningSession = $true
+        }
+
+        Add-SyntheticRuntimeFaultEvent -EventLogPath ([string]$faultState.DiagnosticsPaths.EventLogPath) -ActionName "integration.synthetic-fault" -Title "Synthetic FaultWatch Error" -Message "Synthetic runtime fault for integration coverage."
+        Start-Sleep -Milliseconds 150
+
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "Windows"
+            ReuseRunningSession = $true
+        }
+
+        $captures = @($payload.CapabilityCaptures)
+        Assert-RegressionCondition ($captures.Count -ge 3) "FaultWatch did not collect burst evidence after a synthetic runtime fault."
+
+        $hostState = Invoke-UiExploreJson -Arguments @{
+            Action = "HostState"
+        }
+        $observation = @($hostState.RecentCapabilityObservations | Where-Object {
+            $_.CapabilityName -eq "FaultWatch" -and $_.Kind -eq "fault-signal"
+        } | Select-Object -First 1)
+        Assert-RegressionCondition ($observation.Count -eq 1) "FaultWatch did not record a fault-signal observation."
+        Assert-RegressionCondition ([int]$observation[0].Payload.SignalCount -ge 1) "FaultWatch fault-signal observation did not include any signals."
+        Assert-RegressionCondition ([string]$hostState.CapabilityOperatorView.Status -eq "intervened") "CapabilityOperatorView should report an intervened state after a fault signal."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "fault-watch-repeat-suppressed" -ScriptBlock {
+        $faultState = Invoke-UiExploreJson -Arguments @{
+            Action = "FaultState"
+            ReuseRunningSession = $true
+        }
+
+        Add-SyntheticRuntimeFaultEvent -EventLogPath ([string]$faultState.DiagnosticsPaths.EventLogPath) -ActionName "integration.synthetic-fault" -Title "Synthetic FaultWatch Error" -Message "Synthetic runtime fault for integration coverage."
+        Start-Sleep -Milliseconds 150
+
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "Windows"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition (@($payload.CapabilityCaptures).Count -eq 0) "FaultWatch should have suppressed repeated fault evidence during cooldown."
+
+        $hostState = Invoke-UiExploreJson -Arguments @{
+            Action = "HostState"
+        }
+        $decision = @($hostState.RecentCapabilityDecisions | Where-Object {
+            $_.CapabilityName -eq "FaultWatch" -and $_.Action -eq "Windows" -and $_.Decision -eq "suppressed"
+        } | Select-Object -First 1)
+        Assert-RegressionCondition ($decision.Count -eq 1) "FaultWatch did not record a suppressed decision after the repeated fault signal."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "disable-fault-watch" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "CapabilityOff"
+            CapabilityName = "FaultWatch"
+            Reason = "integration-fault-watch-complete"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition (@($payload.CapabilitySession.ActiveCapabilities | Where-Object Name -eq "FaultWatch").Count -eq 0) "FaultWatch remained active after CapabilityOff."
         return $payload
     } | Out-Null
 

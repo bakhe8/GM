@@ -64,6 +64,13 @@ namespace GuaranteeManager
                 string message = ex is ApplicationOperationException operationException
                     ? operationException.UserMessageWithReference
                     : "تعذر تهيئة قاعدة بيانات النظام. تم تسجيل الخطأ في المجلد Logs.";
+                RecordRuntimeFault(
+                    action: "startup.database-init-failed",
+                    severity: "Error",
+                    title: "خطأ في بدء التشغيل",
+                    message: message,
+                    exception: ex,
+                    isTerminating: true);
                 MessageBox.Show(message, "خطأ في بدء التشغيل", MessageBoxButton.OK, MessageBoxImage.Error);
                 Application.Current.Shutdown();
                 return;
@@ -79,6 +86,13 @@ namespace GuaranteeManager
             catch (Exception ex)
             {
                 SimpleLogger.LogError(ex, "App Startup (Backup)");
+                RecordRuntimeFault(
+                    action: "startup.backup-failed",
+                    severity: "Warning",
+                    title: "خطأ في النسخة الاحتياطية التلقائية",
+                    message: ex.Message,
+                    exception: ex,
+                    isTerminating: false);
             }
 
             ShutdownMode = ShutdownMode.OnMainWindowClose;
@@ -120,6 +134,13 @@ namespace GuaranteeManager
                 string message = e.Exception is ApplicationOperationException operationException
                     ? operationException.UserMessageWithReference
                     : "حدث خطأ أثناء تنفيذ العملية الحالية. تم إلغاء العملية مع بقاء التطبيق مفتوحًا، وتم تسجيل التفاصيل في المجلد Logs.";
+                RecordRuntimeFault(
+                    action: "dispatcher-unhandled-recoverable",
+                    severity: "Warning",
+                    title: "تنبيه في النظام",
+                    message: message,
+                    exception: e.Exception,
+                    isTerminating: false);
                 MessageBox.Show(
                     message,
                     "تنبيه في النظام",
@@ -130,6 +151,13 @@ namespace GuaranteeManager
             }
 
             e.Handled = true;
+            RecordRuntimeFault(
+                action: "dispatcher-unhandled-critical",
+                severity: "Error",
+                title: "خطأ جسيم في النظام",
+                message: "حدث خطأ تقني غير متوقع وقد يترك النظام في حالة غير مستقرة. سيتم إغلاق البرنامج بشكل آمن بعد تسجيل الخطأ في المجلد Logs.",
+                exception: e.Exception,
+                isTerminating: true);
             ShowCriticalFailureAndShutdown(
                 "حدث خطأ تقني غير متوقع وقد يترك النظام في حالة غير مستقرة. سيتم إغلاق البرنامج بشكل آمن بعد تسجيل الخطأ في المجلد Logs.",
                 "خطأ جسيم في النظام");
@@ -149,11 +177,46 @@ namespace GuaranteeManager
                 string message = capturedException is ApplicationOperationException operationException
                     ? operationException.UserMessageWithReference
                     : "حدث خطأ جسيم أدى إلى إيقاف التطبيق. تم تسجيل التفاصيل في المجلد Logs.";
+                RecordRuntimeFault(
+                    action: "appdomain-unhandled-terminating",
+                    severity: "Error",
+                    title: "توقف غير متوقع",
+                    message: message,
+                    exception: capturedException,
+                    isTerminating: true);
                 MessageBox.Show(
                     message,
                     "توقف غير متوقع",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
+            }
+        }
+
+        private static void RecordRuntimeFault(
+            string action,
+            string severity,
+            string title,
+            string message,
+            Exception? exception,
+            bool isTerminating)
+        {
+            try
+            {
+                new UiDiagnosticsService().RecordEvent(
+                    "runtime.fault",
+                    action,
+                    new
+                    {
+                        Severity = severity,
+                        Title = title,
+                        Message = message,
+                        IsTerminating = isTerminating,
+                        ExceptionType = exception?.GetType().FullName,
+                        ExceptionMessage = exception?.Message
+                    });
+            }
+            catch
+            {
             }
         }
 

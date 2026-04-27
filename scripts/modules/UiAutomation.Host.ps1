@@ -53,7 +53,26 @@ function Save-UiCapabilitySessionState {
     }
 
     $json = $SessionState | ConvertTo-Json -Depth 10
-    Set-Content -Path $path -Value $json -Encoding UTF8
+    $saved = $false
+    for ($attempt = 1; $attempt -le 6; $attempt++) {
+        try {
+            Set-Content -Path $path -Value $json -Encoding UTF8
+            $saved = $true
+            break
+        }
+        catch {
+            if ($attempt -ge 6) {
+                throw
+            }
+
+            Start-Sleep -Milliseconds (60 * $attempt)
+        }
+    }
+
+    if (-not $saved) {
+        throw "Failed to persist capability session state."
+    }
+
     return $SessionState
 }
 

@@ -139,14 +139,17 @@
 .\scripts\ui_explore.ps1 -Action Probe -IncludeCapture
 .\scripts\ui_explore.ps1 -Action Compare -WindowAutomationId "Shell.MainWindow" -ReferencePath ".\Doc\Assets\Documentation\Screenshots\UIAcceptance\baselines\shell-main.png"
 .\\scripts\\ui_explore.ps1 -Action HostState
+.\\scripts\\ui_explore.ps1 -Action FaultState
 .\\scripts\\ui_explore.ps1 -Action CapabilityOn -CapabilityName BurstCapture -LeaseMilliseconds 3000 -Reason "suspected-flicker"
 .\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName BurstCapture -Reason "done"
 .\\scripts\\ui_explore.ps1 -Action CapabilityOn -CapabilityName ReactiveAssist -LeaseMilliseconds 4000 -Reason "watch-for-anomaly"
+.\\scripts\\ui_explore.ps1 -Action CapabilityOn -CapabilityName FaultWatch -LeaseMilliseconds 4500 -Reason "watch-for-runtime-faults"
 .\\scripts\\ui_explore.ps1 -Action CapabilityOn -CapabilityName MouseTrace -LeaseMilliseconds 4000 -Reason "follow-pointer"
 .\\scripts\\ui_explore.ps1 -Action HostState
 .\\scripts\\ui_explore.ps1 -Action CapabilityOn -CapabilityName AutoCaptureOnFailure -LeaseMilliseconds 4000 -Reason "catch-failure"
 .\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName MouseTrace -Reason "trace-complete"
 .\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName ReactiveAssist -Reason "reactive-complete"
+.\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName FaultWatch -Reason "fault-watch-complete"
 .\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName AutoCaptureOnFailure -Reason "failure-capture-complete"
 .\\scripts\\ui_explore.ps1 -Action MediaState
 .\\scripts\\ui_explore.ps1 -Action VideoOn -LeaseMilliseconds 5000 -Reason "watch-this-branch"
@@ -218,6 +221,11 @@
   - recent adaptive observations
   - recent capability decisions
   - capability operator view
+- `FaultState` تعطي snapshot مركزة على fault sensing نفسها:
+  - `RecentFaultSignals`
+  - `FaultSummary`
+  - `AppLogPath`
+  - وهل ظهرت fault موثوقة حديثة من التطبيق نفسه
 - `CapabilityOn` و`CapabilityOff` تسمحان الآن بتفعيل قدرات لحظية مثل `BurstCapture` داخل نفس الاستكشاف الحر، ثم إطفائها من غير الخروج من الجلسة.
 - `MediaState` تعطي snapshot مستقلة لمزودي الوسائط أنفسهم:
   - catalog المزودات المتاحة
@@ -250,6 +258,14 @@
   - تُرفض البداية بصراحة
   - ويُسجل `audio-start-blocked`
   - وتبقى hearing evidence غير موثوقة بدل أي نجاح مضلل
+- وإذا كان مقصدنا التقاط ما يشبه "صوت خطأ" من ويندوز:
+  - فالمسار الأوضح الآن ليس `system-mix audio`
+  - بل `FaultWatch`
+  - لأنها تعتمد على:
+    - `runtime.fault`
+    - app log errors
+    - process exit signals
+  - أي على evidence scoped للتطبيق بدل side effect عامة من النظام
 - `BurstCapture` نفسها لم تعد مجرد لقطة واحدة:
   - عند تفعيلها تلتقط الآن **عدة frames متتابعة**
   - تحفظ كل frame على حدة
@@ -271,6 +287,11 @@
 - كما صارت `ReactiveAssist` capability متاحة:
   - تراقب anomaly خفيفة أثناء الـ lease فقط
   - وتشغل burst evidence عند الحاجة بدل أن تعمل دائمًا
+- كما صارت `FaultWatch` capability متاحة:
+  - تراقب fault signals الحديثة من التطبيق نفسه
+  - أو من app log
+  - أو من process exit إذا ماتت العملية المستهدفة
+  - وتطلق evidence بصرية خفيفة فقط عند fault جديدة تستحق الالتقاط
 - كما أصبحت `AutoCaptureOnFailure` أذكى:
   - تنتج الآن multi-frame evidence
   - وتكتب `failure-bundle` observation بدل الاقتصار على لقطة واحدة

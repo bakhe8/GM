@@ -189,24 +189,49 @@
       - `MediaState`
       - `Probe`
       تعرض هذا الحكم مباشرة عبر `MediaScopeView`
-  - ثم أُضيفت الآن **Scoped Audio Contract** قبل أي provider صوت فعلية:
-    - `AudioCapture` ما زالت غير متاحة تشغيليًا
-    - لكن الأداة صارت تصرح مسبقًا بسياسة السمع المقبولة:
-      - `per-app-attested`
-      - بلا `system-mix fallback`
-    - وصارت:
-      - `MediaState`
-      - `HostState`
-      - `Probe`
-      تعرض `AudioScopePolicy` مباشرة
-    - وإذا طُلب `AudioOn` الآن:
-      - تُحجب البداية بصراحة
-      - ويُسجل `audio-start-blocked`
-      - وتبقى hearing evidence غير موثوقة بدل أي غموض صامت
+- ثم أُضيفت الآن **Scoped Audio Contract** قبل أي provider صوت فعلية:
+  - `AudioCapture` ما زالت غير متاحة تشغيليًا
+  - لكن الأداة صارت تصرح مسبقًا بسياسة السمع المقبولة:
+    - `per-app-attested`
+    - بلا `system-mix fallback`
+  - وصارت:
+    - `MediaState`
+    - `HostState`
+    - `Probe`
+    تعرض `AudioScopePolicy` مباشرة
+  - وإذا طُلب `AudioOn` الآن:
+    - تُحجب البداية بصراحة
+    - ويُسجل `audio-start-blocked`
+    - وتبقى hearing evidence غير موثوقة بدل أي غموض صامت
   - والتحقق الحالي بعد هذه الخطوة صار:
     - `tooling unit`: `21/21`
     - `tooling smoke`: `10/10`
     - `tooling integration`: `51/51`
+    - `tooling freedom`: `9/9`
+- ثم أُنجز الآن **بديل AI-first للصوت العام** عبر `FaultWatch`:
+  - بدل الاعتماد على صوت ويندوز كإشارة غير دقيقة على حدوث fault
+  - صار التطبيق نفسه يسجل `runtime.fault` داخل تشخيصاته عند:
+    - فشل تهيئة قاعدة البيانات عند الإقلاع
+    - فشل النسخ الاحتياطي عند الإقلاع
+    - أخطاء `DispatcherUnhandledException`
+    - أخطاء `AppDomain.UnhandledException`
+  - وصارت الأداة تقرأ أيضًا:
+    - `runtime.fault` من `ui-events.jsonl`
+    - إشارات `ERROR` من ملف الـ app log
+    - وخروج العملية نفسها عند اللزوم
+  - ثم تجمعها داخل `RecentFaultSignals` و`FaultSummary`
+  - كما صارت capability جديدة باسم `FaultWatch`:
+    - تراقب fault signals الحديثة
+    - وتطلق evidence بصرية خفيفة فقط عند ظهور fault جديدة موثوقة
+    - وتبقى calm مع cooldown واضح إذا تكررت الإشارة نفسها سريعًا
+  - وهذا يعطينا بديلًا أوضح من السمع في هذا النوع من الأخطاء:
+    - scoped إلى برنامجنا
+    - explainable
+    - وموثوق أكثر للاستنتاج
+  - والتحقق الحالي بعد هذه الخطوة صار:
+    - `tooling unit`: `24/24`
+    - `tooling smoke`: `10/10`
+    - `tooling integration`: `56/56`
     - `tooling freedom`: `9/9`
 
 وأول خطوة تنفيذية منه بدأت فعليًا الآن:
