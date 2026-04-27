@@ -166,6 +166,24 @@ function Ensure-UiCalibrationProfile {
             acceptable = 700
             slow       = 1500
         }
+        actionThresholdsMs = [ordered]@{
+            Launch = [ordered]@{
+                acceptable = 5000
+                slow       = 8000
+            }
+            Sidebar = [ordered]@{
+                acceptable = 1400
+                slow       = 2200
+            }
+            Click = [ordered]@{
+                acceptable = 900
+                slow       = 1600
+            }
+            DialogAction = [ordered]@{
+                acceptable = 1600
+                slow       = 2600
+            }
+        }
         notes = @(
             "افتح الحوارات المهمة ثم تأكد أن الإجراء المطلوب يعيد الفوكس إلى التطبيق الرئيسي بعد الإغلاق.",
             "إذا ظهر تأكيد إغلاق أو رسالة نظام، يجب حسمها قبل الانتقال إلى شاشة أخرى.",
@@ -189,6 +207,49 @@ function Get-UiCalibrationProfile {
     }
 
     return $content | ConvertFrom-Json
+}
+
+function Get-UiLatencyThresholds {
+    param(
+        [string]$ActionName = "",
+        $Calibration = $null
+    )
+
+    if ($null -eq $Calibration) {
+        $Calibration = Get-UiCalibrationProfile
+    }
+
+    $acceptableMs = 700
+    $slowMs = 1500
+
+    if ($null -ne $Calibration -and $null -ne $Calibration.latencyThresholdsMs) {
+        if ($null -ne $Calibration.latencyThresholdsMs.acceptable) {
+            $acceptableMs = [int]$Calibration.latencyThresholdsMs.acceptable
+        }
+
+        if ($null -ne $Calibration.latencyThresholdsMs.slow) {
+            $slowMs = [int]$Calibration.latencyThresholdsMs.slow
+        }
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($ActionName) -and $null -ne $Calibration -and $null -ne $Calibration.actionThresholdsMs) {
+        $property = $Calibration.actionThresholdsMs.PSObject.Properties[$ActionName]
+        if ($null -ne $property) {
+            $actionThresholds = $property.Value
+            if ($null -ne $actionThresholds.acceptable) {
+                $acceptableMs = [int]$actionThresholds.acceptable
+            }
+
+            if ($null -ne $actionThresholds.slow) {
+                $slowMs = [int]$actionThresholds.slow
+            }
+        }
+    }
+
+    return [pscustomobject]@{
+        AcceptableMs = $acceptableMs
+        SlowMs = $slowMs
+    }
 }
 
 function Add-UiFileLineWithRetry {
@@ -295,44 +356,40 @@ function Get-UiPerformanceSummary {
 
     $timeline = @(Get-UiTimelineEntries -MaxCount $MaxCount | Where-Object { $_.Stage -eq "completed" })
     $calibration = Get-UiCalibrationProfile
-    $acceptableMs = 700
-    $slowMs = 1500
-    if ($null -ne $calibration -and $null -ne $calibration.latencyThresholdsMs) {
-        if ($null -ne $calibration.latencyThresholdsMs.acceptable) {
-            $acceptableMs = [int]$calibration.latencyThresholdsMs.acceptable
-        }
-
-        if ($null -ne $calibration.latencyThresholdsMs.slow) {
-            $slowMs = [int]$calibration.latencyThresholdsMs.slow
-        }
-    }
+    $defaultThresholds = Get-UiLatencyThresholds -Calibration $calibration
 
     $lastAction = $timeline | Select-Object -Last 1
     $grouped = @($timeline | Group-Object Action | ForEach-Object {
         $durations = @($_.Group | ForEach-Object { [double]$_.DurationMs })
+        $thresholds = Get-UiLatencyThresholds -ActionName $_.Name -Calibration $calibration
         [pscustomobject]@{
             Action = $_.Name
             Count = $durations.Count
             AverageMs = if ($durations.Count -gt 0) { [math]::Round((($durations | Measure-Object -Average).Average), 2) } else { 0 }
             MaxMs = if ($durations.Count -gt 0) { [math]::Round((($durations | Measure-Object -Maximum).Maximum), 2) } else { 0 }
             LastMs = if ($durations.Count -gt 0) { [math]::Round($durations[-1], 2) } else { 0 }
+            Thresholds = $thresholds
+            AboveAcceptableCount = @($_.Group | Where-Object { [double]$_.DurationMs -ge $thresholds.AcceptableMs }).Count
+            SlowCount = @($_.Group | Where-Object { [double]$_.DurationMs -ge $thresholds.SlowMs }).Count
         }
     })
 
     return [pscustomobject]@{
-        Thresholds = [pscustomobject]@{
-            AcceptableMs = $acceptableMs
-            SlowMs = $slowMs
-        }
+        Thresholds = $defaultThresholds
         TotalActions = $timeline.Count
-        SlowActionCount = @($timeline | Where-Object { [double]$_.DurationMs -ge $slowMs }).Count
+        SlowActionCount = @($timeline | Where-Object {
+            $thresholds = Get-UiLatencyThresholds -ActionName $_.Action -Calibration $calibration
+            [double]$_.DurationMs -ge $thresholds.SlowMs
+        }).Count
         LastAction = if ($null -ne $lastAction) {
+            $lastThresholds = Get-UiLatencyThresholds -ActionName $lastAction.Action -Calibration $calibration
             [pscustomobject]@{
                 Action = $lastAction.Action
                 DurationMs = [math]::Round([double]$lastAction.DurationMs, 2)
                 Success = [bool]$lastAction.Success
-                IsSlow = ([double]$lastAction.DurationMs -ge $slowMs)
-                IsAboveAcceptable = ([double]$lastAction.DurationMs -ge $acceptableMs)
+                Thresholds = $lastThresholds
+                IsSlow = ([double]$lastAction.DurationMs -ge $lastThresholds.SlowMs)
+                IsAboveAcceptable = ([double]$lastAction.DurationMs -ge $lastThresholds.AcceptableMs)
             }
         }
         else {
@@ -1305,7 +1362,7 @@ function Invoke-UiElement {
         $pattern = $null
         if ($target.TryGetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern, [ref]$pattern)) {
             $pattern.Invoke()
-            Start-Sleep -Milliseconds 250
+            Start-Sleep -Milliseconds 120
             return
         }
 
@@ -1314,7 +1371,7 @@ function Invoke-UiElement {
             if ($target.TryGetCurrentPattern($legacyPatternType::Pattern, [ref]$pattern)) {
                 try {
                     $pattern.DoDefaultAction()
-                    Start-Sleep -Milliseconds 250
+                    Start-Sleep -Milliseconds 120
                     return
                 }
                 catch {
@@ -1327,19 +1384,19 @@ function Invoke-UiElement {
             try {
                 $target.SetFocus()
                 Send-UiVirtualKey -VirtualKey 0x20
-                Start-Sleep -Milliseconds 150
+                Start-Sleep -Milliseconds 80
             }
             catch {
             }
 
             [GuaranteeManager.UiAcceptance.NativeMethods]::SendMessage($targetHandle, 0x00F5, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
-            Start-Sleep -Milliseconds 250
+            Start-Sleep -Milliseconds 120
             return
         }
 
         if ($target.TryGetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern, [ref]$pattern)) {
             $pattern.Select()
-            Start-Sleep -Milliseconds 250
+            Start-Sleep -Milliseconds 120
             return
         }
 
@@ -1355,7 +1412,7 @@ function Invoke-UiElement {
     [GuaranteeManager.UiAcceptance.NativeMethods]::SetCursorPos($fallbackBounds.CenterX, $fallbackBounds.CenterY) | Out-Null
     [GuaranteeManager.UiAcceptance.NativeMethods]::mouse_event(0x0002, 0, 0, 0, [UIntPtr]::Zero)
     [GuaranteeManager.UiAcceptance.NativeMethods]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero)
-    Start-Sleep -Milliseconds 300
+    Start-Sleep -Milliseconds 150
 }
 
 function Set-UiElementValue {
@@ -2127,7 +2184,7 @@ function Start-UiTargetApplication {
             return $process
         }
 
-        Start-Sleep -Milliseconds 250
+        Start-Sleep -Milliseconds 100
     }
 
     throw "Timed out waiting for GuaranteeManager main window."
@@ -2141,9 +2198,70 @@ function Invoke-UiSidebarNavigation {
         [string]$WorkspaceLabel
     )
 
+    $previousState = Get-UiShellStateSnapshot
     $button = Get-UiSidebarButton -MainWindow $MainWindow -Label $WorkspaceLabel
     Invoke-UiElement -Element $button
-    Start-Sleep -Milliseconds 500
+    $targetWorkspaceKey = Get-UiWorkspaceKeyForLabel -WorkspaceLabel $WorkspaceLabel
+    if ([string]::IsNullOrWhiteSpace($targetWorkspaceKey)) {
+        Start-Sleep -Milliseconds 200
+        return
+    }
+
+    $ready = Wait-UiShellWorkspace `
+        -WorkspaceKey $targetWorkspaceKey `
+        -PreviousWorkspaceKey $(if ($null -ne $previousState) { [string]$previousState.CurrentWorkspaceKey } else { "" }) `
+        -PreviousTimestamp $(if ($null -ne $previousState) { [string]$previousState.Timestamp } else { "" }) `
+        -TimeoutMilliseconds 2500
+
+    if (-not $ready) {
+        Start-Sleep -Milliseconds 200
+    }
+}
+
+function Get-UiWorkspaceKeyForLabel {
+    param(
+        [Parameter(Mandatory)]
+        [string]$WorkspaceLabel
+    )
+
+    switch ($WorkspaceLabel.Trim()) {
+        "لوحة التحكم" { return "Dashboard" }
+        "الضمانات" { return "Guarantees" }
+        "الطلبات" { return "Requests" }
+        "البنوك" { return "Banks" }
+        "التقارير" { return "Reports" }
+        "التنبيهات" { return "Notifications" }
+        "الإعدادات" { return "Settings" }
+        default { return "" }
+    }
+}
+
+function Wait-UiShellWorkspace {
+    param(
+        [Parameter(Mandatory)]
+        [string]$WorkspaceKey,
+        [string]$PreviousWorkspaceKey = "",
+        [string]$PreviousTimestamp = "",
+        [int]$TimeoutMilliseconds = 2500
+    )
+
+    $deadline = (Get-Date).AddMilliseconds($TimeoutMilliseconds)
+    while ((Get-Date) -lt $deadline) {
+        $state = Get-UiShellStateSnapshot
+        if ($null -ne $state -and [string]$state.CurrentWorkspaceKey -eq $WorkspaceKey) {
+            if ([string]::IsNullOrWhiteSpace($PreviousTimestamp)) {
+                return $true
+            }
+
+            if ([string]$state.Timestamp -ne $PreviousTimestamp -or [string]$PreviousWorkspaceKey -ne $WorkspaceKey) {
+                return $true
+            }
+        }
+
+        Start-Sleep -Milliseconds 75
+    }
+
+    return $false
 }
 
 Export-ModuleMember -Function `

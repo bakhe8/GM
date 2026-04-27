@@ -3,6 +3,24 @@
     "acceptable": 700,
     "slow": 1500
   },
+  "actionThresholdsMs": {
+    "Launch": {
+      "acceptable": 5000,
+      "slow": 8000
+    },
+    "Sidebar": {
+      "acceptable": 1400,
+      "slow": 2200
+    },
+    "Click": {
+      "acceptable": 900,
+      "slow": 1600
+    },
+    "DialogAction": {
+      "acceptable": 1600,
+      "slow": 2600
+    }
+  },
   "notes": [
     "افتح الحوارات المهمة ثم تأكد أن الإجراء المطلوب يعيد الفوكس إلى التطبيق الرئيسي بعد الإغلاق.",
     "إذا ظهر تأكيد إغلاق أو رسالة نظام، يجب حسمها قبل الانتقال إلى شاشة أخرى.",

@@ -150,11 +150,12 @@ function Get-UiAssessment {
     }
 
     if ($null -ne $performance -and $null -ne $performance.LastAction) {
+        $thresholds = if ($null -ne $performance.LastAction.Thresholds) { $performance.LastAction.Thresholds } else { $performance.Thresholds }
         if ($performance.LastAction.IsSlow) {
-            [void]$warnings.Add("آخر إجراء UI أبطأ من الحد البشري البطيء ($($performance.Thresholds.SlowMs)ms).")
+            [void]$warnings.Add("آخر إجراء UI أبطأ من الحد البشري البطيء ($($thresholds.SlowMs)ms).")
         }
         elseif ($performance.LastAction.IsAboveAcceptable) {
-            [void]$observations.Add("آخر إجراء UI أعلى من الحد المقبول ($($performance.Thresholds.AcceptableMs)ms) لكنه ليس بطيئًا جدًا.")
+            [void]$observations.Add("آخر إجراء UI أعلى من الحد المقبول ($($thresholds.AcceptableMs)ms) لكنه ليس بطيئًا جدًا.")
         }
     }
 

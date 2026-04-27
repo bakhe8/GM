@@ -16,6 +16,10 @@
 - لا توجد فجوات وظيفية مؤكدة مفتوحة حاليًا بين الواجهات القديمة والجديدة
 - مساحات العمل الأساسية والحوارات الرئيسية كلها مزروعة على البنية الجديدة
 - المنطق الوظيفي صار قويًا بما يكفي للانتقال من مرحلة parity إلى مرحلة التثبيت
+- وبدأت الآن أول جولة أداء حقيقية بعد إغلاق `preview.2 polish` السلوكي:
+  - `Sidebar` تحسنت من حوالي `2072ms` إلى `1146ms` في الجولة الأوسع
+  - `Click` داخل الحوارات الثقيلة نزلت إلى نطاق `~400–600ms`
+  - `Launch` صار يُقاس بعتبة خاصة به بدل أن يظهر تحذيرًا كاذبًا تحت العتبة العامة
 
 ## الأولوية الحالية
 
@@ -69,7 +73,8 @@
 
 والحصر الحالي يقول إن المتبقي الحقيقي من `preview.2 polish` يتمحور الآن في:
 
-- جولة أداء لاحقة بعد UAT أوسع
+- استكمال جولة الأداء بعد UAT أوسع وعلى بيانات أثقل أو حقيقية/معقمة
+- ومراقبة ما إذا كان ما بقي bottleneck في الأداة أو في التطبيق نفسه
 
 أي أن السؤال الحالي لم يعد: "هل الشجرة نفسها منضبطة؟"  
 بل: "هل هذه baseline النظيفة تصمد تحت الاستخدام الواقعي؟"
@@ -84,6 +89,8 @@
   - [UIAcceptance/baselines/2026-04-26-heavy-seed-acceptance](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-heavy-seed-acceptance)
 - كما توجد جولة UAT أحدث على baseline `preview.2` شددت حسم نوافذ التأكيد وأعادت مساري `NewGuaranteeDiscard` و`All` إلى النجاح:
   - [UIAcceptance/baselines/2026-04-26-uat-pass-04.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-uat-pass-04.md)
+- كما توجد أول جولة أداء موثقة هنا:
+  - [UIAcceptance/baselines/2026-04-27-performance-pass-01.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-27-performance-pass-01.md)
 - مجلد `UIAcceptance/latest/` يبقى generated وتشغيليًا فقط، وليس baseline رسمية
 
 ## وضع التوثيق

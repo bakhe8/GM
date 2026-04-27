@@ -29,6 +29,8 @@
       [2026-04-26-uat-pass-03.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-uat-pass-03.md)
     - ورابع دفعة UAT على baseline `preview.2` التي شددت حسم نوافذ التأكيد وأعادت `NewGuaranteeDiscard` و`All` إلى النجاح:
       [2026-04-26-uat-pass-04.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-uat-pass-04.md)
+    - وأول جولة أداء بعد إغلاق `preview.2 polish` السلوكي:
+      [2026-04-27-performance-pass-01.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-27-performance-pass-01.md)
 
 ## تشغيل الأداة
 
