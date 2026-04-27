@@ -44,6 +44,18 @@
     - `Click`
     - `SetField`
     - `DialogAction`
+- **Phase 4**: مكتملة
+  - انتقل قلب التشخيص نفسه إلى:
+    - [scripts/modules/UiAutomation.Diagnostics.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Diagnostics.ps1:1)
+  - وصار [UIAutomation.Acceptance.psm1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/UIAutomation.Acceptance.psm1:1) يحمّل الآن:
+    - `UiAutomation.Diagnostics.ps1`
+    - `UiAutomation.Core.ps1`
+    - `UiAutomation.Windows.ps1`
+    - `UiAutomation.Dialogs.ps1`
+  - والتحقق التشغيلي الحالي:
+    - `Probe`
+    - `Sidebar`
+    - `All` على جلسة نظيفة
 
 ---
 
@@ -542,13 +554,15 @@ ActionResult
 
 ## المرحلة 4 — طبقة Diagnostics وPerformance
 
+**الحالة:** مكتملة
+
 ### الهدف
 
 فصل التشخيص عن التفاعل.
 
 ### العمل
 
-1. إنشاء `UiAutomation.Diagnostics.psm1`
+1. توسيع [scripts/modules/UiAutomation.Diagnostics.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Diagnostics.ps1:1)
 2. نقل:
    - timeline
    - calibration
@@ -567,6 +581,19 @@ ActionResult
 - `State`
 
 تستمر في إعطاء نفس المخرجات تقريبًا، لكن من بنية أوضح
+
+### نتيجة التنفيذ
+
+- انتقل قلب التشخيص فعليًا من `UIAutomation.Acceptance.psm1` إلى `UiAutomation.Diagnostics.ps1`
+- بقيت مخرجات:
+  - `Probe`
+  - `Diagnostics`
+  - `State`
+  متوافقة وظيفيًا
+- التحقق الحي نجح في:
+  - `Probe`
+  - `Sidebar`
+  - `All` على جلسة نظيفة
 
 ---
 

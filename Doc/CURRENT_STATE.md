@@ -75,6 +75,20 @@
     - `Click`
     - `SetField`
     - `DialogAction`
+- ثم أُنجزت **Phase 4** من نفس الخارطة:
+  - انتقل قلب التشخيص نفسه من [scripts/UIAutomation.Acceptance.psm1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/UIAutomation.Acceptance.psm1:1) إلى:
+    - [scripts/modules/UiAutomation.Diagnostics.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Diagnostics.ps1:1)
+  - وهذا يشمل الآن:
+    - diagnostics paths
+    - calibration profile
+    - timeline writes/reads
+    - performance summaries
+    - shell state snapshot
+    - recent events parsing
+  - والتحقق التشغيلي بعد هذا الفصل نجح في:
+    - `Probe`
+    - `Sidebar`
+    - `All` على جلسة نظيفة
 
 كما أضيف الآن مرجع حي لمراجعة نضج السطوح الأساسية الأربع مقابل التوجيه المستخرج من الأرشيف:
 
