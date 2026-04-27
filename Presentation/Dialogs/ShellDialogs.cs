@@ -1973,7 +1973,7 @@ namespace GuaranteeManager
             var copyButton = WorkspaceSurfaceChrome.ActionButton("نسخ رقم الضمان", "White", "#D8E1EE", "#1F2937");
             UiInstrumentation.Identify(copyButton, "Dialog.GuaranteeHistory.CopyGuaranteeNoButton", "نسخ رقم الضمان");
             copyButton.MinWidth = 116;
-            copyButton.Click += (_, _) => Clipboard.SetText(_row.GuaranteeNo);
+            copyButton.Click += (_, _) => CopyGuaranteeNo();
 
             var closeButton = WorkspaceSurfaceChrome.ActionButton("إغلاق", "#2563EB", "#2563EB", "White");
             UiInstrumentation.Identify(closeButton, "Dialog.GuaranteeHistory.CloseFooterButton", "إغلاق سجل الضمان");
@@ -2046,6 +2046,27 @@ namespace GuaranteeManager
             };
             Grid.SetColumn(header, column);
             grid.Children.Add(header);
+        }
+
+        private void CopyGuaranteeNo()
+        {
+            if (string.IsNullOrWhiteSpace(_row.GuaranteeNo))
+            {
+                MessageBox.Show("لا توجد قيمة متاحة لنسخ رقم الضمان.", "نسخ رقم الضمان", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                Clipboard.SetText(_row.GuaranteeNo);
+                App.CurrentApp.GetRequiredService<IShellStatusService>().ShowSuccess(
+                    "تم نسخ رقم الضمان.",
+                    "سجل الضمان • الحافظة جاهزة للاستخدام");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "نسخ رقم الضمان", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
         private void ReloadData()
