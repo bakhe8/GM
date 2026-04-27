@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("Launch", "Windows", "Elements", "Sidebar", "Click", "SetField", "WaitWindow", "WaitWindowClosed", "Capture", "DialogAction", "State", "Diagnostics", "Probe", "Compare", "Events", "Key", "SendKeys")]
+    [ValidateSet("Launch", "Windows", "Elements", "Sidebar", "Click", "SetField", "WaitWindow", "WaitWindowClosed", "Capture", "DialogAction", "State", "Diagnostics", "Probe", "Compare", "Events", "Key", "SendKeys", "HostState", "CapabilityOn", "CapabilityOff")]
     [string]$Action = "Probe",
     [string]$WindowTitle = "",
     [string]$WindowAutomationId = "",
@@ -13,11 +13,14 @@ param(
     [string]$Category = "",
     [string]$EventActionName = "",
     [string]$KeyName = "",
+    [string]$CapabilityName = "",
+    [string]$Reason = "",
     [string]$OutputPath = ".\\Doc\\Assets\\Documentation\\Screenshots\\UIAcceptance\\latest\\interactive-capture.png",
     [string]$ReferencePath = "",
     [string]$DiffOutputPath = ".\\Doc\\Assets\\Documentation\\Screenshots\\UIAcceptance\\latest\\interactive-diff.png",
     [int]$ProcessId = 0,
     [int]$MaxResults = 50,
+    [int]$LeaseMilliseconds = 0,
     [int]$Tolerance = 18,
     [int]$SampleStep = 2,
     [switch]$PartialMatch,
@@ -35,6 +38,8 @@ $repoRoot = Get-UiAcceptanceRepoRoot
 $modulesRoot = Join-Path $PSScriptRoot "modules"
 . (Join-Path $modulesRoot "UiAutomation.Session.ps1")
 . (Join-Path $modulesRoot "UiAutomation.Diagnostics.ps1")
+. (Join-Path $modulesRoot "UiAutomation.Host.ps1")
+. (Join-Path $modulesRoot "UiAutomation.Capabilities.ps1")
 . (Join-Path $modulesRoot "UiAutomation.Actions.ps1")
 
 function Write-UiObject {
@@ -63,16 +68,43 @@ try {
         Category = $Category
         EventActionName = $EventActionName
         KeyName = $KeyName
+        CapabilityName = $CapabilityName
+        Reason = $Reason
         OutputPath = $OutputPath
         ReferencePath = $ReferencePath
         DiffOutputPath = $DiffOutputPath
         MaxResults = $MaxResults
+        LeaseMilliseconds = $LeaseMilliseconds
         Tolerance = $Tolerance
         SampleStep = $SampleStep
         PartialMatch = [bool]$PartialMatch
         IncludeCapture = [bool]$IncludeCapture
     }
     $traceStopwatch.Stop()
+
+    $hookPayload = $null
+    $processForHooks = if ($null -ne $result -and $result.PSObject.Properties.Name -contains "ProcessId" -and [int]$result.ProcessId -gt 0) {
+        Get-Process -Id ([int]$result.ProcessId) -ErrorAction SilentlyContinue
+    }
+    else {
+        Get-UiProcess
+    }
+
+    if ($Action -notin @("HostState", "CapabilityOn", "CapabilityOff") -and $null -ne $processForHooks) {
+        try {
+            $hookPayload = Invoke-UiCapabilityHooksAfterAction -Process $processForHooks -RepoRoot $repoRoot -ActionName $Action -Result $result
+            if ($null -ne $hookPayload) {
+                Add-Member -InputObject $result -NotePropertyName "CapabilitySession" -NotePropertyValue $hookPayload.Session -Force
+                Add-Member -InputObject $result -NotePropertyName "CapabilityCaptures" -NotePropertyValue ([object[]]@($hookPayload.Captures)) -Force
+            }
+        }
+        catch {
+            Add-Member -InputObject $result -NotePropertyName "CapabilityHookWarning" -NotePropertyValue $_.Exception.Message -Force
+        }
+    }
+    elseif ($null -ne $result -and $result.PSObject.Properties.Name -notcontains "CapabilitySession") {
+        Add-Member -InputObject $result -NotePropertyName "CapabilitySession" -NotePropertyValue (Get-UiCapabilitySessionState) -Force
+    }
 
     $payload = Get-TracePayloadFromResult -Result $result
     Write-UiTimelineEvent `
@@ -88,6 +120,17 @@ try {
 }
 catch {
     $traceStopwatch.Stop()
+    $failureHooks = $null
+    $failureCapturePaths = @()
+    try {
+        $failureHooks = Invoke-UiCapabilityHooksOnFailure -RepoRoot $repoRoot -ActionName $Action -ErrorMessage $_.Exception.Message
+        if ($null -ne $failureHooks -and $null -ne $failureHooks.Captures) {
+            $failureCapturePaths = @($failureHooks.Captures | ForEach-Object { $_.Path })
+        }
+    }
+    catch {
+    }
+
     Write-UiTimelineEvent `
         -Action $Action `
         -Stage "failed" `
@@ -101,6 +144,8 @@ catch {
             Label = $Label
             Text = $Text
             AutomationId = $AutomationId
+            CapabilityName = $CapabilityName
+            FailureCapturePaths = $failureCapturePaths
             StartedAt = $traceStartedAt.ToString("o")
         }
     throw

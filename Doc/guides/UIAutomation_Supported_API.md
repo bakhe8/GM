@@ -46,6 +46,10 @@
 - `Get-UiStorageRoot`
 - `Start-UiTargetApplication`
 - `Get-UiProcess`
+- `Get-UiCapabilitySessionPath`
+- `Get-UiCapabilitySessionState`
+- `Start-UiCapabilitySession`
+- `Stop-UiCapabilitySession`
 
 ### Diagnostics
 
@@ -102,6 +106,15 @@
 - `Save-UiDesktopScreenshot`
 - `New-UiContactSheet`
 - `Compare-UiImages`
+
+### Capabilities
+
+- `Get-UiCapabilityDefinitions`
+- `Get-UiCapabilityObservationPath`
+- `Get-UiCapabilityObservationEntries`
+- `Enable-UiCapability`
+- `Disable-UiCapability`
+- `Invoke-UiCapabilityBrokerSweep`
 
 ## ما الذي لا نعدّه API عامة؟
 

@@ -205,6 +205,64 @@ try {
         return $summary
     } | Out-Null
 
+    Invoke-RegressionStep -Name "capability-definitions-shape" -ScriptBlock {
+        $definitions = @(Get-UiCapabilityDefinitions)
+        Assert-RegressionCondition ($definitions.Count -ge 5) "Capability definitions returned fewer items than expected."
+        foreach ($required in @("BurstCapture", "AutoCaptureOnFailure", "VideoCapture", "AudioCapture", "MouseTrace")) {
+            Assert-RegressionCondition (@($definitions | Where-Object Name -eq $required).Count -eq 1) "Capability definitions are missing '$required'."
+        }
+
+        return $definitions
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "capability-session-lifecycle" -ScriptBlock {
+        $started = Start-UiCapabilitySession -ProcessId 0 -Mode "tooling-unit" -Reason "unit-lifecycle" -ForceNew
+        Assert-RegressionCondition ($started.IsActive) "Capability session did not start as active."
+        $sessionPath = Get-UiCapabilitySessionPath
+        Assert-RegressionCondition (Test-Path -LiteralPath $sessionPath) "Capability session file was not created."
+        $current = Get-UiCapabilitySessionState
+        Assert-RegressionCondition ($null -ne $current) "Capability session state could not be read after start."
+        Assert-RegressionCondition ($current.SessionId -eq $started.SessionId) "Capability session state returned a different session id."
+        $stopped = Stop-UiCapabilitySession -Reason "unit-lifecycle-stop"
+        Assert-RegressionCondition (-not $stopped.IsActive) "Capability session did not stop cleanly."
+        return $sessionPath
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "capability-enable-disable-cycle" -ScriptBlock {
+        try {
+            $enabled = Enable-UiCapability -CapabilityName "BurstCapture" -Reason "unit-enable" -LeaseMilliseconds 250
+            $activeNames = @($enabled.Session.ActiveCapabilities | ForEach-Object { $_.Name })
+            Assert-RegressionCondition ($activeNames -contains "BurstCapture") "BurstCapture was not added to the active capability list."
+            $disabled = Disable-UiCapability -CapabilityName "BurstCapture" -Reason "unit-disable"
+            $remainingNames = @($disabled.ActiveCapabilities | ForEach-Object { $_.Name })
+            Assert-RegressionCondition ($remainingNames -notcontains "BurstCapture") "BurstCapture was not removed from the active capability list."
+            return $disabled
+        }
+        finally {
+            Stop-UiCapabilitySession -Reason "unit-enable-disable-cleanup" | Out-Null
+        }
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "capability-lease-expiry" -ScriptBlock {
+        try {
+            Enable-UiCapability -CapabilityName "AutoCaptureOnFailure" -Reason "unit-expiry" -LeaseMilliseconds 60 | Out-Null
+            Start-Sleep -Milliseconds 120
+            $session = Invoke-UiCapabilityBrokerSweep -Persist
+            $activeNames = if ($null -ne $session -and $null -ne $session.ActiveCapabilities) { @($session.ActiveCapabilities | ForEach-Object { $_.Name }) } else { @() }
+            Assert-RegressionCondition ($activeNames -notcontains "AutoCaptureOnFailure") "Expired capability lease remained active after broker sweep."
+            return $session
+        }
+        finally {
+            Stop-UiCapabilitySession -Reason "unit-expiry-cleanup" | Out-Null
+        }
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "capability-observations-read-maxcount" -ScriptBlock {
+        $entries = @(Get-UiCapabilityObservationEntries -MaxCount 3)
+        Assert-RegressionCondition ($entries.Count -le 3) "Get-UiCapabilityObservationEntries exceeded the requested MaxCount."
+        return $entries
+    } | Out-Null
+
     Invoke-RegressionStep -Name "contact-sheet-generation" -ScriptBlock {
         $artifactsRoot = Join-Path $resolvedOutputRoot "tooling-unit-artifacts"
         $firstImage = New-TestBitmap -Path (Join-Path $artifactsRoot "sheet-a.png") -Color ([System.Drawing.Color]::FromArgb(255, 52, 152, 219))

@@ -442,6 +442,8 @@ function Get-ProbePayload {
     $shellState = Get-UiShellStateSnapshot
     $recentEvents = @(Get-UiRecentEvents -MaxCount $MaxResults)
     $recentTimeline = @(Get-UiTimelineEntries -MaxCount $MaxResults)
+    $capabilitySession = Invoke-UiCapabilityBrokerSweep -Persist
+    $recentCapabilityObservations = @(Get-UiCapabilityObservationEntries -MaxCount $MaxResults)
     $calibration = Get-UiCalibrationProfile
     $performanceSummary = Get-UiPerformanceSummary -MaxCount $MaxResults
     $meaningfulWindows = @($windows | Where-Object {
@@ -466,12 +468,15 @@ function Get-ProbePayload {
         ShellState = $shellState
         RecentEvents = [object[]]$recentEvents
         RecentTimeline = [object[]]$recentTimeline
+        CapabilitySession = $capabilitySession
+        RecentCapabilityObservations = [object[]]$recentCapabilityObservations
         Calibration = $calibration
         PerformanceSummary = $performanceSummary
         Health = [pscustomobject]@{
             HasShellState = $null -ne $shellState
             EventCount = $recentEvents.Count
             TimelineCount = $recentTimeline.Count
+            ActiveCapabilityCount = if ($null -ne $capabilitySession -and $null -ne $capabilitySession.ActiveCapabilities) { @($capabilitySession.ActiveCapabilities).Count } else { 0 }
             OpenWindowCount = $meaningfulWindows.Count
             RawOpenWindowCount = $windows.Count
             ActiveDialogTitle = if ($null -ne $externalForegroundWindow) { $externalForegroundWindow.Name } elseif ($null -ne $dialogWindow) { $dialogWindow.Name } else { $null }
@@ -518,6 +523,25 @@ function Get-TracePayloadFromResult {
     if ($Result.PSObject.Properties.Name -contains "Window" -and $null -ne $Result.Window) {
         $payload["WindowTitle"] = $Result.Window.Name
         $payload["WindowAutomationId"] = $Result.Window.AutomationId
+    }
+
+    if ($Result.PSObject.Properties.Name -contains "CapabilityName" -and -not [string]::IsNullOrWhiteSpace([string]$Result.CapabilityName)) {
+        $payload["CapabilityName"] = [string]$Result.CapabilityName
+    }
+
+    if ($Result.PSObject.Properties.Name -contains "CapabilitySession" -and $null -ne $Result.CapabilitySession) {
+        $payload["CapabilitySessionId"] = [string]$Result.CapabilitySession.SessionId
+        $payload["ActiveCapabilities"] = @($Result.CapabilitySession.ActiveCapabilities | ForEach-Object { $_.Name })
+    }
+
+    if ($Result.PSObject.Properties.Name -contains "CapabilityCaptures" -and $null -ne $Result.CapabilityCaptures) {
+        $captures = @($Result.CapabilityCaptures)
+        $payload["CapabilityCaptureCount"] = $captures.Count
+        $payload["CapabilityCapturePaths"] = @($captures | ForEach-Object { $_.Path })
+    }
+
+    if ($Result.PSObject.Properties.Name -contains "CapabilityHookWarning" -and -not [string]::IsNullOrWhiteSpace([string]$Result.CapabilityHookWarning)) {
+        $payload["CapabilityHookWarning"] = [string]$Result.CapabilityHookWarning
     }
 
     return $payload

@@ -112,6 +112,8 @@ function Get-UiStorageRoot {
 . (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Dialogs.ps1")
 . (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Capture.ps1")
 . (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Diagnostics.ps1")
+. (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Host.ps1")
+. (Join-Path $script:UiAutomationModulesRoot "UiAutomation.Capabilities.ps1")
 
 function Start-UiTargetApplication {
     param(
@@ -285,7 +287,11 @@ $script:UiSupportedApiCatalog = @(
             "Get-UiAcceptanceArtifactsRoot",
             "Get-UiStorageRoot",
             "Start-UiTargetApplication",
-            "Get-UiProcess")
+            "Get-UiProcess",
+            "Get-UiCapabilitySessionPath",
+            "Get-UiCapabilitySessionState",
+            "Start-UiCapabilitySession",
+            "Stop-UiCapabilitySession")
     },
     [pscustomobject]@{
         Category = "Diagnostics"
@@ -353,6 +359,17 @@ $script:UiSupportedApiCatalog = @(
             "Save-UiDesktopScreenshot",
             "New-UiContactSheet",
             "Compare-UiImages")
+    },
+    [pscustomobject]@{
+        Category = "Capabilities"
+        Description = "إدارة القدرات اللحظية الخفيفة وتفعيلها حسب الحاجة داخل نفس الاستكشاف."
+        Commands = @(
+            "Get-UiCapabilityDefinitions",
+            "Get-UiCapabilityObservationPath",
+            "Get-UiCapabilityObservationEntries",
+            "Enable-UiCapability",
+            "Disable-UiCapability",
+            "Invoke-UiCapabilityBrokerSweep")
     }
 )
 

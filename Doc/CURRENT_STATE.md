@@ -42,6 +42,28 @@
 وبشكل موازٍ، صار لدينا الآن مسار هندسي واضح لتطوير الأداة نفسها بدل تركها تكبر بطريقة عضوية فقط:
 
 - [guides/UIAutomation_Tooling_Roadmap.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UIAutomation_Tooling_Roadmap.md:1)
+- [guides/UIAutomation_Adaptive_Capabilities_Roadmap.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UIAutomation_Adaptive_Capabilities_Roadmap.md:1)
+
+كما بدأت الآن أول طبقة تنفيذية لمسار **adaptive capabilities** نفسه:
+
+- أضيفت جلسة قدرات حية عبر:
+  - [scripts/modules/UiAutomation.Host.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Host.ps1:1)
+- وأضيف broker أولي للقدرات عبر:
+  - [scripts/modules/UiAutomation.Capabilities.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Capabilities.ps1:1)
+- وصارت `ui_explore` تعرف الآن:
+  - `HostState`
+  - `CapabilityOn`
+  - `CapabilityOff`
+- كما صار `Probe` يحمل:
+  - `CapabilitySession`
+  - `RecentCapabilityObservations`
+  - وعدد القدرات النشطة
+- والقدرات الأولى الحالية هي:
+  - `BurstCapture` — متاحة
+  - `AutoCaptureOnFailure` — متاحة
+  - `VideoCapture` — planned
+  - `AudioCapture` — planned
+  - `MouseTrace` — planned
 
 وأول خطوة تنفيذية منه بدأت فعليًا الآن:
 

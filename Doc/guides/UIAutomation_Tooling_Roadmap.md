@@ -9,6 +9,11 @@
 
 ## حالة التنفيذ الحالية
 
+> **ملاحظة تنظيمية:** هذه الخارطة تعالج إعادة الهيكلة العامة للأداة نفسها.  
+> أما طبقة **adaptive capabilities** التي تضيف session host + capability broker + on-demand providers فوق هذا الأساس، فمرجعها المخصص هنا:
+>
+> - [UIAutomation_Adaptive_Capabilities_Roadmap.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UIAutomation_Adaptive_Capabilities_Roadmap.md:1)
+
 - **Phase 0**: مثبتة عمليًا
   - baseline الحالية موثقة
   - مسارات الاستخدام الحرجة معروفة

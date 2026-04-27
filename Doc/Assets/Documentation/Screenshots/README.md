@@ -136,6 +136,9 @@
 .\scripts\ui_explore.ps1 -Action Diagnostics -MaxResults 12
 .\scripts\ui_explore.ps1 -Action Probe -IncludeCapture
 .\scripts\ui_explore.ps1 -Action Compare -WindowAutomationId "Shell.MainWindow" -ReferencePath ".\Doc\Assets\Documentation\Screenshots\UIAcceptance\baselines\shell-main.png"
+.\\scripts\\ui_explore.ps1 -Action HostState
+.\\scripts\\ui_explore.ps1 -Action CapabilityOn -CapabilityName BurstCapture -LeaseMilliseconds 3000 -Reason "suspected-flicker"
+.\\scripts\\ui_explore.ps1 -Action CapabilityOff -CapabilityName BurstCapture -Reason "done"
 ```
 
 الهدف منها أن تمنحنا:
@@ -190,3 +193,10 @@
 - التصوير والـ contact sheet لم يعودا يحمّلان مكتبات الرسوم إلا عند الحاجة الفعلية لهما.
 - الأداة لم تعد تسمح بالتنقل العام أو النقر على النافذة الرئيسية بينما توجد رسالة أو حوار مفتوح فوق التطبيق؛ ستطلب أولًا حسم الحوار عبر `DialogAction` أو استهدافه صراحة.
 - `Windows` و`Probe` لا يكتفيان الآن بنوافذ عملية التطبيق فقط؛ بل يعرضان أيضًا النوافذ الأصلية المرتبطة به مثل `GuaranteeManager - Print` عندما تظهر.
+- `HostState` تعطي snapshot خفيفة للجلسة التكيفية نفسها:
+  - session path
+  - observation path
+  - capability definitions
+  - active capabilities
+  - recent adaptive observations
+- `CapabilityOn` و`CapabilityOff` تسمحان الآن بتفعيل قدرات لحظية مثل `BurstCapture` داخل نفس الاستكشاف الحر، ثم إطفائها من غير الخروج من الجلسة.

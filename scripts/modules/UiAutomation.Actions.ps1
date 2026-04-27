@@ -74,6 +74,60 @@ function Invoke-UiExploreAction {
         [hashtable]$Options
     )
 
+    switch ($Options.Action) {
+        "HostState" {
+            $sessionState = Invoke-UiCapabilityBrokerSweep -Persist
+            return [pscustomobject]@{
+                Action = "HostState"
+                SessionPath = Get-UiCapabilitySessionPath
+                ObservationsPath = Get-UiCapabilityObservationPath
+                CapabilitySession = $sessionState
+                CapabilityDefinitions = [object[]]@(Get-UiCapabilityDefinitions)
+                RecentCapabilityObservations = [object[]]@(Get-UiCapabilityObservationEntries -MaxCount $Options.MaxResults)
+            }
+        }
+
+        "CapabilityOn" {
+            if ([string]::IsNullOrWhiteSpace($Options.CapabilityName)) {
+                throw "CapabilityOn requires -CapabilityName."
+            }
+
+            $existingProcess = if ($Options.ProcessId -ne 0) {
+                Get-Process -Id $Options.ProcessId -ErrorAction Stop
+            }
+            else {
+                Get-UiProcess
+            }
+
+            $enabled = Enable-UiCapability `
+                -CapabilityName $Options.CapabilityName `
+                -ProcessId $(if ($null -ne $existingProcess) { $existingProcess.Id } else { 0 }) `
+                -Reason $Options.Reason `
+                -LeaseMilliseconds $Options.LeaseMilliseconds
+
+            return [pscustomobject]@{
+                Action = "CapabilityOn"
+                ProcessId = if ($null -ne $existingProcess) { $existingProcess.Id } else { 0 }
+                CapabilityName = $Options.CapabilityName
+                Capability = $enabled.Capability
+                CapabilitySession = $enabled.Session
+            }
+        }
+
+        "CapabilityOff" {
+            if ([string]::IsNullOrWhiteSpace($Options.CapabilityName)) {
+                throw "CapabilityOff requires -CapabilityName."
+            }
+
+            $sessionState = Disable-UiCapability -CapabilityName $Options.CapabilityName -Reason $Options.Reason
+            return [pscustomobject]@{
+                Action = "CapabilityOff"
+                CapabilityName = $Options.CapabilityName
+                CapabilitySession = $sessionState
+            }
+        }
+    }
+
     $process = Get-ResolvedProcess -RepoRoot $Options.RepoRoot -ProcessId $Options.ProcessId -ReuseRunningSession:$Options.ReuseRunningSession
 
     switch ($Options.Action) {
