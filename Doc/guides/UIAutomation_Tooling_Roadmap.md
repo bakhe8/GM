@@ -13,13 +13,23 @@
   - baseline الحالية موثقة
   - مسارات الاستخدام الحرجة معروفة
   - قياسات الأداء الأخيرة محفوظة
-- **Phase 1**: بدأت فعليًا
+- **Phase 1**: مكتملة
   - استُخرجت طبقة `Windows/Dialog` إلى:
     - [scripts/modules/UiAutomation.Windows.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Windows.ps1:1)
     - [scripts/modules/UiAutomation.Dialogs.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Dialogs.ps1:1)
   - وبقي [UIAutomation.Acceptance.psm1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/UIAutomation.Acceptance.psm1:1) كـ facade متوافقة
   - والتحقق التشغيلي الحالي:
     - `NewGuaranteeDiscard` نجح
+    - `All` نجحت على جلسة نظيفة
+- **Phase 2**: مكتملة
+  - استُخرجت طبقة `Core UIA` إلى:
+    - [scripts/modules/UiAutomation.Core.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Core.ps1:1)
+  - وصار [UIAutomation.Acceptance.psm1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/UIAutomation.Acceptance.psm1:1) يحمّل الآن:
+    - `UiAutomation.Core.ps1`
+    - `UiAutomation.Windows.ps1`
+    - `UiAutomation.Dialogs.ps1`
+  - والتحقق التشغيلي الحالي:
+    - `Probe` نجحت
     - `All` نجحت على جلسة نظيفة
 
 ---
@@ -418,23 +428,30 @@ ActionResult
 
 ## المرحلة 2 — استخلاص طبقة Core UIA
 
+**الحالة:** مكتملة
+
 ### الهدف
 
 عزل منطق العناصر الخام عن منطق الاستخدام.
 
 ### العمل
 
-1. إنشاء `UiAutomation.Core.psm1`
+1. إنشاء [scripts/modules/UiAutomation.Core.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Core.ps1:1)
 2. نقل:
    - `Find`
    - `Wait`
    - `Invoke`
    - `SetValue`
-3. حذف التكرار بين:
-   - `Find-UiElements`
-   - `Find-UiProcessElements`
-   - `Find-UiElementsFast`
-4. توحيد naming ونمط الإدخال
+   - helpers الخام مثل:
+     - `Get-UiDescendants`
+     - `Get-UiBounds`
+     - `Get-UiElementSummary`
+     - `Get-UiClickableAncestor`
+3. حذف التكرار من [UIAutomation.Acceptance.psm1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/UIAutomation.Acceptance.psm1:1) والإبقاء عليه كـ facade متوافقة
+4. تثبيت ترتيب التحميل:
+   - `Core`
+   - ثم `Windows`
+   - ثم `Dialogs`
 
 ### المخاطر
 
@@ -449,6 +466,12 @@ ActionResult
 - `Key`
 
 تبقى سليمة على نفس الحوارات والمساحات الحالية
+
+### نتيجة التنفيذ
+
+- `Probe` نجحت بعد الفصل
+- `All` نجحت على جلسة نظيفة بعد الفصل
+- لم يعد `UIAutomation.Acceptance.psm1` يحمل كتلة الـ Core المكررة داخله
 
 ---
 

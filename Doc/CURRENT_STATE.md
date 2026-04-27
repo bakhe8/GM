@@ -52,6 +52,16 @@
 - والتحقق التشغيلي الحالي على هذا الاستخلاص نجح في:
   - `NewGuaranteeDiscard`
   - `All` على جلسة نظيفة
+- ثم أُنجزت **Phase 2** من نفس الخارطة:
+  - استُخرجت طبقة `Core UIA` إلى:
+    - [scripts/modules/UiAutomation.Core.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/modules/UiAutomation.Core.ps1:1)
+  - وصار [scripts/UIAutomation.Acceptance.psm1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/UIAutomation.Acceptance.psm1:1) يحمّل الآن:
+    - `UiAutomation.Core.ps1`
+    - `UiAutomation.Windows.ps1`
+    - `UiAutomation.Dialogs.ps1`
+  - والتحقق التشغيلي بعد هذا الفصل نجح في:
+    - `Probe`
+    - `All` على جلسة نظيفة
 
 كما أضيف الآن مرجع حي لمراجعة نضج السطوح الأساسية الأربع مقابل التوجيه المستخرج من الأرشيف:
 
