@@ -28,12 +28,14 @@ namespace GuaranteeManager
         private readonly TextBlock _detailPath = BuildPathText();
         private readonly TextBlock _detailOpenPath = BuildPathText();
         private readonly Action? _closeRequested;
+        private readonly Action? _dataResetCompleted;
 
-        public SettingsWorkspaceSurface(Action? closeRequested, string? initialSearchText = null)
+        public SettingsWorkspaceSurface(Action? closeRequested, Action? dataResetCompleted, string? initialSearchText = null)
         {
             _dataService = new SettingsWorkspaceDataService();
             _coordinator = new SettingsWorkspaceCoordinator();
             _closeRequested = closeRequested;
+            _dataResetCompleted = dataResetCompleted;
             _allItems = _dataService.BuildItems();
             UiInstrumentation.Identify(this, "Settings.Workspace", "الإعدادات");
             UiInstrumentation.Identify(_searchInput, "Settings.SearchBox", "بحث الإعدادات");
@@ -64,6 +66,12 @@ namespace GuaranteeManager
                 BuildMetrics(),
                 BuildTableSection(),
                 BuildDetailPanel());
+        }
+
+        private void RefreshAfterDataReset()
+        {
+            ApplyFilters();
+            _dataResetCompleted?.Invoke();
         }
 
         private Grid BuildToolbar()
@@ -99,7 +107,7 @@ namespace GuaranteeManager
                 new("نسخ ملخص المسارات", (_, _) => _coordinator.CopyOperationalPathsSummary())
             };
 #if DEBUG
-            toolItems.Add(new MenuItemSpec("توليد بيانات تجريبية", (_, _) => _coordinator.SeedDevelopmentData(ApplyFilters)));
+            toolItems.Add(new MenuItemSpec("توليد بيانات تجريبية", (_, _) => _coordinator.SeedDevelopmentData(RefreshAfterDataReset)));
 #endif
             toolsMenuButton.ContextMenu = BuildToolbarMenu(toolItems.ToArray());
             Grid.SetColumn(toolsMenuButton, 4);

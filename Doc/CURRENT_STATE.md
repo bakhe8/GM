@@ -20,6 +20,11 @@
   - `Sidebar` تحسنت من حوالي `2072ms` إلى `1146ms` في الجولة الأوسع
   - `Click` داخل الحوارات الثقيلة نزلت إلى نطاق `~400–600ms`
   - `Launch` صار يُقاس بعتبة خاصة به بدل أن يظهر تحذيرًا كاذبًا تحت العتبة العامة
+- ثم أُنجزت جولة UAT أوسع على بيانات مولدة من داخل `Settings`، وكشفت خللًا حقيقيًا بعد `reseed`:
+  - `Shell` كانت تحتفظ بضمان محدد stale بعد إعادة بناء قاعدة البيانات
+  - النتيجة كانت رسالة `تعذر العثور على الضمان المحدد` بدل فتح `OperationalInquiryDialog`
+  - أُغلق هذا بإضافة refresh مركزي بعد `seed-development-data`
+  - وأُعيد التحقق حيًا: `ShellState.Reason = data-reset` ثم عاد `OperationalInquiryDialog` ليفتح بنجاح
 
 ## الأولوية الحالية
 
@@ -76,6 +81,16 @@
 - استكمال جولة الأداء بعد UAT أوسع وعلى بيانات أثقل أو حقيقية/معقمة
 - ومراقبة ما إذا كان ما بقي bottleneck في الأداة أو في التطبيق نفسه
 
+والحكم الحالي صار أوضح:
+
+- البطء الأثقل المتبقي في هذا المسار يميل إلى **التطبيق نفسه**:
+  - القوائم المنبثقة
+  - نوافذ التأكيد
+  - والعمليات المدمرة مثل `seed-development-data`
+- أما كلفة الأداة المتبقية فتركز أكثر في:
+  - اكتشاف عناصر popup/menu عبر UI Automation
+  - وهي أقل حدة من bottleneck التطبيق نفسه في هذه الجولة
+
 أي أن السؤال الحالي لم يعد: "هل الشجرة نفسها منضبطة؟"  
 بل: "هل هذه baseline النظيفة تصمد تحت الاستخدام الواقعي؟"
 
@@ -91,6 +106,8 @@
   - [UIAcceptance/baselines/2026-04-26-uat-pass-04.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-uat-pass-04.md)
 - كما توجد أول جولة أداء موثقة هنا:
   - [UIAcceptance/baselines/2026-04-27-performance-pass-01.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-27-performance-pass-01.md)
+- كما توجد جولة UAT أوسع على بيانات مولدة من داخل `Settings` هنا:
+  - [UIAcceptance/baselines/2026-04-27-heavy-seed-uat-pass-01.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-27-heavy-seed-uat-pass-01.md)
 - مجلد `UIAcceptance/latest/` يبقى generated وتشغيليًا فقط، وليس baseline رسمية
 
 ## وضع التوثيق

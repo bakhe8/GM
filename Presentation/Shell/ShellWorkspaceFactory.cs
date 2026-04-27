@@ -129,9 +129,9 @@ namespace GuaranteeManager
             return new NotificationsWorkspaceSurface(expiring, expired, closeRequested, initialSearchText);
         }
 
-        public FrameworkElement CreateSettingsWorkspace(Action closeRequested, string? initialSearchText = null)
+        public FrameworkElement CreateSettingsWorkspace(Action closeRequested, Action refreshAfterDataReset, string? initialSearchText = null)
         {
-            return new SettingsWorkspaceSurface(closeRequested, initialSearchText);
+            return new SettingsWorkspaceSurface(closeRequested, refreshAfterDataReset, initialSearchText);
         }
     }
 }

@@ -1224,7 +1224,7 @@ namespace GuaranteeManager
 
             ActivateWorkspace(
                 ShellWorkspaceKeys.Settings,
-                _workspaceFactory.CreateSettingsWorkspace(CloseActiveWorkspace, initialSearchText));
+                _workspaceFactory.CreateSettingsWorkspace(CloseActiveWorkspace, RefreshAfterDataReset, initialSearchText));
         }
 
         private void RequestExit()
@@ -1295,6 +1295,20 @@ namespace GuaranteeManager
                 ? Guarantees.FirstOrDefault(row => row.RootId == rootIdToRestore) ?? Guarantees.FirstOrDefault()
                 : Guarantees.FirstOrDefault();
             WriteDiagnosticsState("workflow-change");
+        }
+
+        private void RefreshAfterDataReset()
+        {
+            LoadFilterOptions();
+            Refresh();
+
+            if (_lastFileState.HasLastFile && _database.GetCurrentGuaranteeByRootId(_lastFileState.RootId) == null)
+            {
+                SetLastFileState(ShellLastFileState.Empty);
+            }
+
+            LatestInquiryResult = null;
+            WriteDiagnosticsState("data-reset");
         }
 
         private void LoadFilterOptions()

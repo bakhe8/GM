@@ -36,10 +36,13 @@
 
 ### A. جولة الأداء بعد UAT أوسع
 
-من Logs الأداة نفسها، البطء الملحوظ ما زال يظهر أكثر في:
-- `Launch`
-- `Sidebar`
-- وبعض `Click`
+من Logs الأداة نفسها، وبعد أول UAT أوسع على بيانات مولدة من داخل `Settings`، صار الحكم أدق:
+
+- البطء الأوضح المتبقي لم يعد في `Launch`
+- وهو يتمركز أكثر في:
+  - مسار القوائم المنبثقة داخل `Settings`
+  - ظهور نوافذ التأكيد بعد أدوات destructive مثل `seed-development-data`
+  - وبعض `Click` المرتبطة بانتظار ظهور dialog أو popup
 
 هذه ليست polish واجهة بصرية مباشرة، لكنها بقيت ضمن polish الإيقاع العام ويجب أخذها **بعد** جولة UAT أوسع، لا قبلها.
 
@@ -55,6 +58,15 @@
   - `Launch` ظهرت في دورة نظيفة عند ~`3617ms` ولم تعد تُصنَّف بطئًا كاذبًا
 - المرجع الكامل هنا:
   - [UIAcceptance/baselines/2026-04-27-performance-pass-01.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-27-performance-pass-01.md)
+- كما توجد جولة UAT مرتبطة مباشرة بهذا الحكم هنا:
+  - [UIAcceptance/baselines/2026-04-27-heavy-seed-uat-pass-01.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-27-heavy-seed-uat-pass-01.md)
+
+**أهم مخرج من الجولة**
+
+- لم تكن المشكلة مجرد بطء: الجولة كشفت bug حقيقيًا بعد reseed
+- `Shell` كانت تحتفظ بضمان محدد stale بعد إعادة بناء قاعدة البيانات
+- أُغلق هذا بإضافة refresh مركزي بعد نجاح `SeedDevelopmentData`
+- وبعد الإصلاح، عاد `OperationalInquiryDialog` ليفتح بنجاح على البيانات الجديدة
 
 ## كيف نستخدم هذه القائمة
 
