@@ -444,6 +444,8 @@ function Get-ProbePayload {
     $recentTimeline = @(Get-UiTimelineEntries -MaxCount $MaxResults)
     $capabilitySession = Invoke-UiCapabilityBrokerSweep -Persist
     $recentCapabilityObservations = @(Get-UiCapabilityObservationEntries -MaxCount $MaxResults)
+    $recentCapabilityDecisions = if ($null -ne $capabilitySession) { @($capabilitySession.RecentDecisions | Select-Object -First $MaxResults) } else { @() }
+    $capabilityOperatorView = Get-UiCapabilityOperatorView -SessionState $capabilitySession
     $calibration = Get-UiCalibrationProfile
     $performanceSummary = Get-UiPerformanceSummary -MaxCount $MaxResults
     $meaningfulWindows = @($windows | Where-Object {
@@ -470,6 +472,8 @@ function Get-ProbePayload {
         RecentTimeline = [object[]]$recentTimeline
         CapabilitySession = $capabilitySession
         RecentCapabilityObservations = [object[]]$recentCapabilityObservations
+        RecentCapabilityDecisions = [object[]]$recentCapabilityDecisions
+        CapabilityOperatorView = $capabilityOperatorView
         Calibration = $calibration
         PerformanceSummary = $performanceSummary
         Health = [pscustomobject]@{

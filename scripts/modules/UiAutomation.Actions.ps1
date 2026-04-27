@@ -106,6 +106,8 @@ function Invoke-UiExploreAction {
                 CapabilitySession = $sessionState
                 CapabilityDefinitions = [object[]]@(Get-UiCapabilityDefinitions)
                 RecentCapabilityObservations = [object[]]@(Get-UiCapabilityObservationEntries -MaxCount $Options.MaxResults)
+                RecentCapabilityDecisions = if ($null -ne $sessionState) { [object[]]@($sessionState.RecentDecisions | Select-Object -First $Options.MaxResults) } else { @() }
+                CapabilityOperatorView = Get-UiCapabilityOperatorView -SessionState $sessionState
             }
         }
 

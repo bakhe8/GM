@@ -1,3 +1,21 @@
+function Normalize-UiCapabilitySessionState {
+    param(
+        $SessionState
+    )
+
+    if ($null -eq $SessionState) {
+        return $null
+    }
+
+    foreach ($propertyName in @("ActiveCapabilities", "CapabilityHistory", "RecentArtifacts", "RecentObservations", "RecentDecisions")) {
+        if ($SessionState.PSObject.Properties.Name -notcontains $propertyName -or $null -eq $SessionState.$propertyName) {
+            Add-Member -InputObject $SessionState -NotePropertyName $propertyName -NotePropertyValue @() -Force
+        }
+    }
+
+    return $SessionState
+}
+
 function Get-UiCapabilitySessionPath {
     $repoRoot = Get-UiAcceptanceRepoRoot
     return Join-Path $repoRoot "Doc\\Assets\\Documentation\\Screenshots\\UIAcceptance\\latest\\interactive-capability-session.json"
@@ -19,7 +37,7 @@ function Read-UiCapabilitySessionStateRaw {
         return $null
     }
 
-    return $content | ConvertFrom-Json
+    return Normalize-UiCapabilitySessionState -SessionState ($content | ConvertFrom-Json)
 }
 
 function Save-UiCapabilitySessionState {
@@ -63,6 +81,7 @@ function New-UiCapabilitySessionStateObject {
         CapabilityHistory = @()
         RecentArtifacts = @()
         RecentObservations = @()
+        RecentDecisions = @()
     }
 }
 

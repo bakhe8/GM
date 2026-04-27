@@ -15,6 +15,7 @@ function Get-UiCapabilityDefinitions {
             Category = "Visual"
             ProviderState = "available"
             DefaultLeaseMs = 3000
+            DefaultCooldownMs = 1800
             DefaultFrameCount = 3
             DefaultIntervalMs = 80
             CreateContactSheet = $true
@@ -26,6 +27,7 @@ function Get-UiCapabilityDefinitions {
             ProviderState = "available"
             DefaultLeaseMs = 3200
             DefaultSlowActionMs = 850
+            DefaultCooldownMs = 2200
             DefaultFrameCount = 3
             DefaultIntervalMs = 70
             CreateContactSheet = $true
@@ -154,6 +156,7 @@ function Resolve-UiReactiveAssistProfile {
     $metadata = $CapabilityRecord.Metadata
 
     $slowActionMs = if ($null -ne $metadata -and $null -ne $metadata.SlowActionMs) { [int]$metadata.SlowActionMs } else { [int]$definition.DefaultSlowActionMs }
+    $cooldownMs = if ($null -ne $metadata -and $null -ne $metadata.CooldownMs) { [int]$metadata.CooldownMs } else { [int]$definition.DefaultCooldownMs }
     $frameCount = if ($null -ne $metadata -and $null -ne $metadata.FrameCount) { [int]$metadata.FrameCount } else { [int]$definition.DefaultFrameCount }
     $intervalMs = if ($null -ne $metadata -and $null -ne $metadata.IntervalMs) { [int]$metadata.IntervalMs } else { [int]$definition.DefaultIntervalMs }
     $createContactSheet = if ($null -ne $metadata -and $null -ne $metadata.CreateContactSheet) { [bool]$metadata.CreateContactSheet } else { [bool]$definition.CreateContactSheet }
@@ -163,12 +166,34 @@ function Resolve-UiReactiveAssistProfile {
 
     return [pscustomobject]@{
         SlowActionMs = [Math]::Max(0, $slowActionMs)
+        CooldownMs = [Math]::Max(0, $cooldownMs)
         FrameCount = [Math]::Max(1, $frameCount)
         IntervalMs = [Math]::Max(0, $intervalMs)
         CreateContactSheet = $createContactSheet
         TriggerOnSlowAction = $triggerOnSlowAction
         TriggerOnExternalWindow = $triggerOnExternalWindow
         TriggerOnDialog = $triggerOnDialog
+    }
+}
+
+function Resolve-UiFailureCaptureProfile {
+    param(
+        [Parameter(Mandatory)]
+        $CapabilityRecord
+    )
+
+    $definition = Resolve-UiCapabilityDefinition -CapabilityName ([string]$CapabilityRecord.Name)
+    $metadata = $CapabilityRecord.Metadata
+    $cooldownMs = if ($null -ne $metadata -and $null -ne $metadata.CooldownMs) { [int]$metadata.CooldownMs } else { [int]$definition.DefaultCooldownMs }
+    $frameCount = if ($null -ne $metadata -and $null -ne $metadata.FrameCount) { [int]$metadata.FrameCount } else { [int]$definition.DefaultFrameCount }
+    $intervalMs = if ($null -ne $metadata -and $null -ne $metadata.IntervalMs) { [int]$metadata.IntervalMs } else { [int]$definition.DefaultIntervalMs }
+    $createContactSheet = if ($null -ne $metadata -and $null -ne $metadata.CreateContactSheet) { [bool]$metadata.CreateContactSheet } else { [bool]$definition.CreateContactSheet }
+
+    return [pscustomobject]@{
+        CooldownMs = [Math]::Max(0, $cooldownMs)
+        FrameCount = [Math]::Max(1, $frameCount)
+        IntervalMs = [Math]::Max(0, $intervalMs)
+        CreateContactSheet = $createContactSheet
     }
 }
 
@@ -377,6 +402,124 @@ function Add-UiCapabilityObservationRecord {
         Payload = $Payload
     }
     $SessionState.RecentObservations = @($recentEntry) + @($recentObservations | Select-Object -First 11)
+}
+
+function Add-UiCapabilityDecisionRecord {
+    param(
+        [Parameter(Mandatory)]
+        $SessionState,
+        [Parameter(Mandatory)]
+        [string]$CapabilityName,
+        [Parameter(Mandatory)]
+        [string]$ActionName,
+        [Parameter(Mandatory)]
+        [string]$Decision,
+        [Parameter(Mandatory)]
+        [string]$Summary,
+        $Payload = $null
+    )
+
+    $decisionRecord = [pscustomobject]@{
+        Timestamp = (Get-Date).ToString("o")
+        CapabilityName = $CapabilityName
+        Action = $ActionName
+        Decision = $Decision
+        Summary = $Summary
+        Payload = $Payload
+    }
+
+    $recentDecisions = @($SessionState.RecentDecisions)
+    $SessionState.RecentDecisions = @($decisionRecord) + @($recentDecisions | Select-Object -First 11)
+    return $decisionRecord
+}
+
+function Get-UiRecentCapabilityDecision {
+    param(
+        [Parameter(Mandatory)]
+        $SessionState,
+        [Parameter(Mandatory)]
+        [string]$CapabilityName,
+        [string]$ActionName = "",
+        [string[]]$DecisionKinds = @("triggered")
+    )
+
+    return @($SessionState.RecentDecisions | Where-Object {
+        [string]::Equals([string]$_.CapabilityName, $CapabilityName, [System.StringComparison]::OrdinalIgnoreCase) -and
+        ($DecisionKinds -contains [string]$_.Decision) -and
+        ([string]::IsNullOrWhiteSpace($ActionName) -or [string]::Equals([string]$_.Action, $ActionName, [System.StringComparison]::OrdinalIgnoreCase))
+    } | Select-Object -First 1)
+}
+
+function Get-UiCapabilityCooldownState {
+    param(
+        [Parameter(Mandatory)]
+        $SessionState,
+        [Parameter(Mandatory)]
+        [string]$CapabilityName,
+        [int]$CooldownMs = 0,
+        [string]$ActionName = ""
+    )
+
+    if ($CooldownMs -le 0) {
+        return [pscustomobject]@{
+            IsActive = $false
+            RemainingMs = 0
+            LastDecision = $null
+        }
+    }
+
+    $lastDecision = @(Get-UiRecentCapabilityDecision -SessionState $SessionState -CapabilityName $CapabilityName -ActionName $ActionName -DecisionKinds @("triggered") | Select-Object -First 1)
+    if ($lastDecision.Count -eq 0) {
+        return [pscustomobject]@{
+            IsActive = $false
+            RemainingMs = 0
+            LastDecision = $null
+        }
+    }
+
+    $elapsedMs = ([DateTimeOffset]::Now - [DateTimeOffset]::Parse([string]$lastDecision[0].Timestamp)).TotalMilliseconds
+    $remainingMs = [Math]::Max(0, [int][Math]::Ceiling($CooldownMs - $elapsedMs))
+    return [pscustomobject]@{
+        IsActive = $remainingMs -gt 0
+        RemainingMs = $remainingMs
+        LastDecision = $lastDecision[0]
+    }
+}
+
+function Get-UiCapabilityOperatorView {
+    param(
+        $SessionState = $null
+    )
+
+    if ($null -eq $SessionState) {
+        $SessionState = Get-UiCapabilitySessionState
+    }
+
+    if ($null -eq $SessionState) {
+        return [pscustomobject]@{
+            Status = "idle"
+            Summary = "لا توجد جلسة قدرات حية الآن."
+            ActiveCapabilities = @()
+            RecentDecisions = @()
+        }
+    }
+
+    $activeCapabilities = @($SessionState.ActiveCapabilities | ForEach-Object { $_.Name })
+    $recentDecisions = @($SessionState.RecentDecisions | Select-Object -First 5)
+    $status = if ($activeCapabilities.Count -gt 0) { "active" } else { "calm" }
+    $summary = if ($activeCapabilities.Count -gt 0) {
+        "القدرات النشطة الآن: $($activeCapabilities -join '، ')"
+    }
+    else {
+        "الوضع الآن خفيف وهادئ؛ لا توجد قدرات نشطة حاليًا."
+    }
+
+    return [pscustomobject]@{
+        Status = $status
+        Summary = $summary
+        ActiveCapabilities = [object[]]$activeCapabilities
+        RecentDecisions = [object[]]$recentDecisions
+    }
 }
 
 function Save-UiCapabilityActionCapture {
@@ -724,6 +867,26 @@ function Invoke-UiReactiveAssistAfterAction {
     }
 
     if ($reasons.Count -eq 0) {
+        Add-UiCapabilityDecisionRecord -SessionState $session -CapabilityName ([string]$CapabilityRecord.Name) -ActionName $ActionName -Decision "quiet" -Summary "لم تُرصد anomaly تستدعي التدخل بعد هذا الفعل." -Payload ([pscustomobject]@{
+            DurationMs = [math]::Round($DurationMs, 2)
+            OpenWindowCount = $health.OpenWindowCount
+            ActiveDialogTitle = $health.ActiveDialogTitle
+        }) | Out-Null
+        Save-UiCapabilitySessionState -SessionState $session | Out-Null
+        return [pscustomobject]@{
+            Session = $session
+            Captures = @()
+            Observation = $null
+        }
+    }
+
+    $cooldown = Get-UiCapabilityCooldownState -SessionState $session -CapabilityName ([string]$CapabilityRecord.Name) -CooldownMs $profile.CooldownMs -ActionName $ActionName
+    if ($cooldown.IsActive) {
+        Add-UiCapabilityDecisionRecord -SessionState $session -CapabilityName ([string]$CapabilityRecord.Name) -ActionName $ActionName -Decision "suppressed" -Summary "رُصدت anomaly لكن ReactiveAssist تجاهلت التفعيل مؤقتًا لتجنب الإزعاج المتكرر." -Payload ([pscustomobject]@{
+            RemainingMs = $cooldown.RemainingMs
+            Reasons = [object[]]@($reasons.ToArray())
+        }) | Out-Null
+        Save-UiCapabilitySessionState -SessionState $session | Out-Null
         return [pscustomobject]@{
             Session = $session
             Captures = @()
@@ -736,6 +899,11 @@ function Invoke-UiReactiveAssistAfterAction {
     $suppressedBecauseBurstCaptureActive = $false
     if (Test-UiCapabilityEnabled -CapabilityName "BurstCapture" -SessionState $session) {
         $suppressedBecauseBurstCaptureActive = $true
+        $sessionForDecision = Get-UiCapabilitySessionState
+        Add-UiCapabilityDecisionRecord -SessionState $sessionForDecision -CapabilityName ([string]$CapabilityRecord.Name) -ActionName $ActionName -Decision "suppressed" -Summary "رُصدت anomaly لكن BurstCapture كانت نشطة أصلًا، لذلك لم نكرر evidence إضافية." -Payload ([pscustomobject]@{
+            Reasons = [object[]]@($reasons.ToArray())
+        }) | Out-Null
+        Save-UiCapabilitySessionState -SessionState $sessionForDecision | Out-Null
     }
     else {
         $reactiveCapabilityRecord = [pscustomobject]@{
@@ -752,6 +920,12 @@ function Invoke-UiReactiveAssistAfterAction {
             [void]$captures.Add($capture)
         }
         $burstSummary = $burstPayload.Burst
+        $sessionForDecision = Get-UiCapabilitySessionState
+        Add-UiCapabilityDecisionRecord -SessionState $sessionForDecision -CapabilityName ([string]$CapabilityRecord.Name) -ActionName $ActionName -Decision "triggered" -Summary "فعّلت ReactiveAssist evidence بصرية خفيفة لأن anomaly الحالية تستحق متابعة." -Payload ([pscustomobject]@{
+            Reasons = [object[]]@($reasons.ToArray())
+            CaptureCount = $captures.Count
+        }) | Out-Null
+        Save-UiCapabilitySessionState -SessionState $sessionForDecision | Out-Null
     }
 
     $session = Get-UiCapabilitySessionState
@@ -899,8 +1073,25 @@ function Invoke-UiCapabilityHooksOnFailure {
 
     $captures = @()
     if ($failureCapability.Count -gt 0) {
-        $failurePayload = Save-UiCapabilityBurstSequence -Process $process -CapabilityRecord $failureCapability[0] -ActionName $ActionName -CaptureReason "failure"
-        $captures = @($failurePayload.Captures)
+        $profile = Resolve-UiFailureCaptureProfile -CapabilityRecord $failureCapability[0]
+        $cooldown = Get-UiCapabilityCooldownState -SessionState $session -CapabilityName "AutoCaptureOnFailure" -CooldownMs $profile.CooldownMs -ActionName $ActionName
+        if ($cooldown.IsActive) {
+            Add-UiCapabilityDecisionRecord -SessionState $session -CapabilityName "AutoCaptureOnFailure" -ActionName $ActionName -Decision "suppressed" -Summary "تكرر الفشل نفسه سريعًا، لذلك تم suppress لالتقاط إضافي حتى لا تصبح الأداة مزعجة." -Payload ([pscustomobject]@{
+                RemainingMs = $cooldown.RemainingMs
+                Error = $ErrorMessage
+            }) | Out-Null
+            Save-UiCapabilitySessionState -SessionState $session | Out-Null
+        }
+        else {
+            $failurePayload = Save-UiCapabilityBurstSequence -Process $process -CapabilityRecord $failureCapability[0] -ActionName $ActionName -CaptureReason "failure"
+            $captures = @($failurePayload.Captures)
+            $sessionForDecision = Get-UiCapabilitySessionState
+            Add-UiCapabilityDecisionRecord -SessionState $sessionForDecision -CapabilityName "AutoCaptureOnFailure" -ActionName $ActionName -Decision "triggered" -Summary "فعّلت AutoCaptureOnFailure evidence متعددة لأن الفشل الحالي يستحق دليلًا أوضح." -Payload ([pscustomobject]@{
+                Error = $ErrorMessage
+                CaptureCount = $captures.Count
+            }) | Out-Null
+            Save-UiCapabilitySessionState -SessionState $sessionForDecision | Out-Null
+        }
     }
 
     $health = Get-UiCapabilityWindowHealth -Process $process

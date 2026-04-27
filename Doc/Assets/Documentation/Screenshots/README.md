@@ -211,6 +211,8 @@
   - capability definitions
   - active capabilities
   - recent adaptive observations
+  - recent capability decisions
+  - capability operator view
 - `CapabilityOn` و`CapabilityOff` تسمحان الآن بتفعيل قدرات لحظية مثل `BurstCapture` داخل نفس الاستكشاف الحر، ثم إطفائها من غير الخروج من الجلسة.
 - `BurstCapture` نفسها لم تعد مجرد لقطة واحدة:
   - عند تفعيلها تلتقط الآن **عدة frames متتابعة**
@@ -236,3 +238,10 @@
 - كما أصبحت `AutoCaptureOnFailure` أذكى:
   - تنتج الآن multi-frame evidence
   - وتكتب `failure-bundle` observation بدل الاقتصار على لقطة واحدة
+- والأهم الآن أن هذه الطبقة لم تعد "ذكية بصمت":
+  - `HostState` و`Probe` تعرضان لماذا trigger حصلت
+  - ولماذا suppression حصلت
+  - ولماذا بقيت القدرة quiet
+  - وهذا يظهر عبر:
+    - `RecentCapabilityDecisions`
+    - `CapabilityOperatorView`

@@ -464,6 +464,35 @@ try {
         Assert-RegressionCondition ($trace.Count -eq 1) "ReactiveAssist did not record a reactive-trigger observation after the slow hover."
         Assert-RegressionCondition (@($trace[0].Payload.Reasons | Where-Object Kind -eq "slow-action").Count -ge 1) "ReactiveAssist did not explain the hover anomaly as a slow action."
         Assert-RegressionCondition ([int]$trace[0].Payload.CaptureCount -ge 3) "ReactiveAssist observation did not report burst evidence."
+        Assert-RegressionCondition ($null -ne $payload.CapabilityOperatorView) "HostState did not expose CapabilityOperatorView."
+        Assert-RegressionCondition (-not [string]::IsNullOrWhiteSpace([string]$payload.CapabilityOperatorView.Summary)) "CapabilityOperatorView summary was empty."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "reactive-hover-guarantees-sidebar-suppressed" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "MouseHover"
+            WindowAutomationId = "Shell.MainWindow"
+            AutomationId = "Shell.Sidebar.Guarantees"
+            HoverMilliseconds = 900
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition (@($payload.CapabilityCaptures).Count -eq 0) "ReactiveAssist should have suppressed repeated anomaly evidence during cooldown."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "hoststate-reactive-suppressed-after-repeat" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "HostState"
+        }
+
+        $decision = @($payload.RecentCapabilityDecisions | Where-Object {
+            $_.CapabilityName -eq "ReactiveAssist" -and $_.Action -eq "MouseHover" -and $_.Decision -eq "suppressed"
+        } | Select-Object -First 1)
+
+        Assert-RegressionCondition ($decision.Count -eq 1) "ReactiveAssist did not record a suppressed decision after the repeated hover."
+        Assert-RegressionCondition ([string]$decision[0].Summary -like "*تجنب الإزعاج المتكرر*") "ReactiveAssist suppressed decision did not explain the cooldown behavior."
         return $payload
     } | Out-Null
 
@@ -518,6 +547,31 @@ try {
         foreach ($capturePath in @($bundle[0].Payload.CapturePaths)) {
             Assert-RegressionCondition (Test-Path -LiteralPath ([string]$capturePath)) "A failure-bundle capture path did not exist on disk."
         }
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "expected-failure-invalid-key-suppressed" -ScriptBlock {
+        $message = Invoke-UiExploreExpectedFailure -Arguments @{
+            Action = "Key"
+            KeyName = "Bogus"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($message.Contains("Unsupported key 'Bogus'")) "The repeated expected failure did not return the invalid-key message."
+        return $message
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "hoststate-failure-suppressed-after-repeat" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "HostState"
+        }
+
+        $decision = @($payload.RecentCapabilityDecisions | Where-Object {
+            $_.CapabilityName -eq "AutoCaptureOnFailure" -and $_.Action -eq "Key" -and $_.Decision -eq "suppressed"
+        } | Select-Object -First 1)
+
+        Assert-RegressionCondition ($decision.Count -eq 1) "AutoCaptureOnFailure did not record a suppressed decision after the repeated failure."
+        Assert-RegressionCondition ([string]$decision[0].Summary -like "*تكرر الفشل نفسه سريعًا*") "AutoCaptureOnFailure suppressed decision did not explain the calmer failure behavior."
         return $payload
     } | Out-Null
 

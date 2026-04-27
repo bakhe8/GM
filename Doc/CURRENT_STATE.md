@@ -120,6 +120,21 @@
   - `tooling unit`: `16/16`
   - `tooling smoke`: `10/10`
   - `tooling integration`: `39/39`
+- ثم أُنجزت الآن جولة تأسيسية تركز على **الذكاء الواضح للمشغّل وبساطة التشغيل**:
+  - صارت `HostState` و`Probe` تعرضان:
+    - `RecentCapabilityDecisions`
+    - `CapabilityOperatorView`
+  - وهذا يجعل سلوك الأداة أوضح:
+    - لماذا trigger حصلت
+    - لماذا suppression حصلت
+    - ولماذا بقيت القدرة quiet
+  - كما صار لدينا cooldown حقيقي يهدئ التفعيل المتكرر:
+    - `ReactiveAssist` لا تعيد burst عند anomaly نفسها بسرعة
+    - `AutoCaptureOnFailure` لا تكرر failure bundle بشكل مزعج عند نفس الخطأ المتكرر
+  - والتحقق الحالي لهذه الطبقة ناجح ضمن:
+    - `tooling unit`: `16/16`
+    - `tooling smoke`: `10/10`
+    - `tooling integration`: `43/43`
 
 وأول خطوة تنفيذية منه بدأت فعليًا الآن:
 
@@ -200,7 +215,7 @@
     - والرجوع إلى جلسة نظيفة بعد إغلاق الحوارات الداخلية والخارجية
   - والنتيجة الحالية:
     - `10/10` في smoke
-    - `39/39` في integration
+    - `43/43` في integration
     - وتشغيل `-Suite All` يمر الآن بنجاح
     - والملخصان الحيان يُكتبان هنا:
       - [UIAcceptance/latest/tooling-regression-summary.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/latest/tooling-regression-summary.md)
