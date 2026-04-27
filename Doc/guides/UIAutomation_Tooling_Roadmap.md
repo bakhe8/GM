@@ -704,6 +704,8 @@ ActionResult
 
 ## المرحلة 7 — تثبيت API واستخدامها داخليًا
 
+**الحالة:** بدأت عمليًا
+
 ### الهدف
 
 إعلان الأداة كطبقة مستقرة نسبيًا.
@@ -722,6 +724,20 @@ ActionResult
 - كل من يقرأ الأداة يعرف:
   - ما الذي يجوز استدعاؤه
   - وما الذي هو internal
+
+### أول تنفيذ فعلي
+
+- صار العقد الحي داخل الكود نفسه عبر:
+  - [Get-UiSupportedApi](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/UIAutomation.Acceptance.psm1:1)
+- وأضفنا مرجعًا توثيقيًا مباشرًا:
+  - [UIAutomation_Supported_API.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UIAutomation_Supported_API.md:1)
+- كما أضفنا suite خفيفة للأجزاء الثابتة:
+  - [scripts/tests/UiAutomation.Tooling.Unit.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/tests/UiAutomation.Tooling.Unit.ps1:1)
+- والـ runner الحالي يدعم الآن:
+  - `Smoke`
+  - `Integration`
+  - `Unit`
+  - `All`
 
 ---
 

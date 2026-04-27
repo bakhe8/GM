@@ -1,6 +1,6 @@
 param(
     [string]$OutputRoot = ".\Doc\Assets\Documentation\Screenshots\UIAcceptance\latest",
-    [ValidateSet("Smoke", "Integration", "All")]
+    [ValidateSet("Smoke", "Integration", "Unit", "All")]
     [string]$Suite = "Smoke",
     [switch]$ReuseRunningSession = $false
 )
@@ -11,7 +11,8 @@ $ErrorActionPreference = "Stop"
 $suiteScripts = switch ($Suite) {
     "Smoke" { @("UiAutomation.Tooling.Smoke.ps1") }
     "Integration" { @("UiAutomation.Tooling.Integration.ps1") }
-    "All" { @("UiAutomation.Tooling.Smoke.ps1", "UiAutomation.Tooling.Integration.ps1") }
+    "Unit" { @("UiAutomation.Tooling.Unit.ps1") }
+    "All" { @("UiAutomation.Tooling.Unit.ps1", "UiAutomation.Tooling.Smoke.ps1", "UiAutomation.Tooling.Integration.ps1") }
 }
 
 foreach ($suiteScriptName in $suiteScripts) {

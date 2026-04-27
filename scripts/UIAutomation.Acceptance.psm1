@@ -514,46 +514,104 @@ function Wait-UiShellWorkspace {
     return $false
 }
 
-Export-ModuleMember -Function `
-    Get-UiAcceptanceRepoRoot, `
-    Get-UiAcceptanceArtifactsRoot, `
-    Get-UiStorageRoot, `
-    Get-UiDiagnosticsPaths, `
-    Get-UiTimelinePath, `
-    Get-UiCalibrationPath, `
-    Get-UiCalibrationProfile, `
-    Get-UiTimelineEntries, `
-    Get-UiPerformanceSummary, `
-    Write-UiTimelineEvent, `
-    Get-UiShellStateSnapshot, `
-    Get-UiRecentEvents, `
-    Get-UiProcess, `
-    Wait-UiWindow, `
-    Wait-UiElement, `
-    Resolve-UiWindow, `
-    Send-UiVirtualKey, `
-    Send-UiSendKeys, `
-    Get-UiEditNearLabel, `
-    Get-UiSidebarButton, `
-    Get-UiTopLevelWindows, `
-    Get-UiWindowsCatalog, `
-    Get-UiButtonByText, `
-    Find-UiProcessElements, `
-    Get-UiDialogActionButton, `
-    Wait-UiElementReady, `
-    Wait-UiWindowGone, `
-    Invoke-UiDialogActionButton, `
-    Get-UiBounds, `
-    Get-UiDescendants, `
-    Get-UiElementSummary, `
-    Find-UiElements, `
-    Get-UiActiveDialog, `
-    Show-UiWindow, `
-    Invoke-UiElement, `
-    Set-UiElementValue, `
-    Save-UiWindowScreenshot, `
-    Save-UiDesktopScreenshot, `
-    New-UiContactSheet, `
-    Compare-UiImages, `
-    Start-UiTargetApplication, `
-    Invoke-UiSidebarNavigation
+$script:UiSupportedApiCatalog = @(
+    [pscustomobject]@{
+        Category = "Session"
+        Description = "بدء جلسة التطبيق والوصول إلى الجذور والمسارات المرجعية."
+        Commands = @(
+            "Get-UiAcceptanceRepoRoot",
+            "Get-UiAcceptanceArtifactsRoot",
+            "Get-UiStorageRoot",
+            "Start-UiTargetApplication",
+            "Get-UiProcess")
+    },
+    [pscustomobject]@{
+        Category = "Diagnostics"
+        Description = "قراءة التشخيص، السجل الزمني، ومقاييس الأداء."
+        Commands = @(
+            "Get-UiDiagnosticsPaths",
+            "Get-UiTimelinePath",
+            "Get-UiCalibrationPath",
+            "Get-UiCalibrationProfile",
+            "Get-UiTimelineEntries",
+            "Get-UiPerformanceSummary",
+            "Write-UiTimelineEvent",
+            "Get-UiShellStateSnapshot",
+            "Get-UiRecentEvents")
+    },
+    [pscustomobject]@{
+        Category = "Windows"
+        Description = "اكتشاف النوافذ وإظهارها وانتظارها."
+        Commands = @(
+            "Get-UiTopLevelWindows",
+            "Get-UiWindowsCatalog",
+            "Resolve-UiWindow",
+            "Show-UiWindow",
+            "Wait-UiWindow")
+    },
+    [pscustomobject]@{
+        Category = "Elements"
+        Description = "البحث عن العناصر، قراءتها، والتفاعل معها مباشرة."
+        Commands = @(
+            "Wait-UiElement",
+            "Find-UiElements",
+            "Find-UiProcessElements",
+            "Get-UiElementSummary",
+            "Get-UiBounds",
+            "Get-UiDescendants",
+            "Invoke-UiElement",
+            "Set-UiElementValue",
+            "Get-UiEditNearLabel",
+            "Get-UiButtonByText",
+            "Get-UiSidebarButton")
+    },
+    [pscustomobject]@{
+        Category = "Dialogs"
+        Description = "اكتشاف الحوارات وأزرارها وحسمها بموثوقية."
+        Commands = @(
+            "Get-UiActiveDialog",
+            "Get-UiDialogActionButton",
+            "Wait-UiElementReady",
+            "Wait-UiWindowGone",
+            "Invoke-UiDialogActionButton")
+    },
+    [pscustomobject]@{
+        Category = "InputAndNavigation"
+        Description = "المفاتيح والتنقل السياقي داخل التطبيق."
+        Commands = @(
+            "Send-UiVirtualKey",
+            "Send-UiSendKeys",
+            "Invoke-UiSidebarNavigation")
+    },
+    [pscustomobject]@{
+        Category = "Capture"
+        Description = "اللقطات والمقارنة البصرية وتجميع الشاشات."
+        Commands = @(
+            "Save-UiWindowScreenshot",
+            "Save-UiDesktopScreenshot",
+            "New-UiContactSheet",
+            "Compare-UiImages")
+    }
+)
+
+function Get-UiSupportedApi {
+    return @($script:UiSupportedApiCatalog | ForEach-Object {
+        [pscustomobject]@{
+            Category = $_.Category
+            Description = $_.Description
+            Commands = [object[]]@($_.Commands)
+        }
+    })
+}
+
+$script:UiSupportedFunctionNames = New-Object System.Collections.Generic.List[string]
+[void]$script:UiSupportedFunctionNames.Add("Get-UiSupportedApi")
+foreach ($category in $script:UiSupportedApiCatalog) {
+    foreach ($commandName in @($category.Commands)) {
+        if (-not $script:UiSupportedFunctionNames.Contains($commandName)) {
+            [void]$script:UiSupportedFunctionNames.Add($commandName)
+        }
+    }
+}
+
+Export-ModuleMember -Function $script:UiSupportedFunctionNames

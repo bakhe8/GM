@@ -1,0 +1,133 @@
+# Supported UI Automation API
+
+هذا الملف يحدد **الواجهة العامة المعتمدة** لأداة UI Automation داخل المشروع.
+
+المرجع التنفيذي داخل الكود هو:
+
+- [Get-UiSupportedApi](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/UIAutomation.Acceptance.psm1:1)
+
+## القاعدة العامة
+
+- ما يظهر عبر:
+  - `Get-Command -Module UIAutomation.Acceptance`
+  - أو `Get-UiSupportedApi`
+  يعتبر **API عامة معتمدة**.
+- ما عدا ذلك داخل:
+  - `scripts/modules/*.ps1`
+  يعتبر **تفصيلًا داخليًا** قابلًا للتغيير أثناء إعادة الهيكلة.
+
+## متى أستخدم ماذا؟
+
+### 1. الاستخدام اليومي
+
+ابدأ عادةً من:
+
+- [ui_explore.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/ui_explore.ps1:1)
+- [run_ui_acceptance.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/run_ui_acceptance.ps1:1)
+- [run_ui_tooling_regression.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/run_ui_tooling_regression.ps1:1)
+
+هذه هي نقاط الدخول الرسمية لمعظم الجولات.
+
+### 2. الاستخدام البرمجي المباشر
+
+استخدم أوامر module العامة فقط عندما نحتاج:
+
+- بناء harness جديد
+- regression suite جديدة
+- قياس أو تشخيص أدق
+- التفاعل مع عنصر أو نافذة خارج السيناريوهات الجاهزة
+
+## الفئات العامة الحالية
+
+### Session
+
+- `Get-UiAcceptanceRepoRoot`
+- `Get-UiAcceptanceArtifactsRoot`
+- `Get-UiStorageRoot`
+- `Start-UiTargetApplication`
+- `Get-UiProcess`
+
+### Diagnostics
+
+- `Get-UiDiagnosticsPaths`
+- `Get-UiTimelinePath`
+- `Get-UiCalibrationPath`
+- `Get-UiCalibrationProfile`
+- `Get-UiTimelineEntries`
+- `Get-UiPerformanceSummary`
+- `Write-UiTimelineEvent`
+- `Get-UiShellStateSnapshot`
+- `Get-UiRecentEvents`
+- `Get-UiSupportedApi`
+
+### Windows
+
+- `Get-UiTopLevelWindows`
+- `Get-UiWindowsCatalog`
+- `Resolve-UiWindow`
+- `Show-UiWindow`
+- `Wait-UiWindow`
+
+### Elements
+
+- `Wait-UiElement`
+- `Find-UiElements`
+- `Find-UiProcessElements`
+- `Get-UiElementSummary`
+- `Get-UiBounds`
+- `Get-UiDescendants`
+- `Invoke-UiElement`
+- `Set-UiElementValue`
+- `Get-UiEditNearLabel`
+- `Get-UiButtonByText`
+- `Get-UiSidebarButton`
+
+### Dialogs
+
+- `Get-UiActiveDialog`
+- `Get-UiDialogActionButton`
+- `Wait-UiElementReady`
+- `Wait-UiWindowGone`
+- `Invoke-UiDialogActionButton`
+
+### Input And Navigation
+
+- `Send-UiVirtualKey`
+- `Send-UiSendKeys`
+- `Invoke-UiSidebarNavigation`
+
+### Capture
+
+- `Save-UiWindowScreenshot`
+- `Save-UiDesktopScreenshot`
+- `New-UiContactSheet`
+- `Compare-UiImages`
+
+## ما الذي لا نعدّه API عامة؟
+
+- الدوال الموجودة فقط داخل:
+  - `UiAutomation.Actions.ps1`
+  - `UiAutomation.Session.ps1`
+  - `UiAutomation.Dialogs.ps1`
+  - `UiAutomation.Diagnostics.ps1`
+  - `UiAutomation.Core.ps1`
+  عندما لا تُصدَّر صراحة من facade
+- أي helper مخصص لإعادة الهيكلة الحالية
+- أي behavior نعتمد فيه على side effects غير موثقة
+
+## مبدأ الثبات
+
+نعد بالحفاظ على:
+
+1. أسماء أوامر module العامة
+2. أوامر:
+   - `ui_explore.ps1`
+   - `run_ui_acceptance.ps1`
+   - `run_ui_tooling_regression.ps1`
+3. بنية المخرجات الأساسية للتشخيص والـ regression
+
+أما التفاصيل الداخلية فيمكن أن تتغير إذا:
+
+- صارت الأداة أوضح
+- صارت أسرع
+- أو صارت أسهل في الاختبار والصيانة

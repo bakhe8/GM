@@ -50,10 +50,17 @@
 .\scripts\run_ui_tooling_regression.ps1
 ```
 
+والمخرجات الحالية تُكتب إلى:
+
+- `UIAcceptance/latest/tooling-unit-summary.md`
+- `UIAcceptance/latest/tooling-regression-summary.md`
+- `UIAcceptance/latest/tooling-integration-summary.md`
+
 ولتشغيل التكاملات الأوسع أو كل suites معًا:
 
 ```powershell
 .\scripts\run_ui_tooling_regression.ps1 -Suite Integration
+.\scripts\run_ui_tooling_regression.ps1 -Suite Unit
 .\scripts\run_ui_tooling_regression.ps1 -Suite All
 ```
 

@@ -114,6 +114,28 @@
     - والملخصان الحيان يُكتبان هنا:
       - [UIAcceptance/latest/tooling-regression-summary.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/latest/tooling-regression-summary.md)
       - [UIAcceptance/latest/tooling-integration-summary.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/latest/tooling-integration-summary.md)
+- ثم بدأت **Phase 7** عمليًا أيضًا:
+  - صار للأداة عقد API حي داخل الكود نفسه عبر:
+    - [Get-UiSupportedApi](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/UIAutomation.Acceptance.psm1:1)
+  - وأضفنا suite خفيفة مستقلة للأجزاء الثابتة:
+    - [scripts/tests/UiAutomation.Tooling.Unit.ps1](c:/Users/Bakheet/Documents/Projects/Work/my_work/scripts/tests/UiAutomation.Tooling.Unit.ps1:1)
+  - والجولة الحالية تتحقق من:
+    - فئات الـ API العامة
+    - تطابق `Export-ModuleMember` مع العقد الرسمي
+    - شكل مسارات التشخيص
+    - ملف المعايرة
+    - قراءة timeline
+    - شكل performance summary
+  - والنتيجة الحالية:
+    - `8/8` في unit
+  - كما صار runner يدعم:
+    - `Smoke`
+    - `Integration`
+    - `Unit`
+    - `All`
+  - والمرجع التوثيقي لهذه الطبقة هنا:
+    - [guides/UIAutomation_Supported_API.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UIAutomation_Supported_API.md:1)
+    - [UIAcceptance/latest/tooling-unit-summary.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/latest/tooling-unit-summary.md)
 
 كما أضيف الآن مرجع حي لمراجعة نضج السطوح الأساسية الأربع مقابل التوجيه المستخرج من الأرشيف:
 
