@@ -25,6 +25,10 @@
 2. **Real-data validation**
 3. **Performance and usability polish**
 
+كما أضيف الآن مرجع حي لمراجعة نضج السطوح الأساسية الأربع مقابل التوجيه المستخرج من الأرشيف:
+
+- [guides/Focused_Surface_Review_From_Archive.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Focused_Surface_Review_From_Archive.md:1)
+
 أي أن السؤال الحالي لم يعد: "هل الشجرة نفسها منضبطة؟"  
 بل: "هل هذه baseline النظيفة تصمد تحت الاستخدام الواقعي؟"
 
