@@ -80,6 +80,34 @@
 
 - [Navigation_Architecture_Map.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Navigation_Architecture_Map.md:1)
 - [Canonical_Home_Matrix.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Canonical_Home_Matrix.md:1)
+- [UI_System_Map.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UI_System_Map.md:1)
+- [UI_Component_Atlas.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UI_Component_Atlas.md:1)
+
+### المرحلة B.5 — تثبيت أطلس الواجهة قبل الإصلاح
+
+قبل أي تعديل جديد داخل surface بعينها، نثبت:
+
+- خريطة البرنامج كلها
+- خريطة السايدبار
+- خريطة كل surface
+- خريطة ما بداخلها من:
+  - sections
+  - cards
+  - toolbars
+  - row actions
+  - detail actions
+  - dialogs
+  - system windows
+
+والغرض من هذه المرحلة هو:
+
+- منع الإصلاح الجزئي الذي يكسر عائلة أكبر
+- ومنع نقل شيء إلى مكان “مقبول” محليًا لكنه خاطئ معماريًا
+
+المرجعان الرسميان لهذه البوابة الآن:
+
+- [UI_System_Map.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UI_System_Map.md:1)
+- [UI_Component_Atlas.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UI_Component_Atlas.md:1)
 
 ### المرحلة C — قواعد الواجهة التشغيلية
 

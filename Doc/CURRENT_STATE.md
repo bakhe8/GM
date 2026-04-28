@@ -144,6 +144,32 @@
   - ومعيار إكمال هذا التحول صار واضحًا:
     - عندما تحمل `اليوم` القائمة الكاملة للمتابعات مع detail وmetrics كافية
     - تصبح `Notifications` جاهزة للخروج من السايدبار العليا
+- ثم أُغلقت الآن **بوابة الجرد المعماري الكامل قبل الإصلاحات التالية**:
+  - صار عندنا مرجعان جديدان يغطيان:
+    - البرنامج كله
+    - السايدبار
+    - العائلات العليا
+    - كل surface على حدة
+    - وما بداخل كل surface من:
+      - toolbars
+      - metrics
+      - tables
+      - detail panels
+      - actions
+      - dialogs
+      - والنوافذ النظامية/الخارجية
+  - وهذا يعني أن أي جولة UI Recovery لاحقة لم تعد تبدأ من:
+    - زر
+    - أو كرت
+    - أو toolbar
+  - بل من:
+    - **الخريطة المعمارية**
+    - ثم **البيت الرسمي**
+    - ثم **السطح**
+    - ثم **المكوّن**
+  - المرجعان الرسميان لهذا المستوى الآن:
+    - [guides/UI_System_Map.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UI_System_Map.md:1)
+    - [guides/UI_Component_Atlas.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UI_Component_Atlas.md:1)
 - وبدأت الآن أول دفعة تنفيذية داخل `Requests` نفسها:
   - عمود الإجراءات لم يعد يحمل ثلاثة أزرار صفية متجاورة
   - وصار يعتمد على:
