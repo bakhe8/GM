@@ -715,8 +715,6 @@ namespace GuaranteeManager
 
             menu.Items.Add(BuildMenuItem("عرض التفاصيل", "يحدد هذا الطلب ويعرض تفاصيله في اللوحة اليمنى.", (_, _) => SelectItem(item)));
             menu.Items.Add(new Separator());
-            menu.Items.Add(BuildMenuItem("سجل الضمان", "يفتح سجل الإصدارات والطلبات للضمان المرتبط بهذا الطلب.", (_, _) => _coordinator.OpenHistory(item)));
-            menu.Items.Add(BuildMenuItem("طلبات هذا الضمان", "يعرض الطلبات المرتبطة بهذا الضمان فقط داخل شاشة الطلبات.", (_, _) => ShowGuaranteeRequestsFor(item)));
             menu.Items.Add(BuildMenuItem(
                 "خطاب الطلب",
                 item.CanOpenLetter ? "يفتح خطاب الطلب الخارجي لهذا السجل." : "لا يوجد خطاب طلب محفوظ لهذا السجل.",
@@ -726,14 +724,6 @@ namespace GuaranteeManager
                     OpenLetter();
                 },
                 item.CanOpenLetter));
-            menu.Items.Add(new Separator());
-            menu.Items.Add(BuildMenuItem("تصدير المعلقات من نفس النوع", "يصدر كل الطلبات المعلقة من نفس نوع الطلب المحدد حاليًا.", (_, _) => _coordinator.ExportPendingSameType(item, _allRequests)));
-            menu.Items.Add(BuildMenuItem("تصدير التمديدات المعلقة", "يصدر جميع طلبات التمديد المعلقة الحالية.", (_, _) => _coordinator.ExportPendingExtensions(_allRequests)));
-            menu.Items.Add(BuildMenuItem("تصدير التخفيضات المعلقة", "يصدر جميع طلبات التخفيض المعلقة الحالية.", (_, _) => _coordinator.ExportPendingReductions(_allRequests)));
-            menu.Items.Add(BuildMenuItem("تصدير الإفراجات المعلقة", "يصدر جميع طلبات الإفراج المعلقة الحالية.", (_, _) => _coordinator.ExportPendingReleases(_allRequests)));
-            menu.Items.Add(BuildMenuItem("تصدير طلبات التسييل المعلقة", "يصدر جميع طلبات التسييل المعلقة الحالية.", (_, _) => _coordinator.ExportPendingLiquidations(_allRequests)));
-            menu.Items.Add(BuildMenuItem("تصدير طلبات التحقق المعلقة", "يصدر جميع طلبات التحقق المعلقة الحالية.", (_, _) => _coordinator.ExportPendingVerifications(_allRequests)));
-            menu.Items.Add(BuildMenuItem("تصدير طلبات الاستبدال المعلقة", "يصدر جميع طلبات الاستبدال المعلقة الحالية.", (_, _) => _coordinator.ExportPendingReplacements(_allRequests)));
             menu.Items.Add(new Separator());
             menu.Items.Add(BuildMenuItem("نسخ رقم الضمان", "ينسخ رقم الضمان لهذا الطلب إلى الحافظة.", (_, _) => _coordinator.CopyGuaranteeNo(item)));
             menu.Items.Add(BuildMenuItem("نسخ اسم المورد", "ينسخ اسم المورد لهذا الطلب إلى الحافظة.", (_, _) => _coordinator.CopySupplier(item)));
@@ -810,6 +800,7 @@ namespace GuaranteeManager
                 BuildMenuItem("طلب استبدال", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب استبدال جديد.", (_, _) => _coordinator.CreateReplacementFromEligible(ReloadAndFocusNewRequest)),
                 BuildMenuItem("طلب نقض", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب نقض جديد.", (_, _) => _coordinator.CreateAnnulmentFromEligible(ReloadAndFocusNewRequest))));
             menu.Items.Add(BuildSubmenu("تصدير الدفعات المعلقة", "أدوات ثانوية لتجميع الطلبات المعلقة وتصديرها حسب النوع.",
+                BuildMenuItem("تصدير نوع الطلب المحدد", "يصدر كل الطلبات المعلقة من نوع الطلب المحدد في الجدول.", (_, _) => _coordinator.ExportPendingSameType(SelectedItem, _allRequests)),
                 BuildMenuItem("تصدير التمديدات المعلقة", "يصدر جميع طلبات التمديد المعلقة الحالية.", (_, _) => _coordinator.ExportPendingExtensions(_allRequests)),
                 BuildMenuItem("تصدير التخفيضات المعلقة", "يصدر جميع طلبات التخفيض المعلقة الحالية.", (_, _) => _coordinator.ExportPendingReductions(_allRequests)),
                 BuildMenuItem("تصدير الإفراجات المعلقة", "يصدر جميع طلبات الإفراج المعلقة الحالية.", (_, _) => _coordinator.ExportPendingReleases(_allRequests)),
