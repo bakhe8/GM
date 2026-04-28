@@ -591,10 +591,10 @@
     - `Bank_Guarantees_20260428_1311.xlsx`
   - وظهر success صحيح من التطبيق نفسه:
     - `Shell.Status.Primary = تم إنشاء التقرير: Bank_Guarantees_20260428_1311.xlsx`
-    - `Shell.Status.Secondary = التقارير • المحفظة الكاملة`
+    - `Shell.Status.Secondary = التحليلات • المحفظة الكاملة`
 - بعد الفتح:
   - `Shell.Status.Primary = تم فتح التقرير.`
-  - `Shell.Status.Secondary = التقارير • Bank_Guarantees_20260428_1311.xlsx`
+  - `Shell.Status.Secondary = التحليلات • Bank_Guarantees_20260428_1311.xlsx`
   - كما صارت metadata في زر الفتح تتحدث مع الناتج الأخير:
     - `HelpText = افتح آخر ناتج محفوظ لهذا التقرير: Bank_Guarantees_20260428_1311.xlsx`
     - `ItemStatus = Bank_Guarantees_20260428_1311.xlsx`

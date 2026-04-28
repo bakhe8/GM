@@ -40,7 +40,7 @@ namespace GuaranteeManager
             ReportRunResult result = _reportResults[item.Key];
             if (result.Succeeded)
             {
-                _shellStatus.ShowSuccess(result.Message, $"التقارير • {item.Title}");
+                _shellStatus.ShowSuccess(result.Message, $"التحليلات • {item.Title}");
             }
             _diagnostics.RecordEvent("reports.operation", "run", new
             {
@@ -61,20 +61,20 @@ namespace GuaranteeManager
 
             if (string.IsNullOrWhiteSpace(result.OutputPath) || !File.Exists(result.OutputPath))
             {
-                MessageBox.Show("لا يوجد ملف تقرير صالح لفتحه حالياً.", "التقارير", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("لا يوجد ملف ناتج صالح لفتحه حالياً.", "التحليلات", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
             try
             {
                 Process.Start(new ProcessStartInfo(result.OutputPath) { UseShellExecute = true });
-                _shellStatus.ShowInfo("تم فتح التقرير.", $"التقارير • {Path.GetFileName(result.OutputPath)}");
+                _shellStatus.ShowInfo("تم فتح الملف الناتج.", $"التحليلات • {Path.GetFileName(result.OutputPath)}");
                 _diagnostics.RecordEvent("reports.operation", "open-last-output", new { item.Key, item.Title, result.OutputPath });
             }
             catch (Exception ex)
             {
                 _diagnostics.RecordEvent("reports.operation", "open-last-output-failed", new { item.Key, item.Title, result.OutputPath, ex.Message });
-                MessageBox.Show(ex.Message, "التقارير", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(ex.Message, "التحليلات", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 

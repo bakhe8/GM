@@ -241,12 +241,12 @@
                         <TextBlock Text="التحليلات والمخرجات" Style="{StaticResource NavSectionTitle}" />
                         <TextBlock Text="اقرأ الصورة الكلية ثم أنشئ المخرج المناسب" Style="{StaticResource NavSectionHint}" />
 
-                        <!-- التقارير -->
+                        <!-- التحليلات -->
                         <Button
                                 Margin="0,2,0,0"
                                 Command="{Binding ShowReportsCommand}"
                                 automation:AutomationProperties.AutomationId="Shell.Sidebar.Reports"
-                                automation:AutomationProperties.Name="التقارير">
+                                automation:AutomationProperties.Name="التحليلات">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
                                     <Style.Triggers>
@@ -261,7 +261,7 @@
                                 <Viewbox Width="20" Height="20" Margin="0,0,0,2">
                                     <Path Data="{StaticResource Icon.Reports}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                 </Viewbox>
-                                <TextBlock Text="التقارير" Style="{StaticResource NavLabelText}" />
+                                <TextBlock Text="التحليلات" Style="{StaticResource NavLabelText}" />
                             </StackPanel>
                         </Button>
 

@@ -39,9 +39,7 @@
   - `Shell.Sidebar.Dashboard`
   - `Shell.Sidebar.Guarantees`
   - `Shell.Sidebar.Requests`
-  - `Shell.Sidebar.Banks`
   - `Shell.Sidebar.Reports`
-  - `Shell.Sidebar.Notifications`
   - `Shell.Sidebar.Settings`
 - شريط الحالة:
   - `Shell.Status.Primary`
@@ -439,28 +437,43 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 ---
 
-## 8) التقارير (`ReportsWorkspaceSurface`)
+## 8) التحليلات والمخرجات (`ReportsWorkspaceSurface`)
 
 ### الدور
 
-بيت اختيار التقارير وتشغيلها وفتح آخر ناتج.
+بيت التحليلات والمخرجات:
+
+- إنشاء التقارير
+- فتح آخر ملف ناتج
+- والدخول إلى العدسات التحليلية الانتقالية مثل `البنوك`
 
 ### المكونات الرئيسية
+
+#### Home Header
+
+- عنوان البيت:
+  - `التحليلات والمخرجات`
+- توضيح الدور:
+  - التقارير هي المخرج الأساسي
+  - و`البنوك` عدسة تحليلية انتقالية من داخل البيت نفسه
+- `Reports.Toolbar.OpenBanksLens`
 
 #### Toolbar
 
 - `Reports.Toolbar.Run`
 - `Reports.Toolbar.Reset`
-- `Reports.Toolbar.OpenBanksLens`
 - `Reports.Filter.Category`
+- `كل المخرجات`
+- `مخرجات المحفظة`
+- `مخرجات تشغيلية`
 - `Reports.SearchBox`
 
 #### Metrics
 
-- `تقارير المحفظة`
-- `تقارير تشغيلية`
-- `إجمالي الخيارات`
-- `الحالة`
+- `مخرجات المحفظة`
+- `مخرجات تشغيلية`
+- `إجمالي المخرجات`
+- `جاهزية البيت`
 
 #### Table
 
@@ -470,21 +483,23 @@ Queue-first surface لتنفيذ الطلب الحالي.
   - الفئة
   - الحالة
   - المفتاح
-  - عنوان التقرير
+  - عنوان المخرج
 
 #### Detail Panel
 
 - `Reports.Detail.RunButton`
 - `Reports.Detail.OpenButton`
 - معلومات:
-  - المفتاح
-  - الفئة
-  - الحالة
-  - آخر ناتج / المخرج
+  - المفتاح التشغيلي
+  - نوع المخرج
+  - جاهزية المخرج
+  - آخر ملف ناتج
 
 ### القراءة المعمارية
 
-- surface outputs، لا surface تنفيذ يومي
+- هذا هو البيت الرسمي الحالي لعائلة:
+  - `التحليلات والمخرجات`
+- وتُفتح منه `البنوك` الآن كعدسة انتقالية تابعة، لا كبيت top-level
 
 ---
 

@@ -438,7 +438,7 @@ namespace GuaranteeManager
             ShellWorkspaceKeys.Guarantees => "الضمانات",
             ShellWorkspaceKeys.Requests => "الطلبات",
             ShellWorkspaceKeys.Banks => "البنوك",
-            ShellWorkspaceKeys.Reports => "التقارير",
+            ShellWorkspaceKeys.Reports => "التحليلات والمخرجات",
             ShellWorkspaceKeys.Notifications => "التنبيهات",
             ShellWorkspaceKeys.Settings => "الإعدادات",
             _ => "إدارة الضمانات البنكية"

@@ -49,10 +49,10 @@ namespace GuaranteeManager
             _showBanks = showBanks;
             _allReports = _dataService.BuildItems(actions);
             _closeRequested = closeRequested;
-            UiInstrumentation.Identify(this, "Reports.Workspace", "التقارير");
-            UiInstrumentation.Identify(_searchInput, "Reports.SearchBox", "بحث التقارير");
-            UiInstrumentation.Identify(_categoryFilter, "Reports.Filter.Category", "فئة التقارير");
-            UiInstrumentation.Identify(_list, "Reports.Table.List", "قائمة التقارير");
+            UiInstrumentation.Identify(this, "Reports.Workspace", "التحليلات والمخرجات");
+            UiInstrumentation.Identify(_searchInput, "Reports.SearchBox", "بحث التحليلات والمخرجات");
+            UiInstrumentation.Identify(_categoryFilter, "Reports.Filter.Category", "نوع المخرج");
+            UiInstrumentation.Identify(_list, "Reports.Table.List", "قائمة المخرجات");
 
             FlowDirection = FlowDirection.RightToLeft;
             FontFamily = new FontFamily("Segoe UI, Tahoma");
@@ -75,7 +75,7 @@ namespace GuaranteeManager
         private Grid BuildLayout()
         {
             return WorkspaceSurfaceChrome.BuildReferenceWorkspace(
-                BuildToolbar(),
+                BuildToolbarBlock(),
                 BuildMetrics(),
                 BuildTableSection(),
                 BuildDetailPanel());
@@ -84,23 +84,91 @@ namespace GuaranteeManager
         private void ConfigureButtons()
         {
             _runButton.Style = WorkspaceSurfaceChrome.Style("PrimaryButton");
-            _runButton.Content = "إنشاء التقرير";
+            _runButton.Content = "إنشاء المخرج";
             _runButton.FontSize = 9.5;
             _runButton.Click += (_, _) => RunSelectedReport();
-            UiInstrumentation.Identify(_runButton, "Reports.Detail.RunButton", "إنشاء التقرير");
+            UiInstrumentation.Identify(_runButton, "Reports.Detail.RunButton", "إنشاء المخرج");
 
             _openButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _openButton.Content = "فتح التقرير";
+            _openButton.Content = "فتح الملف الناتج";
             _openButton.FontSize = 9.5;
             _openButton.Click += (_, _) => OpenLastReport();
-            UiInstrumentation.Identify(_openButton, "Reports.Detail.OpenButton", "فتح التقرير");
+            UiInstrumentation.Identify(_openButton, "Reports.Detail.OpenButton", "فتح الملف الناتج");
 
             _openBanksLensButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             _openBanksLensButton.Content = "عدسة البنوك";
             _openBanksLensButton.FontSize = 9.5;
-            _openBanksLensButton.ToolTip = "يفتح العدسة التحليلية الانتقالية الخاصة بالبنوك.";
+            _openBanksLensButton.ToolTip = "يفتح العدسة التحليلية الانتقالية الخاصة بالبنوك من داخل هذا البيت.";
             _openBanksLensButton.Click += (_, _) => _showBanks(_searchInput.Text);
             UiInstrumentation.Identify(_openBanksLensButton, "Reports.Toolbar.OpenBanksLens", "عدسة البنوك");
+        }
+
+        private UIElement BuildToolbarBlock()
+        {
+            var stack = new StackPanel();
+            stack.Children.Add(BuildHomeHeader());
+            stack.Children.Add(BuildToolbar());
+            return stack;
+        }
+
+        private Border BuildHomeHeader()
+        {
+            var card = WorkspaceSurfaceChrome.Card(new Thickness(16, 14, 16, 14));
+            card.Margin = new Thickness(0, 0, 0, 10);
+
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var content = new StackPanel();
+            content.Children.Add(new TextBlock
+            {
+                Text = "التحليلات والمخرجات",
+                FontSize = 18,
+                FontWeight = FontWeights.Bold,
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
+                TextAlignment = TextAlignment.Right
+            });
+            content.Children.Add(new TextBlock
+            {
+                Text = "هذا هو البيت الذي تنشئ منه التقارير، ثم تفتح العدسات التحليلية الانتقالية مثل البنوك من السياق نفسه.",
+                FontSize = 11.5,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
+                Margin = new Thickness(0, 6, 0, 0),
+                TextWrapping = TextWrapping.Wrap,
+                TextAlignment = TextAlignment.Right
+            });
+            grid.Children.Add(content);
+
+            var actions = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                FlowDirection = FlowDirection.LeftToRight,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            actions.Children.Add(new Border
+            {
+                Background = WorkspaceSurfaceChrome.BrushFrom("#EEF4FF"),
+                BorderBrush = WorkspaceSurfaceChrome.BrushFrom("#C7D8F8"),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(999),
+                Padding = new Thickness(10, 5, 10, 5),
+                Margin = new Thickness(0, 0, 8, 0),
+                Child = new TextBlock
+                {
+                    Text = "عدسة انتقالية: البنوك",
+                    FontSize = 10.5,
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = WorkspaceSurfaceChrome.BrushFrom("#31578C")
+                }
+            });
+            actions.Children.Add(_openBanksLensButton);
+            Grid.SetColumn(actions, 1);
+            grid.Children.Add(actions);
+
+            card.Child = grid;
+            return card;
         }
 
         private Grid BuildToolbar()
@@ -110,18 +178,16 @@ namespace GuaranteeManager
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            var runButton = WorkspaceSurfaceChrome.ToolbarButton("إنشاء التقرير", primary: true, automationId: "Reports.Toolbar.Run");
+            var runButton = WorkspaceSurfaceChrome.ToolbarButton("إنشاء المخرج", primary: true, automationId: "Reports.Toolbar.Run");
             runButton.Click += (_, _) => RunSelectedReport();
             Grid.SetColumn(runButton, 0);
             toolbar.Children.Add(runButton);
 
-            var resetButton = WorkspaceSurfaceChrome.ToolbarButton("إعادة ضبط", automationId: "Reports.Toolbar.Reset");
+            var resetButton = WorkspaceSurfaceChrome.ToolbarButton("إعادة ضبط العرض", automationId: "Reports.Toolbar.Reset");
             resetButton.Click += (_, _) =>
             {
                 _searchInput.Text = string.Empty;
@@ -131,21 +197,18 @@ namespace GuaranteeManager
             Grid.SetColumn(resetButton, 2);
             toolbar.Children.Add(resetButton);
 
-            Grid.SetColumn(_openBanksLensButton, 4);
-            toolbar.Children.Add(_openBanksLensButton);
-
             _categoryFilter.Style = WorkspaceSurfaceChrome.Style("FilterComboBox");
-            _categoryFilter.Items.Add("كل التقارير");
-            _categoryFilter.Items.Add("تقارير المحفظة");
-            _categoryFilter.Items.Add("تقارير تشغيلية");
+            _categoryFilter.Items.Add("كل المخرجات");
+            _categoryFilter.Items.Add("مخرجات المحفظة");
+            _categoryFilter.Items.Add("مخرجات تشغيلية");
             _categoryFilter.SelectedIndex = 0;
             _categoryFilter.SelectionChanged += (_, _) => ApplyFilters();
-            Grid.SetColumn(_categoryFilter, 6);
+            Grid.SetColumn(_categoryFilter, 4);
             toolbar.Children.Add(_categoryFilter);
 
             _searchInput.TextChanged += (_, _) => ApplyFilters();
-            var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث بعنوان التقرير أو وصفه أو مفتاحه...");
-            Grid.SetColumn(searchBox, 8);
+            var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث بعنوان المخرج أو وصفه أو مفتاحه...");
+            Grid.SetColumn(searchBox, 6);
             toolbar.Children.Add(searchBox);
 
             return toolbar;
@@ -157,10 +220,10 @@ namespace GuaranteeManager
             {
                 Columns = 4
             };
-            metrics.Children.Add(BuildMetricCard("تقارير المحفظة", _portfolioValue, "#2563EB"));
-            metrics.Children.Add(BuildMetricCard("تقارير تشغيلية", _operationalValue, "#E09408"));
-            metrics.Children.Add(BuildMetricCard("إجمالي الخيارات", _totalValue, "#0F172A"));
-            metrics.Children.Add(BuildMetricCard("الحالة", _statusValue, "#16A34A"));
+            metrics.Children.Add(BuildMetricCard("مخرجات المحفظة", _portfolioValue, "#2563EB"));
+            metrics.Children.Add(BuildMetricCard("مخرجات تشغيلية", _operationalValue, "#E09408"));
+            metrics.Children.Add(BuildMetricCard("إجمالي المخرجات", _totalValue, "#0F172A"));
+            metrics.Children.Add(BuildMetricCard("جاهزية البيت", _statusValue, "#16A34A"));
             return metrics;
         }
 
@@ -207,7 +270,7 @@ namespace GuaranteeManager
             AddHeader(inner, "الفئة", 1, false);
             AddHeader(inner, "الحالة", 2, false);
             AddHeader(inner, "المفتاح", 3, true);
-            AddHeader(inner, "عنوان التقرير", 4, true);
+            AddHeader(inner, "عنوان المخرج", 4, true);
             header.Children.Add(inner);
             return header;
         }
@@ -281,11 +344,11 @@ namespace GuaranteeManager
                     _detailSubtitle,
                     _detailStatusBadgeBorder,
                     new Border { Height = 1, Background = WorkspaceSurfaceChrome.BrushFrom("#EDF2F7"), Margin = new Thickness(0, 13, 0, 12) },
-                    WorkspaceSurfaceChrome.InfoLine("المفتاح", _detailKey),
-                    WorkspaceSurfaceChrome.InfoLine("الفئة", _detailCategory),
-                    WorkspaceSurfaceChrome.InfoLine("الحالة التشغيلية", _detailStatus),
-                    WorkspaceSurfaceChrome.InfoLine("الإجراء التالي", _detailAction),
-                    BuildInfoBlock("آخر ناتج", _detailOutput)
+                    WorkspaceSurfaceChrome.InfoLine("المفتاح التشغيلي", _detailKey),
+                    WorkspaceSurfaceChrome.InfoLine("نوع المخرج", _detailCategory),
+                    WorkspaceSurfaceChrome.InfoLine("جاهزية المخرج", _detailStatus),
+                    WorkspaceSurfaceChrome.InfoLine("الخطوة التالية", _detailAction),
+                    BuildInfoBlock("آخر ملف ناتج", _detailOutput)
                 }
             };
         }
@@ -298,7 +361,7 @@ namespace GuaranteeManager
 
             grid.Children.Add(new TextBlock
             {
-                Text = "تفاصيل التقرير",
+                Text = "تفاصيل المخرج",
                 FontSize = 16,
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
@@ -399,7 +462,7 @@ namespace GuaranteeManager
         private void ApplyFilters()
         {
             _list.Items.Clear();
-            string category = _categoryFilter.SelectedItem as string ?? "كل التقارير";
+            string category = _categoryFilter.SelectedItem as string ?? "كل المخرجات";
             ReportsWorkspaceFilterResult filtered = _dataService.BuildFilteredItems(
                 _allReports,
                 _searchInput.Text,
@@ -571,26 +634,26 @@ namespace GuaranteeManager
 
             if (SelectedItem == null)
             {
-                AutomationProperties.SetName(_runButton, "إنشاء التقرير");
-                AutomationProperties.SetHelpText(_runButton, "اختر تقريرًا أولًا ثم أنشئ ناتجه.");
+                AutomationProperties.SetName(_runButton, "إنشاء المخرج");
+                AutomationProperties.SetHelpText(_runButton, "اختر مخرجًا أولًا ثم أنشئ ملفه الناتج.");
                 AutomationProperties.SetItemStatus(_runButton, "---");
-                AutomationProperties.SetName(_openButton, "فتح التقرير");
-                AutomationProperties.SetHelpText(_openButton, "لا يوجد ناتج جاهز للفتح حتى الآن.");
+                AutomationProperties.SetName(_openButton, "فتح الملف الناتج");
+                AutomationProperties.SetHelpText(_openButton, "لا يوجد ملف ناتج جاهز للفتح حتى الآن.");
                 AutomationProperties.SetItemStatus(_openButton, "---");
                 return;
             }
 
-            AutomationProperties.SetName(_runButton, $"إنشاء تقرير {SelectedItem.Title}");
+            AutomationProperties.SetName(_runButton, $"إنشاء مخرج {SelectedItem.Title}");
             AutomationProperties.SetHelpText(_runButton, state.Action);
             AutomationProperties.SetItemStatus(_runButton, SelectedItem.Key);
 
             string outputLabel = state.CanOpen && !string.IsNullOrWhiteSpace(state.Output)
                 ? System.IO.Path.GetFileName(state.Output)
                 : "لا يوجد ناتج جاهز";
-            AutomationProperties.SetName(_openButton, $"فتح تقرير {SelectedItem.Title}");
+            AutomationProperties.SetName(_openButton, $"فتح ناتج {SelectedItem.Title}");
             AutomationProperties.SetHelpText(_openButton, state.CanOpen
-                ? $"افتح آخر ناتج محفوظ لهذا التقرير: {outputLabel}"
-                : "أنشئ التقرير أولًا حتى يصبح له ناتج جاهز للفتح.");
+                ? $"افتح آخر ملف ناتج محفوظ لهذا المخرج: {outputLabel}"
+                : "أنشئ المخرج أولًا حتى يصبح له ملف ناتج جاهز للفتح.");
             AutomationProperties.SetItemStatus(_openButton, outputLabel);
         }
 

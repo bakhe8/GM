@@ -13,7 +13,7 @@ namespace GuaranteeManager
                 [ShellWorkspaceKeys.Guarantees] = new[] { "الضمانات", "ضمان", "guarantees", "guarantee" },
                 [ShellWorkspaceKeys.Requests] = new[] { "الطلبات", "طلبات", "requests", "request" },
                 [ShellWorkspaceKeys.Banks] = new[] { "البنوك", "بنوك", "banks", "bank" },
-                [ShellWorkspaceKeys.Reports] = new[] { "التقارير", "تقارير", "reports", "report" },
+                [ShellWorkspaceKeys.Reports] = new[] { "التقارير", "تقارير", "التحليلات", "تحليلات", "المخرجات", "analytics", "analysis", "outputs", "reports", "report" },
                 [ShellWorkspaceKeys.Notifications] = new[] { "التنبيهات", "تنبيهات", "المتابعات", "notifications", "alerts" },
                 [ShellWorkspaceKeys.Settings] = new[] { "الإعدادات", "المسارات", "settings", "paths" }
             };

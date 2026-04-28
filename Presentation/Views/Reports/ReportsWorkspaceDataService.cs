@@ -25,8 +25,8 @@ namespace GuaranteeManager
             IEnumerable<ReportWorkspaceItem> query = allReports;
             query = categoryFilter switch
             {
-                "تقارير المحفظة" => query.Where(item => item.IsPortfolio),
-                "تقارير تشغيلية" => query.Where(item => !item.IsPortfolio),
+                "مخرجات المحفظة" => query.Where(item => item.IsPortfolio),
+                "مخرجات تشغيلية" => query.Where(item => !item.IsPortfolio),
                 _ => query
             };
 
@@ -42,8 +42,8 @@ namespace GuaranteeManager
             List<ReportWorkspaceItem> filtered = query.ToList();
             string status = results.Values.Any(result => !result.Succeeded) ? "متابعة" : "جاهز";
             string summary = filtered.Count == 0
-                ? "لا توجد تقارير مطابقة."
-                : $"عرض 1 - {filtered.Count.ToString("N0", CultureInfo.InvariantCulture)} من أصل {allReports.Count.ToString("N0", CultureInfo.InvariantCulture)} تقرير";
+                ? "لا توجد مخرجات مطابقة."
+                : $"عرض 1 - {filtered.Count.ToString("N0", CultureInfo.InvariantCulture)} من أصل {allReports.Count.ToString("N0", CultureInfo.InvariantCulture)} مخرج";
 
             return new ReportsWorkspaceFilterResult(
                 filtered,
@@ -79,8 +79,8 @@ namespace GuaranteeManager
             if (selectedItem == null)
             {
                 return new ReportsWorkspaceDetailState(
-                    "اختر تقريراً",
-                    "ستظهر تفاصيل التقرير المحدد هنا.",
+                    "اختر مخرجًا",
+                    "ستظهر تفاصيل المخرج المحدد هنا مع آخر ملف ناتج له.",
                     "---",
                     WorkspaceSurfaceChrome.BrushFrom("#64748B"),
                     WorkspaceSurfaceChrome.BrushFrom("#F8FAFC"),
@@ -99,7 +99,7 @@ namespace GuaranteeManager
             ReportRunState runState = GetRunState(selectedItem, results);
             string output = TryGetResult(selectedItem, results, out ReportRunResult result) && !string.IsNullOrWhiteSpace(result.OutputPath)
                 ? result.OutputPath
-                : "لم يتم إنشاء ملف بعد.";
+                : "لم يتم إنشاء ملف ناتج بعد.";
 
             return new ReportsWorkspaceDetailState(
                 selectedItem.Title,
@@ -128,7 +128,7 @@ namespace GuaranteeManager
                 return new ReportRunState(
                     "جاهز للتشغيل",
                     "جاهز للتشغيل",
-                    "إنشاء التقرير الآن.",
+                    "أنشئ المخرج الآن.",
                     WorkspaceSurfaceChrome.BrushFrom("#64748B"),
                     WorkspaceSurfaceChrome.BrushFrom("#F8FAFC"),
                     WorkspaceSurfaceChrome.BrushFrom("#E2E8F0"));
@@ -138,7 +138,7 @@ namespace GuaranteeManager
             {
                 return new ReportRunState(
                     "آخر تشغيل ناجح",
-                    string.IsNullOrWhiteSpace(result.Message) ? "تم إنشاء ناتج حديث لهذا التقرير." : result.Message,
+                    string.IsNullOrWhiteSpace(result.Message) ? "تم إنشاء ملف ناتج حديث لهذا المخرج." : result.Message,
                     "يمكن فتح الملف الناتج أو إعادة إنشاء نسخة أحدث.",
                     WorkspaceSurfaceChrome.BrushFrom("#16A34A"),
                     WorkspaceSurfaceChrome.BrushFrom("#F2FBF4"),
@@ -147,7 +147,7 @@ namespace GuaranteeManager
 
             return new ReportRunState(
                 "تعذر الإنشاء",
-                string.IsNullOrWhiteSpace(result.Message) ? "فشل إنشاء التقرير في آخر محاولة." : result.Message,
+                string.IsNullOrWhiteSpace(result.Message) ? "فشل إنشاء المخرج في آخر محاولة." : result.Message,
                 "راجع بيانات الإدخال ثم أعد المحاولة.",
                 WorkspaceSurfaceChrome.BrushFrom("#EF4444"),
                 WorkspaceSurfaceChrome.BrushFrom("#FFF3F3"),
@@ -218,7 +218,7 @@ namespace GuaranteeManager
                 action.Key,
                 action.Title,
                 action.Description,
-                isPortfolio ? "محفظة" : "تشغيلي",
+                isPortfolio ? "مخرج محفظة" : "مخرج تشغيلي",
                 isPortfolio,
                 WorkspaceSurfaceChrome.BrushFrom(isPortfolio ? "#2563EB" : "#E09408"));
         }
