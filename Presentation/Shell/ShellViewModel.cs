@@ -549,6 +549,7 @@ namespace GuaranteeManager
 
         public void Refresh()
         {
+            GuaranteeRow? previousSelection = SelectedGuarantee;
             GuaranteeWorkspaceSnapshot snapshot = _guaranteeData.BuildSnapshot(
                 SearchText,
                 SelectedBank,
@@ -577,7 +578,7 @@ namespace GuaranteeManager
             FooterSummary = snapshot.FooterSummary;
 
             _trackSelectedGuaranteeAsLastFile = false;
-            SelectedGuarantee = Guarantees.FirstOrDefault();
+            SelectedGuarantee = ResolvePreferredVisibleGuarantee(previousSelection);
             _trackSelectedGuaranteeAsLastFile = true;
             if (ExportVisibleGuaranteesCommand is RelayCommand exportCommand)
             {
@@ -585,6 +586,27 @@ namespace GuaranteeManager
             }
 
             WriteDiagnosticsState("refresh");
+        }
+
+        private GuaranteeRow? ResolvePreferredVisibleGuarantee(GuaranteeRow? previousSelection)
+        {
+            if (previousSelection != null)
+            {
+                int previousRootId = previousSelection.RootId > 0
+                    ? previousSelection.RootId
+                    : previousSelection.Id;
+
+                GuaranteeRow? matchingRow = Guarantees.FirstOrDefault(row =>
+                    row.RootId == previousRootId
+                    || row.Id == previousSelection.Id);
+
+                if (matchingRow != null)
+                {
+                    return matchingRow;
+                }
+            }
+
+            return Guarantees.FirstOrDefault();
         }
 
         private void SelectGuarantee(GuaranteeRow? row)
