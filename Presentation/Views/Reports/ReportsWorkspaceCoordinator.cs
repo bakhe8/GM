@@ -14,6 +14,7 @@ namespace GuaranteeManager
         private readonly IDatabaseService _database;
         private readonly IExcelService _excel;
         private readonly IUiDiagnosticsService _diagnostics;
+        private readonly IShellStatusService _shellStatus;
         private readonly Dictionary<string, ReportRunResult> _reportResults = new(StringComparer.OrdinalIgnoreCase);
 
         public ReportsWorkspaceCoordinator(
@@ -23,6 +24,7 @@ namespace GuaranteeManager
             _database = database;
             _excel = excel;
             _diagnostics = App.CurrentApp.GetRequiredService<IUiDiagnosticsService>();
+            _shellStatus = App.CurrentApp.GetRequiredService<IShellStatusService>();
         }
 
         public IReadOnlyDictionary<string, ReportRunResult> Results => _reportResults;
@@ -35,12 +37,17 @@ namespace GuaranteeManager
             }
 
             _reportResults[item.Key] = Run(item.Key);
+            ReportRunResult result = _reportResults[item.Key];
+            if (result.Succeeded)
+            {
+                _shellStatus.ShowSuccess(result.Message, $"التقارير • {item.Title}");
+            }
             _diagnostics.RecordEvent("reports.operation", "run", new
             {
                 item.Key,
                 item.Title,
-                _reportResults[item.Key].Succeeded,
-                _reportResults[item.Key].OutputPath
+                result.Succeeded,
+                result.OutputPath
             });
             return true;
         }
@@ -61,6 +68,7 @@ namespace GuaranteeManager
             try
             {
                 Process.Start(new ProcessStartInfo(result.OutputPath) { UseShellExecute = true });
+                _shellStatus.ShowInfo("تم فتح التقرير.", $"التقارير • {Path.GetFileName(result.OutputPath)}");
                 _diagnostics.RecordEvent("reports.operation", "open-last-output", new { item.Key, item.Title, result.OutputPath });
             }
             catch (Exception ex)

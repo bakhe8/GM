@@ -540,3 +540,49 @@
 - `Dashboard` صارت أكثر صدقًا مع القصد الحالي للصف
 - `Notifications` صارت surface دخول حقيقي، لا مجرد سطح نسخ ومراجعة
 - والسياق صار ينتقل بين السطوح بطريقة أوضح للمستخدم وللأداة معًا
+
+### الجولة 5 — Reports/Exports cross-entry
+
+انتقلنا بعد ذلك إلى سطح `Reports` لأن منطق "الدخول من أكثر من سطح" لا يكتمل إذا بقيت المخرجات والتصدير silent أو غامضة.
+
+ما الذي أُغلق في هذه الجولة:
+
+- `ReportsWorkspaceCoordinator`:
+  - `TryRun(...)` صار يعلن النجاح عبر `IShellStatusService`
+  - `OpenLastReport(...)` صار يعلن فتح الناتج عبر `IShellStatusService`
+- `ReportsWorkspaceSurface`:
+  - `Reports.Detail.RunButton`
+  - `Reports.Detail.OpenButton`
+  لم تعودا generic في خصائص الأتمتة؛ صارت metadata نفسها تعكس عنوان التقرير وحالة الناتج
+
+التحقق الحي أكد:
+
+- قبل الإنشاء:
+  - `Reports.Detail.OpenButton`
+    - `HelpText = أنشئ التقرير أولًا حتى يصبح له ناتج جاهز للفتح.`
+    - `ItemStatus = لا يوجد ناتج جاهز`
+- بعد الإنشاء:
+  - حوار الحفظ النظامي `حفظ تقرير السجلات الحالية` ظهر كما ينبغي
+  - حُفظ الملف فعليًا:
+    - `Bank_Guarantees_20260428_1311.xlsx`
+  - وظهر success صحيح من التطبيق نفسه:
+    - `Shell.Status.Primary = تم إنشاء التقرير: Bank_Guarantees_20260428_1311.xlsx`
+    - `Shell.Status.Secondary = التقارير • المحفظة الكاملة`
+- بعد الفتح:
+  - `Shell.Status.Primary = تم فتح التقرير.`
+  - `Shell.Status.Secondary = التقارير • Bank_Guarantees_20260428_1311.xlsx`
+  - كما صارت metadata في زر الفتح تتحدث مع الناتج الأخير:
+    - `HelpText = افتح آخر ناتج محفوظ لهذا التقرير: Bank_Guarantees_20260428_1311.xlsx`
+    - `ItemStatus = Bank_Guarantees_20260428_1311.xlsx`
+
+الخلاصة:
+
+- `Reports` لم تعد surface تصدير functional فقط
+- صارت surface مفهومة وهادئة في نجاحاتها، ومقروءة أفضل للأداة وللوصولية
+- ولم يظهر bug جديد في التطبيق خارج هذا الصمت السابق
+
+ملاحظة tooling صغيرة ظهرت أثناء الجولة:
+
+- استهداف حقل `File name:` داخل `SaveFileDialog` النظامية عبر `SetField -Label` لم يكن كافيًا بعد
+- لم نعتبرها blocker للمنتج لأن الحفظ الافتراضي أكمل الجولة cleanly
+- لكنها تبقى حافة مشروعة للأداة إذا احتجنا naming حرًا أكثر في جولات لاحقة

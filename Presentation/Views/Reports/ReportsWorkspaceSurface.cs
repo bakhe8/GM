@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Windows.Automation;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -551,6 +552,30 @@ namespace GuaranteeManager
             _detailOutput.Text = state.Output;
             _runButton.IsEnabled = state.CanRun;
             _openButton.IsEnabled = state.CanOpen;
+
+            if (SelectedItem == null)
+            {
+                AutomationProperties.SetName(_runButton, "إنشاء التقرير");
+                AutomationProperties.SetHelpText(_runButton, "اختر تقريرًا أولًا ثم أنشئ ناتجه.");
+                AutomationProperties.SetItemStatus(_runButton, "---");
+                AutomationProperties.SetName(_openButton, "فتح التقرير");
+                AutomationProperties.SetHelpText(_openButton, "لا يوجد ناتج جاهز للفتح حتى الآن.");
+                AutomationProperties.SetItemStatus(_openButton, "---");
+                return;
+            }
+
+            AutomationProperties.SetName(_runButton, $"إنشاء تقرير {SelectedItem.Title}");
+            AutomationProperties.SetHelpText(_runButton, state.Action);
+            AutomationProperties.SetItemStatus(_runButton, SelectedItem.Key);
+
+            string outputLabel = state.CanOpen && !string.IsNullOrWhiteSpace(state.Output)
+                ? System.IO.Path.GetFileName(state.Output)
+                : "لا يوجد ناتج جاهز";
+            AutomationProperties.SetName(_openButton, $"فتح تقرير {SelectedItem.Title}");
+            AutomationProperties.SetHelpText(_openButton, state.CanOpen
+                ? $"افتح آخر ناتج محفوظ لهذا التقرير: {outputLabel}"
+                : "أنشئ التقرير أولًا حتى يصبح له ناتج جاهز للفتح.");
+            AutomationProperties.SetItemStatus(_openButton, outputLabel);
         }
 
         private void RunSelectedReport()
