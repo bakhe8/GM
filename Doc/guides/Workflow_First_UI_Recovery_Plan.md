@@ -109,6 +109,11 @@
 
 ## ترتيب التنفيذ المعتمد
 
+> **ملاحظة:** الترتيب الأولي أدناه كان نقطة انطلاق.  
+> وبعد إعادة التقييم الشاملة لكل الواجهات صار المرجع الأحدث للترتيب هنا:
+>
+> - [UI_Recovery_Priority_Map.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UI_Recovery_Priority_Map.md:1)
+
 ### 0. `Navigation / Canonical Homes`
 
 لماذا أولًا؟

@@ -62,10 +62,32 @@
   - [guides/Workflow_First_UI_Recovery_Plan.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Workflow_First_UI_Recovery_Plan.md:1)
 - ومراجعها التنفيذية هنا:
   - [guides/Core_Workflows.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Core_Workflows.md:1)
+  - [guides/UI_Recovery_Priority_Map.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UI_Recovery_Priority_Map.md:1)
   - [guides/Navigation_Architecture_Map.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Navigation_Architecture_Map.md:1)
   - [guides/Canonical_Home_Matrix.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Canonical_Home_Matrix.md:1)
   - [guides/UI_Operational_Rules.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UI_Operational_Rules.md:1)
   - [guides/Surface_Audit_Matrix.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Surface_Audit_Matrix.md:1)
+- ثم أُنجز الآن أيضًا **إعادة تقييم كاملة لأولويات جميع الواجهات**:
+  - بدل الترتيب الأولي البسيط:
+    - `Requests`
+    - `Guarantee File`
+    - `Dashboard`
+  - صار عندنا الآن ترتيب أشمل وأدق:
+    - `Shell / Navigation / Sidebar`
+    - `اليوم`
+    - `Requests`
+    - `Guarantee File`
+    - ثم طبقة ثانية تابعة:
+      - `Guarantees`
+      - `Notifications`
+      - `HistoryDialog`
+      - `OperationalInquiryDialog`
+    - ثم طبقة ثالثة للتجميع:
+      - `Reports`
+      - `Banks`
+    - ثم `Settings` كتثبيت فقط
+  - والمرجع الرسمي الكامل لهذا الترتيب هنا:
+    - [guides/UI_Recovery_Priority_Map.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UI_Recovery_Priority_Map.md:1)
 - وأُغلقت الآن أيضًا أول وقفة معمارية على مستوى البرنامج كله:
   - السايدبار الحالية حُكم عليها بأنها **مسطحة أكثر من اللازم**
   - وأن عناصر مثل `Notifications` و`Banks` لا ينبغي أن تستمر top-level مستقلة من نفس وزن:
