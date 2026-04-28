@@ -776,3 +776,16 @@
     - `HasLastFile = true`
     - `LastFileGuaranteeNo = BG-2026-0007`
 - هذا يعني أن الرجوع بعد الفتح لم يعد فقط “يعمل”، بل يحافظ أيضًا على **نقطة العمل** التي انطلق منها المستخدم
+- ثم أُغلقت جولة `return-to-work` موازية من `Dashboard` نفسها:
+  - `Dashboard -> راجع الإجراء الآن -> إغلاق ملف الضمان`
+  - وبعد الرجوع بقي:
+    - `Dashboard.SearchBox = ""`
+    - `Dashboard.Detail.PrimaryActionButton`
+      - `Name = راجع الإجراء الآن`
+      - `ItemStatus = BG-2026-0007`
+  - كما بقيت session صادقة:
+    - `CurrentWorkspaceKey = Dashboard`
+    - `LastFileGuaranteeNo = BG-2026-0007`
+    - `SelectedGuaranteeNo = BG-2026-0007`
+  - ولم تبقَ أي نافذة ثانوية مفتوحة بعد الإغلاق
+- هذا يعني أن مسار `Dashboard -> فتح الضمان -> الرجوع` لا يفتح الملف فقط، بل يعيد المستخدم cleanly إلى **نفس نقطة العمل** داخل اللوحة
