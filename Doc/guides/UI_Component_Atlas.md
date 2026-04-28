@@ -333,17 +333,22 @@ Queue-first surface لتنفيذ الطلب الحالي.
 - `GuaranteeDetailPanel.ScrollViewer`
 - `GuaranteeDetailPanel.CloseDetachedFileButton` عند العمل كنافذة مستقلة
 
-#### Executive Summary + Navigator
+#### Start Here + File Map
 
 - `GuaranteeDetailPanel.Section.ExecutiveSummary`
-- navigator داخلي إلى:
-  - `OpenFile`
-  - `ExecutiveSummary`
-  - `Requests`
-  - `Timeline`
-  - `Attachments`
-  - `Outputs`
-  - `Actions`
+- بداية القرار صارت تظهر أولًا داخل:
+  - `GuaranteeDetailPanel.Section.ActionSummary`
+  - `GuaranteeDetailPanel.ActionSummary.FocusSuggested`
+- خريطة الملف لم تعد روابط مسطحة فقط، بل صارت مجموعتين:
+  - `القرار والتنفيذ`
+    - `ExecutiveSummary`
+    - `Requests`
+    - `Actions`
+  - `المراجعة والأثر`
+    - `Timeline`
+    - `Attachments`
+    - `Outputs`
+    - `OpenFile`
 
 #### Reference Facts
 
@@ -353,11 +358,6 @@ Queue-first surface لتنفيذ الطلب الحالي.
 - تاريخ الإصدار
 - تاريخ الانتهاء
 - الأيام المتبقية
-
-#### Action Summary
-
-- `GuaranteeDetailPanel.Section.ActionSummary`
-- `GuaranteeDetailPanel.ActionSummary.FocusSuggested`
 
 #### Operational Inquiry
 
