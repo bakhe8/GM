@@ -235,14 +235,36 @@
                             </StackPanel>
                         </Button>
 
-                        <Border Style="{StaticResource NavSectionDivider}" />
+                        <!-- البنوك -->
+                        <Button
+                                Margin="0,2,0,0"
+                                Command="{Binding ShowBanksCommand}"
+                                automation:AutomationProperties.AutomationId="Shell.Sidebar.Banks"
+                                automation:AutomationProperties.Name="البنوك">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentWorkspaceKey}" Value="{x:Static local:ShellWorkspaceKeys.Banks}">
+                                            <Setter Property="Background" Value="#1D5ED8" />
+                                            <Setter Property="Foreground" Value="White" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <StackPanel>
+                                <Viewbox Width="20" Height="20" Margin="0,0,0,2">
+                                    <Path Data="{StaticResource Icon.Banks}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                </Viewbox>
+                                <TextBlock Text="البنوك" Style="{StaticResource NavLabelText}" />
+                            </StackPanel>
+                        </Button>
 
-                        <!-- التحليلات -->
+                        <!-- التقارير -->
                         <Button
                                 Margin="0,2,0,0"
                                 Command="{Binding ShowReportsCommand}"
                                 automation:AutomationProperties.AutomationId="Shell.Sidebar.Reports"
-                                automation:AutomationProperties.Name="التحليلات">
+                                automation:AutomationProperties.Name="التقارير">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
                                     <Style.Triggers>
@@ -257,7 +279,7 @@
                                 <Viewbox Width="20" Height="20" Margin="0,0,0,2">
                                     <Path Data="{StaticResource Icon.Reports}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                 </Viewbox>
-                                <TextBlock Text="التحليلات" Style="{StaticResource NavLabelText}" />
+                                <TextBlock Text="التقارير" Style="{StaticResource NavLabelText}" />
                             </StackPanel>
                         </Button>
 

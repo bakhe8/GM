@@ -68,10 +68,47 @@ namespace GuaranteeManager
         private Grid BuildLayout()
         {
             return WorkspaceSurfaceChrome.BuildReferenceWorkspace(
-                BuildToolbar(),
+                BuildToolbarBlock(),
                 BuildMetrics(),
                 BuildTableSection(),
                 BuildDetailPanel());
+        }
+
+        private UIElement BuildToolbarBlock()
+        {
+            var stack = new StackPanel();
+            stack.Children.Add(BuildHomeHeader());
+            stack.Children.Add(BuildToolbar());
+            return stack;
+        }
+
+        private Border BuildHomeHeader()
+        {
+            var card = WorkspaceSurfaceChrome.Card(new Thickness(16, 14, 16, 14));
+            card.Margin = new Thickness(0, 0, 0, 10);
+
+            var content = new StackPanel();
+            content.Children.Add(new TextBlock
+            {
+                Text = "البنوك",
+                FontSize = 18,
+                FontWeight = FontWeights.Bold,
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
+                TextAlignment = TextAlignment.Right
+            });
+            content.Children.Add(new TextBlock
+            {
+                Text = "تعامل مع البنوك وتوزيع الضمانات حسب البنك والقيمة والحالة",
+                FontSize = 11.5,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
+                Margin = new Thickness(0, 6, 0, 0),
+                TextWrapping = TextWrapping.Wrap,
+                TextAlignment = TextAlignment.Right
+            });
+
+            card.Child = content;
+            return card;
         }
 
         private Grid BuildToolbar()

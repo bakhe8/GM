@@ -440,7 +440,7 @@ namespace GuaranteeManager
             ShellWorkspaceKeys.Guarantees => "الضمانات",
             ShellWorkspaceKeys.Requests => "الطلبات",
             ShellWorkspaceKeys.Banks => "البنوك",
-            ShellWorkspaceKeys.Reports => "التحليلات والمخرجات",
+            ShellWorkspaceKeys.Reports => "التقارير",
             ShellWorkspaceKeys.Settings => "الإعدادات",
             _ => "إدارة الضمانات البنكية"
         };
@@ -1305,7 +1305,7 @@ namespace GuaranteeManager
 
             ActivateWorkspace(
                 ShellWorkspaceKeys.Reports,
-                _workspaceFactory.CreateReportsWorkspace(ShowBanksWorkspace, CloseActiveWorkspace, initialSearchText));
+                _workspaceFactory.CreateReportsWorkspace(CloseActiveWorkspace, initialSearchText));
         }
 
         private void ShowSettingsWorkspace()
