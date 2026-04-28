@@ -565,7 +565,7 @@ namespace GuaranteeManager
                 outputCount,
                 letterCount,
                 responseCount,
-                ActionEligibility.Enabled("يفتح ملف الضمان على القسم الأنسب لحالته الحالية."),
+                ActionEligibility.Enabled(BuildOpenFileHint(suggestedArea)),
                 registerResponse,
                 openAttachments,
                 openRequests,
@@ -581,6 +581,20 @@ namespace GuaranteeManager
                 summaryDetail,
                 suggestedArea,
                 suggestedLabel);
+        }
+
+        private static string BuildOpenFileHint(GuaranteeFileFocusArea suggestedArea)
+        {
+            return suggestedArea switch
+            {
+                GuaranteeFileFocusArea.Requests => "يفتح ملف الضمان مباشرة عند قسم الطلبات حتى تبدأ من نقطة المتابعة الحالية.",
+                GuaranteeFileFocusArea.Outputs => "يفتح ملف الضمان مباشرة عند قسم المخرجات والأثر المرتبط بهذا الضمان.",
+                GuaranteeFileFocusArea.Attachments => "يفتح ملف الضمان مباشرة عند قسم الأدلة والمرفقات الرسمية.",
+                GuaranteeFileFocusArea.Series => "يفتح ملف الضمان مباشرة عند الخط الزمني لهذا الضمان.",
+                GuaranteeFileFocusArea.Actions => "يفتح ملف الضمان مباشرة عند الإجراءات السريعة المناسبة للحالة الحالية.",
+                GuaranteeFileFocusArea.ExecutiveSummary => "يفتح ملف الضمان عند الملخص التنفيذي لهذا الضمان.",
+                _ => "يفتح ملف الضمان على القسم الأنسب لحالته الحالية."
+            };
         }
 
         private static ActionEligibility BuildLifecycleAction(

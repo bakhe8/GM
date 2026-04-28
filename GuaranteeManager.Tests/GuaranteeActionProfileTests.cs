@@ -34,6 +34,47 @@ namespace GuaranteeManager.Tests
             Assert.Contains("منتهية الصلاحية", profile.ReleaseAction.Hint);
         }
 
+        [Fact]
+        public void Build_WithPendingRequest_OpensFileAtRequests()
+        {
+            Guarantee guarantee = CreateGuarantee(GuaranteeLifecycleStatus.Active);
+            List<WorkflowRequest> requests = new()
+            {
+                new WorkflowRequest
+                {
+                    Type = RequestType.Liquidation,
+                    Status = RequestStatus.Pending,
+                    RequestDate = DateTime.Today
+                }
+            };
+
+            GuaranteeActionProfile profile = GuaranteeActionProfile.Build(guarantee, requests);
+
+            Assert.Equal(GuaranteeFileFocusArea.Requests, profile.SuggestedFocusArea);
+            Assert.Contains("قسم الطلبات", profile.OpenFileAction.Hint);
+        }
+
+        [Fact]
+        public void Build_WithWorkflowOutputs_OpensFileAtOutputs()
+        {
+            Guarantee guarantee = CreateGuarantee(GuaranteeLifecycleStatus.Active);
+            List<WorkflowRequest> requests = new()
+            {
+                new WorkflowRequest
+                {
+                    Type = RequestType.Release,
+                    Status = RequestStatus.Executed,
+                    RequestDate = DateTime.Today,
+                    LetterSavedFileName = "letter.docx"
+                }
+            };
+
+            GuaranteeActionProfile profile = GuaranteeActionProfile.Build(guarantee, requests);
+
+            Assert.Equal(GuaranteeFileFocusArea.Outputs, profile.SuggestedFocusArea);
+            Assert.Contains("قسم المخرجات", profile.OpenFileAction.Hint);
+        }
+
         [Theory]
         [InlineData(GuaranteeLifecycleStatus.Released)]
         [InlineData(GuaranteeLifecycleStatus.Liquidated)]

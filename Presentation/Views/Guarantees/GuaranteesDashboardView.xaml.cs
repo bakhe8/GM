@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Linq;
@@ -58,6 +59,11 @@ namespace GuaranteeManager
                     Header = section.Header,
                     ToolTip = section.Description
                 };
+                UiInstrumentation.Identify(
+                    sectionMenu,
+                    UiInstrumentation.SanitizeAutomationKey("Guarantees.RowMenu.InquirySection", section.Header),
+                    $"{section.Header} | {row.GuaranteeNo}");
+                AutomationProperties.SetHelpText(sectionMenu, section.Description);
 
                 foreach (ContextActionDefinition action in section.Items.Where(item => item.IsLeaf))
                 {
@@ -74,6 +80,12 @@ namespace GuaranteeManager
                         IsEnabled = availability.IsEnabled,
                         ToolTip = tooltip
                     };
+                    UiInstrumentation.Identify(
+                        actionMenu,
+                        UiInstrumentation.SanitizeAutomationKey("Guarantees.RowMenu.InquiryAction", action.Id!),
+                        $"{action.Header} | {row.GuaranteeNo}");
+                    AutomationProperties.SetHelpText(actionMenu, tooltip);
+                    AutomationProperties.SetItemStatus(actionMenu, row.GuaranteeNo);
                     ToolTipService.SetShowOnDisabled(actionMenu, true);
 
                     actionMenu.Icon = new Viewbox
