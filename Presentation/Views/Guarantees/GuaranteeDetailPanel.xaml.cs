@@ -10,11 +10,13 @@ namespace GuaranteeManager
     public partial class GuaranteeDetailPanel : UserControl
     {
         private ShellViewModel? _shellViewModel;
+        private int _lastAppliedFocusRequestVersion;
 
         public GuaranteeDetailPanel()
         {
             InitializeComponent();
             DataContextChanged += GuaranteeDetailPanel_DataContextChanged;
+            Loaded += GuaranteeDetailPanel_Loaded;
             Unloaded += GuaranteeDetailPanel_Unloaded;
         }
 
@@ -29,7 +31,13 @@ namespace GuaranteeManager
             if (_shellViewModel != null)
             {
                 _shellViewModel.GuaranteeFocusRequested += OnGuaranteeFocusRequested;
+                TryApplyPendingOrCurrentFocus();
             }
+        }
+
+        private void GuaranteeDetailPanel_Loaded(object sender, RoutedEventArgs e)
+        {
+            TryApplyPendingOrCurrentFocus();
         }
 
         private void GuaranteeDetailPanel_Unloaded(object sender, RoutedEventArgs e)
@@ -42,7 +50,12 @@ namespace GuaranteeManager
 
         private void OnGuaranteeFocusRequested(GuaranteeFileFocusArea area, int? requestIdToFocus)
         {
-            Dispatcher.BeginInvoke(() => ScrollToArea(area), DispatcherPriority.Loaded);
+            if (_shellViewModel != null)
+            {
+                _lastAppliedFocusRequestVersion = _shellViewModel.GuaranteeFocusRequestVersion;
+            }
+
+            ApplyFocus(area, requestIdToFocus);
         }
 
         private void ClosePanelButton_Click(object sender, RoutedEventArgs e)
@@ -80,6 +93,36 @@ namespace GuaranteeManager
             catch (InvalidOperationException)
             {
             }
+        }
+
+        private void TryApplyPendingOrCurrentFocus()
+        {
+            if (_shellViewModel?.SelectedGuarantee == null)
+            {
+                return;
+            }
+
+            if (_shellViewModel.TryConsumePendingGuaranteeFileOpenFocus(
+                    _shellViewModel.SelectedGuarantee.RootId,
+                    out GuaranteeFileFocusArea pendingArea,
+                    out int? pendingRequestId))
+            {
+                _lastAppliedFocusRequestVersion = _shellViewModel.GuaranteeFocusRequestVersion;
+                ApplyFocus(pendingArea, pendingRequestId);
+                return;
+            }
+
+            if (_shellViewModel.GuaranteeFocusRequestVersion > _lastAppliedFocusRequestVersion)
+            {
+                _lastAppliedFocusRequestVersion = _shellViewModel.GuaranteeFocusRequestVersion;
+                ApplyFocus(_shellViewModel.CurrentGuaranteeFocusArea, _shellViewModel.CurrentGuaranteeFocusRequestId);
+            }
+        }
+
+        private void ApplyFocus(GuaranteeFileFocusArea area, int? requestIdToFocus)
+        {
+            _ = requestIdToFocus;
+            Dispatcher.BeginInvoke(() => ScrollToArea(area), DispatcherPriority.Loaded);
         }
     }
 }

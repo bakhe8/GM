@@ -28,6 +28,12 @@ namespace GuaranteeManager
         private readonly ShellSessionCoordinator _sessionCoordinator;
         private readonly ShellWorkspaceFactory _workspaceFactory;
         private GuaranteeRow? _selectedGuarantee;
+        private int? _focusedGuaranteeRequestId;
+        private int _guaranteeFocusRequestVersion;
+        private GuaranteeFileFocusArea _currentGuaranteeFocusArea = GuaranteeFileFocusArea.None;
+        private int _pendingGuaranteeFileFocusRootId;
+        private int? _pendingGuaranteeFileFocusRequestId;
+        private GuaranteeFileFocusArea _pendingGuaranteeFileFocusArea = GuaranteeFileFocusArea.None;
         private OperationalInquiryResult? _latestInquiryResult;
         private GuaranteeOutputPreviewItem? _latestLetterOutput;
         private GuaranteeOutputPreviewItem? _latestResponseOutput;
@@ -153,6 +159,12 @@ namespace GuaranteeManager
         public ObservableCollection<AttachmentItem> Attachments { get; } = new();
         public ObservableCollection<GuaranteeRequestPreviewItem> GuaranteeRequestsPreview { get; } = new();
         public ObservableCollection<GuaranteeOutputPreviewItem> GuaranteeOutputsPreview { get; } = new();
+        public string GuaranteeRequestsSummaryText => _focusedGuaranteeRequestId.HasValue
+            ? "يعرض هذا الملخص الطلب المفتوح الآن مع أحدث الطلبات المرتبطة بنفس سلسلة الضمان الحالية."
+            : "ملخص سريع لآخر الطلبات المرتبطة بنفس سلسلة الضمان الحالية.";
+        public int GuaranteeFocusRequestVersion => _guaranteeFocusRequestVersion;
+        public GuaranteeFileFocusArea CurrentGuaranteeFocusArea => _currentGuaranteeFocusArea;
+        public int? CurrentGuaranteeFocusRequestId => _focusedGuaranteeRequestId;
         public ObservableCollection<FilterOption> TimeStatusOptions { get; } = new();
         public ObservableCollection<string> BankOptions { get; } = new();
         public ObservableCollection<string> GuaranteeTypeOptions { get; } = new();
@@ -235,6 +247,12 @@ namespace GuaranteeManager
                 }
 
                 _selectedGuarantee = value;
+                if (_focusedGuaranteeRequestId.HasValue)
+                {
+                    _focusedGuaranteeRequestId = null;
+                    OnPropertyChanged(nameof(GuaranteeRequestsSummaryText));
+                }
+
                 OnPropertyChanged();
                 if (_trackSelectedGuaranteeAsLastFile && value != null)
                 {
@@ -645,8 +663,8 @@ namespace GuaranteeManager
             }
 
             SelectedGuarantee = row;
+            QueueGuaranteeFileOpenFocus(area, requestIdToFocus, row.RootId);
             OpenGuaranteeFile(row);
-            FocusGuaranteeSection(area, requestIdToFocus);
             _diagnostics.RecordEvent(
                 "dashboard.action",
                 "open-guarantee-context",
@@ -881,7 +899,42 @@ namespace GuaranteeManager
                 return;
             }
 
+            _currentGuaranteeFocusArea = area;
+            int? nextFocusedRequestId = area == GuaranteeFileFocusArea.Requests ? requestIdToFocus : null;
+            _guaranteeFocusRequestVersion++;
+            if (_focusedGuaranteeRequestId != nextFocusedRequestId)
+            {
+                _focusedGuaranteeRequestId = nextFocusedRequestId;
+                OnPropertyChanged(nameof(GuaranteeRequestsSummaryText));
+                RefreshSelectedGuaranteeArtifacts();
+            }
+
             GuaranteeFocusRequested?.Invoke(area, requestIdToFocus);
+        }
+
+        public void QueueGuaranteeFileOpenFocus(GuaranteeFileFocusArea area, int? requestIdToFocus, int rootId)
+        {
+            _pendingGuaranteeFileFocusArea = area;
+            _pendingGuaranteeFileFocusRequestId = area == GuaranteeFileFocusArea.Requests ? requestIdToFocus : null;
+            _pendingGuaranteeFileFocusRootId = rootId;
+            FocusGuaranteeSection(area, requestIdToFocus);
+        }
+
+        public bool TryConsumePendingGuaranteeFileOpenFocus(int rootId, out GuaranteeFileFocusArea area, out int? requestIdToFocus)
+        {
+            if (_pendingGuaranteeFileFocusRootId == rootId && _pendingGuaranteeFileFocusArea != GuaranteeFileFocusArea.None)
+            {
+                area = _pendingGuaranteeFileFocusArea;
+                requestIdToFocus = _pendingGuaranteeFileFocusRequestId;
+                _pendingGuaranteeFileFocusArea = GuaranteeFileFocusArea.None;
+                _pendingGuaranteeFileFocusRequestId = null;
+                _pendingGuaranteeFileFocusRootId = 0;
+                return true;
+            }
+
+            area = GuaranteeFileFocusArea.None;
+            requestIdToFocus = null;
+            return false;
         }
 
         private void OpenOutputLetter(GuaranteeOutputPreviewItem? item)
@@ -1344,7 +1397,7 @@ namespace GuaranteeManager
 
         private void RefreshSelectedGuaranteeArtifacts()
         {
-            GuaranteeSelectionArtifacts artifacts = _guaranteeData.BuildSelectionArtifacts(SelectedGuarantee);
+            GuaranteeSelectionArtifacts artifacts = _guaranteeData.BuildSelectionArtifacts(SelectedGuarantee, _focusedGuaranteeRequestId);
             Timeline.Clear();
             Attachments.Clear();
             GuaranteeRequestsPreview.Clear();

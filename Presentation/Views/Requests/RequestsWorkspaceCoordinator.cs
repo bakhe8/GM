@@ -157,8 +157,8 @@ namespace GuaranteeManager
             List<WorkflowRequest> requests = _database.GetWorkflowRequestsByRootId(item.RootGuaranteeId);
             GuaranteeRow row = GuaranteeRow.FromGuarantee(guarantee, requests);
             shell.SelectGuaranteeCommand.Execute(row);
+            shell.QueueGuaranteeFileOpenFocus(GuaranteeFileFocusArea.Requests, item.Request.Id, row.RootId);
             shell.OpenGuaranteeFileCommand.Execute(row);
-            shell.FocusGuaranteeSection(GuaranteeFileFocusArea.Requests, item.Request.Id);
         }
 
         public void ExportPendingSameType(RequestListDisplayItem? selectedItem, IReadOnlyList<WorkflowRequestListItem> allRequests)

@@ -392,7 +392,7 @@
                                 <StackPanel>
                                     <TextBlock Text="الطلبات المرتبطة" FontSize="13" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" Margin="0,0,0,8" />
                                     <Border Height="1" Background="{StaticResource Brush.Border}" Margin="0,0,0,10" />
-                                    <TextBlock Text="ملخص سريع لآخر الطلبات المرتبطة بنفس سلسلة الضمان الحالية."
+                                    <TextBlock Text="{Binding GuaranteeRequestsSummaryText}"
                                                FontSize="10.4"
                                                Foreground="{StaticResource Brush.Muted}"
                                                TextWrapping="Wrap"
@@ -403,8 +403,24 @@
                                                 <Border BorderBrush="{StaticResource Brush.Border}"
                                                         BorderThickness="1"
                                                         CornerRadius="8"
+                                                        Background="White"
                                                         Padding="10"
-                                                        Margin="0,0,0,8">
+                                                        Margin="0,0,0,8"
+                                                        automation:AutomationProperties.ItemStatus="{Binding ContextAutomationStatus}">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}" />
+                                                            <Setter Property="BorderThickness" Value="1" />
+                                                            <Setter Property="Background" Value="White" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsContextTarget}" Value="True">
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource Brush.Blue}" />
+                                                                    <Setter Property="BorderThickness" Value="2" />
+                                                                    <Setter Property="Background" Value="#F7FBFF" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
                                                     <StackPanel>
                                                         <Grid FlowDirection="RightToLeft">
                                                             <Grid.ColumnDefinitions>
@@ -412,7 +428,7 @@
                                                                 <ColumnDefinition Width="Auto" />
                                                             </Grid.ColumnDefinitions>
                                                             <StackPanel>
-                                                                <TextBlock Text="{Binding RequestType}"
+                                                                <TextBlock Text="{Binding RequestHeading}"
                                                                            FontSize="11"
                                                                            FontWeight="Bold"
                                                                            Foreground="{StaticResource Brush.Text}" />
@@ -421,6 +437,29 @@
                                                                            Foreground="{StaticResource Brush.Muted}"
                                                                            FlowDirection="LeftToRight"
                                                                            Margin="0,3,0,0" />
+                                                                <Border CornerRadius="9"
+                                                                        Padding="7,2"
+                                                                        Margin="0,6,0,0"
+                                                                        Background="#F2F7FF"
+                                                                        BorderBrush="{StaticResource Brush.Blue}"
+                                                                        BorderThickness="1"
+                                                                        HorizontalAlignment="Right"
+                                                                        Visibility="Collapsed">
+                                                                    <Border.Style>
+                                                                        <Style TargetType="Border">
+                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsContextTarget}" Value="True">
+                                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Border.Style>
+                                                                    <TextBlock Text="{Binding ContextLabel}"
+                                                                               FontSize="9"
+                                                                               FontWeight="SemiBold"
+                                                                               Foreground="{StaticResource Brush.Blue}" />
+                                                                </Border>
                                                             </StackPanel>
                                                             <Border Grid.Column="1"
                                                                     CornerRadius="9"

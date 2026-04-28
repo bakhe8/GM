@@ -633,7 +633,16 @@ namespace GuaranteeManager
 
     public sealed class GuaranteeRequestPreviewItem
     {
-        public GuaranteeRequestPreviewItem(WorkflowRequest request, string requestNo, string requestType, string date, string detail, string status, string requestedValue, Tone tone)
+        public GuaranteeRequestPreviewItem(
+            WorkflowRequest request,
+            string requestNo,
+            string requestType,
+            string date,
+            string detail,
+            string status,
+            string requestedValue,
+            Tone tone,
+            bool isContextTarget)
         {
             Request = request;
             RequestNo = requestNo;
@@ -645,11 +654,13 @@ namespace GuaranteeManager
             Brush = TonePalette.Foreground(tone);
             StatusBackground = TonePalette.Background(tone);
             StatusBorder = TonePalette.Border(tone);
+            IsContextTarget = isContextTarget;
         }
 
         public WorkflowRequest Request { get; }
         public string RequestNo { get; }
         public string RequestType { get; }
+        public string RequestHeading => IsContextTarget ? $"{RequestType} • الطلب المفتوح الآن" : RequestType;
         public string Date { get; }
         public string Detail { get; }
         public string Status { get; }
@@ -657,11 +668,14 @@ namespace GuaranteeManager
         public Brush Brush { get; }
         public Brush StatusBackground { get; }
         public Brush StatusBorder { get; }
+        public bool IsContextTarget { get; }
+        public string ContextLabel => IsContextTarget ? "الطلب المفتوح الآن" : string.Empty;
+        public string ContextAutomationStatus => IsContextTarget ? "هذا هو الطلب الذي تم فتح ملف الضمان منه." : string.Empty;
         public bool CanRegisterResponse => Request.Status == RequestStatus.Pending;
         public bool CanOpenLetter => Request.HasLetter;
         public bool CanOpenResponse => Request.HasResponseDocument;
 
-        public static GuaranteeRequestPreviewItem FromRequest(WorkflowRequest request)
+        public static GuaranteeRequestPreviewItem FromRequest(WorkflowRequest request, bool isContextTarget = false)
         {
             Tone tone = request.Status switch
             {
@@ -683,7 +697,8 @@ namespace GuaranteeManager
                 detail,
                 request.StatusLabel,
                 request.RequestedValueLabel,
-                tone);
+                tone,
+                isContextTarget);
         }
     }
 

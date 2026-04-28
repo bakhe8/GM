@@ -178,7 +178,7 @@ namespace GuaranteeManager
                 BuildFooterSummary(portfolio.Count, pageSize));
         }
 
-        public GuaranteeSelectionArtifacts BuildSelectionArtifacts(GuaranteeRow? selectedGuarantee)
+        public GuaranteeSelectionArtifacts BuildSelectionArtifacts(GuaranteeRow? selectedGuarantee, int? focusedRequestId = null)
         {
             if (selectedGuarantee == null)
             {
@@ -208,11 +208,29 @@ namespace GuaranteeManager
                 .Select(AttachmentItem.FromAttachment)
                 .ToList();
 
-            List<GuaranteeRequestPreviewItem> requestItems = requests
+            List<WorkflowRequest> orderedRequests = requests
                 .OrderByDescending(request => request.RequestDate)
                 .ThenByDescending(request => request.SequenceNumber)
-                .Take(4)
-                .Select(GuaranteeRequestPreviewItem.FromRequest)
+                .ToList();
+
+            List<WorkflowRequest> requestPreviewSource = orderedRequests.Take(4).ToList();
+            if (focusedRequestId.HasValue && requestPreviewSource.All(request => request.Id != focusedRequestId.Value))
+            {
+                WorkflowRequest? focusedRequest = orderedRequests.FirstOrDefault(request => request.Id == focusedRequestId.Value);
+                if (focusedRequest != null)
+                {
+                    requestPreviewSource = orderedRequests
+                        .Where(request => request.Id != focusedRequestId.Value)
+                        .Take(3)
+                        .Prepend(focusedRequest)
+                        .ToList();
+                }
+            }
+
+            List<GuaranteeRequestPreviewItem> requestItems = requestPreviewSource
+                .Select(request => GuaranteeRequestPreviewItem.FromRequest(
+                    request,
+                    focusedRequestId.HasValue && request.Id == focusedRequestId.Value))
                 .ToList();
 
             List<GuaranteeOutputPreviewItem> outputItems = requests
