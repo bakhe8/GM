@@ -188,23 +188,6 @@
                                                         automation:AutomationProperties.Name="الانتقال إلى المخرجات">
                                                     <TextBlock Text="المخرجات" FontSize="10.3" Foreground="{StaticResource Brush.Blue}" />
                                                 </Button>
-                                                <Button Command="{Binding OpenGuaranteeFileCommand}"
-                                                        CommandParameter="{Binding SelectedGuarantee}"
-                                                        Margin="0,0,0,6"
-                                                        automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Navigator.OpenFile"
-                                                        automation:AutomationProperties.Name="فتح ملف الضمان">
-                                                    <Button.Style>
-                                                        <Style TargetType="Button" BasedOn="{StaticResource PlainLinkButton}">
-                                                            <Setter Property="Visibility" Value="Visible" />
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsDetachedFile, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
-                                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-                                                    <TextBlock Text="فتح الملف" FontSize="10.3" Foreground="{StaticResource Brush.Blue}" />
-                                                </Button>
                                             </WrapPanel>
                                         </StackPanel>
                                     </Border>
@@ -1028,29 +1011,6 @@
                             <StackPanel Grid.Row="1" Margin="0,9,0,0">
                                 <TextBlock Text="نفّذ الآن" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource Brush.Muted}" Margin="0,0,0,6" />
                                 <WrapPanel FlowDirection="LeftToRight" Margin="0,0,0,10">
-                                    <Button Content="فتح ملف الضمان"
-                                            FontSize="9"
-                                            MinWidth="108"
-                                            Margin="0,0,6,6"
-                                            Padding="6,0"
-                                            IsEnabled="{Binding SelectedGuarantee.OpenFileAction.IsEnabled}"
-                                            ToolTip="{Binding SelectedGuarantee.OpenFileAction.Hint}"
-                                            ToolTipService.ShowOnDisabled="True"
-                                            Command="{Binding OpenGuaranteeFileCommand}"
-                                            CommandParameter="{Binding SelectedGuarantee}"
-                                            automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.OpenFile"
-                                            automation:AutomationProperties.Name="فتح ملف الضمان">
-                                        <Button.Style>
-                                            <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
-                                                <Setter Property="Visibility" Value="Visible" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsDetachedFile, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
-                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
                                     <Button Style="{StaticResource BaseButton}"
                                             Content="تسجيل رد"
                                             FontSize="9"

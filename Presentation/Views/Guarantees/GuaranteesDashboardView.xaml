@@ -355,21 +355,13 @@
                                                         </MenuItem>
 
                                                         <MenuItem Header="الملف والمراجعة"
-                                                                  ToolTip="فتح الملف أو مراجعة الطلبات والسجل والمرفقات لهذا الضمان"
+                                                                  ToolTip="مراجعة الطلبات والسجل والمرفقات والتعديل لهذا الضمان"
                                                                   automation:AutomationProperties.AutomationId="Guarantees.RowMenu.ReviewOpen">
                                                             <MenuItem.Icon>
                                                                 <Viewbox Width="13" Height="13">
                                                                     <Path Data="{StaticResource Icon.View}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                                                 </Viewbox>
                                                             </MenuItem.Icon>
-
-                                                            <MenuItem Header="فتح الملف"
-                                                                      IsEnabled="{Binding PlacementTarget.DataContext.OpenFileAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      ToolTip="{Binding PlacementTarget.DataContext.OpenFileAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      ToolTipService.ShowOnDisabled="True"
-                                                                      Command="{Binding PlacementTarget.Tag.OpenGuaranteeFileCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.OpenFile" />
 
                                                             <MenuItem Header="طلبات الضمان"
                                                                       IsEnabled="{Binding PlacementTarget.DataContext.OpenRequestsAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
