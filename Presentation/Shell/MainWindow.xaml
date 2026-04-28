@@ -380,8 +380,8 @@
                                FontWeight="SemiBold"
                                VerticalAlignment="Center"
                                automation:AutomationProperties.AutomationId="Shell.Status.Primary"
-                               automation:AutomationProperties.HelpText="جاهز"
-                               automation:AutomationProperties.ItemStatus="جاهز" />
+                               automation:AutomationProperties.HelpText="{Binding ShellStatusPrimaryText}"
+                               automation:AutomationProperties.ItemStatus="{Binding ShellStatusPrimaryText}" />
                     <Border Width="1" Height="12" Background="#2A4B76" Margin="10,0" />
                     <TextBlock x:Name="ShellStatusSecondaryBlock"
                                Text="{Binding ShellStatusSecondaryText}"
@@ -389,8 +389,8 @@
                                FontSize="11"
                                VerticalAlignment="Center"
                                automation:AutomationProperties.AutomationId="Shell.Status.Secondary"
-                               automation:AutomationProperties.HelpText="قاعدة البيانات متصلة"
-                               automation:AutomationProperties.ItemStatus="قاعدة البيانات متصلة" />
+                               automation:AutomationProperties.HelpText="{Binding ShellStatusSecondaryText}"
+                               automation:AutomationProperties.ItemStatus="{Binding ShellStatusSecondaryText}" />
                     <Border Width="1" Height="12" Background="#2A4B76" Margin="10,0" />
                     <TextBlock Text="{Binding CurrentWorkspaceDisplayTitle}"
                                Foreground="#94A3C8"

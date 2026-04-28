@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -9,7 +8,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -32,7 +30,6 @@ namespace GuaranteeManager
             InitializeComponent();
             Title = "إدارة الضمانات البنكية";
             _shellStatus = App.CurrentApp.GetRequiredService<IShellStatusService>();
-            _shellStatus.PropertyChanged += ShellStatus_PropertyChanged;
             SourceInitialized += MainWindow_SourceInitialized;
             Loaded += (_, _) => WindowStateService.Restore(this, nameof(MainWindow));
             Closing += (_, _) => WindowStateService.Save(this, nameof(MainWindow));
@@ -46,24 +43,6 @@ namespace GuaranteeManager
                 App.CurrentApp.GetRequiredService<INavigationGuard>(),
                 _shellStatus,
                 App.CurrentApp.GetRequiredService<IUiDiagnosticsService>());
-            Closed += (_, _) => _shellStatus.PropertyChanged -= ShellStatus_PropertyChanged;
-            SyncShellStatusAutomationProperties();
-        }
-
-        private void ShellStatus_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName is nameof(IShellStatusService.PrimaryText) or nameof(IShellStatusService.SecondaryText) or null)
-            {
-                Dispatcher.BeginInvoke(new Action(SyncShellStatusAutomationProperties));
-            }
-        }
-
-        private void SyncShellStatusAutomationProperties()
-        {
-            AutomationProperties.SetHelpText(ShellStatusPrimaryBlock, _shellStatus.PrimaryText);
-            AutomationProperties.SetItemStatus(ShellStatusPrimaryBlock, _shellStatus.PrimaryText);
-            AutomationProperties.SetHelpText(ShellStatusSecondaryBlock, _shellStatus.SecondaryText);
-            AutomationProperties.SetItemStatus(ShellStatusSecondaryBlock, _shellStatus.SecondaryText);
         }
 
         private void TopBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
