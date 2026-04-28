@@ -14,13 +14,38 @@ namespace GuaranteeManager
                 return;
             }
 
+            CopyText(item.Reference, "المرجع");
+        }
+
+        public void CopyBank(DashboardWorkItem? item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            CopyText(item.Bank, "البنك");
+        }
+
+        public void CopyAmount(DashboardWorkItem? item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            CopyText(item.AmountDisplay, "القيمة");
+        }
+
+        private static void CopyText(string value, string label)
+        {
             try
             {
-                Clipboard.SetText(item.Reference);
+                Clipboard.SetText(value);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "نسخ المرجع", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(ex.Message, $"نسخ {label}", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 

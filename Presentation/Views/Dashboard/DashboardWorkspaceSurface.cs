@@ -69,6 +69,8 @@ namespace GuaranteeManager
         private readonly Button _primaryActionButton = new();
         private readonly Button _openWorkspaceButton = new();
         private readonly Button _copyReferenceButton = new();
+        private readonly Button _copyBankButton = new();
+        private readonly Button _copyAmountButton = new();
         private readonly Button _resumeLastFileButton = new();
         private readonly Button _expiryFollowUpsLensButton = new();
 
@@ -183,6 +185,18 @@ namespace GuaranteeManager
             _copyReferenceButton.FontSize = 9.5;
             _copyReferenceButton.Click += (_, _) => _coordinator.CopyReference(SelectedItem);
             UiInstrumentation.Identify(_copyReferenceButton, "Dashboard.Detail.CopyReferenceButton", "نسخ المرجع");
+
+            _copyBankButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
+            _copyBankButton.Content = "نسخ البنك";
+            _copyBankButton.FontSize = 9.5;
+            _copyBankButton.Click += (_, _) => _coordinator.CopyBank(SelectedItem);
+            UiInstrumentation.Identify(_copyBankButton, "Dashboard.Detail.CopyBankButton", "نسخ البنك");
+
+            _copyAmountButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
+            _copyAmountButton.Content = "نسخ القيمة";
+            _copyAmountButton.FontSize = 9.5;
+            _copyAmountButton.Click += (_, _) => _coordinator.CopyAmount(SelectedItem);
+            UiInstrumentation.Identify(_copyAmountButton, "Dashboard.Detail.CopyAmountButton", "نسخ القيمة");
         }
 
         private Grid BuildLayout()
@@ -364,6 +378,7 @@ namespace GuaranteeManager
                     BuildBankRow(),
                     _detailAmountHeadline,
                     _detailAmountCaption,
+                    BuildDetailCopyStrip(),
                     new Border { Height = 1, Background = WorkspaceSurfaceChrome.BrushFrom("#EDF2F7"), Margin = new Thickness(0, 13, 0, 12) },
                     BuildInfoLine(_detailCategoryLabel, _detailCategory),
                     BuildInfoLine(_detailPriorityLabel, _detailPriority),
@@ -429,6 +444,28 @@ namespace GuaranteeManager
             return row;
         }
 
+        private UIElement BuildDetailCopyStrip()
+        {
+            var strip = new Grid
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                Margin = new Thickness(0, 9, 0, 0)
+            };
+            strip.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            strip.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
+            strip.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            strip.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
+            strip.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            strip.Children.Add(_copyReferenceButton);
+            Grid.SetColumn(_copyBankButton, 2);
+            strip.Children.Add(_copyBankButton);
+            Grid.SetColumn(_copyAmountButton, 4);
+            strip.Children.Add(_copyAmountButton);
+
+            return strip;
+        }
+
         private Border BuildDetailActions()
         {
             var border = new Border
@@ -448,12 +485,8 @@ namespace GuaranteeManager
             actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
             actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             actions.Children.Add(_primaryActionButton);
-            Grid.SetColumn(_copyReferenceButton, 2);
-            actions.Children.Add(_copyReferenceButton);
-            Grid.SetColumn(_openWorkspaceButton, 4);
+            Grid.SetColumn(_openWorkspaceButton, 2);
             actions.Children.Add(_openWorkspaceButton);
             Grid.SetRow(actions, 1);
             grid.Children.Add(actions);
@@ -825,7 +858,26 @@ namespace GuaranteeManager
             AutomationProperties.SetItemStatus(_openWorkspaceButton, state.Reference);
             _primaryActionButton.IsEnabled = state.CanRunPrimaryAction;
             _openWorkspaceButton.IsEnabled = state.CanOpenWorkspace;
-            _copyReferenceButton.IsEnabled = state.CanRunPrimaryAction;
+            bool canCopyDetail = state.CanRunPrimaryAction;
+            _copyReferenceButton.IsEnabled = canCopyDetail;
+            _copyBankButton.IsEnabled = canCopyDetail;
+            _copyAmountButton.IsEnabled = canCopyDetail;
+            ApplyCopyButtonMetadata(state);
+        }
+
+        private void ApplyCopyButtonMetadata(DashboardWorkspaceDetailState state)
+        {
+            AutomationProperties.SetName(_copyReferenceButton, $"نسخ المرجع {state.Reference}");
+            AutomationProperties.SetHelpText(_copyReferenceButton, "ينسخ رقم الضمان أو مرجع عنصر العمل الحالي.");
+            AutomationProperties.SetItemStatus(_copyReferenceButton, state.Reference);
+
+            AutomationProperties.SetName(_copyBankButton, $"نسخ البنك {state.BankText}");
+            AutomationProperties.SetHelpText(_copyBankButton, "ينسخ اسم البنك المرتبط بعنصر العمل الحالي.");
+            AutomationProperties.SetItemStatus(_copyBankButton, state.BankText);
+
+            AutomationProperties.SetName(_copyAmountButton, $"نسخ القيمة {state.AmountHeadline}");
+            AutomationProperties.SetHelpText(_copyAmountButton, "ينسخ قيمة الضمان المعروضة في التفاصيل.");
+            AutomationProperties.SetItemStatus(_copyAmountButton, state.AmountHeadline);
         }
 
         private static FrameworkElement BuildInfoBlock(TextBlock title, TextBlock value)
