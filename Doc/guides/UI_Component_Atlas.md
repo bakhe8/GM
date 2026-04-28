@@ -294,7 +294,7 @@ Queue-first surface لتنفيذ الطلب الحالي.
 مكوّن مشترك له دوران واضحان:
 
 - داخل `الضمانات`: لوحة جانبية مفتوحة دائمًا للبيانات والتاريخ والمرفقات والأفعال السريعة.
-- داخل `GuaranteeFileDialog`: ملف ضمان كامل للطلبات والاستعلامات والمخرجات وخريطة العمل.
+- داخل `GuaranteeFileDialog`: ملف تشغيل غير مكرر للطلبات والاستعلامات والمخرجات وخريطة العمل.
 
 ### المكونات الرئيسية
 
@@ -315,14 +315,12 @@ Queue-first surface لتنفيذ الطلب الحالي.
   - `القرار والتنفيذ`
     - `ExecutiveSummary`
     - `Requests`
-    - `Actions`
   - `المراجعة والأثر`
-    - `Timeline`
-    - `Attachments`
     - `Outputs`
 
 #### Reference Facts
 
+- تظهر في اللوحة الجانبية فقط، ولا تظهر في نافذة `ملف الضمان`.
 - `GuaranteeDetailPanel.ReferenceFacts`
 - النوع
 - المرجع
@@ -360,7 +358,7 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 #### Timeline Section
 
-- تظهر في اللوحة الجانبية ونافذة `ملف الضمان`.
+- تظهر في اللوحة الجانبية فقط، ولا تظهر في نافذة `ملف الضمان`.
 - `GuaranteeDetailPanel.Section.Timeline`
 - `GuaranteeDetailPanel.Timeline.ShowAllRequests`
 - لم يعد الغرض منها “عرض أحداث” فقط
@@ -381,7 +379,7 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 #### Attachments Section
 
-- تظهر في اللوحة الجانبية ونافذة `ملف الضمان`.
+- تظهر في اللوحة الجانبية فقط، ولا تظهر في نافذة `ملف الضمان`.
 - `GuaranteeDetailPanel.Section.Attachments`
 - `GuaranteeDetailPanel.Attachments.ShowAll`
 - هذا القسم صار مخصصًا للأدلة الرسمية الثابتة على الملف
@@ -391,7 +389,7 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 #### Actions Section
 
-- تظهر في اللوحة الجانبية ونافذة `ملف الضمان` كأفعال سريعة، مع إخفاء الأفعال غير المؤهلة حسب حالة الضمان.
+- تظهر في اللوحة الجانبية فقط كأفعال سريعة، مع إخفاء الأفعال غير المؤهلة حسب حالة الضمان.
 - `GuaranteeDetailPanel.Section.Actions`
 - الطبقات:
   - `نفّذ الآن`

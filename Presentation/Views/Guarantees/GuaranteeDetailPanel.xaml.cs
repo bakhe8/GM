@@ -99,7 +99,14 @@ namespace GuaranteeManager
         {
             if (IsDetachedFile)
             {
-                return area;
+                return area switch
+                {
+                    GuaranteeFileFocusArea.Actions => GuaranteeFileFocusArea.ExecutiveSummary,
+                    GuaranteeFileFocusArea.Series => GuaranteeFileFocusArea.Requests,
+                    GuaranteeFileFocusArea.Attachments => GuaranteeFileFocusArea.Outputs,
+                    GuaranteeFileFocusArea.None => GuaranteeFileFocusArea.ExecutiveSummary,
+                    _ => area
+                };
             }
 
             return area switch

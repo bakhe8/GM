@@ -23,6 +23,42 @@
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
+
+                <Style x:Key="SidePanelOnlyStackPanel" TargetType="StackPanel">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDetachedFile, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+
+                <Style x:Key="SidePanelOnlyGrid" TargetType="Grid">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDetachedFile, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+
+                <Style x:Key="SidePanelOnlyBorder" TargetType="Border">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDetachedFile, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+
+                <Style x:Key="SidePanelOnlyCard" TargetType="Border" BasedOn="{StaticResource Card}">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDetachedFile, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
             </UserControl.Resources>
 
             <Border Grid.Column="1"
@@ -43,7 +79,7 @@
                                   automation:AutomationProperties.Name="تمرير ملف الضمان">
                         <StackPanel Margin="16,14">
                             <Grid Margin="0,0,0,10">
-                                <StackPanel Orientation="Horizontal" FlowDirection="RightToLeft">
+                                <StackPanel Style="{StaticResource SidePanelOnlyStackPanel}" Orientation="Horizontal" FlowDirection="RightToLeft">
                                     <TextBlock Text="{Binding SelectedGuarantee.GuaranteeNo}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" />
                                     <Viewbox Width="14" Height="14" Margin="0,0,8,0" VerticalAlignment="Center">
                                         <Path Data="{StaticResource Icon.Badge}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
@@ -72,26 +108,28 @@
                                     </Button.Style>
                                 </Button>
                             </Grid>
-                            <Border Style="{StaticResource StatusPill}"
-                                    HorizontalAlignment="Left"
-                                    Margin="0,0,0,12"
-                                    Background="{Binding SelectedGuarantee.WorkBackground}"
-                                    BorderBrush="{Binding SelectedGuarantee.WorkBorder}">
-                                <TextBlock Text="{Binding SelectedGuarantee.WorkStatus}" Foreground="{Binding SelectedGuarantee.WorkBrush}" FontSize="10" FontWeight="SemiBold" />
-                            </Border>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding SelectedGuarantee.Beneficiary}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" />
-                                <Viewbox Width="14" Height="14" Margin="8,0,0,0" VerticalAlignment="Center">
-                                    <Path Data="{StaticResource Icon.User}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                </Viewbox>
+                            <StackPanel Style="{StaticResource SidePanelOnlyStackPanel}">
+                                <Border Style="{StaticResource StatusPill}"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,0,0,12"
+                                        Background="{Binding SelectedGuarantee.WorkBackground}"
+                                        BorderBrush="{Binding SelectedGuarantee.WorkBorder}">
+                                    <TextBlock Text="{Binding SelectedGuarantee.WorkStatus}" Foreground="{Binding SelectedGuarantee.WorkBrush}" FontSize="10" FontWeight="SemiBold" />
+                                </Border>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding SelectedGuarantee.Beneficiary}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" />
+                                    <Viewbox Width="14" Height="14" Margin="8,0,0,0" VerticalAlignment="Center">
+                                        <Path Data="{StaticResource Icon.User}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                    </Viewbox>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0" HorizontalAlignment="Right">
+                                    <TextBlock Text="{Binding SelectedGuarantee.Bank}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
+                                    <Image Source="{Binding SelectedGuarantee.BankLogo}" Width="17" Height="17" Margin="7,0,0,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding SelectedGuarantee.Amount}" FontSize="34" FontWeight="Bold" Foreground="#0F172A" Margin="0,12,0,0" />
+                                <TextBlock Text="{Binding SelectedGuarantee.AmountDescription}" FontSize="11.5" Foreground="{StaticResource Brush.Muted}" />
+                                <Border Height="1" Background="#EDF2F7" Margin="0,13,0,12" />
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,5,0,0" HorizontalAlignment="Right">
-                                <TextBlock Text="{Binding SelectedGuarantee.Bank}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
-                                <Image Source="{Binding SelectedGuarantee.BankLogo}" Width="17" Height="17" Margin="7,0,0,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
-                            </StackPanel>
-                            <TextBlock Text="{Binding SelectedGuarantee.Amount}" FontSize="34" FontWeight="Bold" Foreground="#0F172A" Margin="0,12,0,0" />
-                            <TextBlock Text="{Binding SelectedGuarantee.AmountDescription}" FontSize="11.5" Foreground="{StaticResource Brush.Muted}" />
-                            <Border Height="1" Background="#EDF2F7" Margin="0,13,0,12" />
 
                             <StackPanel x:Name="ExecutiveSummaryAnchor"
                                         Style="{StaticResource DetachedFileOnlyStackPanel}"
@@ -157,13 +195,6 @@
                                             <TextBlock Text="القرار والتنفيذ" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" Margin="0,0,0,6" />
                                             <WrapPanel FlowDirection="RightToLeft">
                                                 <Button Style="{StaticResource PlainLinkButton}"
-                                                        Command="{Binding FocusActionsSectionCommand}"
-                                                        Margin="0,0,8,6"
-                                                        automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Navigator.Actions"
-                                                        automation:AutomationProperties.Name="الانتقال إلى الإجراءات">
-                                                    <TextBlock Text="الإجراءات" FontSize="10.3" Foreground="{StaticResource Brush.Blue}" />
-                                                </Button>
-                                                <Button Style="{StaticResource PlainLinkButton}"
                                                         Command="{Binding FocusRequestsSectionCommand}"
                                                         Margin="0,0,8,6"
                                                         automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Navigator.Requests"
@@ -189,20 +220,6 @@
                                             <TextBlock Text="المراجعة والأثر" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" Margin="0,0,0,6" />
                                             <WrapPanel FlowDirection="RightToLeft">
                                                 <Button Style="{StaticResource PlainLinkButton}"
-                                                        Command="{Binding FocusTimelineSectionCommand}"
-                                                        Margin="0,0,8,6"
-                                                        automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Navigator.Timeline"
-                                                        automation:AutomationProperties.Name="الانتقال إلى الخط الزمني">
-                                                    <TextBlock Text="الخط الزمني" FontSize="10.3" Foreground="{StaticResource Brush.Blue}" />
-                                                </Button>
-                                                <Button Style="{StaticResource PlainLinkButton}"
-                                                        Command="{Binding FocusAttachmentsSectionCommand}"
-                                                        Margin="0,0,8,6"
-                                                        automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Navigator.Attachments"
-                                                        automation:AutomationProperties.Name="الانتقال إلى المرفقات">
-                                                    <TextBlock Text="المرفقات" FontSize="10.3" Foreground="{StaticResource Brush.Blue}" />
-                                                </Button>
-                                                <Button Style="{StaticResource PlainLinkButton}"
                                                         Command="{Binding FocusOutputsSectionCommand}"
                                                         Margin="0,0,8,6"
                                                         automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Navigator.Outputs"
@@ -215,7 +232,8 @@
                                 </Grid>
                             </StackPanel>
 
-                            <Grid FlowDirection="RightToLeft"
+                            <Grid Style="{StaticResource SidePanelOnlyGrid}"
+                                  FlowDirection="RightToLeft"
                                   automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.ReferenceFacts"
                                   automation:AutomationProperties.Name="بيانات الضمان المرجعية">
                                 <Grid.ColumnDefinitions>
@@ -682,7 +700,7 @@
                             </Border>
 
                             <Border x:Name="TimelineAnchor"
-                                    Style="{StaticResource Card}"
+                                    Style="{StaticResource SidePanelOnlyCard}"
                                     Focusable="True"
                                     Padding="12"
                                     Margin="0,14,0,0"
@@ -887,7 +905,7 @@
                             </Border>
 
                             <Border x:Name="AttachmentsAnchor"
-                                    Style="{StaticResource Card}"
+                                    Style="{StaticResource SidePanelOnlyCard}"
                                     Focusable="True"
                                     Padding="12"
                                     Margin="0,12,0,0"
@@ -1013,6 +1031,7 @@
                     </ScrollViewer>
 
                     <Border x:Name="ActionsAnchor"
+                            Style="{StaticResource SidePanelOnlyBorder}"
                             Grid.Row="1"
                             Focusable="True"
                             Background="White"
