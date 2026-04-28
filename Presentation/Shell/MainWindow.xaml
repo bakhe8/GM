@@ -167,9 +167,6 @@
 
                     <!-- عناصر التنقل -->
                     <StackPanel Grid.Row="0" Margin="0,10,0,0" HorizontalAlignment="Center">
-                        <TextBlock Text="العمل اليومي" Style="{StaticResource NavSectionTitle}" />
-                        <TextBlock Text="ابدأ، ثم نفّذ، ثم ادخل إلى الملف عند الحاجة" Style="{StaticResource NavSectionHint}" />
-
                         <!-- اليوم -->
                         <Button Command="{Binding ShowDashboardCommand}" automation:AutomationProperties.AutomationId="Shell.Sidebar.Dashboard" automation:AutomationProperties.Name="اليوم">
                             <Button.Style>
@@ -238,8 +235,7 @@
                             </StackPanel>
                         </Button>
 
-                        <TextBlock Text="التحليلات والمخرجات" Style="{StaticResource NavSectionTitle}" />
-                        <TextBlock Text="اقرأ الصورة الكلية ثم أنشئ المخرج المناسب" Style="{StaticResource NavSectionHint}" />
+                        <Border Style="{StaticResource NavSectionDivider}" />
 
                         <!-- التحليلات -->
                         <Button
@@ -265,8 +261,7 @@
                             </StackPanel>
                         </Button>
 
-                        <TextBlock Text="التشغيل" Style="{StaticResource NavSectionTitle}" />
-                        <TextBlock Text="المسارات والنسخ الاحتياطي وبيئة العمل" Style="{StaticResource NavSectionHint}" />
+                        <Border Style="{StaticResource NavSectionDivider}" />
 
                         <!-- الإعدادات -->
                         <Button
