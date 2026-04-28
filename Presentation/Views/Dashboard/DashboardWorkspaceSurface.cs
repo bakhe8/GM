@@ -809,7 +809,7 @@ namespace GuaranteeManager
             _detailWorkspace.Text = state.Workspace;
             _detailAction.Text = state.Action;
             _detailNote.Text = state.Note;
-            ApplyDetailLabels(state.UseFollowUpLabels);
+            ApplyDetailLabels(state.DetailProfile);
             _primaryActionButton.Content = state.PrimaryActionButtonLabel;
             _openWorkspaceButton.Content = state.WorkspaceButtonLabel;
             AutomationProperties.SetName(_primaryActionButton, state.PrimaryActionButtonLabel);
@@ -874,9 +874,9 @@ namespace GuaranteeManager
             valueBlock.Text = card.Value;
         }
 
-        private void ApplyDetailLabels(bool useFollowUpLabels)
+        private void ApplyDetailLabels(DashboardDetailProfile detailProfile)
         {
-            if (useFollowUpLabels)
+            if (detailProfile == DashboardDetailProfile.FollowUp)
             {
                 _detailCategoryLabel.Text = "نوع المتابعة";
                 _detailPriorityLabel.Text = "المستوى";
@@ -884,7 +884,19 @@ namespace GuaranteeManager
                 _detailDueLabel.Text = "المدة";
                 _detailWorkspaceLabel.Text = "المسار";
                 _detailActionLabel.Text = "الإجراء المقترح";
-                _detailNoteLabel.Text = "ملاحظة المتابعة";
+                _detailNoteLabel.Text = "لماذا ظهر اليوم؟";
+                return;
+            }
+
+            if (detailProfile == DashboardDetailProfile.PendingRequest)
+            {
+                _detailCategoryLabel.Text = "نوع الطلب";
+                _detailPriorityLabel.Text = "مستوى الانتظار";
+                _detailReferenceLabel.Text = "رقم الضمان";
+                _detailDueLabel.Text = "عمر الطلب";
+                _detailWorkspaceLabel.Text = "بيت التنفيذ";
+                _detailActionLabel.Text = "الإجراء المقترح";
+                _detailNoteLabel.Text = "لماذا ظهر اليوم؟";
                 return;
             }
 

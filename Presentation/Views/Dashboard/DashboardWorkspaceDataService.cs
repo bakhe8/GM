@@ -151,10 +151,17 @@ namespace GuaranteeManager
                     note,
                     "فتح الملف عند اختيار عنصر",
                     "فتح المساحة",
-                    string.Equals(normalizedScope, DashboardScopeFilters.ExpiryFollowUps, StringComparison.Ordinal),
+                    ResolveEmptyDetailProfile(normalizedScope),
                     false,
                     false);
             }
+
+            DashboardDetailProfile detailProfile = selected.Scope switch
+            {
+                DashboardScope.PendingRequests => DashboardDetailProfile.PendingRequest,
+                DashboardScope.ExpiredFollowUp or DashboardScope.ExpiringSoon => DashboardDetailProfile.FollowUp,
+                _ => DashboardDetailProfile.Default
+            };
 
             return new DashboardWorkspaceDetailState(
                 selected.Title,
@@ -176,9 +183,19 @@ namespace GuaranteeManager
                 selected.Note,
                 selected.PrimaryActionLabel,
                 selected.WorkspaceButtonLabel,
-                selected.Scope == DashboardScope.ExpiredFollowUp || selected.Scope == DashboardScope.ExpiringSoon,
+                detailProfile,
                 selected.RootGuaranteeId > 0,
                 true);
+        }
+
+        private static DashboardDetailProfile ResolveEmptyDetailProfile(string normalizedScope)
+        {
+            return normalizedScope switch
+            {
+                DashboardScopeFilters.PendingRequests => DashboardDetailProfile.PendingRequest,
+                DashboardScopeFilters.ExpiryFollowUps => DashboardDetailProfile.FollowUp,
+                _ => DashboardDetailProfile.Default
+            };
         }
 
         private static DashboardWorkItem BuildPendingRequestItem(WorkflowRequestListItem item)
@@ -209,13 +226,13 @@ namespace GuaranteeManager
                 "القيمة الحالية للضمان",
                 item.Request.RequestDate.Date,
                 item.Request.RequestDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
-                $"أُنشئ بتاريخ {item.Request.RequestDate:yyyy/MM/dd}",
+                $"ينتظر منذ {ageDays.ToString("N0", CultureInfo.InvariantCulture)} يوم",
                 $"{item.Request.TypeLabel} | {item.Supplier}",
                 "راجع الطلب",
                 "الطلبات",
                 "فتح الطلبات",
-                $"مراجعة {item.Request.TypeLabel} وتسجيل رد البنك",
-                $"الطلب ما زال معلقاً. الحقل الحالي: {item.CurrentValueFieldLabel} = {item.CurrentValueDisplay}. المطلوب: {item.RequestedValueFieldLabel} = {item.RequestedValueDisplay}.",
+                $"مراجعة {item.Request.TypeLabel} ثم تسجيل رد البنك عند وصوله",
+                $"ظهر اليوم لأنه ما زال بانتظار رد البنك. الحالي: {item.CurrentValueFieldLabel} = {item.CurrentValueDisplay}. المطلوب: {item.RequestedValueFieldLabel} = {item.RequestedValueDisplay}.",
                 TonePalette.Foreground(tone),
                 TonePalette.Background(tone),
                 TonePalette.Border(tone),
@@ -252,8 +269,8 @@ namespace GuaranteeManager
                 "راجع الملف",
                 "متابعات الانتهاء",
                 "ركّز المتابعة",
-                "مراجعة ملف الضمان واتخاذ قرار تشغيل",
-                $"انتهى الضمان وما زالت حالته التشغيلية {item.LifecycleStatusLabel}. يحتاج متابعة للتأكد من الإفراج أو التمديد أو الإقفال التشغيلي.",
+                "افتح الملف وحدد هل يحتاج تمديدًا أو إفراجًا أو إقفالًا تشغيليًا",
+                $"ظهر اليوم لأن تاريخ الانتهاء مضى وما زالت الحالة التشغيلية {item.LifecycleStatusLabel}. المتابعة هنا تمنع بقاء ضمان منتهي بلا قرار.",
                 TonePalette.Foreground(tone),
                 TonePalette.Background(tone),
                 TonePalette.Border(tone),
@@ -293,8 +310,8 @@ namespace GuaranteeManager
                 "راجع التمديد",
                 "متابعات الانتهاء",
                 "ركّز المتابعة",
-                "التأكد من الحاجة إلى تمديد",
-                $"الضمان ضمن نافذة الانتهاء القريبة. يستحسن مراجعة الطلبات المرتبطة والتأكد من الحاجة إلى تمديد أو إقفال مبكر.",
+                "افتح الملف وراجع قرار التمديد قبل الوصول إلى تاريخ الانتهاء",
+                $"ظهر اليوم لأنه داخل نافذة الانتهاء القريبة. راجع الطلبات المرتبطة قبل إنشاء تمديد أو إقفال مبكر.",
                 TonePalette.Foreground(tone),
                 TonePalette.Background(tone),
                 TonePalette.Border(tone),
@@ -396,9 +413,16 @@ namespace GuaranteeManager
         string Note,
         string PrimaryActionButtonLabel,
         string WorkspaceButtonLabel,
-        bool UseFollowUpLabels,
+        DashboardDetailProfile DetailProfile,
         bool CanRunPrimaryAction,
         bool CanOpenWorkspace);
+
+    public enum DashboardDetailProfile
+    {
+        Default,
+        PendingRequest,
+        FollowUp
+    }
 
     public enum DashboardScope
     {
