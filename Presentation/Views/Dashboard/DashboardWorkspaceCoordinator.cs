@@ -1,12 +1,20 @@
 using System;
 using System.Windows;
 using GuaranteeManager.Models;
+using GuaranteeManager.Services;
 using MessageBox = GuaranteeManager.Services.AppMessageBox;
 
 namespace GuaranteeManager
 {
     public sealed class DashboardWorkspaceCoordinator
     {
+        private readonly IShellStatusService _shellStatus;
+
+        public DashboardWorkspaceCoordinator()
+        {
+            _shellStatus = App.CurrentApp.GetRequiredService<IShellStatusService>();
+        }
+
         public void CopyReference(DashboardWorkItem? item)
         {
             if (item == null)
@@ -14,7 +22,7 @@ namespace GuaranteeManager
                 return;
             }
 
-            CopyText(item.Reference, "المرجع");
+            CopyText(item.Reference, "المرجع", BuildStatusContext(item));
         }
 
         public void CopyBank(DashboardWorkItem? item)
@@ -24,7 +32,7 @@ namespace GuaranteeManager
                 return;
             }
 
-            CopyText(item.Bank, "البنك");
+            CopyText(item.Bank, "البنك", BuildStatusContext(item));
         }
 
         public void CopyAmount(DashboardWorkItem? item)
@@ -34,19 +42,32 @@ namespace GuaranteeManager
                 return;
             }
 
-            CopyText(item.AmountDisplay, "القيمة");
+            CopyText(item.AmountDisplay, "القيمة", BuildStatusContext(item));
         }
 
-        private static void CopyText(string value, string label)
+        private void CopyText(string value, string label, string secondaryText)
         {
+            if (string.IsNullOrWhiteSpace(value) || value == "---")
+            {
+                MessageBox.Show($"لا توجد قيمة متاحة لنسخ {label}.", $"نسخ {label}", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
             try
             {
                 Clipboard.SetText(value);
+                _shellStatus.ShowInfo($"تم نسخ {label}.", secondaryText);
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, $"نسخ {label}", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
+        }
+
+        private static string BuildStatusContext(DashboardWorkItem item)
+        {
+            string reference = string.IsNullOrWhiteSpace(item.Reference) ? "عنصر محدد" : item.Reference;
+            return $"اليوم • {reference}";
         }
 
         public void OpenSelectedWorkspace(
