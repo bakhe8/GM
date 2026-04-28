@@ -31,8 +31,8 @@ namespace GuaranteeManager
             }
 
             MessageBox.Show(
-                "تعذر العثور على آخر ملف تم فتحه. ربما تم حذفه أو تغييره.",
-                "استئناف آخر ملف",
+                "تعذر العثور على آخر ضمان تم تحديده. ربما تم حذفه أو تغييره.",
+                "استئناف آخر ضمان",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
             return null;

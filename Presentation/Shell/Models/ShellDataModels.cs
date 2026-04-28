@@ -76,8 +76,6 @@ namespace GuaranteeManager
         public string RowMoreAutomationName => $"المزيد | {GuaranteeNo}";
         public string RowHistoryAutomationId => BuildRowActionAutomationId("History");
         public string RowHistoryAutomationName => $"تاريخ | {GuaranteeNo}";
-        public string RowOpenFileAutomationId => BuildRowActionAutomationId("OpenFile");
-        public string RowOpenFileAutomationName => $"فتح الملف | {GuaranteeNo}";
         public string RowRequestsAutomationId => BuildRowActionAutomationId("Requests");
         public string RowRequestsAutomationName => $"الطلبات | {GuaranteeNo}";
         public string Beneficiary { get; }
@@ -589,13 +587,13 @@ namespace GuaranteeManager
         {
             return suggestedArea switch
             {
-                GuaranteeFileFocusArea.Requests => "يفتح ملف الضمان مباشرة عند قسم الطلبات حتى تبدأ من نقطة المتابعة الحالية.",
-                GuaranteeFileFocusArea.Outputs => "يفتح ملف الضمان مباشرة عند قسم المخرجات والأثر المرتبط بهذا الضمان.",
-                GuaranteeFileFocusArea.Attachments => "يفتح ملف الضمان مباشرة عند قسم الأدلة والمرفقات الرسمية.",
-                GuaranteeFileFocusArea.Series => "يفتح ملف الضمان مباشرة عند الخط الزمني لهذا الضمان.",
-                GuaranteeFileFocusArea.Actions => "يفتح ملف الضمان مباشرة عند الإجراءات السريعة المناسبة للحالة الحالية.",
-                GuaranteeFileFocusArea.ExecutiveSummary => "يفتح ملف الضمان عند الملخص التنفيذي لهذا الضمان.",
-                _ => "يفتح ملف الضمان على القسم الأنسب لحالته الحالية."
+                GuaranteeFileFocusArea.Requests => "يفتح شاشة الطلبات مفلترة على هذا الضمان حتى تبدأ من نقطة المتابعة الحالية.",
+                GuaranteeFileFocusArea.Outputs => "يفتح شاشة الطلبات للوصول إلى المخرجات والأثر المرتبط بهذا الضمان.",
+                GuaranteeFileFocusArea.Attachments => "ينقلك إلى لوحة الضمان الجانبية عند الأدلة والمرفقات الرسمية.",
+                GuaranteeFileFocusArea.Series => "ينقلك إلى لوحة الضمان الجانبية عند الخط الزمني لهذا الضمان.",
+                GuaranteeFileFocusArea.Actions => "ينقلك إلى الإجراءات السريعة المناسبة للحالة الحالية داخل لوحة الضمان.",
+                GuaranteeFileFocusArea.ExecutiveSummary => "ينقلك إلى الضمان المحدد داخل المحفظة.",
+                _ => "ينقلك إلى الوجهة الأنسب لحالة الضمان الحالية."
             };
         }
 
@@ -707,7 +705,7 @@ namespace GuaranteeManager
         public Brush StatusBorder { get; }
         public bool IsContextTarget { get; }
         public string ContextLabel => IsContextTarget ? "الطلب المفتوح الآن" : string.Empty;
-        public string ContextAutomationStatus => IsContextTarget ? "هذا هو الطلب الذي تم فتح ملف الضمان منه." : string.Empty;
+        public string ContextAutomationStatus => IsContextTarget ? "هذا هو الطلب الذي تم فتح شاشة الطلبات منه." : string.Empty;
         public bool CanRegisterResponse => Request.Status == RequestStatus.Pending;
         public bool CanOpenLetter => Request.HasLetter;
         public bool CanOpenResponse => Request.HasResponseDocument;

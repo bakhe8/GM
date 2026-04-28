@@ -9,21 +9,8 @@ namespace GuaranteeManager
 {
     public partial class GuaranteeDetailPanel : UserControl
     {
-        public static readonly DependencyProperty IsDetachedFileProperty =
-            DependencyProperty.Register(
-                nameof(IsDetachedFile),
-                typeof(bool),
-                typeof(GuaranteeDetailPanel),
-                new PropertyMetadata(false));
-
         private ShellViewModel? _shellViewModel;
         private int _lastAppliedFocusRequestVersion;
-
-        public bool IsDetachedFile
-        {
-            get => (bool)GetValue(IsDetachedFileProperty);
-            private set => SetValue(IsDetachedFileProperty, value);
-        }
 
         public GuaranteeDetailPanel()
         {
@@ -44,14 +31,13 @@ namespace GuaranteeManager
             if (_shellViewModel != null)
             {
                 _shellViewModel.GuaranteeFocusRequested += OnGuaranteeFocusRequested;
-                TryApplyPendingOrCurrentFocus();
+                TryApplyCurrentFocus();
             }
         }
 
         private void GuaranteeDetailPanel_Loaded(object sender, RoutedEventArgs e)
         {
-            IsDetachedFile = Window.GetWindow(this) is Window window && window is not MainWindow;
-            TryApplyPendingOrCurrentFocus();
+            TryApplyCurrentFocus();
         }
 
         private void GuaranteeDetailPanel_Unloaded(object sender, RoutedEventArgs e)
@@ -69,65 +55,24 @@ namespace GuaranteeManager
                 _lastAppliedFocusRequestVersion = _shellViewModel.GuaranteeFocusRequestVersion;
             }
 
-            ApplyFocus(area, requestIdToFocus);
+            _ = requestIdToFocus;
+            ApplyFocus(area);
         }
 
-        private void ClosePanelButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (Window.GetWindow(this) is Window window && window is not MainWindow)
-            {
-                window.Close();
-                e.Handled = true;
-            }
-        }
-
-        private FrameworkElement? ResolveAreaElement(GuaranteeFileFocusArea area)
+        private FrameworkElement ResolveAreaElement(GuaranteeFileFocusArea area)
         {
             return area switch
             {
-                GuaranteeFileFocusArea.ExecutiveSummary => ExecutiveSummaryAnchor,
-                GuaranteeFileFocusArea.Requests => RequestsAnchor,
-                GuaranteeFileFocusArea.Series => TimelineAnchor,
                 GuaranteeFileFocusArea.Attachments => AttachmentsAnchor,
+                GuaranteeFileFocusArea.Outputs => AttachmentsAnchor,
                 GuaranteeFileFocusArea.Actions => ActionsAnchor,
-                GuaranteeFileFocusArea.Outputs => OutputsAnchor,
-                _ => ExecutiveSummaryAnchor
-            };
-        }
-
-        private GuaranteeFileFocusArea NormalizeFocusAreaForCurrentSurface(GuaranteeFileFocusArea area)
-        {
-            if (IsDetachedFile)
-            {
-                return area switch
-                {
-                    GuaranteeFileFocusArea.Series => GuaranteeFileFocusArea.Requests,
-                    GuaranteeFileFocusArea.Attachments => GuaranteeFileFocusArea.Outputs,
-                    GuaranteeFileFocusArea.None => GuaranteeFileFocusArea.ExecutiveSummary,
-                    _ => area
-                };
-            }
-
-            return area switch
-            {
-                GuaranteeFileFocusArea.Requests => GuaranteeFileFocusArea.Series,
-                GuaranteeFileFocusArea.Outputs => GuaranteeFileFocusArea.Attachments,
-                GuaranteeFileFocusArea.ExecutiveSummary => GuaranteeFileFocusArea.Series,
-                GuaranteeFileFocusArea.None => GuaranteeFileFocusArea.Series,
-                _ => area
+                _ => TimelineAnchor
             };
         }
 
         private void ApplyAreaFocus(GuaranteeFileFocusArea area)
         {
-            area = NormalizeFocusAreaForCurrentSurface(area);
-            FrameworkElement? target = ResolveAreaElement(area);
-
-            if (target == null)
-            {
-                return;
-            }
-
+            FrameworkElement target = ResolveAreaElement(area);
             if (area != GuaranteeFileFocusArea.Actions && RootScrollViewer.Content is Visual content)
             {
                 try
@@ -143,34 +88,22 @@ namespace GuaranteeManager
             target.Focus();
         }
 
-        private void TryApplyPendingOrCurrentFocus()
+        private void TryApplyCurrentFocus()
         {
             if (_shellViewModel?.SelectedGuarantee == null)
             {
                 return;
             }
 
-            if (IsDetachedFile &&
-                _shellViewModel.TryConsumePendingGuaranteeFileOpenFocus(
-                    _shellViewModel.SelectedGuarantee.RootId,
-                    out GuaranteeFileFocusArea pendingArea,
-                    out int? pendingRequestId))
-            {
-                _lastAppliedFocusRequestVersion = _shellViewModel.GuaranteeFocusRequestVersion;
-                ApplyFocus(pendingArea, pendingRequestId);
-                return;
-            }
-
             if (_shellViewModel.GuaranteeFocusRequestVersion > _lastAppliedFocusRequestVersion)
             {
                 _lastAppliedFocusRequestVersion = _shellViewModel.GuaranteeFocusRequestVersion;
-                ApplyFocus(_shellViewModel.CurrentGuaranteeFocusArea, _shellViewModel.CurrentGuaranteeFocusRequestId);
+                ApplyFocus(_shellViewModel.CurrentGuaranteeFocusArea);
             }
         }
 
-        private void ApplyFocus(GuaranteeFileFocusArea area, int? requestIdToFocus)
+        private void ApplyFocus(GuaranteeFileFocusArea area)
         {
-            _ = requestIdToFocus;
             Dispatcher.BeginInvoke(() => ApplyAreaFocus(area), DispatcherPriority.Loaded);
         }
     }

@@ -35,7 +35,7 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
-        public void Build_WithPendingRequest_OpensFileAtRequests()
+        public void Build_WithPendingRequest_RoutesToRequestsWorkspace()
         {
             Guarantee guarantee = CreateGuarantee(GuaranteeLifecycleStatus.Active);
             List<WorkflowRequest> requests = new()
@@ -51,11 +51,11 @@ namespace GuaranteeManager.Tests
             GuaranteeActionProfile profile = GuaranteeActionProfile.Build(guarantee, requests);
 
             Assert.Equal(GuaranteeFileFocusArea.Requests, profile.SuggestedFocusArea);
-            Assert.Contains("قسم الطلبات", profile.OpenFileAction.Hint);
+            Assert.Contains("شاشة الطلبات", profile.OpenFileAction.Hint);
         }
 
         [Fact]
-        public void Build_WithWorkflowOutputs_OpensFileAtOutputs()
+        public void Build_WithWorkflowOutputs_RoutesToRequestsWorkspace()
         {
             Guarantee guarantee = CreateGuarantee(GuaranteeLifecycleStatus.Active);
             List<WorkflowRequest> requests = new()
@@ -72,7 +72,7 @@ namespace GuaranteeManager.Tests
             GuaranteeActionProfile profile = GuaranteeActionProfile.Build(guarantee, requests);
 
             Assert.Equal(GuaranteeFileFocusArea.Outputs, profile.SuggestedFocusArea);
-            Assert.Contains("قسم المخرجات", profile.OpenFileAction.Hint);
+            Assert.Contains("المخرجات", profile.OpenFileAction.Hint);
         }
 
         [Theory]

@@ -171,10 +171,10 @@ namespace GuaranteeManager
 
             _resumeLastFileButton.Style = WorkspaceSurfaceChrome.Style(_hasLastFile ? "PrimaryButton" : "BaseButton");
             _resumeLastFileButton.FontSize = 9.5;
-            _resumeLastFileButton.Content = _hasLastFile ? $"استئناف {_lastFileGuaranteeNo}" : "لا يوجد ملف حديث";
+            _resumeLastFileButton.Content = _hasLastFile ? $"استئناف {_lastFileGuaranteeNo}" : "لا يوجد ضمان حديث";
             _resumeLastFileButton.IsEnabled = _hasLastFile;
             _resumeLastFileButton.Click += (_, _) => _resumeLastFile();
-            UiInstrumentation.Identify(_resumeLastFileButton, "Dashboard.Toolbar.ResumeLastFile", "استئناف آخر ملف");
+            UiInstrumentation.Identify(_resumeLastFileButton, "Dashboard.Toolbar.ResumeLastFile", "استئناف آخر ضمان");
 
             _expiryFollowUpsLensButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             _expiryFollowUpsLensButton.FontSize = 9.5;

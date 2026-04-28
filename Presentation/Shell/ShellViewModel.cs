@@ -32,9 +32,6 @@ namespace GuaranteeManager
         private int? _focusedGuaranteeRequestId;
         private int _guaranteeFocusRequestVersion;
         private GuaranteeFileFocusArea _currentGuaranteeFocusArea = GuaranteeFileFocusArea.None;
-        private int _pendingGuaranteeFileFocusRootId;
-        private int? _pendingGuaranteeFileFocusRequestId;
-        private GuaranteeFileFocusArea _pendingGuaranteeFileFocusArea = GuaranteeFileFocusArea.None;
         private OperationalInquiryResult? _latestInquiryResult;
         private GuaranteeOutputPreviewItem? _latestLetterOutput;
         private GuaranteeOutputPreviewItem? _latestResponseOutput;
@@ -99,7 +96,6 @@ namespace GuaranteeManager
             ApplySmartFilterCommand = new RelayCommand(_ => ApplySmartFilter());
             SelectGuaranteeCommand = new RelayCommand(parameter => SelectGuarantee(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
             OpenHistoryCommand = new RelayCommand(parameter => OpenHistory(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
-            RunSelectedInquiryCommand = new RelayCommand(_ => RunSelectedInquiry(), _ => SelectedGuarantee != null && SelectedOperationalInquiryOption != null);
             CreateExtensionRequestCommand = new RelayCommand(parameter => CreateExtensionRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             CreateReleaseRequestCommand = new RelayCommand(parameter => CreateReleaseRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             CreateReductionRequestCommand = new RelayCommand(parameter => CreateReductionRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
@@ -120,26 +116,9 @@ namespace GuaranteeManager
             ExportGuaranteesByBankCommand = new RelayCommand(parameter => ExportGuaranteesByBank(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
             ExportGuaranteesBySupplierCommand = new RelayCommand(parameter => ExportGuaranteesBySupplier(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
             ExportGuaranteesByTemporalStatusCommand = new RelayCommand(parameter => ExportGuaranteesByTemporalStatus(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
-            OpenGuaranteeFileCommand = new RelayCommand(parameter => OpenGuaranteeFile(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
-            FocusExecutiveSummaryCommand = new RelayCommand(_ => FocusGuaranteeSection(GuaranteeFileFocusArea.ExecutiveSummary), _ => SelectedGuarantee != null);
-            FocusRequestsSectionCommand = new RelayCommand(_ => FocusGuaranteeSection(GuaranteeFileFocusArea.Requests), _ => SelectedGuarantee != null);
-            FocusTimelineSectionCommand = new RelayCommand(_ => FocusGuaranteeSection(GuaranteeFileFocusArea.Series), _ => SelectedGuarantee != null);
-            FocusAttachmentsSectionCommand = new RelayCommand(_ => FocusGuaranteeSection(GuaranteeFileFocusArea.Attachments), _ => SelectedGuarantee != null);
-            FocusActionsSectionCommand = new RelayCommand(_ => FocusGuaranteeSection(GuaranteeFileFocusArea.Actions), _ => SelectedGuarantee != null);
-            FocusOutputsSectionCommand = new RelayCommand(_ => FocusGuaranteeSection(GuaranteeFileFocusArea.Outputs), _ => SelectedGuarantee != null);
-            FocusSuggestedGuaranteeActionCommand = new RelayCommand(_ => FocusSuggestedGuaranteeArea(), _ => SelectedGuarantee?.HasSuggestedFocus == true);
             OpenAttachmentCommand = new RelayCommand(parameter => OpenAttachment(parameter as AttachmentItem), parameter => parameter is AttachmentItem);
-            OpenRequestPreviewCommand = new RelayCommand(parameter => OpenRequestPreview(parameter as GuaranteeRequestPreviewItem), parameter => parameter is GuaranteeRequestPreviewItem);
-            RegisterRequestPreviewResponseCommand = new RelayCommand(parameter => RegisterRequestPreviewResponse(parameter as GuaranteeRequestPreviewItem), parameter => parameter is GuaranteeRequestPreviewItem item && item.CanRegisterResponse);
-            OpenRequestPreviewLetterCommand = new RelayCommand(parameter => OpenRequestPreviewLetter(parameter as GuaranteeRequestPreviewItem), parameter => parameter is GuaranteeRequestPreviewItem item && item.CanOpenLetter);
-            OpenRequestPreviewResponseCommand = new RelayCommand(parameter => OpenRequestPreviewResponse(parameter as GuaranteeRequestPreviewItem), parameter => parameter is GuaranteeRequestPreviewItem item && item.CanOpenResponse);
             OpenOutputLetterCommand = new RelayCommand(parameter => OpenOutputLetter(parameter as GuaranteeOutputPreviewItem), parameter => parameter is GuaranteeOutputPreviewItem item && item.CanOpenLetter);
             OpenOutputResponseCommand = new RelayCommand(parameter => OpenOutputResponse(parameter as GuaranteeOutputPreviewItem), parameter => parameter is GuaranteeOutputPreviewItem item && item.CanOpenResponse);
-            OpenLatestInquiryDialogCommand = new RelayCommand(_ => OpenLatestInquiryDialog(), _ => LatestInquiryResult != null);
-            OpenLatestInquiryHistoryCommand = new RelayCommand(_ => OpenLatestInquiryHistory(), _ => LatestInquiryResult?.CanOpenHistory == true);
-            OpenLatestInquiryLetterCommand = new RelayCommand(_ => OpenLatestInquiryLetter(), _ => LatestInquiryResult?.CanOpenRequestLetter == true);
-            OpenLatestInquiryResponseCommand = new RelayCommand(_ => OpenLatestInquiryResponse(), _ => LatestInquiryResult?.CanOpenResponseDocument == true);
-            FocusLatestInquirySectionCommand = new RelayCommand(_ => FocusLatestInquirySection(), _ => ResolveLatestInquirySuggestedArea(LatestInquiryResult) != GuaranteeFileFocusArea.None);
             ShowAllAttachmentsCommand = new RelayCommand(_ => ShowAllAttachments(), _ => SelectedGuarantee != null);
             ShowGuaranteeRequestsCommand = new RelayCommand(_ => ShowGuaranteeRequests(), _ => SelectedGuarantee != null);
             ResumeLastFileCommand = new RelayCommand(_ => ResumeLastFile(), _ => HasLastFile);
@@ -165,7 +144,7 @@ namespace GuaranteeManager
                 ? "لا توجد طلبات مرتبطة تغيّر القرار الآن. إذا كنت تراجع الأثر فقط فانتقل إلى الخط الزمني أو المرفقات."
                 : $"هذه هي الطلبات الأقرب للتنفيذ الآن في نفس السلسلة. يظهر هنا آخر {GuaranteeRequestsPreview.Count.ToString("N0", CultureInfo.InvariantCulture)} طلبات مرتبطة.";
         public string GuaranteeRequestsContextLabel => _focusedGuaranteeRequestId.HasValue
-            ? "الطلب الذي فتح الملف"
+            ? "الطلب المفتوح الآن"
             : GuaranteeRequestsPreview.Count == 0
                 ? "لا توجد حركة حالية"
                 : "الأقرب للتنفيذ الآن";
@@ -214,7 +193,6 @@ namespace GuaranteeManager
         public ICommand ApplySmartFilterCommand { get; }
         public ICommand SelectGuaranteeCommand { get; }
         public ICommand OpenHistoryCommand { get; }
-        public ICommand RunSelectedInquiryCommand { get; }
         public ICommand CreateExtensionRequestCommand { get; }
         public ICommand CreateReleaseRequestCommand { get; }
         public ICommand CreateReductionRequestCommand { get; }
@@ -235,26 +213,9 @@ namespace GuaranteeManager
         public ICommand ExportGuaranteesByBankCommand { get; }
         public ICommand ExportGuaranteesBySupplierCommand { get; }
         public ICommand ExportGuaranteesByTemporalStatusCommand { get; }
-        public ICommand OpenGuaranteeFileCommand { get; }
-        public ICommand FocusExecutiveSummaryCommand { get; }
-        public ICommand FocusRequestsSectionCommand { get; }
-        public ICommand FocusTimelineSectionCommand { get; }
-        public ICommand FocusAttachmentsSectionCommand { get; }
-        public ICommand FocusActionsSectionCommand { get; }
-        public ICommand FocusOutputsSectionCommand { get; }
-        public ICommand FocusSuggestedGuaranteeActionCommand { get; }
         public ICommand OpenAttachmentCommand { get; }
-        public ICommand OpenRequestPreviewCommand { get; }
-        public ICommand RegisterRequestPreviewResponseCommand { get; }
-        public ICommand OpenRequestPreviewLetterCommand { get; }
-        public ICommand OpenRequestPreviewResponseCommand { get; }
         public ICommand OpenOutputLetterCommand { get; }
         public ICommand OpenOutputResponseCommand { get; }
-        public ICommand OpenLatestInquiryDialogCommand { get; }
-        public ICommand OpenLatestInquiryHistoryCommand { get; }
-        public ICommand OpenLatestInquiryLetterCommand { get; }
-        public ICommand OpenLatestInquiryResponseCommand { get; }
-        public ICommand FocusLatestInquirySectionCommand { get; }
         public ICommand ShowAllAttachmentsCommand { get; }
         public ICommand ShowGuaranteeRequestsCommand { get; }
         public ICommand ResumeLastFileCommand { get; }
@@ -680,37 +641,6 @@ namespace GuaranteeManager
             ExecuteGuaranteeAction(row, _guaranteeWorkspace.EditGuarantee);
         }
 
-        private void OpenGuaranteeFile(GuaranteeRow? row)
-        {
-            GuaranteeRow? target = ResolveTarget(row);
-            if (target == null)
-            {
-                return;
-            }
-
-            SelectedGuarantee = target;
-            GuaranteeFileFocusArea focusArea = target.SuggestedFocusArea == GuaranteeFileFocusArea.None
-                ? GuaranteeFileFocusArea.ExecutiveSummary
-                : target.SuggestedFocusArea;
-            QueueGuaranteeFileOpenFocus(focusArea, ResolveInitialFileFocusRequestId(target, focusArea), target.RootId);
-            GuaranteeFileDialog.ShowFor(this, target);
-        }
-
-        private int? ResolveInitialFileFocusRequestId(GuaranteeRow target, GuaranteeFileFocusArea focusArea)
-        {
-            if (focusArea != GuaranteeFileFocusArea.Requests)
-            {
-                return null;
-            }
-
-            return _database.GetWorkflowRequestsByRootId(target.RootId)
-                .Where(request => request.Status == RequestStatus.Pending)
-                .OrderByDescending(request => request.RequestDate)
-                .ThenByDescending(request => request.SequenceNumber)
-                .FirstOrDefault()
-                ?.Id;
-        }
-
         private int? ResolveContextRequestId(GuaranteeRow target)
         {
             return _database.GetWorkflowRequestsByRootId(target.RootId)
@@ -758,19 +688,44 @@ namespace GuaranteeManager
                 return;
             }
 
+            RouteGuaranteeContext(row, area, requestIdToFocus, sourceKey);
+        }
+
+        public void RouteGuaranteeContext(
+            GuaranteeRow row,
+            GuaranteeFileFocusArea area,
+            int? requestIdToFocus,
+            string sourceKey = "guarantee")
+        {
             SelectedGuarantee = row;
-            QueueGuaranteeFileOpenFocus(area, requestIdToFocus, row.RootId);
-            GuaranteeFileDialog.ShowFor(this, row);
+            GuaranteeFileFocusArea resolvedArea = area == GuaranteeFileFocusArea.None
+                ? GuaranteeFileFocusArea.Series
+                : area;
+
+            if (resolvedArea == GuaranteeFileFocusArea.Requests ||
+                resolvedArea == GuaranteeFileFocusArea.Outputs ||
+                requestIdToFocus.HasValue)
+            {
+                ShowRequestsForGuarantee(row, requestIdToFocus ?? ResolveContextRequestId(row));
+            }
+            else
+            {
+                ShowGuaranteesWorkspace();
+                SelectedGuarantee = row;
+                FocusGuaranteeSection(resolvedArea);
+            }
+
             _diagnostics.RecordEvent(
                 $"{sourceKey}.action",
-                "open-guarantee-context",
+                "route-guarantee-context",
                 new
                 {
-                    rootId,
-                    FocusArea = area.ToString(),
+                    row.RootId,
+                    row.GuaranteeNo,
+                    FocusArea = resolvedArea.ToString(),
                     requestIdToFocus
                 });
-            WriteDiagnosticsState($"{sourceKey}-open-guarantee-context");
+            WriteDiagnosticsState($"{sourceKey}-route-guarantee-context");
         }
 
         private void ApplySmartFilter()
@@ -1023,31 +978,6 @@ namespace GuaranteeManager
             }
 
             GuaranteeFocusRequested?.Invoke(area, requestIdToFocus);
-        }
-
-        public void QueueGuaranteeFileOpenFocus(GuaranteeFileFocusArea area, int? requestIdToFocus, int rootId)
-        {
-            _pendingGuaranteeFileFocusArea = area;
-            _pendingGuaranteeFileFocusRequestId = area == GuaranteeFileFocusArea.Requests ? requestIdToFocus : null;
-            _pendingGuaranteeFileFocusRootId = rootId;
-            FocusGuaranteeSection(area, requestIdToFocus);
-        }
-
-        public bool TryConsumePendingGuaranteeFileOpenFocus(int rootId, out GuaranteeFileFocusArea area, out int? requestIdToFocus)
-        {
-            if (_pendingGuaranteeFileFocusRootId == rootId && _pendingGuaranteeFileFocusArea != GuaranteeFileFocusArea.None)
-            {
-                area = _pendingGuaranteeFileFocusArea;
-                requestIdToFocus = _pendingGuaranteeFileFocusRequestId;
-                _pendingGuaranteeFileFocusArea = GuaranteeFileFocusArea.None;
-                _pendingGuaranteeFileFocusRequestId = null;
-                _pendingGuaranteeFileFocusRootId = 0;
-                return true;
-            }
-
-            area = GuaranteeFileFocusArea.None;
-            requestIdToFocus = null;
-            return false;
         }
 
         private void OpenOutputLetter(GuaranteeOutputPreviewItem? item)
@@ -1590,7 +1520,6 @@ namespace GuaranteeManager
             foreach (ICommand command in new[]
                      {
                          OpenHistoryCommand,
-                         RunSelectedInquiryCommand,
                          EditGuaranteeCommand,
                          CreateExtensionRequestCommand,
                          CreateReleaseRequestCommand,
@@ -1602,23 +1531,8 @@ namespace GuaranteeManager
                          RegisterBankResponseCommand,
                          ShowAllAttachmentsCommand,
                          ShowGuaranteeRequestsCommand,
-                         OpenGuaranteeFileCommand,
-                         FocusSuggestedGuaranteeActionCommand
-                        , FocusExecutiveSummaryCommand
-                        , FocusRequestsSectionCommand
-                        , FocusTimelineSectionCommand
-                        , FocusAttachmentsSectionCommand
-                        , FocusActionsSectionCommand
-                        , FocusOutputsSectionCommand
-                        , OpenRequestPreviewCommand
-                        , RegisterRequestPreviewResponseCommand
-                        , OpenRequestPreviewLetterCommand
-                        , OpenRequestPreviewResponseCommand
-                        , OpenLatestInquiryDialogCommand
-                        , OpenLatestInquiryHistoryCommand
-                        , OpenLatestInquiryLetterCommand
-                        , OpenLatestInquiryResponseCommand
-                        , FocusLatestInquirySectionCommand
+                         OpenOutputLetterCommand,
+                         OpenOutputResponseCommand
                      })
             {
                 if (command is RelayCommand relayCommand)
@@ -1632,11 +1546,8 @@ namespace GuaranteeManager
         {
             foreach (ICommand command in new[]
                      {
-                         OpenLatestInquiryDialogCommand,
-                         OpenLatestInquiryHistoryCommand,
-                         OpenLatestInquiryLetterCommand,
-                         OpenLatestInquiryResponseCommand,
-                         FocusLatestInquirySectionCommand
+                         OpenOutputLetterCommand,
+                         OpenOutputResponseCommand
                      })
             {
                 if (command is RelayCommand relayCommand)

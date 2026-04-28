@@ -171,8 +171,8 @@ namespace GuaranteeManager
                 string title = "لا توجد أولوية محددة";
                 string subtitle = "ابدأ باختيار عنصر من قائمة الأولويات اليومية.";
                 string note = hasLastFile
-                    ? $"آخر ملف تم العمل عليه: {lastFileGuaranteeNo} | {lastFileSummary}"
-                    : "لا يوجد ملف حديث بعد. ابدأ بفتح الضمانات أو اختيار عنصر من أعمال اليوم.";
+                    ? $"آخر ضمان تم العمل عليه: {lastFileGuaranteeNo} | {lastFileSummary}"
+                    : "لا يوجد ضمان حديث بعد. ابدأ بفتح الضمانات أو اختيار عنصر من أعمال اليوم.";
 
                 if (string.Equals(normalizedScope, DashboardScopeFilters.ExpiryFollowUps, StringComparison.Ordinal))
                 {
@@ -206,7 +206,7 @@ namespace GuaranteeManager
                     "---",
                     "---",
                     note,
-                    "فتح الملف عند اختيار عنصر",
+                    "اختر عنصرًا لفتح وجهته",
                     "فتح المساحة",
                     ResolveEmptyDetailProfile(normalizedScope),
                     false,
@@ -318,10 +318,10 @@ namespace GuaranteeManager
             GuaranteeFileFocusArea focusArea = hasPendingRequest
                 ? GuaranteeFileFocusArea.Requests
                 : GuaranteeFileFocusArea.Actions;
-            string primaryAction = hasPendingRequest ? "راجع الطلب" : "راجع الملف";
+            string primaryAction = hasPendingRequest ? "راجع الطلب" : "راجع الضمان";
             string nextAction = hasPendingRequest
                 ? $"افتح {pendingRequest!.Request.TypeLabel} المعلق وسجل رد البنك عند وصوله"
-                : "افتح الملف وحدد هل يحتاج تمديدًا أو إفراجًا أو إقفالًا تشغيليًا";
+                : "افتح الضمان في المحفظة وحدد هل يحتاج تمديدًا أو إفراجًا أو إقفالًا تشغيليًا";
             string note = hasPendingRequest
                 ? $"ظهر اليوم لأن تاريخ الانتهاء مضى ويوجد {pendingRequest!.Request.TypeLabel} معلق منذ {pendingRequest.Request.RequestDate:yyyy/MM/dd}. ابدأ من الطلب المرتبط قبل إنشاء إجراء جديد."
                 : $"ظهر اليوم لأن تاريخ الانتهاء مضى وما زالت الحالة التشغيلية {item.LifecycleStatusLabel}. المتابعة هنا تمنع بقاء ضمان منتهي بلا قرار.";
@@ -374,7 +374,7 @@ namespace GuaranteeManager
             string primaryAction = hasPendingRequest ? "راجع الطلب" : "راجع التمديد";
             string nextAction = hasPendingRequest
                 ? $"راجع {pendingRequest!.Request.TypeLabel} المعلق قبل إنشاء متابعة جديدة"
-                : "افتح الملف وراجع قرار التمديد قبل الوصول إلى تاريخ الانتهاء";
+                : "افتح الضمان في المحفظة وراجع قرار التمديد قبل الوصول إلى تاريخ الانتهاء";
             string note = hasPendingRequest
                 ? $"ظهر اليوم لأنه داخل نافذة الانتهاء القريبة ويوجد {pendingRequest!.Request.TypeLabel} معلق منذ {pendingRequest.Request.RequestDate:yyyy/MM/dd}. ابدأ من الطلب المرتبط."
                 : "ظهر اليوم لأنه داخل نافذة الانتهاء القريبة. راجع الطلبات المرتبطة قبل إنشاء تمديد أو إقفال مبكر.";
@@ -472,7 +472,7 @@ namespace GuaranteeManager
             }
 
             return new DashboardWorkspaceMetrics(
-                new DashboardMetricCard("آخر ملف", hasLastFile ? lastFileGuaranteeNo : "لا يوجد", "#2563EB"),
+                new DashboardMetricCard("آخر ضمان", hasLastFile ? lastFileGuaranteeNo : "لا يوجد", "#2563EB"),
                 new DashboardMetricCard("أعمال حرجة", allItems.Count(item => item.PriorityRank <= 1).ToString("N0", CultureInfo.InvariantCulture), "#EF4444"),
                 new DashboardMetricCard("طلبات معلقة", pendingRequests.Count.ToString("N0", CultureInfo.InvariantCulture), "#E09408"),
                 new DashboardMetricCard("متابعات الانتهاء", guarantees.Count(item => item.NeedsExpiryFollowUp || item.IsExpiringSoon).ToString("N0", CultureInfo.InvariantCulture), "#0F172A"));
