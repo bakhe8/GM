@@ -77,6 +77,7 @@ namespace GuaranteeManager
         public FrameworkElement CreateRequestsWorkspace(
             Action<int> refreshAfterWorkflowChange,
             Action closeRequested,
+            Action? selectionChanged = null,
             string? initialSearchText = null)
         {
             WorkflowRequestQueryOptions options = new()
@@ -92,6 +93,7 @@ namespace GuaranteeManager
                 App.CurrentApp.GetRequiredService<IExcelService>(),
                 refreshAfterWorkflowChange,
                 closeRequested,
+                selectionChanged,
                 initialSearchText);
         }
 

@@ -16,6 +16,7 @@ namespace GuaranteeManager
     {
         private readonly Func<IReadOnlyList<WorkflowRequestListItem>> _loadRequests;
         private readonly Action? _closeRequested;
+        private readonly Action? _selectionChanged;
         private readonly RequestsWorkspaceDataService _dataService;
         private readonly RequestsWorkspaceCoordinator _coordinator;
         private readonly ListBox _list = new();
@@ -51,10 +52,12 @@ namespace GuaranteeManager
             IExcelService excel,
             Action<int>? onChanged,
             Action? closeRequested = null,
+            Action? selectionChanged = null,
             string? initialSearchText = null)
         {
             _loadRequests = loadRequests;
             _closeRequested = closeRequested;
+            _selectionChanged = selectionChanged;
             _dataService = new RequestsWorkspaceDataService();
             _coordinator = new RequestsWorkspaceCoordinator(database, workflow, excel, App.CurrentApp.GetRequiredService<IShellStatusService>(), onChanged);
             UiInstrumentation.Identify(this, "Requests.Workspace", "الطلبات");
@@ -72,6 +75,8 @@ namespace GuaranteeManager
             ReloadRequests();
             ApplyInitialSearch(initialSearchText);
         }
+
+        public RequestListDisplayItem? SelectedDiagnosticsItem => SelectedItem;
 
         private void ApplyInitialSearch(string? initialSearchText)
         {
@@ -194,7 +199,11 @@ namespace GuaranteeManager
 
         private UIElement BuildTableSection()
         {
-            _list.SelectionChanged += (_, _) => UpdateDetails();
+            _list.SelectionChanged += (_, _) =>
+            {
+                UpdateDetails();
+                _selectionChanged?.Invoke();
+            };
             return WorkspaceSurfaceChrome.BuildReferenceTableShell(
                 BuildTableHeader(),
                 _list,

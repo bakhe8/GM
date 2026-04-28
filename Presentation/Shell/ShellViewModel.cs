@@ -1146,6 +1146,14 @@ namespace GuaranteeManager
                 _workspaceFactory.CreateRequestsWorkspace(
                     RefreshAfterWorkflowChange,
                     CloseActiveWorkspace,
+                    () =>
+                    {
+                        if (string.Equals(CurrentWorkspaceKey, ShellWorkspaceKeys.Requests, StringComparison.Ordinal)
+                            && ActiveWorkspaceContent is RequestsWorkspaceSurface)
+                        {
+                            WriteDiagnosticsState("requests-selection");
+                        }
+                    },
                     initialSearchText));
         }
 
@@ -1538,6 +1546,7 @@ namespace GuaranteeManager
 
         private void WriteDiagnosticsState(string reason)
         {
+            ShellDiagnosticsSelection diagnosticsSelection = ResolveDiagnosticsSelection();
             _diagnostics.UpdateShellState(new UiShellDiagnosticsState(
                 DateTimeOffset.Now,
                 reason,
@@ -1558,14 +1567,47 @@ namespace GuaranteeManager
                 HasLastFile,
                 LastFileGuaranteeNo,
                 LastFileSummary,
+                diagnosticsSelection.GuaranteeId,
+                diagnosticsSelection.RootGuaranteeId,
+                diagnosticsSelection.GuaranteeNo,
+                diagnosticsSelection.Supplier,
+                diagnosticsSelection.Bank,
+                SelectedOperationalInquiryOption?.Id ?? string.Empty,
+                HasLatestInquiryResult));
+        }
+
+        private ShellDiagnosticsSelection ResolveDiagnosticsSelection()
+        {
+            if (string.Equals(CurrentWorkspaceKey, ShellWorkspaceKeys.Requests, StringComparison.Ordinal)
+                && ActiveWorkspaceContent is RequestsWorkspaceSurface requestsWorkspace)
+            {
+                if (requestsWorkspace.SelectedDiagnosticsItem is RequestListDisplayItem requestItem)
+                {
+                    return new ShellDiagnosticsSelection(
+                        requestItem.Item.CurrentGuaranteeId,
+                        requestItem.Item.RootGuaranteeId,
+                        requestItem.GuaranteeNo,
+                        requestItem.Supplier,
+                        requestItem.Bank);
+                }
+
+                return new ShellDiagnosticsSelection(null, null, string.Empty, string.Empty, string.Empty);
+            }
+
+            return new ShellDiagnosticsSelection(
                 SelectedGuarantee?.Id,
                 SelectedGuarantee?.RootId,
                 SelectedGuarantee?.GuaranteeNo ?? string.Empty,
                 SelectedGuarantee?.Beneficiary ?? string.Empty,
-                SelectedGuarantee?.Bank ?? string.Empty,
-                SelectedOperationalInquiryOption?.Id ?? string.Empty,
-                HasLatestInquiryResult));
+                SelectedGuarantee?.Bank ?? string.Empty);
         }
+
+        private sealed record ShellDiagnosticsSelection(
+            int? GuaranteeId,
+            int? RootGuaranteeId,
+            string GuaranteeNo,
+            string Supplier,
+            string Bank);
 
         private bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {

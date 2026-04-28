@@ -169,7 +169,18 @@
   - `AutomationProperties.Name`
   - `AutomationProperties.HelpText`
   - `AutomationProperties.ItemStatus`
-  وفق الفعل الفعلي الجاري
+- ثم ظهرت فجوة صدق في التشخيص نفسه:
+  - `Requests` كانت تبقي الصف الصحيح محددًا بعد التحديثات
+  - لكن `ShellState` قد تحتفظ أحيانًا بـ `SelectedGuarantee*` من مساحة سابقة
+- أُغلق هذا الآن عبر:
+  - قراءة snapshot الطلب المحدد من `RequestsWorkspaceSurface` نفسها عندما تكون `Requests` هي المساحة الحالية
+  - وإطلاق تحديث تشخيصي خفيف عند تغير الصف المحدد
+- والتحقق الحي أكد بعدها:
+  - `CurrentWorkspaceKey = Requests`
+  - `SelectedGuaranteeNo = BG-2026-0056`
+  - `SelectedGuaranteeBank = مصرف الإنماء`
+  - بما يطابق الشاشة بدل ذاكرة قديمة
+- وهذا كله صار يتبع الفعل الفعلي الجاري بدل اسم عام أو ذاكرة قديمة
 - التحقق الحي بعد الإصلاح أثبت:
   - `BG-2026-0050 -> إلحاق الرد`
   - `BG-2026-0056 -> رد البنك`
