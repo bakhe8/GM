@@ -55,6 +55,13 @@ namespace GuaranteeManager
         private readonly TextBlock _detailWorkspace = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailAction = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailNote = BuildMutedText(11, FontWeights.Normal);
+        private readonly TextBlock _detailCategoryLabel = BuildInfoLabel("الفئة");
+        private readonly TextBlock _detailPriorityLabel = BuildInfoLabel("الأولوية");
+        private readonly TextBlock _detailReferenceLabel = BuildInfoLabel("المرجع");
+        private readonly TextBlock _detailDueLabel = BuildInfoLabel("الموعد");
+        private readonly TextBlock _detailWorkspaceLabel = BuildInfoLabel("المساحة");
+        private readonly TextBlock _detailActionLabel = BuildInfoLabel("الإجراء التالي");
+        private readonly TextBlock _detailNoteLabel = BuildInfoLabel("ملاحظة تشغيلية");
         private readonly Button _primaryActionButton = new();
         private readonly Button _openWorkspaceButton = new();
         private readonly Button _copyReferenceButton = new();
@@ -338,13 +345,13 @@ namespace GuaranteeManager
                     _detailAmountHeadline,
                     _detailAmountCaption,
                     new Border { Height = 1, Background = WorkspaceSurfaceChrome.BrushFrom("#EDF2F7"), Margin = new Thickness(0, 13, 0, 12) },
-                    WorkspaceSurfaceChrome.InfoLine("الفئة", _detailCategory),
-                    WorkspaceSurfaceChrome.InfoLine("الأولوية", _detailPriority),
-                    WorkspaceSurfaceChrome.InfoLine("المرجع", _detailReference),
-                    WorkspaceSurfaceChrome.InfoLine("الموعد", _detailDue),
-                    WorkspaceSurfaceChrome.InfoLine("المساحة", _detailWorkspace),
-                    WorkspaceSurfaceChrome.InfoLine("الإجراء التالي", _detailAction),
-                    BuildInfoBlock("ملاحظة تشغيلية", _detailNote)
+                    BuildInfoLine(_detailCategoryLabel, _detailCategory),
+                    BuildInfoLine(_detailPriorityLabel, _detailPriority),
+                    BuildInfoLine(_detailReferenceLabel, _detailReference),
+                    BuildInfoLine(_detailDueLabel, _detailDue),
+                    BuildInfoLine(_detailWorkspaceLabel, _detailWorkspace),
+                    BuildInfoLine(_detailActionLabel, _detailAction),
+                    BuildInfoBlock(_detailNoteLabel, _detailNote)
                 }
             };
         }
@@ -786,6 +793,7 @@ namespace GuaranteeManager
             _detailWorkspace.Text = state.Workspace;
             _detailAction.Text = state.Action;
             _detailNote.Text = state.Note;
+            ApplyDetailLabels(state.UseFollowUpLabels);
             _primaryActionButton.Content = state.PrimaryActionButtonLabel;
             _openWorkspaceButton.Content = state.WorkspaceButtonLabel;
             AutomationProperties.SetName(_primaryActionButton, state.PrimaryActionButtonLabel);
@@ -799,19 +807,24 @@ namespace GuaranteeManager
             _copyReferenceButton.IsEnabled = state.CanRunPrimaryAction;
         }
 
-        private static FrameworkElement BuildInfoBlock(string title, TextBlock value)
+        private static FrameworkElement BuildInfoBlock(TextBlock title, TextBlock value)
         {
             var panel = new StackPanel { Margin = new Thickness(0, 0, 0, 12) };
-            panel.Children.Add(new TextBlock
-            {
-                Text = title,
-                FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#94A3C8")
-            });
+            panel.Children.Add(title);
             value.Margin = new Thickness(0, 5, 0, 0);
             panel.Children.Add(value);
             return panel;
+        }
+
+        private static FrameworkElement BuildInfoLine(TextBlock label, TextBlock value)
+        {
+            var grid = new Grid { Margin = new Thickness(0, 0, 0, 12) };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.Children.Add(label);
+            Grid.SetColumn(value, 1);
+            grid.Children.Add(value);
+            return grid;
         }
 
         private static TextBlock BuildMetricValue(double fontSize = 27)
@@ -843,6 +856,41 @@ namespace GuaranteeManager
             labelBlock.Text = card.Label;
             labelBlock.Foreground = WorkspaceSurfaceChrome.BrushFrom(card.AccentHex);
             valueBlock.Text = card.Value;
+        }
+
+        private void ApplyDetailLabels(bool useFollowUpLabels)
+        {
+            if (useFollowUpLabels)
+            {
+                _detailCategoryLabel.Text = "نوع المتابعة";
+                _detailPriorityLabel.Text = "المستوى";
+                _detailReferenceLabel.Text = "المرجع";
+                _detailDueLabel.Text = "المدة";
+                _detailWorkspaceLabel.Text = "المسار";
+                _detailActionLabel.Text = "الإجراء المقترح";
+                _detailNoteLabel.Text = "ملاحظة المتابعة";
+                return;
+            }
+
+            _detailCategoryLabel.Text = "الفئة";
+            _detailPriorityLabel.Text = "الأولوية";
+            _detailReferenceLabel.Text = "المرجع";
+            _detailDueLabel.Text = "الموعد";
+            _detailWorkspaceLabel.Text = "المساحة";
+            _detailActionLabel.Text = "الإجراء التالي";
+            _detailNoteLabel.Text = "ملاحظة تشغيلية";
+        }
+
+        private static TextBlock BuildInfoLabel(string text)
+        {
+            return new TextBlock
+            {
+                Text = text,
+                FontSize = 11,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#94A3C8"),
+                VerticalAlignment = VerticalAlignment.Center
+            };
         }
 
         private static TextBlock BuildDetailValue(double size, FontWeight weight)

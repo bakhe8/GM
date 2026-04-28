@@ -151,6 +151,7 @@ namespace GuaranteeManager
                     note,
                     "فتح الملف عند اختيار عنصر",
                     "فتح المساحة",
+                    string.Equals(normalizedScope, DashboardScopeFilters.ExpiryFollowUps, StringComparison.Ordinal),
                     false,
                     false);
             }
@@ -175,6 +176,7 @@ namespace GuaranteeManager
                 selected.Note,
                 selected.PrimaryActionLabel,
                 selected.WorkspaceButtonLabel,
+                selected.Scope == DashboardScope.ExpiredFollowUp || selected.Scope == DashboardScope.ExpiringSoon,
                 selected.RootGuaranteeId > 0,
                 true);
         }
@@ -394,6 +396,7 @@ namespace GuaranteeManager
         string Note,
         string PrimaryActionButtonLabel,
         string WorkspaceButtonLabel,
+        bool UseFollowUpLabels,
         bool CanRunPrimaryAction,
         bool CanOpenWorkspace);
 
