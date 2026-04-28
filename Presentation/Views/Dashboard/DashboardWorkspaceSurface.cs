@@ -107,9 +107,11 @@ namespace GuaranteeManager
 
         private void ApplyInitialState(string? initialSearchText, string? initialScopeFilter)
         {
-            if (!string.IsNullOrWhiteSpace(initialScopeFilter))
+            string normalizedScopeFilter = DashboardScopeFilters.Normalize(initialScopeFilter);
+
+            if (!string.IsNullOrWhiteSpace(normalizedScopeFilter))
             {
-                string targetScope = initialScopeFilter.Trim();
+                string targetScope = normalizedScopeFilter;
                 foreach (object item in _scopeFilter.Items)
                 {
                     if (string.Equals(item as string, targetScope, StringComparison.Ordinal))
@@ -126,7 +128,7 @@ namespace GuaranteeManager
                 return;
             }
 
-            if (!string.IsNullOrWhiteSpace(initialScopeFilter))
+            if (!string.IsNullOrWhiteSpace(normalizedScopeFilter))
             {
                 ApplyFilters();
             }
@@ -194,10 +196,9 @@ namespace GuaranteeManager
             toolbar.Children.Add(refreshButton);
 
             _scopeFilter.Style = WorkspaceSurfaceChrome.Style("FilterComboBox");
-            _scopeFilter.Items.Add("أعمال اليوم");
-            _scopeFilter.Items.Add("طلبات معلقة");
-            _scopeFilter.Items.Add("منتهية تحتاج متابعة");
-            _scopeFilter.Items.Add("قريبة الانتهاء");
+            _scopeFilter.Items.Add(DashboardScopeFilters.AllWork);
+            _scopeFilter.Items.Add(DashboardScopeFilters.PendingRequests);
+            _scopeFilter.Items.Add(DashboardScopeFilters.ExpiryFollowUps);
             _scopeFilter.SelectedIndex = 0;
             _scopeFilter.SelectionChanged += (_, _) => ApplyFilters();
             Grid.SetColumn(_scopeFilter, 6);
@@ -498,7 +499,7 @@ namespace GuaranteeManager
         private void ApplyFilters()
         {
             _list.Items.Clear();
-            string selectedScope = _scopeFilter.SelectedItem as string ?? "أعمال اليوم";
+            string selectedScope = _scopeFilter.SelectedItem as string ?? DashboardScopeFilters.AllWork;
             DashboardWorkspaceFilterResult filtered = _dataService.BuildFilteredItems(
                 _allItems,
                 _searchInput.Text,

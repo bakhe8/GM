@@ -81,10 +81,10 @@ namespace GuaranteeManager
         {
             return item.Scope switch
             {
-                DashboardScope.PendingRequests => "طلبات معلقة",
-                DashboardScope.ExpiredFollowUp => "منتهية تحتاج متابعة",
-                DashboardScope.ExpiringSoon => "قريبة الانتهاء",
-                _ => "أعمال اليوم"
+                DashboardScope.PendingRequests => DashboardScopeFilters.PendingRequests,
+                DashboardScope.ExpiredFollowUp => DashboardScopeFilters.ExpiryFollowUps,
+                DashboardScope.ExpiringSoon => DashboardScopeFilters.ExpiryFollowUps,
+                _ => DashboardScopeFilters.AllWork
             };
         }
 

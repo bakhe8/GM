@@ -7,6 +7,28 @@ using GuaranteeManager.Models;
 
 namespace GuaranteeManager
 {
+    public static class DashboardScopeFilters
+    {
+        public const string AllWork = "أعمال اليوم";
+        public const string PendingRequests = "طلبات معلقة";
+        public const string ExpiryFollowUps = "متابعات الانتهاء";
+        public const string LegacyExpiredFollowUp = "منتهية تحتاج متابعة";
+        public const string LegacyExpiringSoon = "قريبة الانتهاء";
+
+        public static string Normalize(string? rawScope)
+        {
+            string scope = rawScope?.Trim() ?? string.Empty;
+            return scope switch
+            {
+                LegacyExpiredFollowUp => ExpiryFollowUps,
+                LegacyExpiringSoon => ExpiryFollowUps,
+                PendingRequests => PendingRequests,
+                ExpiryFollowUps => ExpiryFollowUps,
+                _ => AllWork
+            };
+        }
+    }
+
     public sealed class DashboardWorkspaceDataService
     {
         public List<DashboardWorkItem> BuildItems(
@@ -38,11 +60,12 @@ namespace GuaranteeManager
             IReadOnlyList<WorkflowRequestListItem> pendingRequests)
         {
             IEnumerable<DashboardWorkItem> query = allItems;
-            query = scopeFilter switch
+            query = DashboardScopeFilters.Normalize(scopeFilter) switch
             {
-                "طلبات معلقة" => query.Where(item => item.Scope == DashboardScope.PendingRequests),
-                "منتهية تحتاج متابعة" => query.Where(item => item.Scope == DashboardScope.ExpiredFollowUp),
-                "قريبة الانتهاء" => query.Where(item => item.Scope == DashboardScope.ExpiringSoon),
+                DashboardScopeFilters.PendingRequests => query.Where(item => item.Scope == DashboardScope.PendingRequests),
+                DashboardScopeFilters.ExpiryFollowUps => query.Where(item =>
+                    item.Scope == DashboardScope.ExpiredFollowUp ||
+                    item.Scope == DashboardScope.ExpiringSoon),
                 _ => query
             };
 
