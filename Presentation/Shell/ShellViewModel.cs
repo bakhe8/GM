@@ -148,7 +148,7 @@ namespace GuaranteeManager
             ShowRequestsCommand = new RelayCommand(_ => ShowRequestsWorkspace());
             ShowBanksCommand = new RelayCommand(_ => ShowBanksWorkspace());
             ShowReportsCommand = new RelayCommand(_ => ShowReportsWorkspace());
-            ShowNotificationsCommand = new RelayCommand(_ => ShowNotificationsWorkspace());
+            ShowNotificationsCommand = new RelayCommand(_ => ShowDashboardWorkspace(null, DashboardScopeFilters.ExpiryFollowUps));
             ShowSettingsCommand = new RelayCommand(_ => ShowSettingsWorkspace());
             ExecuteGlobalSearchCommand = new RelayCommand(_ => ExecuteGlobalSearch());
             ExitCommand = new RelayCommand(_ => RequestExit());
@@ -1160,7 +1160,9 @@ namespace GuaranteeManager
             switch (plan.TargetWorkspaceKey)
             {
                 case ShellWorkspaceKeys.Dashboard:
-                    ShowDashboardWorkspace(plan.HasSearchText ? plan.SearchText : null);
+                    ShowDashboardWorkspace(
+                        plan.HasSearchText ? plan.SearchText : null,
+                        plan.HasInitialScopeFilter ? plan.InitialScopeFilter : null);
                     break;
                 case ShellWorkspaceKeys.Guarantees:
                     if (!CanNavigateToWorkspace(ShellWorkspaceKeys.Guarantees))
@@ -1185,7 +1187,9 @@ namespace GuaranteeManager
                     ShowReportsWorkspace(plan.SearchText);
                     break;
                 case ShellWorkspaceKeys.Notifications:
-                    ShowNotificationsWorkspace(plan.SearchText);
+                    ShowDashboardWorkspace(
+                        plan.HasSearchText ? plan.SearchText : null,
+                        DashboardScopeFilters.ExpiryFollowUps);
                     break;
                 case ShellWorkspaceKeys.Settings:
                     ShowSettingsWorkspace(plan.SearchText);

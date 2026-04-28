@@ -210,6 +210,21 @@
   - وبذلك يستطيع المستخدم فصل المنتهي عن القريب من الانتهاء دون الرجوع إلى `Notifications`
   - وتم التحقق حيًا باختيار `منتهية` وظهور الملخص:
     - `عرض 8 نتيجة ضمن المتابعات المنتهية من أصل 44`
+- ثم أُغلق الآن منفذ تنقل قديم كان يمكن أن يعيد المستخدم إلى `Notifications`:
+  - aliases البحث الشامل:
+    - `التنبيهات`
+    - `المتابعات`
+    - `notifications`
+    - `alerts`
+  - صارت تفتح `اليوم` مباشرة على `متابعات الانتهاء`
+  - و`التنبيهات: منتهي` صار يفتح `اليوم` على فلتر `منتهية`
+  - وتم تحديث نص البحث الشامل إلى مثال:
+    - `المتابعات: منتهي`
+  - وتم التحقق حيًا من أن `التنبيهات: منتهي` يفتح:
+    - `Dashboard.Workspace`
+    - `Dashboard.Filter.ExpiryFollowUpKind`
+    - وملخص `المتابعات المنتهية`
+  - وحتى `ShowNotificationsCommand` القديم صار يوجه إلى `اليوم / متابعات الانتهاء`
 - ثم أُغلق الآن الحكم المعماري على `Notifications` نفسها:
   - لم تعد تستحق top-level مستقلة بعد الآن
   - ثم أُنجز الآن أول **تخفيض فعلي آمن**:
@@ -945,7 +960,7 @@
 ## آخر تحقق معروف
 
 - `dotnet build .\\my_work.sln` ناجح
-- `dotnet test .\\my_work.sln --no-build` ناجح: `66/66`
+- `dotnet test .\\my_work.sln --no-build` ناجح: `67/67`
 - baseline القبول الحالي محفوظ هنا:
   - [UIAcceptance/baselines/2026-04-26-stabilization](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-stabilization)
 - كما توجد جولة قبول ناجحة على بيانات مولدة أثقل هنا:
@@ -1325,4 +1340,4 @@
 
 - `git diff --check` ناجح.
 - `dotnet build .\my_work.sln` ناجح.
-- `dotnet test .\my_work.sln --no-build` ناجح: `66/66`.
+- `dotnet test .\my_work.sln --no-build` ناجح: `67/67`.

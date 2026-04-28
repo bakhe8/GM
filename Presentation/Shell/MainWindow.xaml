@@ -89,11 +89,11 @@
                                  Background="Transparent"
                                  Text="{Binding GlobalSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                  KeyDown="ShellGlobalSearchBox_KeyDown"
-                                 ToolTip="بحث عام على مستوى البرنامج. أمثلة: الطلبات: تمديد ، التنبيهات: منتهي ، الإعدادات"
+                                 ToolTip="بحث عام على مستوى البرنامج. أمثلة: الطلبات: تمديد ، المتابعات: منتهي ، الإعدادات"
                                  automation:AutomationProperties.AutomationId="Shell.GlobalSearchBox"
                                  automation:AutomationProperties.Name="البحث الشامل" />
                         <TextBlock Grid.Column="0"
-                                   Text="ابحث عامًّا أو اكتب: الطلبات: تمديد"
+                                   Text="ابحث عامًّا أو اكتب: المتابعات: منتهي"
                                    FontSize="11"
                                    Foreground="#94A3B8"
                                    VerticalAlignment="Center"

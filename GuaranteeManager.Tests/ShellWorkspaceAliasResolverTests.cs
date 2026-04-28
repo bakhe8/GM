@@ -9,8 +9,20 @@ namespace GuaranteeManager.Tests
         {
             ShellWorkspaceSearchPlan plan = ShellWorkspaceAliasResolver.Resolve("التنبيهات", ShellWorkspaceKeys.Dashboard);
 
-            Assert.Equal(ShellWorkspaceKeys.Notifications, plan.TargetWorkspaceKey);
+            Assert.Equal(ShellWorkspaceKeys.Dashboard, plan.TargetWorkspaceKey);
             Assert.False(plan.HasSearchText);
+            Assert.Equal(DashboardScopeFilters.ExpiryFollowUps, plan.InitialScopeFilter);
+            Assert.True(plan.MatchedAlias);
+        }
+
+        [Fact]
+        public void Resolve_FollowUpAliasWithExpiredFilter_TargetsTodayExpiredFollowUps()
+        {
+            ShellWorkspaceSearchPlan plan = ShellWorkspaceAliasResolver.Resolve("التنبيهات: منتهي", ShellWorkspaceKeys.Guarantees);
+
+            Assert.Equal(ShellWorkspaceKeys.Dashboard, plan.TargetWorkspaceKey);
+            Assert.False(plan.HasSearchText);
+            Assert.Equal(DashboardScopeFilters.LegacyExpiredFollowUp, plan.InitialScopeFilter);
             Assert.True(plan.MatchedAlias);
         }
 
