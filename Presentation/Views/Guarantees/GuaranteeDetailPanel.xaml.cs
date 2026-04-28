@@ -95,8 +95,26 @@ namespace GuaranteeManager
             };
         }
 
+        private GuaranteeFileFocusArea NormalizeFocusAreaForCurrentSurface(GuaranteeFileFocusArea area)
+        {
+            if (IsDetachedFile)
+            {
+                return area;
+            }
+
+            return area switch
+            {
+                GuaranteeFileFocusArea.Requests => GuaranteeFileFocusArea.Series,
+                GuaranteeFileFocusArea.Outputs => GuaranteeFileFocusArea.Attachments,
+                GuaranteeFileFocusArea.ExecutiveSummary => GuaranteeFileFocusArea.Series,
+                GuaranteeFileFocusArea.None => GuaranteeFileFocusArea.Series,
+                _ => area
+            };
+        }
+
         private void ApplyAreaFocus(GuaranteeFileFocusArea area)
         {
+            area = NormalizeFocusAreaForCurrentSurface(area);
             FrameworkElement? target = ResolveAreaElement(area);
 
             if (target == null)
@@ -126,7 +144,8 @@ namespace GuaranteeManager
                 return;
             }
 
-            if (_shellViewModel.TryConsumePendingGuaranteeFileOpenFocus(
+            if (IsDetachedFile &&
+                _shellViewModel.TryConsumePendingGuaranteeFileOpenFocus(
                     _shellViewModel.SelectedGuarantee.RootId,
                     out GuaranteeFileFocusArea pendingArea,
                     out int? pendingRequestId))

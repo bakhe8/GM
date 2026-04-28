@@ -3,7 +3,27 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:automation="clr-namespace:System.Windows.Automation;assembly=PresentationCore"
              automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Root"
-             automation:AutomationProperties.Name="ملف الضمان">
+             automation:AutomationProperties.Name="تفاصيل الضمان">
+
+            <UserControl.Resources>
+                <Style x:Key="DetachedFileOnlyStackPanel" TargetType="StackPanel">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDetachedFile, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+
+                <Style x:Key="DetachedFileOnlyCard" TargetType="Border" BasedOn="{StaticResource Card}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDetachedFile, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </UserControl.Resources>
 
             <Border Grid.Column="1"
                     Background="White"
@@ -74,6 +94,7 @@
                             <Border Height="1" Background="#EDF2F7" Margin="0,13,0,12" />
 
                             <StackPanel x:Name="ExecutiveSummaryAnchor"
+                                        Style="{StaticResource DetachedFileOnlyStackPanel}"
                                         Focusable="True"
                                         automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Section.ExecutiveSummary"
                                         automation:AutomationProperties.Name="قسم الملخص التنفيذي">
@@ -244,7 +265,7 @@
                                 </StackPanel>
                             </Grid>
 
-                            <Border Style="{StaticResource Card}"
+                            <Border Style="{StaticResource DetachedFileOnlyCard}"
                                     Padding="12"
                                     Margin="0,14,0,0"
                                     Effect="{x:Null}"
@@ -285,7 +306,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border Style="{StaticResource Card}"
+                            <Border Style="{StaticResource DetachedFileOnlyCard}"
                                     Padding="12"
                                     Margin="0,14,0,0"
                                     Effect="{x:Null}"
@@ -452,7 +473,7 @@
                             </Border>
 
                             <Border x:Name="RequestsAnchor"
-                                    Style="{StaticResource Card}"
+                                    Style="{StaticResource DetachedFileOnlyCard}"
                                     Focusable="True"
                                     Padding="12"
                                     Margin="0,14,0,0"
@@ -747,7 +768,7 @@
                             </Border>
 
                             <Border x:Name="OutputsAnchor"
-                                    Style="{StaticResource Card}"
+                                    Style="{StaticResource DetachedFileOnlyCard}"
                                     Focusable="True"
                                     Padding="12"
                                     Margin="0,12,0,0"

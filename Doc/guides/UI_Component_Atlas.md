@@ -291,7 +291,10 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 ### الدور
 
-البيت التنفيذي والمرجعي المركزي للضمان الواحد.
+مكوّن مشترك له دوران واضحان:
+
+- داخل `الضمانات`: لوحة جانبية مفتوحة دائمًا للبيانات والتاريخ والمرفقات والأفعال السريعة.
+- داخل `GuaranteeFileDialog`: ملف ضمان كامل للطلبات والاستعلامات والمخرجات وخريطة العمل.
 
 ### المكونات الرئيسية
 
@@ -303,6 +306,7 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 #### Start Here + File Map
 
+- تظهر هذه المجموعة في نافذة `ملف الضمان` المنفصلة فقط، ولا تظهر في اللوحة الجانبية.
 - `GuaranteeDetailPanel.Section.ExecutiveSummary`
 - بداية القرار صارت تظهر أولًا داخل:
   - `GuaranteeDetailPanel.Section.ActionSummary`
@@ -316,7 +320,6 @@ Queue-first surface لتنفيذ الطلب الحالي.
     - `Timeline`
     - `Attachments`
     - `Outputs`
-    - `OpenFile`
 
 #### Reference Facts
 
@@ -329,12 +332,14 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 #### Operational Inquiry
 
+- تظهر في نافذة `ملف الضمان` المنفصلة فقط.
 - `GuaranteeDetailPanel.Section.OperationalInquiry`
 - `GuaranteeDetailPanel.OperationalInquiry.Options`
 - `GuaranteeDetailPanel.OperationalInquiry.Run`
 
 #### Latest Inquiry
 
+- تظهر في نافذة `ملف الضمان` المنفصلة فقط.
 - `GuaranteeDetailPanel.Section.LatestInquiry`
 - `FocusSuggested`
 - `OpenDialog`
@@ -344,6 +349,7 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 #### Requests Section
 
+- تظهر في نافذة `ملف الضمان` المنفصلة فقط.
 - `GuaranteeDetailPanel.Section.Requests`
 - `GuaranteeDetailPanel.Requests.ShowAll`
 - لم تعد تُقرأ كأرشيف طلبات فقط
@@ -354,6 +360,7 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 #### Timeline Section
 
+- تظهر في اللوحة الجانبية ونافذة `ملف الضمان`.
 - `GuaranteeDetailPanel.Section.Timeline`
 - `GuaranteeDetailPanel.Timeline.ShowAllRequests`
 - لم يعد الغرض منها “عرض أحداث” فقط
@@ -363,6 +370,7 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 #### Outputs Section
 
+- تظهر في نافذة `ملف الضمان` المنفصلة فقط.
 - `GuaranteeDetailPanel.Section.Outputs`
 - هذا القسم هو بيت:
   - الأثر الناتج عن الطلبات
@@ -373,6 +381,7 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 #### Attachments Section
 
+- تظهر في اللوحة الجانبية ونافذة `ملف الضمان`.
 - `GuaranteeDetailPanel.Section.Attachments`
 - `GuaranteeDetailPanel.Attachments.ShowAll`
 - هذا القسم صار مخصصًا للأدلة الرسمية الثابتة على الملف
@@ -382,6 +391,7 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 #### Actions Section
 
+- تظهر في اللوحة الجانبية ونافذة `ملف الضمان` كأفعال سريعة، مع إخفاء الأفعال غير المؤهلة حسب حالة الضمان.
 - `GuaranteeDetailPanel.Section.Actions`
 - الطبقات:
   - `نفّذ الآن`
@@ -393,7 +403,6 @@ Queue-first surface لتنفيذ الطلب الحالي.
     - `Requests`
     - `History`
     - `Attachments`
-    - `OpenFile`
   - `أفعال متقدمة`
     - `Reduction`
     - `Liquidation`
