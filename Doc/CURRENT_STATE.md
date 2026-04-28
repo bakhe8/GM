@@ -64,6 +64,13 @@
   - [guides/Core_Workflows.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Core_Workflows.md:1)
   - [guides/UI_Operational_Rules.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UI_Operational_Rules.md:1)
   - [guides/Surface_Audit_Matrix.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Surface_Audit_Matrix.md:1)
+- وبدأت الآن أول دفعة تنفيذية داخل `Requests` نفسها:
+  - عمود الإجراءات لم يعد يحمل ثلاثة أزرار صفية متجاورة
+  - وصار يعتمد على:
+    - `الفعل اليومي` ظاهرًا في الصف
+    - و`المزيد` كقائمة منسدلة للأفعال الثانوية
+  - وهذا هو أول تطبيق مباشر لقاعدة:
+    - `فعل رئيسي واحد + أفعال ثانوية أهدأ`
 - وبدأت الآن أول جولة تنفيذ فعلية من هذا الانتقال على `Settings`:
   - أُغلقت فجوة صمت صغيرة في `نسخ المسار` و`فتح المسار` عبر الشريط السفلي
   - كما صارت حالة النجاح الهادئ نفسها قابلة للقراءة من الأداة عبر `Shell.Status.Primary`

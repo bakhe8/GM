@@ -435,7 +435,7 @@ namespace GuaranteeManager
                 Margin = new Thickness(9, 0, 9, 0),
                 FlowDirection = FlowDirection.LeftToRight
             };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3.55, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.55, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.15, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.25, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.45, GridUnitType.Star) });
@@ -516,8 +516,6 @@ namespace GuaranteeManager
                 Margin = new Thickness(10, 0, 0, 0)
             };
             actions.Children.Add(CreateRowButton(item.QueueActionLabel, "Icon.Document", item, OpenResponseFromRow_Click, item.CanRunQueueAction, item.QueueActionHint));
-            actions.Children.Add(CreateRowButton("خطاب", "Icon.Document", item, OpenLetterFromRow_Click, item.CanOpenLetter));
-            actions.Children.Add(CreateRowButton("تفاصيل", "Icon.View", item, SelectRowFromButton_Click, true, "يعرض تفاصيل الطلب الحالي في اللوحة اليمنى."));
             actions.Children.Add(CreateMoreButton(item));
             Grid.SetColumn(actions, 0);
             row.Children.Add(actions);
@@ -603,11 +601,11 @@ namespace GuaranteeManager
         {
             var button = new Button
             {
-                Content = BuildRowButtonContent(string.Empty, "Icon.ChevronDown"),
+                Content = BuildRowButtonContent("المزيد", "Icon.ChevronDown"),
                 Tag = item,
                 Style = WorkspaceSurfaceChrome.Style("RowButton"),
-                MinWidth = 26,
-                ToolTip = "إجراءات إضافية"
+                MinWidth = 62,
+                ToolTip = "إجراءات إضافية لهذا الطلب"
             };
             UiInstrumentation.Identify(
                 button,
@@ -648,17 +646,10 @@ namespace GuaranteeManager
                 }
             });
 
+            menu.Items.Add(BuildMenuItem("عرض التفاصيل", "يحدد هذا الطلب ويعرض تفاصيله في اللوحة اليمنى.", (_, _) => SelectItem(item)));
+            menu.Items.Add(new Separator());
             menu.Items.Add(BuildMenuItem("سجل الضمان", "يفتح سجل الإصدارات والطلبات للضمان المرتبط بهذا الطلب.", (_, _) => _coordinator.OpenHistory(item)));
             menu.Items.Add(BuildMenuItem("فتح الضمان الحالي", "يفتح ملف الضمان الحالي المرتبط بهذا الطلب مع التركيز على قسم الطلبات.", (_, _) => _coordinator.OpenCurrentGuarantee(item)));
-            menu.Items.Add(BuildMenuItem(
-                item.QueueActionLabel,
-                item.QueueActionHint,
-                (_, _) =>
-                {
-                    SelectItem(item);
-                    UseResponseAction();
-                },
-                item.CanRunQueueAction));
             menu.Items.Add(BuildMenuItem(
                 "خطاب الطلب",
                 item.CanOpenLetter ? "يفتح خطاب الطلب الخارجي لهذا السجل." : "لا يوجد خطاب طلب محفوظ لهذا السجل.",
@@ -824,17 +815,6 @@ namespace GuaranteeManager
                 VerticalAlignment = VerticalAlignment.Center
             });
             return stack;
-        }
-
-        private void SelectRowFromButton_Click(object sender, RoutedEventArgs e)
-        {
-            SelectRowFromSender(sender);
-        }
-
-        private void OpenLetterFromRow_Click(object sender, RoutedEventArgs e)
-        {
-            SelectRowFromSender(sender);
-            OpenLetter();
         }
 
         private void OpenResponseFromRow_Click(object sender, RoutedEventArgs e)
