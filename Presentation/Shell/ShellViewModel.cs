@@ -763,7 +763,7 @@ namespace GuaranteeManager
 
             SelectedGuarantee = row;
             QueueGuaranteeFileOpenFocus(area, requestIdToFocus, row.RootId);
-            OpenGuaranteeFile(row);
+            GuaranteeFileDialog.ShowFor(this, row);
             _diagnostics.RecordEvent(
                 $"{sourceKey}.action",
                 "open-guarantee-context",
