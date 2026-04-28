@@ -101,7 +101,6 @@ namespace GuaranteeManager
             {
                 return area switch
                 {
-                    GuaranteeFileFocusArea.Actions => GuaranteeFileFocusArea.ExecutiveSummary,
                     GuaranteeFileFocusArea.Series => GuaranteeFileFocusArea.Requests,
                     GuaranteeFileFocusArea.Attachments => GuaranteeFileFocusArea.Outputs,
                     GuaranteeFileFocusArea.None => GuaranteeFileFocusArea.ExecutiveSummary,

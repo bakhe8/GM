@@ -1031,7 +1031,6 @@
                     </ScrollViewer>
 
                     <Border x:Name="ActionsAnchor"
-                            Style="{StaticResource SidePanelOnlyBorder}"
                             Grid.Row="1"
                             Focusable="True"
                             Background="White"
@@ -1045,11 +1044,63 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <StackPanel Style="{StaticResource SidePanelOnlyStackPanel}" Orientation="Horizontal" Margin="0,0,0,2">
                                 <TextBlock Text="القرار والعمل الآن" FontSize="12" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" />
                             </StackPanel>
-                            <StackPanel Grid.Row="1" Margin="0,9,0,0">
-                                <TextBlock Text="نفّذ الآن" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource Brush.Muted}" Margin="0,0,0,6" />
+                            <StackPanel Style="{StaticResource DetachedFileOnlyStackPanel}" Orientation="Horizontal" Margin="0,0,0,2">
+                                <TextBlock Text="إجراءات الملف" FontSize="12" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1"
+                                        Style="{StaticResource SidePanelOnlyStackPanel}"
+                                        Margin="0,9,0,0">
+                                <WrapPanel FlowDirection="RightToLeft">
+                                    <Button Style="{StaticResource BaseButton}"
+                                            Content="تعديل"
+                                            FontSize="9"
+                                            Margin="0,0,6,6"
+                                            Padding="2,0"
+                                            IsEnabled="{Binding SelectedGuarantee.EditAction.IsEnabled}"
+                                            ToolTip="{Binding SelectedGuarantee.EditAction.Hint}"
+                                            ToolTipService.ShowOnDisabled="True"
+                                            Command="{Binding EditGuaranteeCommand}"
+                                            CommandParameter="{Binding SelectedGuarantee}"
+                                            automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Edit"
+                                            automation:AutomationProperties.Name="تعديل الضمان" />
+                                    <Button Style="{StaticResource BaseButton}"
+                                            Content="تمديد"
+                                            FontSize="9"
+                                            Margin="0,0,6,6"
+                                            Padding="2,0"
+                                            IsEnabled="{Binding SelectedGuarantee.ExtensionAction.IsEnabled}"
+                                            ToolTip="{Binding SelectedGuarantee.ExtensionAction.Hint}"
+                                            ToolTipService.ShowOnDisabled="True"
+                                            Command="{Binding CreateExtensionRequestCommand}"
+                                            CommandParameter="{Binding SelectedGuarantee}"
+                                            automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Extension"
+                                            automation:AutomationProperties.Name="إنشاء طلب تمديد" />
+                                    <Button Style="{StaticResource BaseButton}"
+                                            BorderBrush="#97DBAE"
+                                            Background="#F5FFF7"
+                                            Foreground="#15803D"
+                                            Content="إفراج"
+                                            FontSize="9"
+                                            Margin="0,0,0,6"
+                                            Padding="2,0"
+                                            IsEnabled="{Binding SelectedGuarantee.ReleaseAction.IsEnabled}"
+                                            ToolTip="{Binding SelectedGuarantee.ReleaseAction.Hint}"
+                                            ToolTipService.ShowOnDisabled="True"
+                                            Command="{Binding CreateReleaseRequestCommand}"
+                                            CommandParameter="{Binding SelectedGuarantee}"
+                                            automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Release"
+                                            automation:AutomationProperties.Name="إنشاء طلب إفراج" />
+                                </WrapPanel>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1"
+                                        Style="{StaticResource DetachedFileOnlyStackPanel}"
+                                        Margin="0,9,0,0">
+                                <TextBlock Text="نفّذ من الملف" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource Brush.Muted}" Margin="0,0,0,6" />
                                 <WrapPanel FlowDirection="LeftToRight" Margin="0,0,0,10">
                                     <Button Style="{StaticResource BaseButton}"
                                             Content="تسجيل رد"
@@ -1064,87 +1115,9 @@
                                             CommandParameter="{Binding SelectedGuarantee}"
                                             automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.RegisterResponse"
                                             automation:AutomationProperties.Name="تسجيل رد البنك" />
-                                    <Button Style="{StaticResource BaseButton}"
-                                            Content="طلب تمديد"
-                                            FontSize="9"
-                                            Margin="0,0,6,6"
-                                            Padding="2,0"
-                                            Visibility="{Binding SelectedGuarantee.ExtensionAction.IsEnabled, Converter={StaticResource TrueToVisibleCollapsedConverter}}"
-                                            IsEnabled="{Binding SelectedGuarantee.ExtensionAction.IsEnabled}"
-                                            ToolTip="{Binding SelectedGuarantee.ExtensionAction.Hint}"
-                                            ToolTipService.ShowOnDisabled="True"
-                                            Command="{Binding CreateExtensionRequestCommand}"
-                                            CommandParameter="{Binding SelectedGuarantee}"
-                                            automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Extension"
-                                            automation:AutomationProperties.Name="إنشاء طلب تمديد" />
-                                    <Button Style="{StaticResource BaseButton}"
-                                            BorderBrush="#97DBAE"
-                                            Background="#F5FFF7"
-                                            Foreground="#15803D"
-                                            Content="طلب إفراج"
-                                            FontSize="9"
-                                            Margin="0,0,6,6"
-                                            Padding="2,0"
-                                            Visibility="{Binding SelectedGuarantee.ReleaseAction.IsEnabled, Converter={StaticResource TrueToVisibleCollapsedConverter}}"
-                                            IsEnabled="{Binding SelectedGuarantee.ReleaseAction.IsEnabled}"
-                                            ToolTip="{Binding SelectedGuarantee.ReleaseAction.Hint}"
-                                            ToolTipService.ShowOnDisabled="True"
-                                            Command="{Binding CreateReleaseRequestCommand}"
-                                            CommandParameter="{Binding SelectedGuarantee}"
-                                            automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Release"
-                                            automation:AutomationProperties.Name="إنشاء طلب إفراج" />
-                                    <Button Style="{StaticResource BaseButton}"
-                                            Content="تعديل"
-                                            FontSize="9"
-                                            Margin="0,0,0,6"
-                                            Padding="2,0"
-                                            IsEnabled="{Binding SelectedGuarantee.EditAction.IsEnabled}"
-                                            ToolTip="{Binding SelectedGuarantee.EditAction.Hint}"
-                                            ToolTipService.ShowOnDisabled="True"
-                                            Command="{Binding EditGuaranteeCommand}"
-                                            CommandParameter="{Binding SelectedGuarantee}"
-                                            automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Edit"
-                                            automation:AutomationProperties.Name="تعديل الضمان" />
                                 </WrapPanel>
 
-                                <TextBlock Text="راجع وافتح" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource Brush.Muted}" Margin="0,0,0,6" />
-                                <WrapPanel FlowDirection="LeftToRight" Margin="0,0,0,10">
-                                    <Button Style="{StaticResource BaseButton}"
-                                            Content="الطلبات"
-                                            FontSize="9"
-                                            Margin="0,0,6,6"
-                                            Padding="2,0"
-                                            Visibility="{Binding SelectedGuarantee.OpenRequestsAction.IsEnabled, Converter={StaticResource TrueToVisibleCollapsedConverter}}"
-                                            IsEnabled="{Binding SelectedGuarantee.OpenRequestsAction.IsEnabled}"
-                                            ToolTip="{Binding SelectedGuarantee.OpenRequestsAction.Hint}"
-                                            ToolTipService.ShowOnDisabled="True"
-                                            Command="{Binding ShowGuaranteeRequestsCommand}"
-                                            automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Requests"
-                                            automation:AutomationProperties.Name="فتح طلبات الضمان" />
-                                    <Button Style="{StaticResource BaseButton}"
-                                            Content="السجل"
-                                            FontSize="9"
-                                            Margin="0,0,6,6"
-                                            Padding="2,0"
-                                            Command="{Binding OpenHistoryCommand}"
-                                            CommandParameter="{Binding SelectedGuarantee}"
-                                            automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.History"
-                                            automation:AutomationProperties.Name="فتح سجل الضمان" />
-                                    <Button Style="{StaticResource BaseButton}"
-                                            Content="المرفقات"
-                                            FontSize="9"
-                                            Margin="0,0,6,6"
-                                            Padding="2,0"
-                                            Visibility="{Binding SelectedGuarantee.OpenAttachmentsAction.IsEnabled, Converter={StaticResource TrueToVisibleCollapsedConverter}}"
-                                            IsEnabled="{Binding SelectedGuarantee.OpenAttachmentsAction.IsEnabled}"
-                                            ToolTip="{Binding SelectedGuarantee.OpenAttachmentsAction.Hint}"
-                                            ToolTipService.ShowOnDisabled="True"
-                                            Command="{Binding ShowAllAttachmentsCommand}"
-                                            automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Attachments"
-                                            automation:AutomationProperties.Name="فتح مرفقات الضمان" />
-                                </WrapPanel>
-
-                                <TextBlock Text="أفعال متقدمة" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource Brush.Muted}" Margin="0,0,0,6" />
+                                <TextBlock Text="إجراءات أخرى" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource Brush.Muted}" Margin="0,0,0,6" />
                                 <WrapPanel FlowDirection="LeftToRight">
                                     <Button Style="{StaticResource BaseButton}"
                                             Content="تخفيض"
