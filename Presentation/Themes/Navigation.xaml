@@ -19,4 +19,25 @@
         <Setter Property="TextAlignment" Value="Center" />
         <Setter Property="Margin" Value="0,3,0,0" />
     </Style>
+
+    <Style x:Key="NavSectionTitle" TargetType="TextBlock">
+        <Setter Property="Width" Value="94" />
+        <Setter Property="FontSize" Value="9.5" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="#9FB6D6" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,10,0,6" />
+    </Style>
+
+    <Style x:Key="NavSectionHint" TargetType="TextBlock">
+        <Setter Property="Width" Value="94" />
+        <Setter Property="FontSize" Value="8" />
+        <Setter Property="Foreground" Value="#6F89AC" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,-2,0,4" />
+    </Style>
 </ResourceDictionary>

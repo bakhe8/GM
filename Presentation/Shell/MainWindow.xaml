@@ -167,6 +167,8 @@
 
                     <!-- عناصر التنقل -->
                     <StackPanel Grid.Row="0" Margin="0,10,0,0" HorizontalAlignment="Center">
+                        <TextBlock Text="العمل اليومي" Style="{StaticResource NavSectionTitle}" />
+                        <TextBlock Text="ابدأ، ثم نفّذ، ثم ادخل إلى الملف عند الحاجة" Style="{StaticResource NavSectionHint}" />
 
                         <!-- اليوم -->
                         <Button Command="{Binding ShowDashboardCommand}" automation:AutomationProperties.AutomationId="Shell.Sidebar.Dashboard" automation:AutomationProperties.Name="اليوم">
@@ -185,30 +187,6 @@
                                     <Path Data="{StaticResource Icon.Dashboard}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                 </Viewbox>
                                 <TextBlock Text="اليوم" Style="{StaticResource NavLabelText}" />
-                            </StackPanel>
-                        </Button>
-
-                        <!-- الضمانات -->
-                        <Button
-                                Margin="0,2,0,0"
-                                Command="{Binding ShowGuaranteesCommand}"
-                                automation:AutomationProperties.AutomationId="Shell.Sidebar.Guarantees"
-                                automation:AutomationProperties.Name="الضمانات">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding CurrentWorkspaceKey}" Value="{x:Static local:ShellWorkspaceKeys.Guarantees}">
-                                            <Setter Property="Background" Value="#1D5ED8" />
-                                            <Setter Property="Foreground" Value="White" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                            <StackPanel>
-                                <Viewbox Width="20" Height="20" Margin="0,0,0,2">
-                                    <Path Data="{StaticResource Icon.Guarantees}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                </Viewbox>
-                                <TextBlock Text="الضمانات" Style="{StaticResource NavLabelText}" />
                             </StackPanel>
                         </Button>
 
@@ -236,16 +214,16 @@
                             </StackPanel>
                         </Button>
 
-                        <!-- البنوك -->
+                        <!-- الضمانات -->
                         <Button
                                 Margin="0,2,0,0"
-                                Command="{Binding ShowBanksCommand}"
-                                automation:AutomationProperties.AutomationId="Shell.Sidebar.Banks"
-                                automation:AutomationProperties.Name="البنوك">
+                                Command="{Binding ShowGuaranteesCommand}"
+                                automation:AutomationProperties.AutomationId="Shell.Sidebar.Guarantees"
+                                automation:AutomationProperties.Name="الضمانات">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding CurrentWorkspaceKey}" Value="{x:Static local:ShellWorkspaceKeys.Banks}">
+                                        <DataTrigger Binding="{Binding CurrentWorkspaceKey}" Value="{x:Static local:ShellWorkspaceKeys.Guarantees}">
                                             <Setter Property="Background" Value="#1D5ED8" />
                                             <Setter Property="Foreground" Value="White" />
                                         </DataTrigger>
@@ -254,42 +232,22 @@
                             </Button.Style>
                             <StackPanel>
                                 <Viewbox Width="20" Height="20" Margin="0,0,0,2">
-                                    <Path Data="{StaticResource Icon.Banks}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                    <Path Data="{StaticResource Icon.Guarantees}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                 </Viewbox>
-                                <TextBlock Text="البنوك" Style="{StaticResource NavLabelText}" />
+                                <TextBlock Text="الضمانات" Style="{StaticResource NavLabelText}" />
                             </StackPanel>
                         </Button>
 
-                        <!-- التقارير -->
-                        <Button
-                                Margin="0,2,0,0"
-                                Command="{Binding ShowReportsCommand}"
-                                automation:AutomationProperties.AutomationId="Shell.Sidebar.Reports"
-                                automation:AutomationProperties.Name="التقارير">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding CurrentWorkspaceKey}" Value="{x:Static local:ShellWorkspaceKeys.Reports}">
-                                            <Setter Property="Background" Value="#1D5ED8" />
-                                            <Setter Property="Foreground" Value="White" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                            <StackPanel>
-                                <Viewbox Width="20" Height="20" Margin="0,0,0,2">
-                                    <Path Data="{StaticResource Icon.Reports}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                </Viewbox>
-                                <TextBlock Text="التقارير" Style="{StaticResource NavLabelText}" />
-                            </StackPanel>
-                        </Button>
+                        <TextBlock Text="متابعة اليوم" Style="{StaticResource NavSectionTitle}" />
+                        <TextBlock Text="عدسة تفصيلية انتقالية حتى تكتمل سعة اليوم" Style="{StaticResource NavSectionHint}" />
 
                         <!-- التنبيهات مع Badge -->
                         <Button
                                 Margin="0,2,0,0"
                                 Command="{Binding ShowNotificationsCommand}"
                                 automation:AutomationProperties.AutomationId="Shell.Sidebar.Notifications"
-                                automation:AutomationProperties.Name="التنبيهات">
+                                automation:AutomationProperties.Name="التنبيهات"
+                                ToolTip="عدسة متابعة تفصيلية تابعة لليوم">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
                                     <Style.Triggers>
@@ -316,6 +274,61 @@
                                 <TextBlock Text="التنبيهات" Style="{StaticResource NavLabelText}" />
                             </StackPanel>
                         </Button>
+
+                        <TextBlock Text="التحليلات والمخرجات" Style="{StaticResource NavSectionTitle}" />
+                        <TextBlock Text="اقرأ الصورة الكلية ثم أنشئ المخرج المناسب" Style="{StaticResource NavSectionHint}" />
+
+                        <!-- التقارير -->
+                        <Button
+                                Margin="0,2,0,0"
+                                Command="{Binding ShowReportsCommand}"
+                                automation:AutomationProperties.AutomationId="Shell.Sidebar.Reports"
+                                automation:AutomationProperties.Name="التقارير">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentWorkspaceKey}" Value="{x:Static local:ShellWorkspaceKeys.Reports}">
+                                            <Setter Property="Background" Value="#1D5ED8" />
+                                            <Setter Property="Foreground" Value="White" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <StackPanel>
+                                <Viewbox Width="20" Height="20" Margin="0,0,0,2">
+                                    <Path Data="{StaticResource Icon.Reports}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                </Viewbox>
+                                <TextBlock Text="التقارير" Style="{StaticResource NavLabelText}" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- البنوك -->
+                        <Button
+                                Margin="0,2,0,0"
+                                Command="{Binding ShowBanksCommand}"
+                                automation:AutomationProperties.AutomationId="Shell.Sidebar.Banks"
+                                automation:AutomationProperties.Name="البنوك"
+                                ToolTip="عدسة تحليلية تابعة لعائلة التحليلات والمخرجات">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentWorkspaceKey}" Value="{x:Static local:ShellWorkspaceKeys.Banks}">
+                                            <Setter Property="Background" Value="#1D5ED8" />
+                                            <Setter Property="Foreground" Value="White" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <StackPanel>
+                                <Viewbox Width="20" Height="20" Margin="0,0,0,2">
+                                    <Path Data="{StaticResource Icon.Banks}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                </Viewbox>
+                                <TextBlock Text="البنوك" Style="{StaticResource NavLabelText}" />
+                            </StackPanel>
+                        </Button>
+
+                        <TextBlock Text="التشغيل" Style="{StaticResource NavSectionTitle}" />
+                        <TextBlock Text="المسارات والنسخ الاحتياطي وبيئة العمل" Style="{StaticResource NavSectionHint}" />
 
                         <!-- الإعدادات -->
                         <Button
