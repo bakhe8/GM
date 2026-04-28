@@ -200,6 +200,16 @@
     - `Dashboard.Detail.CopyAmountButton`
   - وتم التحقق حيًا من ظهور الأزرار ونجاح نسخ البنك إلى الحافظة
   - وهذا يحول `Notifications` أكثر إلى ذاكرة انتقالية لا سطح عمل يومي
+- ثم أُغلقت الآن أول **فلترة محلية داخل متابعات الانتهاء** في `اليوم`:
+  - لم تعد عائلة `متابعات الانتهاء` مجرد قائمة موحدة
+  - صار لها فلتر داخلي يظهر فقط داخل هذه العدسة:
+    - `Dashboard.Filter.ExpiryFollowUpKind`
+    - `كل المتابعات`
+    - `منتهية`
+    - `قريبة الانتهاء`
+  - وبذلك يستطيع المستخدم فصل المنتهي عن القريب من الانتهاء دون الرجوع إلى `Notifications`
+  - وتم التحقق حيًا باختيار `منتهية` وظهور الملخص:
+    - `عرض 8 نتيجة ضمن المتابعات المنتهية من أصل 44`
 - ثم أُغلق الآن الحكم المعماري على `Notifications` نفسها:
   - لم تعد تستحق top-level مستقلة بعد الآن
   - ثم أُنجز الآن أول **تخفيض فعلي آمن**:
@@ -935,7 +945,7 @@
 ## آخر تحقق معروف
 
 - `dotnet build .\\my_work.sln` ناجح
-- `dotnet test .\\my_work.sln --no-build` ناجح: `65/65`
+- `dotnet test .\\my_work.sln --no-build` ناجح: `66/66`
 - baseline القبول الحالي محفوظ هنا:
   - [UIAcceptance/baselines/2026-04-26-stabilization](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-stabilization)
 - كما توجد جولة قبول ناجحة على بيانات مولدة أثقل هنا:
@@ -1315,4 +1325,4 @@
 
 - `git diff --check` ناجح.
 - `dotnet build .\my_work.sln` ناجح.
-- `dotnet test .\my_work.sln --no-build` ناجح: `65/65`.
+- `dotnet test .\my_work.sln --no-build` ناجح: `66/66`.

@@ -12,35 +12,17 @@ namespace GuaranteeManager.Tests
         {
             var service = new DashboardWorkspaceDataService();
             DateTime expiryDate = DateTime.Today.AddDays(5);
-            var item = new DashboardWorkItem(
+            var item = CreateFollowUpItem(
                 DashboardScope.ExpiringSoon,
-                DashboardTarget.Today,
-                42,
-                null,
-                GuaranteeFileFocusArea.Actions,
                 "قريبة الانتهاء",
                 "مرتفع",
                 1,
-                "مستفيد اختبار",
-                "بنك اختبار",
-                new DrawingImage(),
                 "BG-TEST-EXP",
                 1000m,
                 "1,000 ريال",
-                "قيمة الضمان الحالية",
                 expiryDate,
                 expiryDate.ToString("yyyy/MM/dd"),
-                "خلال 5 أيام",
-                "ابتدائي",
-                "راجع التمديد",
-                "متابعات الانتهاء",
-                "ركّز المتابعة",
-                "افتح الملف وراجع قرار التمديد",
-                "ظهر اليوم لأنه داخل نافذة الانتهاء القريبة.",
-                Brushes.DarkOrange,
-                Brushes.White,
-                Brushes.Orange,
-                Brushes.DarkOrange);
+                "خلال 5 أيام");
 
             DashboardWorkspaceDetailState state = service.BuildDetailState(
                 item,
@@ -52,6 +34,93 @@ namespace GuaranteeManager.Tests
             Assert.Equal(DashboardDetailProfile.FollowUp, state.DetailProfile);
             Assert.Equal("خلال 5 أيام", state.Due);
             Assert.Equal(expiryDate.ToString("yyyy/MM/dd"), state.Expiry);
+        }
+
+        [Fact]
+        public void BuildFilteredItems_ForExpiredFollowUpMode_OnlyReturnsExpiredItems()
+        {
+            var service = new DashboardWorkspaceDataService();
+            DashboardWorkItem expired = CreateFollowUpItem(
+                DashboardScope.ExpiredFollowUp,
+                "منتهية تحتاج متابعة",
+                "حرج",
+                0,
+                "BG-TEST-OLD",
+                2000m,
+                "2,000 ريال",
+                DateTime.Today.AddDays(-3),
+                DateTime.Today.AddDays(-3).ToString("yyyy/MM/dd"),
+                "متأخر 3 أيام");
+            DashboardWorkItem expiring = CreateFollowUpItem(
+                DashboardScope.ExpiringSoon,
+                "قريبة الانتهاء",
+                "متابعة",
+                3,
+                "BG-TEST-SOON",
+                1000m,
+                "1,000 ريال",
+                DateTime.Today.AddDays(5),
+                DateTime.Today.AddDays(5).ToString("yyyy/MM/dd"),
+                "خلال 5 أيام");
+
+            DashboardWorkspaceFilterResult result = service.BuildFilteredItems(
+                new[] { expired, expiring },
+                string.Empty,
+                DashboardScopeFilters.ExpiryFollowUps,
+                false,
+                string.Empty,
+                Array.Empty<Guarantee>(),
+                Array.Empty<WorkflowRequestListItem>(),
+                DashboardExpiryFollowUpFilters.Expired);
+
+            DashboardWorkItem item = Assert.Single(result.Items);
+            Assert.Equal(DashboardScope.ExpiredFollowUp, item.Scope);
+            Assert.Contains("المتابعات المنتهية", result.Summary);
+            Assert.Equal("0", result.Metrics.First.Value);
+            Assert.Equal("1", result.Metrics.Second.Value);
+        }
+
+        private static DashboardWorkItem CreateFollowUpItem(
+            DashboardScope scope,
+            string category,
+            string priority,
+            int rank,
+            string reference,
+            decimal amount,
+            string amountDisplay,
+            DateTime expiryDate,
+            string dueLabel,
+            string dueDetail)
+        {
+            return new DashboardWorkItem(
+                scope,
+                DashboardTarget.Today,
+                42,
+                null,
+                GuaranteeFileFocusArea.Actions,
+                category,
+                priority,
+                rank,
+                "مستفيد اختبار",
+                "بنك اختبار",
+                new DrawingImage(),
+                reference,
+                amount,
+                amountDisplay,
+                "قيمة الضمان الحالية",
+                expiryDate,
+                dueLabel,
+                dueDetail,
+                "ابتدائي",
+                "راجع التمديد",
+                "متابعات الانتهاء",
+                "ركّز المتابعة",
+                "افتح الملف وراجع قرار التمديد",
+                "ظهر اليوم لأنه داخل نافذة الانتهاء القريبة.",
+                Brushes.DarkOrange,
+                Brushes.White,
+                Brushes.Orange,
+                Brushes.DarkOrange);
         }
     }
 }

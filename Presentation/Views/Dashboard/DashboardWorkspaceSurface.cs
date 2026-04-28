@@ -30,6 +30,7 @@ namespace GuaranteeManager
         private readonly ListBox _list = new();
         private readonly TextBox _searchInput = new();
         private readonly ComboBox _scopeFilter = new();
+        private readonly ComboBox _expiryFollowUpFilter = new();
         private readonly TextBlock _summary = BuildMutedText(12, FontWeights.SemiBold);
         private readonly Grid _tableHeaderInner = new();
         private readonly TextBlock _lastFileLabel = BuildMetricLabel("#2563EB");
@@ -113,6 +114,7 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(this, "Dashboard.Workspace", "اليوم");
             UiInstrumentation.Identify(_searchInput, "Dashboard.SearchBox", "بحث اليوم");
             UiInstrumentation.Identify(_scopeFilter, "Dashboard.Filter.Scope", "نطاق اليوم");
+            UiInstrumentation.Identify(_expiryFollowUpFilter, "Dashboard.Filter.ExpiryFollowUpKind", "نوع متابعة الانتهاء");
             UiInstrumentation.Identify(_list, "Dashboard.Table.List", "قائمة أعمال اليوم");
 
             FlowDirection = FlowDirection.RightToLeft;
@@ -128,6 +130,7 @@ namespace GuaranteeManager
         private void ApplyInitialState(string? initialSearchText, string? initialScopeFilter)
         {
             string normalizedScopeFilter = DashboardScopeFilters.Normalize(initialScopeFilter);
+            SelectExpiryFollowUpFilter(DashboardExpiryFollowUpFilters.FromScope(initialScopeFilter));
 
             if (!string.IsNullOrWhiteSpace(normalizedScopeFilter))
             {
@@ -221,6 +224,8 @@ namespace GuaranteeManager
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(180) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
+            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
             Grid.SetColumn(_resumeLastFileButton, 0);
@@ -248,9 +253,20 @@ namespace GuaranteeManager
             Grid.SetColumn(_scopeFilter, 8);
             toolbar.Children.Add(_scopeFilter);
 
+            _expiryFollowUpFilter.Style = WorkspaceSurfaceChrome.Style("FilterComboBox");
+            _expiryFollowUpFilter.Width = 150;
+            _expiryFollowUpFilter.Items.Add(DashboardExpiryFollowUpFilters.All);
+            _expiryFollowUpFilter.Items.Add(DashboardExpiryFollowUpFilters.Expired);
+            _expiryFollowUpFilter.Items.Add(DashboardExpiryFollowUpFilters.ExpiringSoon);
+            _expiryFollowUpFilter.SelectedIndex = 0;
+            _expiryFollowUpFilter.Visibility = Visibility.Collapsed;
+            _expiryFollowUpFilter.SelectionChanged += (_, _) => ApplyFilters();
+            Grid.SetColumn(_expiryFollowUpFilter, 10);
+            toolbar.Children.Add(_expiryFollowUpFilter);
+
             _searchInput.TextChanged += (_, _) => ApplyFilters();
             var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث باسم المستفيد أو البنك أو المرجع...");
-            Grid.SetColumn(searchBox, 10);
+            Grid.SetColumn(searchBox, 12);
             toolbar.Children.Add(searchBox);
             return toolbar;
         }
@@ -539,6 +555,8 @@ namespace GuaranteeManager
         {
             _list.Items.Clear();
             string selectedScope = _scopeFilter.SelectedItem as string ?? DashboardScopeFilters.AllWork;
+            string expiryFollowUpFilter = _expiryFollowUpFilter.SelectedItem as string ?? DashboardExpiryFollowUpFilters.All;
+            UpdateExpiryFollowUpFilterVisibility(selectedScope);
             RefreshTableHeader(selectedScope);
             DashboardWorkspaceFilterResult filtered = _dataService.BuildFilteredItems(
                 _allItems,
@@ -547,7 +565,8 @@ namespace GuaranteeManager
                 _hasLastFile,
                 _lastFileGuaranteeNo,
                 _guarantees,
-                _pendingRequests);
+                _pendingRequests,
+                expiryFollowUpFilter);
 
             foreach (DashboardWorkItem item in filtered.Items)
             {
@@ -562,6 +581,28 @@ namespace GuaranteeManager
             ApplyMetrics(filtered.Metrics);
             _summary.Text = filtered.Summary;
             UpdateDetails();
+        }
+
+        private void SelectExpiryFollowUpFilter(string filter)
+        {
+            string normalizedFilter = DashboardExpiryFollowUpFilters.Normalize(filter);
+            foreach (object item in _expiryFollowUpFilter.Items)
+            {
+                if (string.Equals(item as string, normalizedFilter, StringComparison.Ordinal))
+                {
+                    _expiryFollowUpFilter.SelectedItem = item;
+                    return;
+                }
+            }
+
+            _expiryFollowUpFilter.SelectedItem = DashboardExpiryFollowUpFilters.All;
+        }
+
+        private void UpdateExpiryFollowUpFilterVisibility(string selectedScope)
+        {
+            bool isExpiryFollowUpScope = IsExpiryFollowUpScope(selectedScope);
+            _expiryFollowUpFilter.Visibility = isExpiryFollowUpScope ? Visibility.Visible : Visibility.Collapsed;
+            _expiryFollowUpFilter.IsEnabled = isExpiryFollowUpScope;
         }
 
         private FrameworkElement BuildRow(DashboardWorkItem item, string selectedScope)
@@ -792,6 +833,7 @@ namespace GuaranteeManager
 
         private void ShowExpiryFollowUpsLens()
         {
+            SelectExpiryFollowUpFilter(DashboardExpiryFollowUpFilters.All);
             if (IsExpiryFollowUpScope(_scopeFilter.SelectedItem as string ?? DashboardScopeFilters.AllWork))
             {
                 ApplyFilters();

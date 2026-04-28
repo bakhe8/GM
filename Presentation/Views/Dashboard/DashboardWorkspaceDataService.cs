@@ -29,6 +29,35 @@ namespace GuaranteeManager
         }
     }
 
+    public static class DashboardExpiryFollowUpFilters
+    {
+        public const string All = "كل المتابعات";
+        public const string Expired = "منتهية";
+        public const string ExpiringSoon = "قريبة الانتهاء";
+
+        public static string Normalize(string? rawFilter)
+        {
+            string filter = rawFilter?.Trim() ?? string.Empty;
+            return filter switch
+            {
+                Expired or DashboardScopeFilters.LegacyExpiredFollowUp => Expired,
+                ExpiringSoon or DashboardScopeFilters.LegacyExpiringSoon => ExpiringSoon,
+                _ => All
+            };
+        }
+
+        public static string FromScope(string? rawScope)
+        {
+            string scope = rawScope?.Trim() ?? string.Empty;
+            return scope switch
+            {
+                DashboardScopeFilters.LegacyExpiredFollowUp => Expired,
+                DashboardScopeFilters.LegacyExpiringSoon => ExpiringSoon,
+                _ => All
+            };
+        }
+    }
+
     public sealed class DashboardWorkspaceDataService
     {
         public List<DashboardWorkItem> BuildItems(
@@ -65,16 +94,16 @@ namespace GuaranteeManager
             bool hasLastFile,
             string lastFileGuaranteeNo,
             IReadOnlyList<Guarantee> guarantees,
-            IReadOnlyList<WorkflowRequestListItem> pendingRequests)
+            IReadOnlyList<WorkflowRequestListItem> pendingRequests,
+            string expiryFollowUpFilter = DashboardExpiryFollowUpFilters.All)
         {
             IEnumerable<DashboardWorkItem> query = allItems;
             string normalizedScope = DashboardScopeFilters.Normalize(scopeFilter);
+            string normalizedExpiryFilter = DashboardExpiryFollowUpFilters.Normalize(expiryFollowUpFilter);
             query = normalizedScope switch
             {
                 DashboardScopeFilters.PendingRequests => query.Where(item => item.Scope == DashboardScope.PendingRequests),
-                DashboardScopeFilters.ExpiryFollowUps => query.Where(item =>
-                    item.Scope == DashboardScope.ExpiredFollowUp ||
-                    item.Scope == DashboardScope.ExpiringSoon),
+                DashboardScopeFilters.ExpiryFollowUps => ApplyExpiryFollowUpFilter(query, normalizedExpiryFilter),
                 _ => query
             };
 
@@ -94,7 +123,12 @@ namespace GuaranteeManager
                 .ThenByDescending(item => item.Amount)
                 .ToList();
 
-            string summary = BuildSummary(filtered.Count, allItems.Count, normalizedSearch, normalizedScope);
+            string summary = BuildSummary(
+                filtered.Count,
+                allItems.Count,
+                normalizedSearch,
+                normalizedScope,
+                normalizedExpiryFilter);
 
             return new DashboardWorkspaceFilterResult(
                 filtered,
@@ -107,6 +141,20 @@ namespace GuaranteeManager
                     guarantees,
                     pendingRequests),
                 summary);
+        }
+
+        private static IEnumerable<DashboardWorkItem> ApplyExpiryFollowUpFilter(
+            IEnumerable<DashboardWorkItem> query,
+            string normalizedExpiryFilter)
+        {
+            return normalizedExpiryFilter switch
+            {
+                DashboardExpiryFollowUpFilters.Expired => query.Where(item => item.Scope == DashboardScope.ExpiredFollowUp),
+                DashboardExpiryFollowUpFilters.ExpiringSoon => query.Where(item => item.Scope == DashboardScope.ExpiringSoon),
+                _ => query.Where(item =>
+                    item.Scope == DashboardScope.ExpiredFollowUp ||
+                    item.Scope == DashboardScope.ExpiringSoon)
+            };
         }
 
         public DashboardWorkspaceDetailState BuildDetailState(
@@ -362,7 +410,12 @@ namespace GuaranteeManager
                 WorkspaceSurfaceChrome.BrushFrom("#E09408"));
         }
 
-        private static string BuildSummary(int filteredCount, int totalCount, string normalizedSearch, string normalizedScope)
+        private static string BuildSummary(
+            int filteredCount,
+            int totalCount,
+            string normalizedSearch,
+            string normalizedScope,
+            string normalizedExpiryFilter)
         {
             if (filteredCount == 0)
             {
@@ -380,7 +433,12 @@ namespace GuaranteeManager
             string scopeLabel = normalizedScope switch
             {
                 DashboardScopeFilters.PendingRequests => "الطلبات المعلقة",
-                DashboardScopeFilters.ExpiryFollowUps => "متابعات الانتهاء",
+                DashboardScopeFilters.ExpiryFollowUps => normalizedExpiryFilter switch
+                {
+                    DashboardExpiryFollowUpFilters.Expired => "المتابعات المنتهية",
+                    DashboardExpiryFollowUpFilters.ExpiringSoon => "المتابعات القريبة من الانتهاء",
+                    _ => "متابعات الانتهاء"
+                },
                 _ => "أعمال اليوم"
             };
 
