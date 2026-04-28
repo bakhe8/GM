@@ -266,7 +266,7 @@
                             <Border Style="{StaticResource ReferenceTableHeaderDivider}" />
                             <Grid Margin="9,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="4.55*" />
+                                    <ColumnDefinition Width="2.75*" />
                                     <ColumnDefinition Width="1.18*" />
                                     <ColumnDefinition Width="1.15*" />
                                     <ColumnDefinition Width="1.00*" />
@@ -296,7 +296,7 @@
                                 <DataTemplate>
                                     <Grid Height="40" Margin="6,0" FlowDirection="LeftToRight">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="4.55*" />
+                                            <ColumnDefinition Width="2.75*" />
                                             <ColumnDefinition Width="1.18*" />
                                             <ColumnDefinition Width="1.15*" />
                                             <ColumnDefinition Width="1.00*" />
@@ -520,44 +520,22 @@
                                                     <TextBlock Text="تاريخ" />
                                                 </StackPanel>
                                             </Button>
-                                            <Button Style="{StaticResource RowButton}"
-                                                    Command="{Binding DataContext.SelectGuaranteeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            <Button Style="{StaticResource PrimaryButton}"
+                                                    Height="26"
+                                                    MinWidth="70"
+                                                    Padding="7,0"
+                                                    FontSize="9.5"
+                                                    Margin="0,0,4,0"
+                                                    IsEnabled="{Binding OpenFileAction.IsEnabled}"
+                                                    ToolTip="{Binding OpenFileAction.Hint}"
+                                                    ToolTipService.ShowOnDisabled="True"
+                                                    Command="{Binding DataContext.OpenGuaranteeFileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}">
                                                 <StackPanel Orientation="Horizontal">
                                                     <Viewbox Width="10" Height="10" Margin="0,0,3,0" VerticalAlignment="Center">
-                                                        <Path Data="{StaticResource Icon.View}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                        <Path Data="{StaticResource Icon.View}" Stroke="White" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                                     </Viewbox>
-                                                    <TextBlock Text="عرض" />
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Style="{StaticResource RowButton}"
-                                                    Command="{Binding DataContext.CreateReleaseRequestCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Viewbox Width="10" Height="10" Margin="0,0,3,0" VerticalAlignment="Center">
-                                                        <Path Data="{StaticResource Icon.Release}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                    </Viewbox>
-                                                    <TextBlock Text="إفراج" />
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Style="{StaticResource RowButton}"
-                                                    Command="{Binding DataContext.CreateReductionRequestCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Viewbox Width="10" Height="10" Margin="0,0,3,0" VerticalAlignment="Center">
-                                                        <Path Data="{StaticResource Icon.Decrease}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                    </Viewbox>
-                                                    <TextBlock Text="تخفيض" />
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Style="{StaticResource RowButton}"
-                                                    Command="{Binding DataContext.CreateExtensionRequestCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Viewbox Width="10" Height="10" Margin="0,0,3,0" VerticalAlignment="Center">
-                                                        <Path Data="{StaticResource Icon.Extend}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                    </Viewbox>
-                                                    <TextBlock Text="تمديد" />
+                                                    <TextBlock Text="فتح الملف" />
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>

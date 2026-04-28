@@ -963,6 +963,19 @@
                                 <TextBlock Text="نفّذ الآن" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource Brush.Muted}" Margin="0,0,0,6" />
                                 <WrapPanel FlowDirection="LeftToRight" Margin="0,0,0,10">
                                     <Button Style="{StaticResource PrimaryButton}"
+                                            Content="فتح ملف الضمان"
+                                            FontSize="9"
+                                            MinWidth="108"
+                                            Margin="0,0,6,6"
+                                            Padding="6,0"
+                                            IsEnabled="{Binding SelectedGuarantee.OpenFileAction.IsEnabled}"
+                                            ToolTip="{Binding SelectedGuarantee.OpenFileAction.Hint}"
+                                            ToolTipService.ShowOnDisabled="True"
+                                            Command="{Binding OpenGuaranteeFileCommand}"
+                                            CommandParameter="{Binding SelectedGuarantee}"
+                                            automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.OpenFile"
+                                            automation:AutomationProperties.Name="فتح ملف الضمان" />
+                                    <Button Style="{StaticResource BaseButton}"
                                             Content="تسجيل رد"
                                             FontSize="9"
                                             Margin="0,0,6,6"
@@ -975,7 +988,7 @@
                                             CommandParameter="{Binding SelectedGuarantee}"
                                             automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.RegisterResponse"
                                             automation:AutomationProperties.Name="تسجيل رد البنك" />
-                                    <Button Style="{StaticResource PrimaryButton}"
+                                    <Button Style="{StaticResource BaseButton}"
                                             Content="طلب تمديد"
                                             FontSize="9"
                                             Margin="0,0,6,6"
@@ -1053,18 +1066,6 @@
                                             Command="{Binding ShowAllAttachmentsCommand}"
                                             automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Attachments"
                                             automation:AutomationProperties.Name="فتح مرفقات الضمان" />
-                                    <Button Style="{StaticResource BaseButton}"
-                                            Content="فتح الملف"
-                                            FontSize="9"
-                                            Margin="0,0,0,6"
-                                            Padding="2,0"
-                                            IsEnabled="{Binding SelectedGuarantee.OpenFileAction.IsEnabled}"
-                                            ToolTip="{Binding SelectedGuarantee.OpenFileAction.Hint}"
-                                            ToolTipService.ShowOnDisabled="True"
-                                            Command="{Binding OpenGuaranteeFileCommand}"
-                                            CommandParameter="{Binding SelectedGuarantee}"
-                                            automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.OpenFile"
-                                            automation:AutomationProperties.Name="فتح ملف الضمان" />
                                 </WrapPanel>
 
                                 <TextBlock Text="أفعال متقدمة" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource Brush.Muted}" Margin="0,0,0,6" />
