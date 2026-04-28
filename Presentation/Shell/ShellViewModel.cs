@@ -704,6 +704,11 @@ namespace GuaranteeManager
                 return null;
             }
 
+            return ResolveContextRequestId(target);
+        }
+
+        private int? ResolveContextRequestId(GuaranteeRow target)
+        {
             return _database.GetWorkflowRequestsByRootId(target.RootId)
                 .OrderBy(request => request.Status == RequestStatus.Pending ? 0 : 1)
                 .ThenByDescending(request => request.RequestDate)
@@ -859,7 +864,12 @@ namespace GuaranteeManager
 
         private void ShowGuaranteeRequests()
         {
-            ExecuteGuaranteeAction(SelectedGuarantee, target => _guaranteeWorkspace.ShowRequests(target, requireExistingRequests: false));
+            ExecuteGuaranteeAction(
+                SelectedGuarantee,
+                target => _guaranteeWorkspace.ShowRequests(
+                    target,
+                    requireExistingRequests: false,
+                    _focusedGuaranteeRequestId ?? ResolveContextRequestId(target)));
         }
 
         private void OpenRequestPreview(GuaranteeRequestPreviewItem? item)
@@ -930,7 +940,10 @@ namespace GuaranteeManager
         {
             ExecuteGuaranteeAction(
                 row,
-                target => _guaranteeWorkspace.ShowRequests(target, requireExistingRequests: true),
+                target => _guaranteeWorkspace.ShowRequests(
+                    target,
+                    requireExistingRequests: true,
+                    ResolveContextRequestId(target)),
                 syncSelection: true);
         }
 
