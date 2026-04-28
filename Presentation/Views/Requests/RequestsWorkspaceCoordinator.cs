@@ -129,7 +129,7 @@ namespace GuaranteeManager
             List<WorkflowRequest> requests = _database.GetWorkflowRequestsByRootId(item.RootGuaranteeId);
             GuaranteeRow row = GuaranteeRow.FromGuarantee(guarantee, requests);
             List<Guarantee> history = _database.GetGuaranteeHistory(guarantee.Id);
-            HistoryDialog.ShowFor(row, history, requests);
+            HistoryDialog.ShowFor(row, history, requests, item.Request.Id, preferRequestsTab: true);
         }
 
         public void OpenCurrentGuarantee(RequestListDisplayItem? selectedItem)

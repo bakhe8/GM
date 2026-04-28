@@ -645,7 +645,12 @@ namespace GuaranteeManager
             List<WorkflowRequest> requests = _database.GetWorkflowRequestsByRootId(rootId);
             List<Guarantee> history = _database.GetGuaranteeHistory(currentGuarantee.Id);
             GuaranteeRow row = GuaranteeRow.FromGuarantee(currentGuarantee, requests);
-            HistoryDialog.ShowFor(row, history, requests);
+            HistoryDialog.ShowFor(
+                row,
+                history,
+                requests,
+                result.RelatedRequest?.Id,
+                preferRequestsTab: result.RelatedRequest != null);
         }
 
         public void OpenRequestLetter(WorkflowRequest request)

@@ -2012,8 +2012,15 @@ namespace GuaranteeManager
         private readonly Button _exportHistoryButton = new();
         private readonly Button _printHistoryButton = new();
         private Action? _nextStepAction;
+        private readonly int? _initialRequestId;
+        private readonly bool _preferRequestsTab;
 
-        private HistoryDialog(GuaranteeRow row, IReadOnlyList<Guarantee> history, IReadOnlyList<WorkflowRequest> requests)
+        private HistoryDialog(
+            GuaranteeRow row,
+            IReadOnlyList<Guarantee> history,
+            IReadOnlyList<WorkflowRequest> requests,
+            int? initialRequestId = null,
+            bool preferRequestsTab = false)
         {
             _row = row;
             _historyDocuments = App.CurrentApp.GetRequiredService<IGuaranteeHistoryDocumentService>();
@@ -2025,6 +2032,8 @@ namespace GuaranteeManager
                 .OrderByDescending(item => item.RequestDate)
                 .ThenByDescending(item => item.SequenceNumber)
                 .ToList();
+            _initialRequestId = initialRequestId;
+            _preferRequestsTab = preferRequestsTab;
 
             Title = "سجل الضمان";
             UiInstrumentation.Identify(this, "Dialog.GuaranteeHistory", Title);
@@ -2048,11 +2057,16 @@ namespace GuaranteeManager
             ReloadData();
         }
 
-        public static void ShowFor(GuaranteeRow row, IReadOnlyList<Guarantee> history, IReadOnlyList<WorkflowRequest> requests)
+        public static void ShowFor(
+            GuaranteeRow row,
+            IReadOnlyList<Guarantee> history,
+            IReadOnlyList<WorkflowRequest> requests,
+            int? initialRequestId = null,
+            bool preferRequestsTab = false)
         {
             App.CurrentApp.GetRequiredService<SecondaryWindowManager>().ShowDialog(
                 $"history:{row.RootId}",
-                () => new HistoryDialog(row, history, requests),
+                () => new HistoryDialog(row, history, requests, initialRequestId, preferRequestsTab),
                 "سجل الضمان",
                 "سجل هذا الضمان مفتوح بالفعل.");
         }
@@ -2495,15 +2509,30 @@ namespace GuaranteeManager
                 _requestsList.Items.Add(BuildRequestRow(request));
             }
 
-            if (_versionsList.Items.Count > 0)
+            FrameworkElement? initialRequestRow = null;
+            if (_initialRequestId.HasValue)
+            {
+                initialRequestRow = _requestsList.Items
+                    .OfType<FrameworkElement>()
+                    .FirstOrDefault(item => item.Tag is WorkflowRequest request && request.Id == _initialRequestId.Value);
+            }
+
+            if (_versionsList.Items.Count > 0 && _versionsList.SelectedItem == null)
             {
                 _versionsList.SelectedIndex = 0;
             }
 
-            if (_requestsList.Items.Count > 0)
+            if (initialRequestRow != null)
+            {
+                _requestsList.SelectedItem = initialRequestRow;
+                _requestsList.ScrollIntoView(initialRequestRow);
+            }
+            else if (_requestsList.Items.Count > 0 && _requestsList.SelectedItem == null)
             {
                 _requestsList.SelectedIndex = 0;
             }
+
+            _tabs.SelectedIndex = _preferRequestsTab && initialRequestRow != null ? 1 : 0;
 
             UpdateDetailPanel();
             UpdateHistoryActionsAvailability();
@@ -3814,7 +3843,12 @@ namespace GuaranteeManager
             List<WorkflowRequest> requests = _database.GetWorkflowRequestsByRootId(rootId);
             GuaranteeRow row = GuaranteeRow.FromGuarantee(currentGuarantee, requests);
 
-            HistoryDialog.ShowFor(row, history, requests);
+            HistoryDialog.ShowFor(
+                row,
+                history,
+                requests,
+                _result.RelatedRequest?.Id,
+                preferRequestsTab: _result.RelatedRequest != null);
         }
 
         private void OpenAttachments()
