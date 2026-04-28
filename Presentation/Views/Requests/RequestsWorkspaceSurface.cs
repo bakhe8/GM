@@ -54,7 +54,8 @@ namespace GuaranteeManager
             Action<int>? onChanged,
             Action? closeRequested = null,
             Action? selectionChanged = null,
-            string? initialSearchText = null)
+            string? initialSearchText = null,
+            int? initialRequestId = null)
         {
             _loadRequests = loadRequests;
             _closeRequested = closeRequested;
@@ -73,8 +74,8 @@ namespace GuaranteeManager
 
             ConfigureButtons();
             Content = BuildLayout();
-            ReloadRequests();
             ApplyInitialSearch(initialSearchText);
+            ReloadRequests(initialRequestId);
         }
 
         public RequestListDisplayItem? SelectedDiagnosticsItem => SelectedItem;
@@ -1098,7 +1099,8 @@ namespace GuaranteeManager
             IDatabaseService database,
             IWorkflowService workflow,
             IExcelService excel,
-            Action<int>? onChanged)
+            Action<int>? onChanged,
+            int? initialRequestId)
         {
             Title = "الطلبات";
             Width = 980;
@@ -1109,7 +1111,7 @@ namespace GuaranteeManager
             FlowDirection = FlowDirection.RightToLeft;
             FontFamily = new FontFamily("Segoe UI, Tahoma");
             Background = WorkspaceSurfaceChrome.BrushFrom("#F7F9FC");
-            Content = new RequestsWorkspaceSurface(loadRequests, database, workflow, excel, onChanged, Close);
+            Content = new RequestsWorkspaceSurface(loadRequests, database, workflow, excel, onChanged, Close, initialRequestId: initialRequestId);
         }
 
         public static void ShowFor(
@@ -1117,11 +1119,12 @@ namespace GuaranteeManager
             IWorkflowService workflow,
             IDatabaseService database,
             IExcelService excel,
-            Action<int>? onChanged = null)
+            Action<int>? onChanged = null,
+            int? initialRequestId = null)
         {
             App.CurrentApp.GetRequiredService<SecondaryWindowManager>().ShowDialog(
                 "requests-workspace-dialog",
-                () => new RequestsWorkspaceDialog(loadRequests, database, workflow, excel, onChanged),
+                () => new RequestsWorkspaceDialog(loadRequests, database, workflow, excel, onChanged, initialRequestId),
                 "الطلبات",
                 "نافذة الطلبات مفتوحة بالفعل.");
         }

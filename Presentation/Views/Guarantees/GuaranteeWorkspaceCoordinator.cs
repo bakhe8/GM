@@ -470,11 +470,16 @@ namespace GuaranteeManager
                 return;
             }
 
-            RequestsDialog.ShowFor(
-                () => _database.GetWorkflowRequestsByRootId(rootId),
+            RequestsWorkspaceDialog.ShowFor(
+                () => _database.QueryWorkflowRequests(new WorkflowRequestQueryOptions
+                {
+                    RootGuaranteeId = rootId,
+                    SortMode = WorkflowRequestQuerySortMode.ActivityDateDescending
+                }),
                 _workflow,
-                () => _refreshAfterWorkflowChange(rootId),
-                $"requests:{rootId}",
+                _database,
+                _excel,
+                _refreshAfterWorkflowChange,
                 initialRequestId);
         }
 
