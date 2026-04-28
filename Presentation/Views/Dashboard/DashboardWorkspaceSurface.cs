@@ -89,10 +89,10 @@ namespace GuaranteeManager
             _showReports = showReports;
             _closeRequested = closeRequested;
 
-            UiInstrumentation.Identify(this, "Dashboard.Workspace", "لوحة التحكم");
-            UiInstrumentation.Identify(_searchInput, "Dashboard.SearchBox", "بحث لوحة التحكم");
-            UiInstrumentation.Identify(_scopeFilter, "Dashboard.Filter.Scope", "نطاق لوحة التحكم");
-            UiInstrumentation.Identify(_list, "Dashboard.Table.List", "قائمة أعمال لوحة التحكم");
+            UiInstrumentation.Identify(this, "Dashboard.Workspace", "اليوم");
+            UiInstrumentation.Identify(_searchInput, "Dashboard.SearchBox", "بحث اليوم");
+            UiInstrumentation.Identify(_scopeFilter, "Dashboard.Filter.Scope", "نطاق اليوم");
+            UiInstrumentation.Identify(_list, "Dashboard.Table.List", "قائمة أعمال اليوم");
 
             FlowDirection = FlowDirection.RightToLeft;
             FontFamily = new FontFamily("Segoe UI, Tahoma");
@@ -346,7 +346,7 @@ namespace GuaranteeManager
 
             grid.Children.Add(new TextBlock
             {
-                Text = "لوحة التحكم",
+                Text = "اليوم",
                 FontSize = 16,
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
@@ -362,7 +362,7 @@ namespace GuaranteeManager
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B")
             };
             closeButton.Click += (_, _) => _closeRequested?.Invoke();
-            UiInstrumentation.Identify(closeButton, "Dashboard.Detail.CloseButton", "إغلاق لوحة التحكم");
+            UiInstrumentation.Identify(closeButton, "Dashboard.Detail.CloseButton", "إغلاق اليوم");
             Grid.SetColumn(closeButton, 1);
             grid.Children.Add(closeButton);
             return grid;

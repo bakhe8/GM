@@ -9,7 +9,7 @@ namespace GuaranteeManager
         private static readonly IReadOnlyDictionary<string, string[]> AliasMap =
             new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
             {
-                [ShellWorkspaceKeys.Dashboard] = new[] { "لوحة التحكم", "الرئيسية", "dashboard", "home" },
+                [ShellWorkspaceKeys.Dashboard] = new[] { "اليوم", "لوحة التحكم", "الرئيسية", "dashboard", "home", "today" },
                 [ShellWorkspaceKeys.Guarantees] = new[] { "الضمانات", "ضمان", "guarantees", "guarantee" },
                 [ShellWorkspaceKeys.Requests] = new[] { "الطلبات", "طلبات", "requests", "request" },
                 [ShellWorkspaceKeys.Banks] = new[] { "البنوك", "بنوك", "banks", "bank" },

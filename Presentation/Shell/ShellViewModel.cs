@@ -434,7 +434,7 @@ namespace GuaranteeManager
 
         public string CurrentWorkspaceDisplayTitle => CurrentWorkspaceKey switch
         {
-            ShellWorkspaceKeys.Dashboard => "لوحة التحكم",
+            ShellWorkspaceKeys.Dashboard => "اليوم",
             ShellWorkspaceKeys.Guarantees => "الضمانات",
             ShellWorkspaceKeys.Requests => "الطلبات",
             ShellWorkspaceKeys.Banks => "البنوك",
