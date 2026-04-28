@@ -74,6 +74,7 @@
                             <Border Height="1" Background="#EDF2F7" Margin="0,13,0,12" />
 
                             <StackPanel x:Name="ExecutiveSummaryAnchor"
+                                        Focusable="True"
                                         automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Section.ExecutiveSummary"
                                         automation:AutomationProperties.Name="قسم الملخص التنفيذي">
                                 <Border Style="{StaticResource Card}"
@@ -433,6 +434,7 @@
 
                             <Border x:Name="RequestsAnchor"
                                     Style="{StaticResource Card}"
+                                    Focusable="True"
                                     Padding="12"
                                     Margin="0,14,0,0"
                                     Effect="{x:Null}"
@@ -641,6 +643,7 @@
 
                             <Border x:Name="TimelineAnchor"
                                     Style="{StaticResource Card}"
+                                    Focusable="True"
                                     Padding="12"
                                     Margin="0,14,0,0"
                                     Effect="{x:Null}"
@@ -726,6 +729,7 @@
 
                             <Border x:Name="OutputsAnchor"
                                     Style="{StaticResource Card}"
+                                    Focusable="True"
                                     Padding="12"
                                     Margin="0,12,0,0"
                                     Effect="{x:Null}"
@@ -844,6 +848,7 @@
 
                             <Border x:Name="AttachmentsAnchor"
                                     Style="{StaticResource Card}"
+                                    Focusable="True"
                                     Padding="12"
                                     Margin="0,12,0,0"
                                     Effect="{x:Null}"
@@ -965,6 +970,7 @@
 
                     <Border x:Name="ActionsAnchor"
                             Grid.Row="1"
+                            Focusable="True"
                             Background="White"
                             BorderBrush="#E3E9F2"
                             BorderThickness="0,1,0,0"

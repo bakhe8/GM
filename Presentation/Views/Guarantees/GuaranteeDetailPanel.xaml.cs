@@ -81,9 +81,9 @@ namespace GuaranteeManager
             }
         }
 
-        private void ScrollToArea(GuaranteeFileFocusArea area)
+        private FrameworkElement? ResolveAreaElement(GuaranteeFileFocusArea area)
         {
-            FrameworkElement? target = area switch
+            return area switch
             {
                 GuaranteeFileFocusArea.ExecutiveSummary => ExecutiveSummaryAnchor,
                 GuaranteeFileFocusArea.Requests => RequestsAnchor,
@@ -93,20 +93,30 @@ namespace GuaranteeManager
                 GuaranteeFileFocusArea.Outputs => OutputsAnchor,
                 _ => ExecutiveSummaryAnchor
             };
+        }
 
-            if (target == null || RootScrollViewer.Content is not Visual content)
+        private void ApplyAreaFocus(GuaranteeFileFocusArea area)
+        {
+            FrameworkElement? target = ResolveAreaElement(area);
+
+            if (target == null)
             {
                 return;
             }
 
-            try
+            if (area != GuaranteeFileFocusArea.Actions && RootScrollViewer.Content is Visual content)
             {
-                Point point = target.TransformToAncestor(content).Transform(new Point(0, 0));
-                RootScrollViewer.ScrollToVerticalOffset(Math.Max(0, point.Y - 10));
+                try
+                {
+                    Point point = target.TransformToAncestor(content).Transform(new Point(0, 0));
+                    RootScrollViewer.ScrollToVerticalOffset(Math.Max(0, point.Y - 10));
+                }
+                catch (InvalidOperationException)
+                {
+                }
             }
-            catch (InvalidOperationException)
-            {
-            }
+
+            target.Focus();
         }
 
         private void TryApplyPendingOrCurrentFocus()
@@ -136,7 +146,7 @@ namespace GuaranteeManager
         private void ApplyFocus(GuaranteeFileFocusArea area, int? requestIdToFocus)
         {
             _ = requestIdToFocus;
-            Dispatcher.BeginInvoke(() => ScrollToArea(area), DispatcherPriority.Loaded);
+            Dispatcher.BeginInvoke(() => ApplyAreaFocus(area), DispatcherPriority.Loaded);
         }
     }
 }
