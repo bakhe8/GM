@@ -706,7 +706,12 @@ namespace GuaranteeManager
                 return null;
             }
 
-            return ResolveContextRequestId(target);
+            return _database.GetWorkflowRequestsByRootId(target.RootId)
+                .Where(request => request.Status == RequestStatus.Pending)
+                .OrderByDescending(request => request.RequestDate)
+                .ThenByDescending(request => request.SequenceNumber)
+                .FirstOrDefault()
+                ?.Id;
         }
 
         private int? ResolveContextRequestId(GuaranteeRow target)
