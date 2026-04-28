@@ -475,12 +475,12 @@ namespace GuaranteeManager
                 "يوجد طلب استبدال معلق بالفعل لهذا الضمان.",
                 "طلب الاستبدال متاح عند الحاجة لإصدار ضمان بديل.");
 
-            ActionEligibility annulment = BuildLifecycleAction(
-                lifecycleClosed,
-                hasPendingType(RequestType.Annulment),
-                closedLifecycleHint,
-                "يوجد طلب نقض معلق بالفعل لهذا الضمان.",
-                "طلب النقض متاح إذا تقرر إسقاط الأثر التشغيلي أو تصحيح المسار.");
+            bool annulmentEligible = guarantee.LifecycleStatus is GuaranteeLifecycleStatus.Released or GuaranteeLifecycleStatus.Liquidated;
+            ActionEligibility annulment = hasPendingType(RequestType.Annulment)
+                ? ActionEligibility.Disabled("يوجد طلب نقض معلق بالفعل لهذا الضمان.")
+                : annulmentEligible
+                    ? ActionEligibility.Enabled("طلب النقض متاح للضمانات المفرج عنها أو المسيّلة فقط، وهذا الضمان يطابق الشرط الآن.")
+                    : ActionEligibility.Disabled("طلب النقض متاح للضمانات المفرج عنها أو المسيّلة فقط.");
 
             string summaryTitle;
             string summaryDetail;
