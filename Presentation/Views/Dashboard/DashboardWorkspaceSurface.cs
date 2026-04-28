@@ -31,6 +31,7 @@ namespace GuaranteeManager
         private readonly TextBox _searchInput = new();
         private readonly ComboBox _scopeFilter = new();
         private readonly TextBlock _summary = BuildMutedText(12, FontWeights.SemiBold);
+        private readonly Grid _tableHeaderInner = new();
         private readonly TextBlock _lastFileLabel = BuildMetricLabel("#2563EB");
         private readonly TextBlock _criticalWorkLabel = BuildMetricLabel("#EF4444");
         private readonly TextBlock _pendingRequestsLabel = BuildMetricLabel("#E09408");
@@ -260,16 +261,8 @@ namespace GuaranteeManager
                 Style = WorkspaceSurfaceChrome.Style("ReferenceTableHeaderDivider")
             });
 
-            var inner = CreateTableGrid();
-            AddHeader(inner, "الإجراءات", 0, false);
-            AddHeader(inner, "الفئة", 1, false);
-            AddHeader(inner, "الأولوية", 2, false);
-            AddHeader(inner, "الموعد", 3, false);
-            AddHeader(inner, "القيمة", 4, false);
-            AddHeader(inner, "البنك", 5, true);
-            AddHeader(inner, "العنصر", 6, true);
-            AddHeader(inner, "المرجع", 7, true);
-            header.Children.Add(inner);
+            RefreshTableHeader(DashboardScopeFilters.AllWork);
+            header.Children.Add(_tableHeaderInner);
             return header;
         }
 
@@ -497,6 +490,7 @@ namespace GuaranteeManager
         {
             _list.Items.Clear();
             string selectedScope = _scopeFilter.SelectedItem as string ?? DashboardScopeFilters.AllWork;
+            RefreshTableHeader(selectedScope);
             DashboardWorkspaceFilterResult filtered = _dataService.BuildFilteredItems(
                 _allItems,
                 _searchInput.Text,
@@ -508,7 +502,7 @@ namespace GuaranteeManager
 
             foreach (DashboardWorkItem item in filtered.Items)
             {
-                _list.Items.Add(BuildRow(item));
+                _list.Items.Add(BuildRow(item, selectedScope));
             }
 
             if (_list.Items.Count > 0)
@@ -521,7 +515,7 @@ namespace GuaranteeManager
             UpdateDetails();
         }
 
-        private FrameworkElement BuildRow(DashboardWorkItem item)
+        private FrameworkElement BuildRow(DashboardWorkItem item, string selectedScope)
         {
             var row = CreateTableGrid();
             row.Tag = item;
@@ -539,15 +533,62 @@ namespace GuaranteeManager
             Grid.SetColumn(actions, 0);
             row.Children.Add(actions);
 
-            row.Children.Add(BuildCell(item.CategoryLabel, 1, "TableCellCenter", item.CategoryBrush));
-            row.Children.Add(BuildCell(item.PriorityLabel, 2, "TableCellCenter", item.PriorityBrush));
-            row.Children.Add(BuildCell(item.DueLabel, 3, "TableCellCenter"));
+            if (IsExpiryFollowUpScope(selectedScope))
+            {
+                row.Children.Add(BuildCell(item.PriorityLabel, 1, "TableCellCenter", item.PriorityBrush));
+                row.Children.Add(BuildCell(item.DueDetail, 2, "TableCellCenter", item.PriorityBrush));
+                row.Children.Add(BuildCell(item.DueLabel, 3, "TableCellCenter"));
+            }
+            else
+            {
+                row.Children.Add(BuildCell(item.CategoryLabel, 1, "TableCellCenter", item.CategoryBrush));
+                row.Children.Add(BuildCell(item.PriorityLabel, 2, "TableCellCenter", item.PriorityBrush));
+                row.Children.Add(BuildCell(item.DueLabel, 3, "TableCellCenter"));
+            }
+
             row.Children.Add(BuildAmountCell(item.AmountDisplay, 4));
             row.Children.Add(BuildBankCell(item, 5));
             row.Children.Add(BuildCell(item.Title, 6, "TableCellRight"));
             row.Children.Add(BuildCell(item.Reference, 7, "TableCellRight"));
             return row;
         }
+
+        private void RefreshTableHeader(string selectedScope)
+        {
+            _tableHeaderInner.Children.Clear();
+            _tableHeaderInner.ColumnDefinitions.Clear();
+            _tableHeaderInner.Margin = new Thickness(9, 0, 9, 0);
+            _tableHeaderInner.FlowDirection = FlowDirection.LeftToRight;
+            foreach (ColumnDefinition definition in CreateTableGrid().ColumnDefinitions)
+            {
+                _tableHeaderInner.ColumnDefinitions.Add(new ColumnDefinition { Width = definition.Width });
+            }
+
+            AddHeader(_tableHeaderInner, "الإجراءات", 0, false);
+            if (IsExpiryFollowUpScope(selectedScope))
+            {
+                AddHeader(_tableHeaderInner, "المستوى", 1, false);
+                AddHeader(_tableHeaderInner, "الأيام", 2, false);
+                AddHeader(_tableHeaderInner, "تاريخ الانتهاء", 3, false);
+            }
+            else
+            {
+                AddHeader(_tableHeaderInner, "الفئة", 1, false);
+                AddHeader(_tableHeaderInner, "الأولوية", 2, false);
+                AddHeader(_tableHeaderInner, "الموعد", 3, false);
+            }
+
+            AddHeader(_tableHeaderInner, "القيمة", 4, false);
+            AddHeader(_tableHeaderInner, "البنك", 5, true);
+            AddHeader(_tableHeaderInner, "العنصر", 6, true);
+            AddHeader(_tableHeaderInner, "المرجع", 7, true);
+        }
+
+        private static bool IsExpiryFollowUpScope(string selectedScope)
+            => string.Equals(
+                DashboardScopeFilters.Normalize(selectedScope),
+                DashboardScopeFilters.ExpiryFollowUps,
+                StringComparison.Ordinal);
 
         private static TextBlock BuildCell(string text, int column, string styleKey, Brush? foreground = null)
         {
