@@ -32,6 +32,8 @@
   - خطة الانتقال الرسمية من تطوير الأداة إلى تطوير البرنامج الأصلي، مع أول ثلاث ساحات تنفيذ فعلية وقاعدة blocker-driven للأداة.
 - `guides/Product_Coverage_Matrix.md`
   - مصفوفة التغطية الحالية للمنتج: ما الذي صار مشبعًا، ومتى نعيد الفحص، ومتى لا تكون الأداة مبررة.
+- `guides/Next_Level_Development_Readiness.md`
+  - مرجع الجاهزية الرسمي للانتقال إلى مستوى تطوير أعلى في البرنامج، مع نتائج build/tests/regressions والحكم التنفيذي.
 - `guides/UIAutomation_Tooling_Roadmap.md`
   - خارطة الطريق الرسمية لتطوير أداة الفحص والتشغيل البصري/السلوكي نفسها، بما في ذلك إعادة الهيكلة التدريجية والاختبارات الرجعية.
 - `guides/UIAutomation_Adaptive_Capabilities_Roadmap.md`

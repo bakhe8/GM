@@ -47,6 +47,11 @@
   - [guides/Program_Transition_Plan.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Program_Transition_Plan.md:1)
 - كما صار عندنا الآن مرجع صريح يمنع إعادة الجولات المشبعة ويضبط متى نستخدم الأداة ومتى لا نستخدمها:
   - [guides/Product_Coverage_Matrix.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Product_Coverage_Matrix.md:1)
+- كما أُغلقت الآن جولة جاهزية انتقال مستقلة، وخرجت بحكم صريح:
+  - نحن جاهزون للانتقال إلى مستوى تطوير أعلى في البرنامج
+  - مع build/tests/regressions ناجحة على baseline الحالية
+  - والمرجع الرسمي لهذا الحكم هنا:
+  - [guides/Next_Level_Development_Readiness.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Next_Level_Development_Readiness.md:1)
 - وبدأت الآن أول جولة تنفيذ فعلية من هذا الانتقال على `Settings`:
   - أُغلقت فجوة صمت صغيرة في `نسخ المسار` و`فتح المسار` عبر الشريط السفلي
   - كما صارت حالة النجاح الهادئ نفسها قابلة للقراءة من الأداة عبر `Shell.Status.Primary`
