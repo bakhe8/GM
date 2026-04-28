@@ -31,6 +31,10 @@ namespace GuaranteeManager
         private readonly TextBox _searchInput = new();
         private readonly ComboBox _scopeFilter = new();
         private readonly TextBlock _summary = BuildMutedText(12, FontWeights.SemiBold);
+        private readonly TextBlock _lastFileLabel = BuildMetricLabel("#2563EB");
+        private readonly TextBlock _criticalWorkLabel = BuildMetricLabel("#EF4444");
+        private readonly TextBlock _pendingRequestsLabel = BuildMetricLabel("#E09408");
+        private readonly TextBlock _followUpsLabel = BuildMetricLabel("#0F172A");
         private readonly TextBlock _guaranteeCountValue = BuildMetricValue(22);
         private readonly TextBlock _portfolioAmountValue = BuildMetricValue();
         private readonly TextBlock _pendingValue = BuildMetricValue();
@@ -217,27 +221,20 @@ namespace GuaranteeManager
             {
                 Columns = 4
             };
-            metrics.Children.Add(BuildMetricCard("آخر ملف", _guaranteeCountValue, "#2563EB"));
-            metrics.Children.Add(BuildMetricCard("أعمال حرجة", _portfolioAmountValue, "#EF4444"));
-            metrics.Children.Add(BuildMetricCard("طلبات معلقة", _pendingValue, "#E09408"));
-            metrics.Children.Add(BuildMetricCard("متابعات الانتهاء", _followUpValue, "#0F172A"));
+            metrics.Children.Add(BuildMetricCard(_lastFileLabel, _guaranteeCountValue));
+            metrics.Children.Add(BuildMetricCard(_criticalWorkLabel, _portfolioAmountValue));
+            metrics.Children.Add(BuildMetricCard(_pendingRequestsLabel, _pendingValue));
+            metrics.Children.Add(BuildMetricCard(_followUpsLabel, _followUpValue));
             return metrics;
         }
 
-        private Border BuildMetricCard(string label, TextBlock value, string accent)
+        private Border BuildMetricCard(TextBlock label, TextBlock value)
         {
             var card = WorkspaceSurfaceChrome.Card(new Thickness(14, 10, 14, 10));
             card.Margin = new Thickness(0, 0, 10, 0);
 
             var stack = new StackPanel();
-            stack.Children.Add(new TextBlock
-            {
-                Text = label,
-                FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom(accent),
-                TextAlignment = TextAlignment.Right
-            });
+            stack.Children.Add(label);
             stack.Children.Add(value);
             card.Child = stack;
             return card;
@@ -715,6 +712,7 @@ namespace GuaranteeManager
         {
             ApplyDetailState(_dataService.BuildDetailState(
                 SelectedItem,
+                _scopeFilter.SelectedItem as string ?? DashboardScopeFilters.AllWork,
                 _hasLastFile,
                 _lastFileGuaranteeNo,
                 _lastFileSummary));
@@ -722,10 +720,10 @@ namespace GuaranteeManager
 
         private void ApplyMetrics(DashboardWorkspaceMetrics metrics)
         {
-            _guaranteeCountValue.Text = metrics.LastFile;
-            _portfolioAmountValue.Text = metrics.CriticalWork;
-            _pendingValue.Text = metrics.PendingRequests;
-            _followUpValue.Text = metrics.FollowUps;
+            ApplyMetricCard(_lastFileLabel, _guaranteeCountValue, metrics.First);
+            ApplyMetricCard(_criticalWorkLabel, _portfolioAmountValue, metrics.Second);
+            ApplyMetricCard(_pendingRequestsLabel, _pendingValue, metrics.Third);
+            ApplyMetricCard(_followUpsLabel, _followUpValue, metrics.Fourth);
         }
 
         private void ApplyDetailState(DashboardWorkspaceDetailState state)
@@ -786,6 +784,24 @@ namespace GuaranteeManager
                 TextAlignment = TextAlignment.Right,
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
+        }
+
+        private static TextBlock BuildMetricLabel(string accentHex)
+        {
+            return new TextBlock
+            {
+                FontSize = 11,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = WorkspaceSurfaceChrome.BrushFrom(accentHex),
+                TextAlignment = TextAlignment.Right
+            };
+        }
+
+        private static void ApplyMetricCard(TextBlock labelBlock, TextBlock valueBlock, DashboardMetricCard card)
+        {
+            labelBlock.Text = card.Label;
+            labelBlock.Foreground = WorkspaceSurfaceChrome.BrushFrom(card.AccentHex);
+            valueBlock.Text = card.Value;
         }
 
         private static TextBlock BuildDetailValue(double size, FontWeight weight)

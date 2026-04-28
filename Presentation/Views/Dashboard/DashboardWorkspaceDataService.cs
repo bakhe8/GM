@@ -90,25 +90,50 @@ namespace GuaranteeManager
 
             return new DashboardWorkspaceFilterResult(
                 filtered,
-                new DashboardWorkspaceMetrics(
-                    hasLastFile ? lastFileGuaranteeNo : "لا يوجد",
-                    allItems.Count(item => item.PriorityRank <= 1).ToString("N0", CultureInfo.InvariantCulture),
-                    pendingRequests.Count.ToString("N0", CultureInfo.InvariantCulture),
-                    guarantees.Count(item => item.NeedsExpiryFollowUp || item.IsExpiringSoon).ToString("N0", CultureInfo.InvariantCulture)),
+                BuildMetrics(
+                    normalizedScope,
+                    filtered,
+                    hasLastFile,
+                    lastFileGuaranteeNo,
+                    allItems,
+                    guarantees,
+                    pendingRequests),
                 summary);
         }
 
-    public DashboardWorkspaceDetailState BuildDetailState(
-        DashboardWorkItem? selected,
-        bool hasLastFile,
-        string lastFileGuaranteeNo,
-        string lastFileSummary)
+        public DashboardWorkspaceDetailState BuildDetailState(
+            DashboardWorkItem? selected,
+            string scopeFilter,
+            bool hasLastFile,
+            string lastFileGuaranteeNo,
+            string lastFileSummary)
         {
+            string normalizedScope = DashboardScopeFilters.Normalize(scopeFilter);
+
             if (selected == null)
             {
+                string title = "لا توجد أولوية محددة";
+                string subtitle = "ابدأ باختيار عنصر من قائمة الأولويات اليومية.";
+                string note = hasLastFile
+                    ? $"آخر ملف تم العمل عليه: {lastFileGuaranteeNo} | {lastFileSummary}"
+                    : "لا يوجد ملف حديث بعد. ابدأ بفتح الضمانات أو اختيار عنصر من أعمال اليوم.";
+
+                if (string.Equals(normalizedScope, DashboardScopeFilters.ExpiryFollowUps, StringComparison.Ordinal))
+                {
+                    title = "اختر متابعة انتهاء";
+                    subtitle = "ستظهر هنا تفاصيل الضمانات القريبة من الانتهاء أو المنتهية التي تحتاج متابعة.";
+                    note = "هذه العدسة تجمع المتابعة الوقائية والمتابعة المتأخرة في بيت يومي واحد.";
+                }
+                else if (string.Equals(normalizedScope, DashboardScopeFilters.PendingRequests, StringComparison.Ordinal))
+                {
+                    title = "اختر طلبًا معلقًا";
+                    subtitle = "ستظهر هنا تفاصيل الطلب المحدد والخطوة التالية المناسبة له.";
+                    note = "ابدأ بطلب معلق لترى المرجع والقيمة المطلوبة وما الإجراء الأنسب الآن.";
+                }
+
                 return new DashboardWorkspaceDetailState(
-                    "لا توجد أولوية محددة",
-                    "ابدأ باختيار عنصر من قائمة الأولويات اليومية.",
+                    title,
+                    subtitle,
                     "جاهز",
                     WorkspaceSurfaceChrome.BrushFrom("#16A34A"),
                     WorkspaceSurfaceChrome.BrushFrom("#F2FBF4"),
@@ -123,9 +148,7 @@ namespace GuaranteeManager
                     "---",
                     "---",
                     "---",
-                    hasLastFile
-                    ? $"آخر ملف تم العمل عليه: {lastFileGuaranteeNo} | {lastFileSummary}"
-                    : "لا يوجد ملف حديث بعد. ابدأ بفتح الضمانات أو اختيار عنصر من أعمال اليوم.",
+                    note,
                     "فتح الملف عند اختيار عنصر",
                     "فتح المساحة",
                     false,
@@ -225,7 +248,7 @@ namespace GuaranteeManager
                 $"متأخر {daysLate.ToString("N0", CultureInfo.InvariantCulture)} يوماً",
                 item.GuaranteeType,
                 "راجع الإجراء الآن",
-                "اليوم",
+                "اليوم • متابعات الانتهاء",
                 "فتح اليوم",
                 "مراجعة ملف الضمان واتخاذ قرار تشغيل",
                 $"انتهى الضمان وما زالت حالته التشغيلية {item.LifecycleStatusLabel}. يحتاج متابعة للتأكد من الإفراج أو التمديد أو الإقفال التشغيلي.",
@@ -266,7 +289,7 @@ namespace GuaranteeManager
                 $"خلال {daysLeft.ToString("N0", CultureInfo.InvariantCulture)} يوم",
                 item.GuaranteeType,
                 "راجع التمديد الآن",
-                "اليوم",
+                "اليوم • متابعات الانتهاء",
                 "فتح اليوم",
                 "التأكد من الحاجة إلى تمديد",
                 $"الضمان ضمن نافذة الانتهاء القريبة. يستحسن مراجعة الطلبات المرتبطة والتأكد من الحاجة إلى تمديد أو إقفال مبكر.",
@@ -300,13 +323,51 @@ namespace GuaranteeManager
 
             return $"عرض {filteredCount.ToString("N0", CultureInfo.InvariantCulture)} نتيجة ضمن {scopeLabel} من أصل {totalCount.ToString("N0", CultureInfo.InvariantCulture)}.";
         }
+
+        private static DashboardWorkspaceMetrics BuildMetrics(
+            string normalizedScope,
+            IReadOnlyList<DashboardWorkItem> filteredItems,
+            bool hasLastFile,
+            string lastFileGuaranteeNo,
+            IReadOnlyList<DashboardWorkItem> allItems,
+            IReadOnlyList<Guarantee> guarantees,
+            IReadOnlyList<WorkflowRequestListItem> pendingRequests)
+        {
+            if (string.Equals(normalizedScope, DashboardScopeFilters.ExpiryFollowUps, StringComparison.Ordinal))
+            {
+                int expiringCount = filteredItems.Count(item => item.Scope == DashboardScope.ExpiringSoon);
+                int expiredCount = filteredItems.Count(item => item.Scope == DashboardScope.ExpiredFollowUp);
+                decimal totalAmount = filteredItems.Sum(item => item.Amount);
+                string closestDate = filteredItems
+                    .OrderBy(item => item.SortDate)
+                    .FirstOrDefault()?
+                    .DueLabel ?? "---";
+
+                return new DashboardWorkspaceMetrics(
+                    new DashboardMetricCard("قريب الانتهاء", expiringCount.ToString("N0", CultureInfo.InvariantCulture), "#E09408"),
+                    new DashboardMetricCard("منتهي", expiredCount.ToString("N0", CultureInfo.InvariantCulture), "#EF4444"),
+                    new DashboardMetricCard("إجمالي القيمة", $"{totalAmount.ToString("N0", CultureInfo.InvariantCulture)} ريال", "#2563EB"),
+                    new DashboardMetricCard("أقرب تاريخ", closestDate, "#0F172A"));
+            }
+
+            return new DashboardWorkspaceMetrics(
+                new DashboardMetricCard("آخر ملف", hasLastFile ? lastFileGuaranteeNo : "لا يوجد", "#2563EB"),
+                new DashboardMetricCard("أعمال حرجة", allItems.Count(item => item.PriorityRank <= 1).ToString("N0", CultureInfo.InvariantCulture), "#EF4444"),
+                new DashboardMetricCard("طلبات معلقة", pendingRequests.Count.ToString("N0", CultureInfo.InvariantCulture), "#E09408"),
+                new DashboardMetricCard("متابعات الانتهاء", guarantees.Count(item => item.NeedsExpiryFollowUp || item.IsExpiringSoon).ToString("N0", CultureInfo.InvariantCulture), "#0F172A"));
+        }
     }
 
     public sealed record DashboardWorkspaceMetrics(
-        string LastFile,
-        string CriticalWork,
-        string PendingRequests,
-        string FollowUps);
+        DashboardMetricCard First,
+        DashboardMetricCard Second,
+        DashboardMetricCard Third,
+        DashboardMetricCard Fourth);
+
+    public sealed record DashboardMetricCard(
+        string Label,
+        string Value,
+        string AccentHex);
 
     public sealed record DashboardWorkspaceFilterResult(
         IReadOnlyList<DashboardWorkItem> Items,
