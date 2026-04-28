@@ -62,8 +62,28 @@
   - [guides/Workflow_First_UI_Recovery_Plan.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Workflow_First_UI_Recovery_Plan.md:1)
 - ومراجعها التنفيذية هنا:
   - [guides/Core_Workflows.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Core_Workflows.md:1)
+  - [guides/Navigation_Architecture_Map.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Navigation_Architecture_Map.md:1)
+  - [guides/Canonical_Home_Matrix.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Canonical_Home_Matrix.md:1)
   - [guides/UI_Operational_Rules.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UI_Operational_Rules.md:1)
   - [guides/Surface_Audit_Matrix.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Surface_Audit_Matrix.md:1)
+- وأُغلقت الآن أيضًا أول وقفة معمارية على مستوى البرنامج كله:
+  - السايدبار الحالية حُكم عليها بأنها **مسطحة أكثر من اللازم**
+  - وأن عناصر مثل `Notifications` و`Banks` لا ينبغي أن تستمر top-level مستقلة من نفس وزن:
+    - `Requests`
+    - `Guarantees`
+  - وصارت البنية المستهدفة أوضح:
+    - `اليوم`
+    - `الطلبات`
+    - `الضمانات`
+    - `التحليلات والمخرجات`
+    - `التشغيل`
+  - كما صار عندنا الآن مرجع صريح يحدد:
+    - البيت الرسمي لكل وظيفة
+    - وأين يجوز أن تظهر ثانويًا فقط
+  - وهذا يعني أن المرحلة التالية لم تعد:
+    - “تحسين شاشة هنا أو هناك”
+  - بل:
+    - **إعادة تنظيم البرنامج من بيوته الرسمية نزولًا إلى تفاصيل الأسطح**
 - وبدأت الآن أول دفعة تنفيذية داخل `Requests` نفسها:
   - عمود الإجراءات لم يعد يحمل ثلاثة أزرار صفية متجاورة
   - وصار يعتمد على:

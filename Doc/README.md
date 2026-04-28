@@ -42,6 +42,10 @@
   - قواعد تشغيلية تحكم ما يظهر وما يهدأ وما يندمج داخل الواجهات.
 - `guides/Surface_Audit_Matrix.md`
   - audit تنفيذي للسطوح الحالية، يبدأ فعليًا من `Requests` ويحدد ما يجب أن يبقى أو يهدأ أو يُعاد تنظيمه.
+- `guides/Navigation_Architecture_Map.md`
+  - الخريطة المقترحة لبنية التنقل العليا: ما الذي يبقى top-level، وما الذي يندمج تحت عائلة أكبر.
+- `guides/Canonical_Home_Matrix.md`
+  - المرجع الرسمي لبيوت الوظائف: أين البيت الرسمي لكل مسار، وأين يسمح بظهوره ثانويًا فقط.
 - `guides/UIAutomation_Tooling_Roadmap.md`
   - خارطة الطريق الرسمية لتطوير أداة الفحص والتشغيل البصري/السلوكي نفسها، بما في ذلك إعادة الهيكلة التدريجية والاختبارات الرجعية.
 - `guides/UIAutomation_Adaptive_Capabilities_Roadmap.md`

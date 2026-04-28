@@ -67,7 +67,21 @@
 
 - [Core_Workflows.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Core_Workflows.md:1)
 
-### المرحلة B — قواعد الواجهة التشغيلية
+### المرحلة B — تعريف المعمارية العليا وبيوت الوظائف
+
+نحسم قبل أي تفصيل داخلي:
+
+- ما العائلات العليا للبرنامج؟
+- ما الذي يجب أن يبقى top-level؟
+- ما الذي يجب أن يصبح lens داخل family أكبر؟
+- ما البيت الرسمي لكل وظيفة؟
+
+المراجع هنا:
+
+- [Navigation_Architecture_Map.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Navigation_Architecture_Map.md:1)
+- [Canonical_Home_Matrix.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Canonical_Home_Matrix.md:1)
+
+### المرحلة C — قواعد الواجهة التشغيلية
 
 نثبت قواعد:
 
@@ -80,7 +94,7 @@
 
 - [UI_Operational_Rules.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UI_Operational_Rules.md:1)
 
-### المرحلة C — Surface Audit
+### المرحلة D — Surface Audit
 
 لكل surface نجيب عن 4 أسئلة:
 
@@ -94,6 +108,14 @@
 - [Surface_Audit_Matrix.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Surface_Audit_Matrix.md:1)
 
 ## ترتيب التنفيذ المعتمد
+
+### 0. `Navigation / Canonical Homes`
+
+لماذا أولًا؟
+
+- لأن السايدبار الحالية نفسها جزء من المشكلة
+- ولأن بعض الأسطح لا ينبغي أن تستمر كوجهات عليا مستقلة
+- ولأن أي audit داخلي قبل هذا الحسم سيبقى جزئيًا
 
 ### 1. `Requests`
 
