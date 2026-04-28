@@ -915,7 +915,7 @@
 ## آخر تحقق معروف
 
 - `dotnet build .\\my_work.sln` ناجح
-- `dotnet test .\\my_work.sln --no-build` ناجح: `54/54`
+- `dotnet test .\\my_work.sln --no-build` ناجح: `64/64`
 - baseline القبول الحالي محفوظ هنا:
   - [UIAcceptance/baselines/2026-04-26-stabilization](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-stabilization)
 - كما توجد جولة قبول ناجحة على بيانات مولدة أثقل هنا:
@@ -1242,6 +1242,15 @@
      - `BG-2026-0007 -> عرض جميع الطلبات` فتح `طلبات الضمان - BG-2026-0007`
      - `BG-2026-0007` لم يعد يعرض زر `عرض جميع المرفقات` عندما لا توجد مرفقات
      - `BG-2026-0049 -> عرض جميع المرفقات` فتح `مرفقات الضمان - BG-2026-0049`
+   - وأُغلقت الآن مراجعة أزرار الإنشاء داخل `Actions Footer`:
+     - إنشاء طلب من ملف الضمان صار يلتقط `WorkflowRequest.Id` الناتج
+     - وبعد نجاح الإنشاء يعيد تحديث الملف مع تركيز قسم `الطلبات` على الطلب الجديد
+     - أزرار إنشاء الطلبات التشغيلية لم تعد تظهر على ضمان حالته التشغيلية ليست `Active`
+     - أُضيف اختبار يمنع عودة ظهور أزرار الإنشاء على الضمانات `Expired`
+   - تحقق حي:
+     - `BG-2026-0007` لم يعد يعرض أزرار إنشاء طلبات تشغيلية لأنه `Expired`
+     - `BG-2026-0016 -> طلب إفراج` أنشأ الطلب من داخل الملف
+     - وبعد النجاح ظهر داخل الملف `طلب إفراج • الطلب المفتوح الآن`
    - وأُغلقت الآن مراجعة handoff من `HistoryDialog` إلى `Guarantee File`:
      - ظهر زر ثابت `ملف الضمان` داخل أفعال السجل السفلي
      - عند الوقوف على تبويب `الإصدارات` يفتح الملف على `المرفقات` إذا كان الإصدار يحمل مرفقات
@@ -1278,7 +1287,7 @@
 - `Recovered_Context_From_Stuck_Codex_Thread_2026-04-28.md` أصبح واضحًا أنه snapshot تاريخي لا يقود الأولوية الحالية.
 - `Navigation_Architecture_Map.md` و`UI_System_Map.md` صارا يقرآن السايدبار كبيوت حُسمت، لا كقائمة مسطحة ما زالت تنتظر القرار.
 - `Surface_Audit_Matrix.md` صار يحتوي ملاحظة قراءة حالية تمنع اعتبار توصيات `Requests` ووسط `Guarantee File` القديمة كأولوية مفتوحة من جديد.
-- `Product_Coverage_Matrix.md` صار يميّز `Dashboard / Notifications cross-entry` عن نضج `اليوم` الكامل، ويضع `Guarantee File structure` كـ WIP مركز.
+- `Product_Coverage_Matrix.md` صار يميّز `Dashboard / Notifications cross-entry` عن نضج `اليوم` الكامل، ويضع `Guarantee File structure` كفحص مركز عند الدلتا لا كـ WIP واسع.
 - `Next_Level_Development_Readiness.md` و`Preview2_Polish_Backlog.md` صارا موسومين كلحظات سابقة أو ذاكرة polish، لا كحالة clean/status راهنة.
 - أدلة المستخدم السريعة والنهائية صارت تستخدم `اليوم` و`الضمانات` بدل خلط `الرئيسية` و`المتابعات` كبيوت قديمة.
 
@@ -1286,4 +1295,4 @@
 
 - `git diff --check` ناجح.
 - `dotnet build .\my_work.sln` ناجح.
-- `dotnet test .\my_work.sln --no-build` ناجح: `54/54`.
+- `dotnet test .\my_work.sln --no-build` ناجح: `64/64`.

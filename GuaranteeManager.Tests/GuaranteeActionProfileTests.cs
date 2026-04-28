@@ -18,6 +18,22 @@ namespace GuaranteeManager.Tests
             Assert.Equal("طلب النقض متاح للضمانات المفرج عنها أو المسيّلة فقط.", profile.AnnulmentAction.Hint);
         }
 
+        [Fact]
+        public void Build_ForExpiredLifecycle_DisablesCreationActions()
+        {
+            Guarantee guarantee = CreateGuarantee(GuaranteeLifecycleStatus.Expired);
+
+            GuaranteeActionProfile profile = GuaranteeActionProfile.Build(guarantee, new List<WorkflowRequest>());
+
+            Assert.False(profile.ExtensionAction.IsEnabled);
+            Assert.False(profile.ReleaseAction.IsEnabled);
+            Assert.False(profile.ReductionAction.IsEnabled);
+            Assert.False(profile.LiquidationAction.IsEnabled);
+            Assert.False(profile.VerificationAction.IsEnabled);
+            Assert.False(profile.ReplacementAction.IsEnabled);
+            Assert.Contains("منتهية الصلاحية", profile.ReleaseAction.Hint);
+        }
+
         [Theory]
         [InlineData(GuaranteeLifecycleStatus.Released)]
         [InlineData(GuaranteeLifecycleStatus.Liquidated)]

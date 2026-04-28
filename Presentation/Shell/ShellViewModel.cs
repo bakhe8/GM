@@ -1479,10 +1479,21 @@ namespace GuaranteeManager
 
         private void RefreshAfterWorkflowChange(int rootIdToRestore)
         {
+            RefreshAfterWorkflowChange(rootIdToRestore, null);
+        }
+
+        private void RefreshAfterWorkflowChange(int rootIdToRestore, int? requestIdToFocus)
+        {
             Refresh();
             SelectedGuarantee = rootIdToRestore > 0
                 ? ResolveOrSurfaceGuaranteeRow(rootIdToRestore) ?? Guarantees.FirstOrDefault()
                 : Guarantees.FirstOrDefault();
+
+            if (requestIdToFocus.HasValue && SelectedGuarantee?.RootId == rootIdToRestore)
+            {
+                FocusGuaranteeSection(GuaranteeFileFocusArea.Requests, requestIdToFocus);
+            }
+
             WriteDiagnosticsState("workflow-change");
         }
 

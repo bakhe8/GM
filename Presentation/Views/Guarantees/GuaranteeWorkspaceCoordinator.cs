@@ -21,7 +21,7 @@ namespace GuaranteeManager
         private readonly IShellStatusService _shellStatus;
         private readonly IUiDiagnosticsService _diagnostics;
         private readonly Action _loadFilterOptions;
-        private readonly Action<int> _refreshAfterWorkflowChange;
+        private readonly Action<int, int?> _refreshAfterWorkflowChange;
 
         public GuaranteeWorkspaceCoordinator(
             IDatabaseService database,
@@ -31,7 +31,7 @@ namespace GuaranteeManager
             IOperationalInquiryService inquiry,
             IShellStatusService shellStatus,
             Action loadFilterOptions,
-            Action<int> refreshAfterWorkflowChange)
+            Action<int, int?> refreshAfterWorkflowChange)
         {
             _database = database;
             _workflow = workflow;
@@ -210,8 +210,8 @@ namespace GuaranteeManager
             string requestNotes = $"طلب تمديد من واجهة الضمانات. {ExtensionRequestFlowSupport.BuildReasonSummary(current)}";
             ExecuteAction("طلب تمديد", () =>
             {
-                _workflow.CreateExtensionRequest(current.Id, requestedDate, requestNotes, Environment.UserName);
-                return GuaranteeActionResult.Success($"تم إنشاء طلب تمديد للضمان {target.GuaranteeNo}.", target.RootId);
+                WorkflowRequest request = _workflow.CreateExtensionRequest(current.Id, requestedDate, requestNotes, Environment.UserName);
+                return GuaranteeActionResult.Success($"تم إنشاء طلب تمديد للضمان {target.GuaranteeNo}.", request.RootGuaranteeId, request.Id);
             });
         }
 
@@ -229,8 +229,8 @@ namespace GuaranteeManager
 
             ExecuteAction("طلب إفراج", () =>
             {
-                _workflow.CreateReleaseRequest(target.Id, "طلب إفراج من واجهة الضمانات", Environment.UserName);
-                return GuaranteeActionResult.Success($"تم إنشاء طلب إفراج للضمان {target.GuaranteeNo}.", target.RootId);
+                WorkflowRequest request = _workflow.CreateReleaseRequest(target.Id, "طلب إفراج من واجهة الضمانات", Environment.UserName);
+                return GuaranteeActionResult.Success($"تم إنشاء طلب إفراج للضمان {target.GuaranteeNo}.", request.RootGuaranteeId, request.Id);
             });
         }
 
@@ -254,8 +254,8 @@ namespace GuaranteeManager
 
             ExecuteAction("طلب تخفيض", () =>
             {
-                _workflow.CreateReductionRequest(target.Id, requestedAmount, "طلب تخفيض من واجهة الضمانات", Environment.UserName);
-                return GuaranteeActionResult.Success($"تم إنشاء طلب تخفيض للضمان {target.GuaranteeNo}.", target.RootId);
+                WorkflowRequest request = _workflow.CreateReductionRequest(target.Id, requestedAmount, "طلب تخفيض من واجهة الضمانات", Environment.UserName);
+                return GuaranteeActionResult.Success($"تم إنشاء طلب تخفيض للضمان {target.GuaranteeNo}.", request.RootGuaranteeId, request.Id);
             });
         }
 
@@ -282,8 +282,8 @@ namespace GuaranteeManager
 
             ExecuteAction("طلب تسييل", () =>
             {
-                _workflow.CreateLiquidationRequest(current.Id, normalizedNotes, Environment.UserName);
-                return GuaranteeActionResult.Success($"تم إنشاء طلب تسييل للضمان {target.GuaranteeNo}.", target.RootId);
+                WorkflowRequest request = _workflow.CreateLiquidationRequest(current.Id, normalizedNotes, Environment.UserName);
+                return GuaranteeActionResult.Success($"تم إنشاء طلب تسييل للضمان {target.GuaranteeNo}.", request.RootGuaranteeId, request.Id);
             });
         }
 
@@ -310,8 +310,8 @@ namespace GuaranteeManager
 
             ExecuteAction("طلب تحقق", () =>
             {
-                _workflow.CreateVerificationRequest(current.Id, normalizedNotes, Environment.UserName);
-                return GuaranteeActionResult.Success($"تم إنشاء طلب تحقق للضمان {target.GuaranteeNo}.", target.RootId);
+                WorkflowRequest request = _workflow.CreateVerificationRequest(current.Id, normalizedNotes, Environment.UserName);
+                return GuaranteeActionResult.Success($"تم إنشاء طلب تحقق للضمان {target.GuaranteeNo}.", request.RootGuaranteeId, request.Id);
             });
         }
 
@@ -335,7 +335,7 @@ namespace GuaranteeManager
 
             ExecuteAction("طلب استبدال", () =>
             {
-                _workflow.CreateReplacementRequest(
+                WorkflowRequest request = _workflow.CreateReplacementRequest(
                     current.Id,
                     input.ReplacementGuaranteeNo,
                     input.ReplacementSupplier,
@@ -348,7 +348,7 @@ namespace GuaranteeManager
                     input.ReplacementReferenceNumber,
                     input.Notes,
                     Environment.UserName);
-                return GuaranteeActionResult.Success($"تم إنشاء طلب استبدال للضمان {target.GuaranteeNo}.", target.RootId);
+                return GuaranteeActionResult.Success($"تم إنشاء طلب استبدال للضمان {target.GuaranteeNo}.", request.RootGuaranteeId, request.Id);
             });
         }
 
@@ -375,8 +375,8 @@ namespace GuaranteeManager
 
             ExecuteAction("طلب نقض", () =>
             {
-                _workflow.CreateAnnulmentRequest(current.Id, normalizedReason, Environment.UserName);
-                return GuaranteeActionResult.Success($"تم إنشاء طلب نقض للضمان {target.GuaranteeNo}.", target.RootId);
+                WorkflowRequest request = _workflow.CreateAnnulmentRequest(current.Id, normalizedReason, Environment.UserName);
+                return GuaranteeActionResult.Success($"تم إنشاء طلب نقض للضمان {target.GuaranteeNo}.", request.RootGuaranteeId, request.Id);
             });
         }
 
@@ -482,7 +482,7 @@ namespace GuaranteeManager
                 _workflow,
                 _database,
                 _excel,
-                _refreshAfterWorkflowChange,
+                rootId => _refreshAfterWorkflowChange(rootId, null),
                 initialRequestId,
                 $"requests:{rootId}",
                 $"طلبات الضمان - {target.GuaranteeNo}");
@@ -716,7 +716,7 @@ namespace GuaranteeManager
                 GuaranteeActionResult result = action();
                 if (result.ShouldRefresh)
                 {
-                    _refreshAfterWorkflowChange(result.RootIdToRestore);
+                    _refreshAfterWorkflowChange(result.RootIdToRestore, result.RequestIdToFocus);
                 }
 
                 if (!string.IsNullOrWhiteSpace(result.Message))
@@ -808,10 +808,10 @@ namespace GuaranteeManager
             }
         }
 
-        private readonly record struct GuaranteeActionResult(bool ShouldRefresh, int RootIdToRestore, string Message)
+        private readonly record struct GuaranteeActionResult(bool ShouldRefresh, int RootIdToRestore, int? RequestIdToFocus, string Message)
         {
-            public static GuaranteeActionResult Success(string message, int rootIdToRestore)
-                => new(true, rootIdToRestore, message);
+            public static GuaranteeActionResult Success(string message, int rootIdToRestore, int? requestIdToFocus = null)
+                => new(true, rootIdToRestore, requestIdToFocus, message);
         }
     }
 }

@@ -414,9 +414,11 @@ namespace GuaranteeManager
 
             bool hasPendingType(RequestType type) => requests.Any(request => request.Status == RequestStatus.Pending && request.Type == type);
             bool lifecycleClosed = guarantee.LifecycleStatus is GuaranteeLifecycleStatus.Released or GuaranteeLifecycleStatus.Liquidated or GuaranteeLifecycleStatus.Replaced or GuaranteeLifecycleStatus.Closed;
+            bool lifecycleActionBlocked = guarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active;
 
-            string closedLifecycleHint = guarantee.LifecycleStatus switch
+            string blockedLifecycleHint = guarantee.LifecycleStatus switch
             {
+                GuaranteeLifecycleStatus.Expired => "حالة الضمان التشغيلية منتهية الصلاحية، لذلك لا يمكن إنشاء طلبات تشغيلية جديدة عليه قبل معالجة حالته.",
                 GuaranteeLifecycleStatus.Released => "تم الإفراج عن هذا الضمان، لذلك لا تظهر عليه إجراءات متابعة إنشائية جديدة عادةً.",
                 GuaranteeLifecycleStatus.Liquidated => "هذا الضمان مُسيّل بالفعل، لذلك أغلب إجراءات التغيير الجديدة غير منطقية عليه.",
                 GuaranteeLifecycleStatus.Replaced => "هذا الضمان استُبدل بالفعل، لذلك إجراءات التعديل الإنشائي تنتقل غالبًا إلى الضمان البديل.",
@@ -447,16 +449,16 @@ namespace GuaranteeManager
                 : ActionEligibility.Enabled("التعديل متاح وسيُحفظ كسجل إصدار جديد مع الإبقاء على التاريخ الكامل.");
 
             ActionEligibility release = BuildLifecycleAction(
-                lifecycleClosed,
+                lifecycleActionBlocked,
                 hasPendingType(RequestType.Release),
-                closedLifecycleHint,
+                blockedLifecycleHint,
                 "يوجد طلب إفراج معلق بالفعل لهذا الضمان.",
                 "طلب الإفراج متاح عند اكتمال مستندات إنهاء الالتزام.");
 
             ActionEligibility extension = BuildLifecycleAction(
-                lifecycleClosed,
+                lifecycleActionBlocked,
                 hasPendingType(RequestType.Extension),
-                closedLifecycleHint,
+                blockedLifecycleHint,
                 "يوجد طلب تمديد معلق بالفعل لهذا الضمان.",
                 guarantee.IsExpired
                     ? "الضمان منتهٍ حاليًا، وطلب التمديد مناسب لإغلاق فجوة المتابعة."
@@ -465,32 +467,32 @@ namespace GuaranteeManager
                         : "طلب التمديد متاح لتمديد استباقي عند الحاجة.");
 
             ActionEligibility reduction = BuildLifecycleAction(
-                lifecycleClosed,
+                lifecycleActionBlocked,
                 hasPendingType(RequestType.Reduction),
-                closedLifecycleHint,
+                blockedLifecycleHint,
                 "يوجد طلب تخفيض معلق بالفعل لهذا الضمان.",
                 "طلب التخفيض متاح عند الحاجة لتعديل قيمة الضمان.");
 
             ActionEligibility liquidation = BuildLifecycleAction(
-                lifecycleClosed,
+                lifecycleActionBlocked,
                 hasPendingType(RequestType.Liquidation),
-                closedLifecycleHint,
+                blockedLifecycleHint,
                 "يوجد طلب تسييل معلق بالفعل لهذا الضمان.",
                 guarantee.IsExpired
                     ? "الضمان منتهٍ، وطلب التسييل متاح إذا كانت مبررات المطالبة مكتملة."
                     : "طلب التسييل متاح عند الحاجة لإثبات المطالبة وتنفيذ أثرها.");
 
             ActionEligibility verification = BuildLifecycleAction(
-                false,
+                lifecycleActionBlocked,
                 hasPendingType(RequestType.Verification),
-                string.Empty,
+                blockedLifecycleHint,
                 "يوجد طلب تحقق معلق بالفعل لهذا الضمان.",
                 "طلب التحقق متاح لمراجعة صحة المستندات أو إثبات الحالة.");
 
             ActionEligibility replacement = BuildLifecycleAction(
-                lifecycleClosed,
+                lifecycleActionBlocked,
                 hasPendingType(RequestType.Replacement),
-                closedLifecycleHint,
+                blockedLifecycleHint,
                 "يوجد طلب استبدال معلق بالفعل لهذا الضمان.",
                 "طلب الاستبدال متاح عند الحاجة لإصدار ضمان بديل.");
 
