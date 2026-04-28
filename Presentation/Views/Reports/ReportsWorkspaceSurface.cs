@@ -33,16 +33,20 @@ namespace GuaranteeManager
         private readonly TextBlock _detailOutput = BuildMutedText(11, FontWeights.Normal);
         private readonly Button _runButton = new();
         private readonly Button _openButton = new();
+        private readonly Button _openBanksLensButton = new();
+        private readonly Action<string?> _showBanks;
         private readonly Action? _closeRequested;
 
         public ReportsWorkspaceSurface(
             IReadOnlyList<WorkspaceReportCatalog.WorkspaceReportAction> actions,
             ReportsWorkspaceCoordinator coordinator,
+            Action<string?> showBanks,
             Action? closeRequested,
             string? initialSearchText = null)
         {
             _dataService = new ReportsWorkspaceDataService();
             _coordinator = coordinator;
+            _showBanks = showBanks;
             _allReports = _dataService.BuildItems(actions);
             _closeRequested = closeRequested;
             UiInstrumentation.Identify(this, "Reports.Workspace", "التقارير");
@@ -90,11 +94,20 @@ namespace GuaranteeManager
             _openButton.FontSize = 9.5;
             _openButton.Click += (_, _) => OpenLastReport();
             UiInstrumentation.Identify(_openButton, "Reports.Detail.OpenButton", "فتح التقرير");
+
+            _openBanksLensButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
+            _openBanksLensButton.Content = "عدسة البنوك";
+            _openBanksLensButton.FontSize = 9.5;
+            _openBanksLensButton.ToolTip = "يفتح العدسة التحليلية الانتقالية الخاصة بالبنوك.";
+            _openBanksLensButton.Click += (_, _) => _showBanks(_searchInput.Text);
+            UiInstrumentation.Identify(_openBanksLensButton, "Reports.Toolbar.OpenBanksLens", "عدسة البنوك");
         }
 
         private Grid BuildToolbar()
         {
             var toolbar = new Grid { FlowDirection = FlowDirection.LeftToRight };
+            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -118,18 +131,21 @@ namespace GuaranteeManager
             Grid.SetColumn(resetButton, 2);
             toolbar.Children.Add(resetButton);
 
+            Grid.SetColumn(_openBanksLensButton, 4);
+            toolbar.Children.Add(_openBanksLensButton);
+
             _categoryFilter.Style = WorkspaceSurfaceChrome.Style("FilterComboBox");
             _categoryFilter.Items.Add("كل التقارير");
             _categoryFilter.Items.Add("تقارير المحفظة");
             _categoryFilter.Items.Add("تقارير تشغيلية");
             _categoryFilter.SelectedIndex = 0;
             _categoryFilter.SelectionChanged += (_, _) => ApplyFilters();
-            Grid.SetColumn(_categoryFilter, 4);
+            Grid.SetColumn(_categoryFilter, 6);
             toolbar.Children.Add(_categoryFilter);
 
             _searchInput.TextChanged += (_, _) => ApplyFilters();
             var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث بعنوان التقرير أو وصفه أو مفتاحه...");
-            Grid.SetColumn(searchBox, 6);
+            Grid.SetColumn(searchBox, 8);
             toolbar.Children.Add(searchBox);
 
             return toolbar;

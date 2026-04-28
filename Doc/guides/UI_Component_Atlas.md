@@ -451,6 +451,7 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 - `Reports.Toolbar.Run`
 - `Reports.Toolbar.Reset`
+- `Reports.Toolbar.OpenBanksLens`
 - `Reports.Filter.Category`
 - `Reports.SearchBox`
 
@@ -492,6 +493,11 @@ Queue-first surface لتنفيذ الطلب الحالي.
 ### الدور الحالي
 
 عدسة تجميعية على الضمانات حسب البنك.
+
+### موضعها الحالي
+
+- لم تعد عنصرًا في السايدبار العليا
+- تُفتح الآن من داخل `التقارير` عبر زر toolbar ثانوي انتقالي
 
 ### المكونات الرئيسية
 

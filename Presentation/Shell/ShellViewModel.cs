@@ -1290,7 +1290,7 @@ namespace GuaranteeManager
 
             ActivateWorkspace(
                 ShellWorkspaceKeys.Reports,
-                _workspaceFactory.CreateReportsWorkspace(CloseActiveWorkspace, initialSearchText));
+                _workspaceFactory.CreateReportsWorkspace(ShowBanksWorkspace, CloseActiveWorkspace, initialSearchText));
         }
 
         private void ShowNotificationsWorkspace()

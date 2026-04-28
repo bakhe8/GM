@@ -107,11 +107,12 @@ namespace GuaranteeManager
             return new BanksWorkspaceSurface(guarantees, closeRequested, initialSearchText);
         }
 
-        public FrameworkElement CreateReportsWorkspace(Action closeRequested, string? initialSearchText = null)
+        public FrameworkElement CreateReportsWorkspace(Action<string?> showBanks, Action closeRequested, string? initialSearchText = null)
         {
             return new ReportsWorkspaceSurface(
                 WorkspaceReportCatalog.PortfolioActions.Concat(WorkspaceReportCatalog.OperationalActions).ToList(),
                 _reportsWorkspace,
+                showBanks,
                 closeRequested,
                 initialSearchText);
         }
