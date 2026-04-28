@@ -418,6 +418,8 @@
                                                         <Separator />
 
                                                         <MenuItem Header="إنشاء طلب"
+                                                                  ToolTip="إنشاء طلب تشغيلي جديد لهذا الضمان. العناصر المعطلة تعرض سبب المنع."
+                                                                  automation:AutomationProperties.HelpText="إنشاء طلب تشغيلي جديد لهذا الضمان. العناصر المعطلة تعرض سبب المنع."
                                                                   automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CreateRequest">
                                                             <MenuItem.Icon>
                                                                 <Viewbox Width="13" Height="13">
@@ -425,49 +427,57 @@
                                                                 </Viewbox>
                                                             </MenuItem.Icon>
 
-                                                            <MenuItem Header="تمديد"
+                                                            <MenuItem Header="طلب تمديد"
                                                                       IsEnabled="{Binding PlacementTarget.DataContext.ExtensionAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                       ToolTip="{Binding PlacementTarget.DataContext.ExtensionAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                       ToolTipService.ShowOnDisabled="True"
                                                                       Command="{Binding PlacementTarget.Tag.CreateExtensionRequestCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
-                                                            <MenuItem Header="إفراج"
-                                                                      IsEnabled="{Binding PlacementTarget.DataContext.ReleaseAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      ToolTip="{Binding PlacementTarget.DataContext.ReleaseAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      ToolTipService.ShowOnDisabled="True"
-                                                                      Command="{Binding PlacementTarget.Tag.CreateReleaseRequestCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
-                                                            <MenuItem Header="تخفيض"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CreateExtensionRequest" />
+                                                            <MenuItem Header="طلب تخفيض"
                                                                       IsEnabled="{Binding PlacementTarget.DataContext.ReductionAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                       ToolTip="{Binding PlacementTarget.DataContext.ReductionAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                       ToolTipService.ShowOnDisabled="True"
                                                                       Command="{Binding PlacementTarget.Tag.CreateReductionRequestCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
-                                                            <Separator />
-                                                            <MenuItem Header="تسييل"
-                                                                      IsEnabled="{Binding PlacementTarget.DataContext.LiquidationAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      ToolTip="{Binding PlacementTarget.DataContext.LiquidationAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      ToolTipService.ShowOnDisabled="True"
-                                                                      Command="{Binding PlacementTarget.Tag.CreateLiquidationRequestCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
-                                                            <MenuItem Header="تحقق"
-                                                                      IsEnabled="{Binding PlacementTarget.DataContext.VerificationAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      ToolTip="{Binding PlacementTarget.DataContext.VerificationAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      ToolTipService.ShowOnDisabled="True"
-                                                                      Command="{Binding PlacementTarget.Tag.CreateVerificationRequestCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
-                                                            <MenuItem Header="استبدال"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CreateReductionRequest" />
+                                                            <MenuItem Header="طلب استبدال"
                                                                       IsEnabled="{Binding PlacementTarget.DataContext.ReplacementAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                       ToolTip="{Binding PlacementTarget.DataContext.ReplacementAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                       ToolTipService.ShowOnDisabled="True"
                                                                       Command="{Binding PlacementTarget.Tag.CreateReplacementRequestCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
-                                                            <MenuItem Header="نقض"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CreateReplacementRequest" />
+                                                            <Separator />
+                                                            <MenuItem Header="طلب إفراج"
+                                                                      IsEnabled="{Binding PlacementTarget.DataContext.ReleaseAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      ToolTip="{Binding PlacementTarget.DataContext.ReleaseAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      ToolTipService.ShowOnDisabled="True"
+                                                                      Command="{Binding PlacementTarget.Tag.CreateReleaseRequestCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CreateReleaseRequest" />
+                                                            <MenuItem Header="طلب تسييل"
+                                                                      IsEnabled="{Binding PlacementTarget.DataContext.LiquidationAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      ToolTip="{Binding PlacementTarget.DataContext.LiquidationAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      ToolTipService.ShowOnDisabled="True"
+                                                                      Command="{Binding PlacementTarget.Tag.CreateLiquidationRequestCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CreateLiquidationRequest" />
+                                                            <MenuItem Header="طلب نقض"
                                                                       IsEnabled="{Binding PlacementTarget.DataContext.AnnulmentAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                       ToolTip="{Binding PlacementTarget.DataContext.AnnulmentAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                       ToolTipService.ShowOnDisabled="True"
                                                                       Command="{Binding PlacementTarget.Tag.CreateAnnulmentRequestCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CreateAnnulmentRequest" />
+                                                            <Separator />
+                                                            <MenuItem Header="طلب تحقق"
+                                                                      IsEnabled="{Binding PlacementTarget.DataContext.VerificationAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      ToolTip="{Binding PlacementTarget.DataContext.VerificationAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      ToolTipService.ShowOnDisabled="True"
+                                                                      Command="{Binding PlacementTarget.Tag.CreateVerificationRequestCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CreateVerificationRequest" />
                                                         </MenuItem>
 
                                                         <Separator />
