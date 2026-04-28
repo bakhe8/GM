@@ -40,9 +40,9 @@ namespace GuaranteeManager
             Action resumeLastFile,
             Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
             Action showGuarantees,
-            Action showRequests,
-            Action showNotifications,
-            Action showReports,
+            Action<string?> showRequests,
+            Action<string?> showNotifications,
+            Action<string?> showReports,
             string? initialSearchText = null)
         {
             return new DashboardWorkspaceSurface(

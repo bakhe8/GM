@@ -22,9 +22,9 @@ namespace GuaranteeManager
         private readonly Action _resumeLastFile;
         private readonly Action<int, GuaranteeFileFocusArea, int?> _openGuaranteeContext;
         private readonly Action _showGuarantees;
-        private readonly Action _showRequests;
-        private readonly Action _showNotifications;
-        private readonly Action _showReports;
+        private readonly Action<string?> _showRequests;
+        private readonly Action<string?> _showNotifications;
+        private readonly Action<string?> _showReports;
         private readonly Action? _closeRequested;
 
         private readonly ListBox _list = new();
@@ -68,9 +68,9 @@ namespace GuaranteeManager
             Action resumeLastFile,
             Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
             Action showGuarantees,
-            Action showRequests,
-            Action showNotifications,
-            Action showReports,
+            Action<string?> showRequests,
+            Action<string?> showNotifications,
+            Action<string?> showReports,
             Action? closeRequested,
             string? initialSearchText = null)
         {

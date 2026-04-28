@@ -27,25 +27,27 @@ namespace GuaranteeManager
         public void OpenSelectedWorkspace(
             DashboardWorkItem? item,
             Action showGuarantees,
-            Action showRequests,
-            Action showNotifications,
-            Action showReports)
+            Action<string?> showRequests,
+            Action<string?> showNotifications,
+            Action<string?> showReports)
         {
             if (item == null)
             {
                 return;
             }
 
+            string? initialSearchText = ResolveWorkspaceContext(item);
+
             switch (item.Target)
             {
                 case DashboardTarget.Requests:
-                    showRequests();
+                    showRequests(initialSearchText);
                     break;
                 case DashboardTarget.Notifications:
-                    showNotifications();
+                    showNotifications(initialSearchText);
                     break;
                 case DashboardTarget.Reports:
-                    showReports();
+                    showReports(initialSearchText);
                     break;
                 default:
                     showGuarantees();
@@ -70,6 +72,21 @@ namespace GuaranteeManager
             }
 
             showGuarantees();
+        }
+
+        private static string? ResolveWorkspaceContext(DashboardWorkItem item)
+        {
+            if (!string.IsNullOrWhiteSpace(item.Reference))
+            {
+                return item.Reference.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.Title))
+            {
+                return item.Title.Trim();
+            }
+
+            return null;
         }
     }
 }
