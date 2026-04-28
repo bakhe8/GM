@@ -95,9 +95,9 @@ namespace GuaranteeManager
             var backupMenuButton = CreateToolbarMenuButton("النسخ الاحتياطي", "Settings.Toolbar.BackupMenu");
             backupMenuButton.ContextMenu = BuildToolbarMenu(
                 new MenuItemSpec("إنشاء نسخة احتياطية", (_, _) => _coordinator.CreateManualBackup()),
-                new MenuItemSpec("استرجاع نسخة احتياطية", (_, _) => _coordinator.RestoreManualBackup(ApplyFilters)),
+                new MenuItemSpec("استرجاع نسخة احتياطية", (_, _) => _coordinator.RestoreManualBackup(RefreshAfterDataReset)),
                 new MenuItemSpec("إنشاء حزمة محمولة", (_, _) => _coordinator.CreatePortableBackup()),
-                new MenuItemSpec("استرجاع حزمة محمولة", (_, _) => _coordinator.RestorePortableBackup(ApplyFilters)));
+                new MenuItemSpec("استرجاع حزمة محمولة", (_, _) => _coordinator.RestorePortableBackup(RefreshAfterDataReset)));
             Grid.SetColumn(backupMenuButton, 2);
             toolbar.Children.Add(backupMenuButton);
 

@@ -108,7 +108,7 @@ namespace GuaranteeManager
             }
         }
 
-        public void RestoreManualBackup(Action refresh)
+        public void RestoreManualBackup(Action refreshAfterDataChange)
         {
             OpenFileDialog dialog = new()
             {
@@ -135,7 +135,7 @@ namespace GuaranteeManager
             try
             {
                 _backupService.RestoreManualBackup(dialog.FileName);
-                refresh();
+                refreshAfterDataChange();
                 string safety = string.IsNullOrWhiteSpace(_backupService.LastPreRestoreSafetyBackupPath)
                     ? "لم يلزم إنشاء نسخة أمان."
                     : $"نسخة الأمان:\n{_backupService.LastPreRestoreSafetyBackupPath}";
@@ -197,7 +197,7 @@ namespace GuaranteeManager
             }
         }
 
-        public void RestorePortableBackup(Action refresh)
+        public void RestorePortableBackup(Action refreshAfterDataChange)
         {
             OpenFileDialog dialog = new()
             {
@@ -236,7 +236,7 @@ namespace GuaranteeManager
             try
             {
                 _backupService.RestorePortableBackupPackage(dialog.FileName, passphrase);
-                refresh();
+                refreshAfterDataChange();
                 string safety = string.IsNullOrWhiteSpace(_backupService.LastPortableRestoreSafetyPackagePath)
                     ? "لم يلزم إنشاء حزمة أمان."
                     : $"حزمة الأمان:\n{_backupService.LastPortableRestoreSafetyPackagePath}";
