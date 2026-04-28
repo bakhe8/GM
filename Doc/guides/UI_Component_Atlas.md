@@ -396,24 +396,31 @@ Queue-first surface لتنفيذ الطلب الحالي.
 #### Actions Section
 
 - `GuaranteeDetailPanel.Section.Actions`
-- الأفعال:
-  - `RegisterResponse`
-  - `Release`
-  - `Extension`
-  - `Edit`
-  - `Requests`
-  - `History`
-  - `Attachments`
-  - `OpenFile`
-  - `Reduction`
-  - `Liquidation`
-  - `Verification`
-  - `Replacement`
-  - `Annulment`
+- الطبقات:
+  - `نفّذ الآن`
+    - `RegisterResponse`
+    - `Extension`
+    - `Release`
+    - `Edit`
+  - `راجع وافتح`
+    - `Requests`
+    - `History`
+    - `Attachments`
+    - `OpenFile`
+  - `أفعال متقدمة`
+    - `Reduction`
+    - `Liquidation`
+    - `Verification`
+    - `Replacement`
+    - `Annulment`
 
 ### القراءة المعمارية
 
 - هذا هو **البيت الأقوى للقرار**
+- ولم تعد الأفعال فيه تقرأ كشبكة مسطحة واحدة؛ صارت هرمية:
+  - نفّذ
+  - ثم راجع
+  - ثم استخدم الأفعال الأثقل عند الحاجة
 - أي نقل لأفعال منه يجب أن يكون deliberate جدًا
 
 ---
