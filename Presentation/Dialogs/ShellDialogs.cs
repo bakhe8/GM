@@ -3149,7 +3149,10 @@ namespace GuaranteeManager
         {
             if (SelectedVersion is { AttachmentCount: > 0 } version)
             {
-                AttachmentPickerDialog.ShowFor(version.Attachments, $"history-attachments:{version.RootId}:{version.VersionNumber}");
+                AttachmentPickerDialog.ShowFor(
+                    version.Attachments,
+                    $"history-attachments:{version.RootId}:{version.VersionNumber}",
+                    $"مرفقات {version.GuaranteeNo} - {version.VersionLabel}");
             }
         }
 
@@ -4114,7 +4117,10 @@ namespace GuaranteeManager
             Guarantee? guarantee = ResolveFocusGuarantee();
             if (guarantee?.Attachments?.Count > 0)
             {
-                AttachmentPickerDialog.ShowFor(guarantee.Attachments);
+                AttachmentPickerDialog.ShowFor(
+                    guarantee.Attachments,
+                    $"inquiry-attachments:{guarantee.RootId ?? guarantee.Id}",
+                    $"مرفقات الضمان - {guarantee.GuaranteeNo}");
             }
         }
 
@@ -4252,9 +4258,9 @@ namespace GuaranteeManager
     {
         private readonly ListBox _list = new();
 
-        private AttachmentPickerDialog(IReadOnlyList<AttachmentRecord> attachments)
+        private AttachmentPickerDialog(IReadOnlyList<AttachmentRecord> attachments, string title)
         {
-            Title = "المرفقات";
+            Title = title;
             UiInstrumentation.Identify(this, "Dialog.AttachmentPicker", Title);
             UiInstrumentation.Identify(_list, "Dialog.AttachmentPicker.List", "قائمة المرفقات");
             Width = 460;
@@ -4285,12 +4291,13 @@ namespace GuaranteeManager
             Content = root;
         }
 
-        public static void ShowFor(IReadOnlyList<AttachmentRecord> attachments, string windowKey = "attachments")
+        public static void ShowFor(IReadOnlyList<AttachmentRecord> attachments, string windowKey = "attachments", string? title = null)
         {
+            string resolvedTitle = string.IsNullOrWhiteSpace(title) ? "المرفقات" : title;
             App.CurrentApp.GetRequiredService<SecondaryWindowManager>().ShowDialog(
                 windowKey,
-                () => new AttachmentPickerDialog(attachments),
-                "المرفقات",
+                () => new AttachmentPickerDialog(attachments, resolvedTitle),
+                resolvedTitle,
                 "نافذة المرفقات مفتوحة بالفعل.");
         }
 

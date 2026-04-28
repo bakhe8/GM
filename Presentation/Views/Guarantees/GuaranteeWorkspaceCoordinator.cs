@@ -457,7 +457,10 @@ namespace GuaranteeManager
                 return;
             }
 
-            AttachmentPickerDialog.ShowFor(target.Attachments, $"attachments:{target.RootId}");
+            AttachmentPickerDialog.ShowFor(
+                target.Attachments,
+                $"attachments:{target.RootId}",
+                $"مرفقات الضمان - {target.GuaranteeNo}");
         }
 
         public void ShowRequests(GuaranteeRow target, bool requireExistingRequests, int? initialRequestId = null)
@@ -480,7 +483,9 @@ namespace GuaranteeManager
                 _database,
                 _excel,
                 _refreshAfterWorkflowChange,
-                initialRequestId);
+                initialRequestId,
+                $"requests:{rootId}",
+                $"طلبات الضمان - {target.GuaranteeNo}");
         }
 
         public void CopyGuaranteeNo(GuaranteeRow target)

@@ -995,6 +995,10 @@
                                     <Button Style="{StaticResource PlainLinkButton}"
                                             Command="{Binding ShowAllAttachmentsCommand}"
                                             Margin="0,8,0,0"
+                                            Visibility="{Binding SelectedGuarantee.OpenAttachmentsAction.IsEnabled, Converter={StaticResource TrueToVisibleCollapsedConverter}}"
+                                            IsEnabled="{Binding SelectedGuarantee.OpenAttachmentsAction.IsEnabled}"
+                                            ToolTip="{Binding SelectedGuarantee.OpenAttachmentsAction.Hint}"
+                                            ToolTipService.ShowOnDisabled="True"
                                             automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Attachments.ShowAll"
                                             automation:AutomationProperties.Name="عرض جميع المرفقات">
                                         <TextBlock Text="عرض جميع المرفقات" FontSize="10.5" Foreground="{StaticResource Brush.Blue}" />

@@ -1100,9 +1100,11 @@ namespace GuaranteeManager
             IWorkflowService workflow,
             IExcelService excel,
             Action<int>? onChanged,
-            int? initialRequestId)
+            int? initialRequestId,
+            string title)
         {
-            Title = "الطلبات";
+            Title = title;
+            UiInstrumentation.Identify(this, "Dialog.RequestsWorkspace", Title);
             Width = 980;
             Height = 640;
             MinWidth = 860;
@@ -1120,12 +1122,15 @@ namespace GuaranteeManager
             IDatabaseService database,
             IExcelService excel,
             Action<int>? onChanged = null,
-            int? initialRequestId = null)
+            int? initialRequestId = null,
+            string? windowKey = null,
+            string? title = null)
         {
+            string resolvedTitle = string.IsNullOrWhiteSpace(title) ? "الطلبات" : title;
             App.CurrentApp.GetRequiredService<SecondaryWindowManager>().ShowDialog(
-                "requests-workspace-dialog",
-                () => new RequestsWorkspaceDialog(loadRequests, database, workflow, excel, onChanged, initialRequestId),
-                "الطلبات",
+                string.IsNullOrWhiteSpace(windowKey) ? "requests-workspace-dialog" : windowKey,
+                () => new RequestsWorkspaceDialog(loadRequests, database, workflow, excel, onChanged, initialRequestId, resolvedTitle),
+                resolvedTitle,
                 "نافذة الطلبات مفتوحة بالفعل.");
         }
     }
