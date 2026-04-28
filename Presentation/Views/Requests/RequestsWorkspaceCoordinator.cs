@@ -132,35 +132,6 @@ namespace GuaranteeManager
             HistoryDialog.ShowFor(row, history, requests, item.Request.Id, preferRequestsTab: true);
         }
 
-        public void OpenCurrentGuarantee(RequestListDisplayItem? selectedItem)
-        {
-            if (selectedItem == null)
-            {
-                MessageBox.Show("اختر طلبًا أولًا.", "الطلبات", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            WorkflowRequestListItem item = selectedItem.Item;
-            Guarantee? guarantee = _database.GetCurrentGuaranteeByRootId(item.RootGuaranteeId);
-            if (guarantee == null)
-            {
-                MessageBox.Show("تعذر تحميل الضمان المرتبط بهذا الطلب.", "الطلبات", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            if (Application.Current.MainWindow?.DataContext is not ShellViewModel shell)
-            {
-                MessageBox.Show("تعذر الوصول إلى واجهة الملف الرئيسية لهذا الضمان حاليًا.", "الطلبات", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            List<WorkflowRequest> requests = _database.GetWorkflowRequestsByRootId(item.RootGuaranteeId);
-            GuaranteeRow row = GuaranteeRow.FromGuarantee(guarantee, requests);
-            shell.SelectGuaranteeCommand.Execute(row);
-            shell.QueueGuaranteeFileOpenFocus(GuaranteeFileFocusArea.Requests, item.Request.Id, row.RootId);
-            shell.OpenGuaranteeFileCommand.Execute(row);
-        }
-
         public void ExportPendingSameType(RequestListDisplayItem? selectedItem, IReadOnlyList<WorkflowRequestListItem> allRequests)
         {
             if (selectedItem == null)

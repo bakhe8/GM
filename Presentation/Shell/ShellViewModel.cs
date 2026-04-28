@@ -865,10 +865,7 @@ namespace GuaranteeManager
         {
             ExecuteGuaranteeAction(
                 SelectedGuarantee,
-                target => _guaranteeWorkspace.ShowRequests(
-                    target,
-                    requireExistingRequests: false,
-                    _focusedGuaranteeRequestId ?? ResolveContextRequestId(target)));
+                target => ShowRequestsForGuarantee(target, _focusedGuaranteeRequestId ?? ResolveContextRequestId(target)));
         }
 
         private void OpenRequestPreview(GuaranteeRequestPreviewItem? item)
@@ -880,7 +877,7 @@ namespace GuaranteeManager
 
             ExecuteGuaranteeAction(
                 SelectedGuarantee,
-                target => _guaranteeWorkspace.ShowRequests(target, requireExistingRequests: false, item.Request.Id),
+                target => ShowRequestsForGuarantee(target, item.Request.Id),
                 syncSelection: true);
         }
 
@@ -939,11 +936,23 @@ namespace GuaranteeManager
         {
             ExecuteGuaranteeAction(
                 row,
-                target => _guaranteeWorkspace.ShowRequests(
-                    target,
-                    requireExistingRequests: true,
-                    ResolveContextRequestId(target)),
+                target => ShowRequestsForGuarantee(target, ResolveContextRequestId(target)),
                 syncSelection: true);
+        }
+
+        private void ShowRequestsForGuarantee(GuaranteeRow target, int? initialRequestId = null)
+        {
+            ShowRequestsWorkspace(target.GuaranteeNo, initialRequestId);
+            _diagnostics.RecordEvent(
+                "guarantees.action",
+                "show-guarantee-requests",
+                new
+                {
+                    target.RootId,
+                    target.GuaranteeNo,
+                    initialRequestId
+                });
+            WriteDiagnosticsState("guarantee-requests");
         }
 
         private void CopyGuaranteeNo(GuaranteeRow? row)

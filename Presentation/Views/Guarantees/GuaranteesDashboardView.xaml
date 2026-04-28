@@ -570,20 +570,19 @@
                                                     Padding="7,0"
                                                     FontSize="9.5"
                                                     Margin="0,0,4,0"
-                                                    IsEnabled="{Binding OpenFileAction.IsEnabled}"
-                                                    ToolTip="{Binding OpenFileAction.Hint}"
+                                                    ToolTip="يعرض طلبات هذا الضمان فقط في شاشة الطلبات"
                                                     ToolTipService.ShowOnDisabled="True"
-                                                    Command="{Binding DataContext.OpenGuaranteeFileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    Command="{Binding DataContext.ShowRowRequestsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"
-                                                    automation:AutomationProperties.AutomationId="{Binding RowOpenFileAutomationId}"
-                                                    automation:AutomationProperties.Name="{Binding RowOpenFileAutomationName}"
-                                                    automation:AutomationProperties.HelpText="{Binding OpenFileAction.Hint}"
+                                                    automation:AutomationProperties.AutomationId="{Binding RowRequestsAutomationId}"
+                                                    automation:AutomationProperties.Name="{Binding RowRequestsAutomationName}"
+                                                    automation:AutomationProperties.HelpText="يعرض طلبات هذا الضمان فقط في شاشة الطلبات."
                                                     automation:AutomationProperties.ItemStatus="{Binding GuaranteeNo}">
                                                 <StackPanel Orientation="Horizontal">
                                                     <Viewbox Width="10" Height="10" Margin="0,0,3,0" VerticalAlignment="Center">
-                                                        <Path Data="{StaticResource Icon.View}" Stroke="White" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                        <Path Data="{StaticResource Icon.Requests}" Stroke="White" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                                     </Viewbox>
-                                                    <TextBlock Text="فتح الملف" />
+                                                    <TextBlock Text="الطلبات" />
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>

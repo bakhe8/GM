@@ -106,10 +106,10 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(_queueToolbarButton, "Requests.Toolbar.PrimaryQueueAction", "الخطوة التالية");
 
             _openGuaranteeButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _openGuaranteeButton.Content = "فتح ملف الضمان";
+            _openGuaranteeButton.Content = "طلبات الضمان";
             _openGuaranteeButton.FontSize = 9.5;
-            _openGuaranteeButton.Click += (_, _) => OpenCurrentGuarantee();
-            UiInstrumentation.Identify(_openGuaranteeButton, "Requests.Detail.OpenGuaranteeButton", "فتح الضمان");
+            _openGuaranteeButton.Click += (_, _) => ShowSelectedGuaranteeRequests();
+            UiInstrumentation.Identify(_openGuaranteeButton, "Requests.Detail.OpenGuaranteeButton", "طلبات الضمان");
 
             _primaryActionButton.Style = WorkspaceSurfaceChrome.Style("PrimaryButton");
             _primaryActionButton.Content = "الإجراء التالي";
@@ -716,7 +716,7 @@ namespace GuaranteeManager
             menu.Items.Add(BuildMenuItem("عرض التفاصيل", "يحدد هذا الطلب ويعرض تفاصيله في اللوحة اليمنى.", (_, _) => SelectItem(item)));
             menu.Items.Add(new Separator());
             menu.Items.Add(BuildMenuItem("سجل الضمان", "يفتح سجل الإصدارات والطلبات للضمان المرتبط بهذا الطلب.", (_, _) => _coordinator.OpenHistory(item)));
-            menu.Items.Add(BuildMenuItem("فتح الضمان الحالي", "يفتح ملف الضمان الحالي المرتبط بهذا الطلب مع التركيز على قسم الطلبات.", (_, _) => _coordinator.OpenCurrentGuarantee(item)));
+            menu.Items.Add(BuildMenuItem("طلبات هذا الضمان", "يعرض الطلبات المرتبطة بهذا الضمان فقط داخل شاشة الطلبات.", (_, _) => ShowGuaranteeRequestsFor(item)));
             menu.Items.Add(BuildMenuItem(
                 "خطاب الطلب",
                 item.CanOpenLetter ? "يفتح خطاب الطلب الخارجي لهذا السجل." : "لا يوجد خطاب طلب محفوظ لهذا السجل.",
@@ -953,6 +953,11 @@ namespace GuaranteeManager
             _detailNotes.Text = state.Notes;
             _detailResponse.Text = state.Response;
             _openGuaranteeButton.IsEnabled = state.CanOpenGuarantee;
+            _openGuaranteeButton.ToolTip = state.CanOpenGuarantee
+                ? "يعرض الطلبات المرتبطة بهذا الضمان فقط داخل شاشة الطلبات."
+                : "اختر طلبًا أولًا لفلترة الطلبات حسب الضمان.";
+            AutomationProperties.SetName(_openGuaranteeButton, "طلبات الضمان");
+            AutomationProperties.SetHelpText(_openGuaranteeButton, "يعرض الطلبات المرتبطة بهذا الضمان فقط داخل شاشة الطلبات.");
             _letterButton.IsEnabled = state.CanOpenLetter;
             _primaryActionButton.IsEnabled = state.CanRunPrimaryAction;
             _primaryActionButton.Content = state.PrimaryActionLabel;
@@ -980,9 +985,21 @@ namespace GuaranteeManager
             _coordinator.OpenLetter(SelectedItem);
         }
 
-        private void OpenCurrentGuarantee()
+        private void ShowSelectedGuaranteeRequests()
         {
-            _coordinator.OpenCurrentGuarantee(SelectedItem);
+            ShowGuaranteeRequestsFor(SelectedItem);
+        }
+
+        private void ShowGuaranteeRequestsFor(RequestListDisplayItem? item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            _statusFilter.SelectedIndex = 0;
+            _searchInput.Text = item.GuaranteeNo;
+            ApplyFilters(item.Item.Request.Id);
         }
 
         private void UseResponseAction()

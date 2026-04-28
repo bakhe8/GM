@@ -78,6 +78,8 @@ namespace GuaranteeManager
         public string RowHistoryAutomationName => $"تاريخ | {GuaranteeNo}";
         public string RowOpenFileAutomationId => BuildRowActionAutomationId("OpenFile");
         public string RowOpenFileAutomationName => $"فتح الملف | {GuaranteeNo}";
+        public string RowRequestsAutomationId => BuildRowActionAutomationId("Requests");
+        public string RowRequestsAutomationName => $"الطلبات | {GuaranteeNo}";
         public string Beneficiary { get; }
         public string Bank { get; }
         public ImageSource BankLogo => GetBankLogo(Bank);
