@@ -39,6 +39,12 @@
 2. **Real-data validation**
 3. **Performance and usability polish**
 
+ثم أُغلقت الآن بوابة جاهزية الانتقال، وبدأت مرحلة جديدة أوضح:
+
+1. **Workflow-First UI Recovery**
+2. **إعادة تنظيم الواجهات حول المهام لا الشاشات**
+3. **تقليل التكرار واستعادة المسار الرسمي لكل وظيفة**
+
 ومع اكتمال طبقات الأداة الحالية، صار التحول المطلوب الآن أوضح:
 
 - التطوير الرئيسي ينتقل إلى **البرنامج الأصلي**
@@ -52,6 +58,12 @@
   - مع build/tests/regressions ناجحة على baseline الحالية
   - والمرجع الرسمي لهذا الحكم هنا:
   - [guides/Next_Level_Development_Readiness.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Next_Level_Development_Readiness.md:1)
+- والمرجع الرسمي للمبادرة التالية هنا:
+  - [guides/Workflow_First_UI_Recovery_Plan.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Workflow_First_UI_Recovery_Plan.md:1)
+- ومراجعها التنفيذية هنا:
+  - [guides/Core_Workflows.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Core_Workflows.md:1)
+  - [guides/UI_Operational_Rules.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/UI_Operational_Rules.md:1)
+  - [guides/Surface_Audit_Matrix.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Surface_Audit_Matrix.md:1)
 - وبدأت الآن أول جولة تنفيذ فعلية من هذا الانتقال على `Settings`:
   - أُغلقت فجوة صمت صغيرة في `نسخ المسار` و`فتح المسار` عبر الشريط السفلي
   - كما صارت حالة النجاح الهادئ نفسها قابلة للقراءة من الأداة عبر `Shell.Status.Primary`
