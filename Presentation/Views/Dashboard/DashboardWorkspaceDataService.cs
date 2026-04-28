@@ -36,16 +36,24 @@ namespace GuaranteeManager
             IReadOnlyList<WorkflowRequestListItem> pendingRequests)
         {
             var items = new List<DashboardWorkItem>();
+            Dictionary<int, WorkflowRequestListItem> latestPendingByRoot = pendingRequests
+                .GroupBy(item => item.RootGuaranteeId)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group
+                        .OrderByDescending(item => item.Request.RequestDate)
+                        .ThenByDescending(item => item.Request.SequenceNumber)
+                        .First());
 
             items.AddRange(pendingRequests.Select(BuildPendingRequestItem));
             items.AddRange(guarantees
                 .Where(item => item.NeedsExpiryFollowUp)
                 .OrderBy(item => item.ExpiryDate)
-                .Select(BuildExpiredFollowUpItem));
+                .Select(item => BuildExpiredFollowUpItem(item, ResolvePending(latestPendingByRoot, item))));
             items.AddRange(guarantees
                 .Where(item => item.IsExpiringSoon)
                 .OrderBy(item => item.ExpiryDate)
-                .Select(BuildExpiringSoonItem));
+                .Select(item => BuildExpiringSoonItem(item, ResolvePending(latestPendingByRoot, item))));
 
             return items;
         }
@@ -239,19 +247,41 @@ namespace GuaranteeManager
                 WorkspaceSurfaceChrome.BrushFrom("#2563EB"));
         }
 
-        private static DashboardWorkItem BuildExpiredFollowUpItem(Guarantee item)
+        private static WorkflowRequestListItem? ResolvePending(
+            IReadOnlyDictionary<int, WorkflowRequestListItem> latestPendingByRoot,
+            Guarantee guarantee)
+        {
+            int rootId = guarantee.RootId ?? guarantee.Id;
+            return latestPendingByRoot.TryGetValue(rootId, out WorkflowRequestListItem? pending)
+                ? pending
+                : null;
+        }
+
+        private static DashboardWorkItem BuildExpiredFollowUpItem(Guarantee item, WorkflowRequestListItem? pendingRequest)
         {
             int daysLate = Math.Abs((item.ExpiryDate.Date - DateTime.Today).Days);
             (string label, Tone tone, int rank) = daysLate >= 30
                 ? ("حرج", Tone.Danger, 0)
                 : ("عاجل", Tone.Warning, 1);
+            bool hasPendingRequest = pendingRequest != null;
+            int? requestId = pendingRequest?.Request.Id;
+            GuaranteeFileFocusArea focusArea = hasPendingRequest
+                ? GuaranteeFileFocusArea.Requests
+                : GuaranteeFileFocusArea.Actions;
+            string primaryAction = hasPendingRequest ? "راجع الطلب" : "راجع الملف";
+            string nextAction = hasPendingRequest
+                ? $"افتح {pendingRequest!.Request.TypeLabel} المعلق وسجل رد البنك عند وصوله"
+                : "افتح الملف وحدد هل يحتاج تمديدًا أو إفراجًا أو إقفالًا تشغيليًا";
+            string note = hasPendingRequest
+                ? $"ظهر اليوم لأن تاريخ الانتهاء مضى ويوجد {pendingRequest!.Request.TypeLabel} معلق منذ {pendingRequest.Request.RequestDate:yyyy/MM/dd}. ابدأ من الطلب المرتبط قبل إنشاء إجراء جديد."
+                : $"ظهر اليوم لأن تاريخ الانتهاء مضى وما زالت الحالة التشغيلية {item.LifecycleStatusLabel}. المتابعة هنا تمنع بقاء ضمان منتهي بلا قرار.";
 
             return new DashboardWorkItem(
                 DashboardScope.ExpiredFollowUp,
                 DashboardTarget.Today,
                 item.RootId ?? item.Id,
-                null,
-                GuaranteeFileFocusArea.Actions,
+                requestId,
+                focusArea,
                 "منتهية تحتاج متابعة",
                 label,
                 rank,
@@ -266,18 +296,18 @@ namespace GuaranteeManager
                 item.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
                 $"متأخر {daysLate.ToString("N0", CultureInfo.InvariantCulture)} يوماً",
                 item.GuaranteeType,
-                "راجع الملف",
+                primaryAction,
                 "متابعات الانتهاء",
                 "ركّز المتابعة",
-                "افتح الملف وحدد هل يحتاج تمديدًا أو إفراجًا أو إقفالًا تشغيليًا",
-                $"ظهر اليوم لأن تاريخ الانتهاء مضى وما زالت الحالة التشغيلية {item.LifecycleStatusLabel}. المتابعة هنا تمنع بقاء ضمان منتهي بلا قرار.",
+                nextAction,
+                note,
                 TonePalette.Foreground(tone),
                 TonePalette.Background(tone),
                 TonePalette.Border(tone),
                 WorkspaceSurfaceChrome.BrushFrom("#EF4444"));
         }
 
-        private static DashboardWorkItem BuildExpiringSoonItem(Guarantee item)
+        private static DashboardWorkItem BuildExpiringSoonItem(Guarantee item, WorkflowRequestListItem? pendingRequest)
         {
             int daysLeft = Math.Max(0, (item.ExpiryDate.Date - DateTime.Today).Days);
             (string label, Tone tone, int rank) = daysLeft switch
@@ -286,13 +316,25 @@ namespace GuaranteeManager
                 <= 10 => ("مرتفع", Tone.Warning, 2),
                 _ => ("متابعة", Tone.Info, 3)
             };
+            bool hasPendingRequest = pendingRequest != null;
+            int? requestId = pendingRequest?.Request.Id;
+            GuaranteeFileFocusArea focusArea = hasPendingRequest
+                ? GuaranteeFileFocusArea.Requests
+                : GuaranteeFileFocusArea.Actions;
+            string primaryAction = hasPendingRequest ? "راجع الطلب" : "راجع التمديد";
+            string nextAction = hasPendingRequest
+                ? $"راجع {pendingRequest!.Request.TypeLabel} المعلق قبل إنشاء متابعة جديدة"
+                : "افتح الملف وراجع قرار التمديد قبل الوصول إلى تاريخ الانتهاء";
+            string note = hasPendingRequest
+                ? $"ظهر اليوم لأنه داخل نافذة الانتهاء القريبة ويوجد {pendingRequest!.Request.TypeLabel} معلق منذ {pendingRequest.Request.RequestDate:yyyy/MM/dd}. ابدأ من الطلب المرتبط."
+                : "ظهر اليوم لأنه داخل نافذة الانتهاء القريبة. راجع الطلبات المرتبطة قبل إنشاء تمديد أو إقفال مبكر.";
 
             return new DashboardWorkItem(
                 DashboardScope.ExpiringSoon,
                 DashboardTarget.Today,
                 item.RootId ?? item.Id,
-                null,
-                GuaranteeFileFocusArea.Actions,
+                requestId,
+                focusArea,
                 "قريبة الانتهاء",
                 label,
                 rank,
@@ -307,11 +349,11 @@ namespace GuaranteeManager
                 item.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
                 $"خلال {daysLeft.ToString("N0", CultureInfo.InvariantCulture)} يوم",
                 item.GuaranteeType,
-                "راجع التمديد",
+                primaryAction,
                 "متابعات الانتهاء",
                 "ركّز المتابعة",
-                "افتح الملف وراجع قرار التمديد قبل الوصول إلى تاريخ الانتهاء",
-                $"ظهر اليوم لأنه داخل نافذة الانتهاء القريبة. راجع الطلبات المرتبطة قبل إنشاء تمديد أو إقفال مبكر.",
+                nextAction,
+                note,
                 TonePalette.Foreground(tone),
                 TonePalette.Background(tone),
                 TonePalette.Border(tone),
@@ -472,7 +514,7 @@ namespace GuaranteeManager
     {
         public string WorkspaceIconKey => Target switch
         {
-            DashboardTarget.Today => "Icon.Notifications",
+            DashboardTarget.Today => "Icon.Dashboard",
             DashboardTarget.Requests => "Icon.Requests",
             DashboardTarget.Notifications => "Icon.Notifications",
             DashboardTarget.Reports => "Icon.Reports",
@@ -481,7 +523,7 @@ namespace GuaranteeManager
 
         public string WorkspaceRowActionLabel => Target switch
         {
-            DashboardTarget.Today => "المتابعة",
+            DashboardTarget.Today => "ركّز",
             DashboardTarget.Requests => "الطلبات",
             DashboardTarget.Notifications => "التنبيهات",
             DashboardTarget.Reports => "التقارير",

@@ -22,7 +22,6 @@ namespace GuaranteeManager
         private readonly Action _resumeLastFile;
         private readonly Action<int, GuaranteeFileFocusArea, int?> _openGuaranteeContext;
         private readonly Action _showGuarantees;
-        private readonly Action<string?> _showNotifications;
         private readonly Action<string?> _showRequests;
         private readonly Action<string?, string?> _showToday;
         private readonly Action<string?> _showReports;
@@ -69,7 +68,7 @@ namespace GuaranteeManager
         private readonly Button _openWorkspaceButton = new();
         private readonly Button _copyReferenceButton = new();
         private readonly Button _resumeLastFileButton = new();
-        private readonly Button _openNotificationsLensButton = new();
+        private readonly Button _expiryFollowUpsLensButton = new();
 
         private List<Guarantee> _guarantees = new();
         private List<WorkflowRequestListItem> _pendingRequests = new();
@@ -84,7 +83,6 @@ namespace GuaranteeManager
             Action resumeLastFile,
             Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
             Action showGuarantees,
-            Action<string?> showNotifications,
             Action<string?, string?> showToday,
             Action<string?> showRequests,
             Action<string?> showReports,
@@ -102,7 +100,6 @@ namespace GuaranteeManager
             _resumeLastFile = resumeLastFile;
             _openGuaranteeContext = openGuaranteeContext;
             _showGuarantees = showGuarantees;
-            _showNotifications = showNotifications;
             _showToday = showToday;
             _showRequests = showRequests;
             _showReports = showReports;
@@ -171,12 +168,12 @@ namespace GuaranteeManager
             _resumeLastFileButton.Click += (_, _) => _resumeLastFile();
             UiInstrumentation.Identify(_resumeLastFileButton, "Dashboard.Toolbar.ResumeLastFile", "استئناف آخر ملف");
 
-            _openNotificationsLensButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _openNotificationsLensButton.FontSize = 9.5;
-            _openNotificationsLensButton.Content = "عدسة المتابعات";
-            _openNotificationsLensButton.ToolTip = "يفتح العدسة التفصيلية الانتقالية لعائلة متابعات الانتهاء.";
-            _openNotificationsLensButton.Click += (_, _) => _showNotifications(_searchInput.Text);
-            UiInstrumentation.Identify(_openNotificationsLensButton, "Dashboard.Toolbar.OpenNotificationsLens", "عدسة المتابعات");
+            _expiryFollowUpsLensButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
+            _expiryFollowUpsLensButton.FontSize = 9.5;
+            _expiryFollowUpsLensButton.Content = "متابعات الانتهاء";
+            _expiryFollowUpsLensButton.ToolTip = "يعرض متابعات الانتهاء داخل اليوم مع الحفاظ على البحث الحالي.";
+            _expiryFollowUpsLensButton.Click += (_, _) => ShowExpiryFollowUpsLens();
+            UiInstrumentation.Identify(_expiryFollowUpsLensButton, "Dashboard.Toolbar.ExpiryFollowUpsLens", "متابعات الانتهاء");
 
             _copyReferenceButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             _copyReferenceButton.Content = "نسخ المرجع";
@@ -222,8 +219,8 @@ namespace GuaranteeManager
             Grid.SetColumn(refreshButton, 4);
             toolbar.Children.Add(refreshButton);
 
-            Grid.SetColumn(_openNotificationsLensButton, 6);
-            toolbar.Children.Add(_openNotificationsLensButton);
+            Grid.SetColumn(_expiryFollowUpsLensButton, 6);
+            toolbar.Children.Add(_expiryFollowUpsLensButton);
 
             _scopeFilter.Style = WorkspaceSurfaceChrome.Style("FilterComboBox");
             _scopeFilter.Items.Add(DashboardScopeFilters.AllWork);
@@ -752,6 +749,17 @@ namespace GuaranteeManager
                 _showGuarantees,
                 _showRequests,
                 _showReports);
+        }
+
+        private void ShowExpiryFollowUpsLens()
+        {
+            if (IsExpiryFollowUpScope(_scopeFilter.SelectedItem as string ?? DashboardScopeFilters.AllWork))
+            {
+                ApplyFilters();
+                return;
+            }
+
+            _scopeFilter.SelectedItem = DashboardScopeFilters.ExpiryFollowUps;
         }
 
         private void OpenSelectedPrimaryAction()
