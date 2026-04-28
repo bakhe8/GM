@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -900,6 +901,9 @@ namespace GuaranteeManager
             _primaryActionButton.IsEnabled = state.CanRunPrimaryAction;
             _primaryActionButton.Content = state.PrimaryActionLabel;
             _primaryActionButton.ToolTip = state.PrimaryActionHint;
+            AutomationProperties.SetName(_primaryActionButton, state.PrimaryActionLabel);
+            AutomationProperties.SetHelpText(_primaryActionButton, state.PrimaryActionHint);
+            AutomationProperties.SetItemStatus(_primaryActionButton, state.PrimaryActionHint);
         }
 
         private void RegisterSelectedResponse()
