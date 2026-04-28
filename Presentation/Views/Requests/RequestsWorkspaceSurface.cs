@@ -40,6 +40,7 @@ namespace GuaranteeManager
         private readonly TextBlock _detailDates = BuildMutedText(11, FontWeights.SemiBold);
         private readonly TextBlock _detailNotes = BuildMutedText(11, FontWeights.Normal);
         private readonly TextBlock _detailResponse = BuildMutedText(11, FontWeights.Normal);
+        private readonly Button _queueToolbarButton = new();
         private readonly Button _openGuaranteeButton = new();
         private readonly Button _letterButton = new();
         private readonly Button _primaryActionButton = new();
@@ -89,7 +90,7 @@ namespace GuaranteeManager
         private Grid BuildLayout()
         {
             return WorkspaceSurfaceChrome.BuildReferenceWorkspace(
-                BuildToolbar(),
+                BuildToolbarBlock(),
                 BuildMetrics(),
                 BuildTableSection(),
                 BuildDetailPanel());
@@ -97,6 +98,12 @@ namespace GuaranteeManager
 
         private void ConfigureButtons()
         {
+            _queueToolbarButton.Style = WorkspaceSurfaceChrome.Style("PrimaryButton");
+            _queueToolbarButton.Content = "الخطوة التالية";
+            _queueToolbarButton.FontSize = 9.5;
+            _queueToolbarButton.Click += (_, _) => UseResponseAction();
+            UiInstrumentation.Identify(_queueToolbarButton, "Requests.Toolbar.PrimaryQueueAction", "الخطوة التالية");
+
             _openGuaranteeButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             _openGuaranteeButton.Content = "فتح ملف الضمان";
             _openGuaranteeButton.FontSize = 9.5;
@@ -116,6 +123,66 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(_letterButton, "Requests.Detail.OpenLetterButton", "فتح الخطاب");
         }
 
+        private UIElement BuildToolbarBlock()
+        {
+            var stack = new StackPanel();
+            stack.Children.Add(BuildHomeHeader());
+            stack.Children.Add(BuildToolbar());
+            return stack;
+        }
+
+        private Border BuildHomeHeader()
+        {
+            var card = WorkspaceSurfaceChrome.Card(new Thickness(16, 14, 16, 14));
+            card.Margin = new Thickness(0, 0, 0, 10);
+
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var content = new StackPanel();
+            content.Children.Add(new TextBlock
+            {
+                Text = "الطلبات اليومية",
+                FontSize = 18,
+                FontWeight = FontWeights.Bold,
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
+                TextAlignment = TextAlignment.Right
+            });
+            content.Children.Add(new TextBlock
+            {
+                Text = "ابدأ بالطلب المحدد ونفّذ خطوته التالية أولًا. إنشاء الطلبات والتصدير يبقيان هنا، لكن كأدوات ثانوية لا تنافس عمل الصف الحالي.",
+                FontSize = 11.5,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
+                Margin = new Thickness(0, 6, 0, 0),
+                TextWrapping = TextWrapping.Wrap,
+                TextAlignment = TextAlignment.Right
+            });
+            grid.Children.Add(content);
+
+            var cue = new Border
+            {
+                Background = WorkspaceSurfaceChrome.BrushFrom("#F5F8FC"),
+                BorderBrush = WorkspaceSurfaceChrome.BrushFrom("#D8E1EE"),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(999),
+                Padding = new Thickness(10, 5, 10, 5),
+                Child = new TextBlock
+                {
+                    Text = "ثانوي: إنشاء وتصدير",
+                    FontSize = 10.5,
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = WorkspaceSurfaceChrome.BrushFrom("#31578C")
+                }
+            };
+            Grid.SetColumn(cue, 1);
+            grid.Children.Add(cue);
+
+            card.Child = grid;
+            return card;
+        }
+
         private Grid BuildToolbar()
         {
             var toolbar = new Grid { FlowDirection = FlowDirection.LeftToRight };
@@ -129,18 +196,17 @@ namespace GuaranteeManager
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            var registerButton = WorkspaceSurfaceChrome.ToolbarButton("تسجيل رد البنك", primary: true, automationId: "Requests.Toolbar.RegisterResponse");
-            registerButton.Click += (_, _) => RegisterSelectedResponse();
-            Grid.SetColumn(registerButton, 0);
-            toolbar.Children.Add(registerButton);
+            Grid.SetColumn(_queueToolbarButton, 0);
+            toolbar.Children.Add(_queueToolbarButton);
 
             var refreshButton = WorkspaceSurfaceChrome.ToolbarButton("تحديث", automationId: "Requests.Toolbar.Refresh");
             refreshButton.Click += (_, _) => ReloadRequests(SelectedRequest?.Id);
             Grid.SetColumn(refreshButton, 2);
             toolbar.Children.Add(refreshButton);
 
-            var moreButton = CreateToolbarMenuButton("أدوات إضافية", "Requests.Toolbar.MoreTools");
+            var moreButton = CreateToolbarMenuButton("إنشاء وتصدير", "Requests.Toolbar.MoreTools");
             moreButton.ContextMenu = BuildOverflowMenu();
+            moreButton.ToolTip = "يفتح أدوات العمل الثانوية مثل إنشاء الطلبات الجديدة وتصدير الدفعات.";
             Grid.SetColumn(moreButton, 4);
             toolbar.Children.Add(moreButton);
 
@@ -172,9 +238,9 @@ namespace GuaranteeManager
                 Columns = 4
             };
             metrics.Children.Add(BuildMetricCard("إجمالي الطلبات", _totalValue, "#2563EB"));
-            metrics.Children.Add(BuildMetricCard("قيد الانتظار", _pendingValue, "#E09408"));
-            metrics.Children.Add(BuildMetricCard("بدون مستند رد", _missingResponseValue, "#3B82F6"));
-            metrics.Children.Add(BuildMetricCard("مغلق", _closedValue, "#16A34A"));
+            metrics.Children.Add(BuildMetricCard("بانتظار التنفيذ", _pendingValue, "#E09408"));
+            metrics.Children.Add(BuildMetricCard("تحتاج مستند رد", _missingResponseValue, "#3B82F6"));
+            metrics.Children.Add(BuildMetricCard("مغلقة", _closedValue, "#16A34A"));
             return metrics;
         }
 
@@ -403,7 +469,7 @@ namespace GuaranteeManager
 
             grid.Children.Add(new TextBlock
             {
-                Text = "الخطوة التالية",
+                Text = "العمل الحالي",
                 FontSize = 12,
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
@@ -418,10 +484,10 @@ namespace GuaranteeManager
 
             Grid.SetRow(actions, 1);
             actions.Children.Add(_primaryActionButton);
-            Grid.SetColumn(_letterButton, 2);
-            actions.Children.Add(_letterButton);
-            Grid.SetColumn(_openGuaranteeButton, 4);
+            Grid.SetColumn(_openGuaranteeButton, 2);
             actions.Children.Add(_openGuaranteeButton);
+            Grid.SetColumn(_letterButton, 4);
+            actions.Children.Add(_letterButton);
             grid.Children.Add(actions);
 
             border.Child = grid;
@@ -734,7 +800,7 @@ namespace GuaranteeManager
                 }
             });
 
-            menu.Items.Add(BuildSubmenu("إنشاء طلب", "مسارات إنشاء الطلبات من الضمانات المؤهلة.",
+            menu.Items.Add(BuildSubmenu("إنشاء من الضمانات المؤهلة", "مسارات ثانوية لإنشاء طلبات جديدة من الضمانات التي تسمح حالتها بذلك.",
                 BuildMenuItem("طلب تمديد", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب تمديد جديد.", (_, _) => _coordinator.CreateExtensionFromEligible(ReloadAndFocusNewRequest)),
                 BuildMenuItem("طلب تخفيض", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب تخفيض جديد.", (_, _) => _coordinator.CreateReductionFromEligible(ReloadAndFocusNewRequest)),
                 BuildMenuItem("طلب إفراج", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب إفراج جديد.", (_, _) => _coordinator.CreateReleaseFromEligible(ReloadAndFocusNewRequest)),
@@ -742,7 +808,7 @@ namespace GuaranteeManager
                 BuildMenuItem("طلب تحقق", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب تحقق جديد.", (_, _) => _coordinator.CreateVerificationFromEligible(ReloadAndFocusNewRequest)),
                 BuildMenuItem("طلب استبدال", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب استبدال جديد.", (_, _) => _coordinator.CreateReplacementFromEligible(ReloadAndFocusNewRequest)),
                 BuildMenuItem("طلب نقض", "يفتح قائمة الضمانات المؤهلة لإنشاء طلب نقض جديد.", (_, _) => _coordinator.CreateAnnulmentFromEligible(ReloadAndFocusNewRequest))));
-            menu.Items.Add(BuildSubmenu("تصدير الطلبات", "أدوات تصدير المعلقات حسب النوع.",
+            menu.Items.Add(BuildSubmenu("تصدير الدفعات المعلقة", "أدوات ثانوية لتجميع الطلبات المعلقة وتصديرها حسب النوع.",
                 BuildMenuItem("تصدير التمديدات المعلقة", "يصدر جميع طلبات التمديد المعلقة الحالية.", (_, _) => _coordinator.ExportPendingExtensions(_allRequests)),
                 BuildMenuItem("تصدير التخفيضات المعلقة", "يصدر جميع طلبات التخفيض المعلقة الحالية.", (_, _) => _coordinator.ExportPendingReductions(_allRequests)),
                 BuildMenuItem("تصدير الإفراجات المعلقة", "يصدر جميع طلبات الإفراج المعلقة الحالية.", (_, _) => _coordinator.ExportPendingReleases(_allRequests)),
@@ -893,11 +959,13 @@ namespace GuaranteeManager
             AutomationProperties.SetName(_primaryActionButton, state.PrimaryActionLabel);
             AutomationProperties.SetHelpText(_primaryActionButton, state.PrimaryActionHint);
             AutomationProperties.SetItemStatus(_primaryActionButton, state.PrimaryActionHint);
-        }
 
-        private void RegisterSelectedResponse()
-        {
-            _coordinator.RegisterSelectedResponse(SelectedItem, ReloadRequests);
+            _queueToolbarButton.IsEnabled = state.CanRunPrimaryAction;
+            _queueToolbarButton.Content = state.PrimaryActionLabel;
+            _queueToolbarButton.ToolTip = state.PrimaryActionHint;
+            AutomationProperties.SetName(_queueToolbarButton, state.PrimaryActionLabel);
+            AutomationProperties.SetHelpText(_queueToolbarButton, state.PrimaryActionHint);
+            AutomationProperties.SetItemStatus(_queueToolbarButton, state.PrimaryActionHint);
         }
 
         private void ReloadAndFocusNewRequest(int? requestId)
