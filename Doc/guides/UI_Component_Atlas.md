@@ -378,20 +378,39 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 - `GuaranteeDetailPanel.Section.Requests`
 - `GuaranteeDetailPanel.Requests.ShowAll`
+- لم تعد تُقرأ كأرشيف طلبات فقط
+- صارت تعلن بوضوح:
+  - ما الطلب الذي يحرك القرار الآن
+  - وما أحدث الطلبات التابعة لنفس السلسلة
+- وعند فتح الملف من `Requests` يظهر الطلب القادم من هناك كمرجع التنفيذ الحالي
 
 #### Timeline Section
 
 - `GuaranteeDetailPanel.Section.Timeline`
 - `GuaranteeDetailPanel.Timeline.ShowAllRequests`
+- لم يعد الغرض منها “عرض أحداث” فقط
+- بل:
+  - تفسير آخر ما تغيّر
+  - وتثبيت نقطة التوقف قبل مراجعة المخرجات أو المرفقات
 
 #### Outputs Section
 
 - `GuaranteeDetailPanel.Section.Outputs`
+- هذا القسم هو بيت:
+  - الأثر الناتج عن الطلبات
+  - والملفات الجاهزة للفتح فورًا
+- لذلك يقرأ الآن كل ما له علاقة بخطاب الطلب أو رد البنك كـ:
+  - `مخرجات`
+  - لا `مرفقات رسمية`
 
 #### Attachments Section
 
 - `GuaranteeDetailPanel.Section.Attachments`
 - `GuaranteeDetailPanel.Attachments.ShowAll`
+- هذا القسم صار مخصصًا للأدلة الرسمية الثابتة على الملف
+- بينما اختصارات آخر خطاب طلب وآخر رد بنك تبقى:
+  - إشارات عبور سريعة
+  - لا إعادة دمج للمخرجات داخل المرفقات
 
 #### Actions Section
 

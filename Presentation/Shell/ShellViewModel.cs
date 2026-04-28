@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -160,8 +161,48 @@ namespace GuaranteeManager
         public ObservableCollection<GuaranteeRequestPreviewItem> GuaranteeRequestsPreview { get; } = new();
         public ObservableCollection<GuaranteeOutputPreviewItem> GuaranteeOutputsPreview { get; } = new();
         public string GuaranteeRequestsSummaryText => _focusedGuaranteeRequestId.HasValue
-            ? "يعرض هذا الملخص الطلب المفتوح الآن مع أحدث الطلبات المرتبطة بنفس سلسلة الضمان الحالية."
-            : "ملخص سريع لآخر الطلبات المرتبطة بنفس سلسلة الضمان الحالية.";
+            ? "ابدأ بالطلب الذي فتح هذا الملف الآن، ثم راجع أحدث الطلبات في نفس السلسلة قبل تنفيذ الخطوة التالية."
+            : GuaranteeRequestsPreview.Count == 0
+                ? "لا توجد طلبات مرتبطة تغيّر القرار الآن. إذا كنت تراجع الأثر فقط فانتقل إلى الخط الزمني أو المرفقات."
+                : $"هذه هي الطلبات الأقرب للتنفيذ الآن في نفس السلسلة. يظهر هنا آخر {GuaranteeRequestsPreview.Count.ToString("N0", CultureInfo.InvariantCulture)} طلبات مرتبطة.";
+        public string GuaranteeRequestsContextLabel => _focusedGuaranteeRequestId.HasValue
+            ? "الطلب الذي فتح الملف"
+            : GuaranteeRequestsPreview.Count == 0
+                ? "لا توجد حركة حالية"
+                : "الأقرب للتنفيذ الآن";
+        public string TimelineSummaryText => Timeline.Count == 0
+            ? "سجل المراحل الرئيسية لهذا الضمان سيظهر هنا عند توفر طلبات أو أحداث موثقة."
+            : "راجع هذا التسلسل لفهم آخر ما تغيّر قبل فتح طلب أو مخرج أو مرفق.";
+        public string TimelineStationsLabel => $"{Timeline.Count.ToString("N0", CultureInfo.InvariantCulture)} محطات مرتبطة";
+        public string OutputsSummaryText
+        {
+            get
+            {
+                int outputCount = GuaranteeOutputsPreview.Count;
+                int letterCount = SelectedGuarantee?.ActionProfile.LetterOutputCount
+                    ?? GuaranteeOutputsPreview.Count(item => item.CanOpenLetter);
+                int responseCount = SelectedGuarantee?.ActionProfile.ResponseOutputCount
+                    ?? GuaranteeOutputsPreview.Count(item => item.CanOpenResponse);
+
+                return outputCount == 0
+                    ? "لا تظهر هنا إلا المخرجات الجاهزة للفتح الآن. عند عدم وجودها تبقى المراجعة عبر الطلبات أو المرفقات الرسمية."
+                    : $"تظهر هنا المستندات الناتجة عن الطلبات والجاهزة للفتح الآن: {letterCount.ToString("N0", CultureInfo.InvariantCulture)} خطاب طلب و{responseCount.ToString("N0", CultureInfo.InvariantCulture)} رد بنك.";
+            }
+        }
+
+        public string OutputsAvailabilityLabel => GuaranteeOutputsPreview.Count == 0
+            ? "لا توجد ملفات جاهزة"
+            : $"{GuaranteeOutputsPreview.Count.ToString("N0", CultureInfo.InvariantCulture)} مخرجات جاهزة";
+        public string AttachmentsSummaryText => Attachments.Count == 0
+            ? "لا توجد مرفقات رسمية محفوظة على هذا الملف حاليًا. ستبقى خطابات الطلب وردود البنك داخل قسم المخرجات عند توفرها."
+            : $"هذه هي الأدلة الرسمية المحفوظة على الملف. يوجد {Attachments.Count.ToString("N0", CultureInfo.InvariantCulture)} مرفقات رسمية، بينما تبقى خطابات الطلب وردود البنك ضمن المخرجات.";
+        public string OfficialAttachmentsHeading => Attachments.Count == 0
+            ? "المرفقات الرسمية"
+            : $"المرفقات الرسمية ({Attachments.Count.ToString("N0", CultureInfo.InvariantCulture)})";
+        public bool HasOutputShortcuts => HasLatestLetterOutput || HasLatestResponseOutput;
+        public string OutputShortcutsSummaryText => HasOutputShortcuts
+            ? "اختصارات آخر المستندات الناتجة"
+            : "لا توجد اختصارات لمستندات ناتجة الآن";
         public int GuaranteeFocusRequestVersion => _guaranteeFocusRequestVersion;
         public GuaranteeFileFocusArea CurrentGuaranteeFocusArea => _currentGuaranteeFocusArea;
         public int? CurrentGuaranteeFocusRequestId => _focusedGuaranteeRequestId;
@@ -250,7 +291,7 @@ namespace GuaranteeManager
                 if (_focusedGuaranteeRequestId.HasValue)
                 {
                     _focusedGuaranteeRequestId = null;
-                    OnPropertyChanged(nameof(GuaranteeRequestsSummaryText));
+                    RaiseGuaranteeFileSectionTextProperties();
                 }
 
                 OnPropertyChanged();
@@ -937,7 +978,7 @@ namespace GuaranteeManager
             if (_focusedGuaranteeRequestId != nextFocusedRequestId)
             {
                 _focusedGuaranteeRequestId = nextFocusedRequestId;
-                OnPropertyChanged(nameof(GuaranteeRequestsSummaryText));
+                RaiseGuaranteeFileSectionTextProperties();
                 RefreshSelectedGuaranteeArtifacts();
             }
 
@@ -1493,6 +1534,21 @@ namespace GuaranteeManager
 
             LatestLetterOutput = GuaranteeOutputsPreview.FirstOrDefault(item => item.CanOpenLetter);
             LatestResponseOutput = GuaranteeOutputsPreview.FirstOrDefault(item => item.CanOpenResponse);
+            RaiseGuaranteeFileSectionTextProperties();
+        }
+
+        private void RaiseGuaranteeFileSectionTextProperties()
+        {
+            OnPropertyChanged(nameof(GuaranteeRequestsSummaryText));
+            OnPropertyChanged(nameof(GuaranteeRequestsContextLabel));
+            OnPropertyChanged(nameof(TimelineSummaryText));
+            OnPropertyChanged(nameof(TimelineStationsLabel));
+            OnPropertyChanged(nameof(OutputsSummaryText));
+            OnPropertyChanged(nameof(OutputsAvailabilityLabel));
+            OnPropertyChanged(nameof(AttachmentsSummaryText));
+            OnPropertyChanged(nameof(OfficialAttachmentsHeading));
+            OnPropertyChanged(nameof(HasOutputShortcuts));
+            OnPropertyChanged(nameof(OutputShortcutsSummaryText));
         }
 
         private void RaiseSelectionCommandStates()

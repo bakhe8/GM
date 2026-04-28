@@ -55,7 +55,8 @@
 | `Requests` | مشبع | `رد البنك`، `فتح الرد`، `إلحاق الرد`، `فتح الضمان`، metadata للخطوة التالية، صدق `ShellState` | إذا تغير response workflow أو context handoff أو file opening | `انتقائي` |
 | `Guarantee Operational Path` | مشبع | `HistoryDialog` بسياق الطلب، `OperationalInquiry -> export report`، `History -> print cancel` | إذا تغيرت dialogs الثقيلة أو save/print integration أو next-step logic | `انتقائي` |
 | `Guarantee Authoring Path` | مشبع | جديد/تعديل، discard prompts، restore focus بعد الحفظ، تمديد/إفراج/تخفيض/استبدال/نقض/تسييل/تحقق | إذا تغيرت قواعد الأهلية أو authoring dialogs أو post-save refresh | `انتقائي` |
-| `Dashboard / Notifications cross-entry` | مشبع | فتح الضمان بسياق صحيح، carry context إلى `Requests/Notifications`، return-to-work clean | إذا تغيرت navigation أو handoff أو session persistence | `انتقائي` |
+| `Guarantee File structure` | مركز / WIP | بداية الملف وخريطة الملف أُغلقت، ووسط الملف صار يقسم `الطلبات/الخط الزمني/المخرجات/المرفقات` حسب سؤال العمل | بعد إغلاق WIP الحالي أو إذا تغيرت bindings / focus / section navigation | `build/test + فحص مركز عند الحاجة` |
+| `Dashboard / Notifications cross-entry` | مشبع كـ cross-entry فقط | فتح الضمان بسياق صحيح، carry context إلى `Requests/Notifications`، return-to-work clean | إذا تغيرت navigation أو handoff أو session persistence | `انتقائي` |
 | `Reports` | مستقر | feedback لإنشاء التقرير وفتحه، metadata أكثر صدقًا، حفظ فعلي clean | إذا تغير export workflow أو dialogs الحفظ أو latest-output logic | `انتقائي` |
 | `Banks` | مستقر | feedback هادئة لأفعال النسخ | إذا تغير clipboard/status behavior أو daily actions | `عند الحاجة فقط` |
 | `Guarantees list/search/filter` | مستقر | الحفاظ على الاختيار عند بقاء السجل مرئيًا بعد البحث/الفلتر | إذا تغيرت `Refresh()` أو sorting/filter/search logic | `فحص مركز` |

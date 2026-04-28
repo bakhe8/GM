@@ -419,7 +419,24 @@
                                     automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Section.Requests"
                                     automation:AutomationProperties.Name="قسم الطلبات المرتبطة">
                                 <StackPanel>
-                                    <TextBlock Text="الطلبات المرتبطة" FontSize="13" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" Margin="0,0,0,8" />
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="الطلبات التي تقود التنفيذ" FontSize="13" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" VerticalAlignment="Center" />
+                                        <Border Grid.Column="1"
+                                                CornerRadius="9"
+                                                Padding="7,2"
+                                                Background="#F8FAFC"
+                                                BorderBrush="{StaticResource Brush.Border}"
+                                                BorderThickness="1">
+                                            <TextBlock Text="{Binding GuaranteeRequestsContextLabel}"
+                                                       FontSize="9"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource Brush.Muted}" />
+                                        </Border>
+                                    </Grid>
                                     <Border Height="1" Background="{StaticResource Brush.Border}" Margin="0,0,0,10" />
                                     <TextBlock Text="{Binding GuaranteeRequestsSummaryText}"
                                                FontSize="10.4"
@@ -597,7 +614,7 @@
                                             Margin="0,2,0,0"
                                             automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Requests.ShowAll"
                                             automation:AutomationProperties.Name="عرض جميع الطلبات المرتبطة">
-                                        <TextBlock Text="عرض جميع الطلبات" FontSize="10.5" Foreground="{StaticResource Brush.Blue}" />
+                                        <TextBlock Text="افتح جميع الطلبات في مساحة الطلبات" FontSize="10.5" Foreground="{StaticResource Brush.Blue}" />
                                     </Button>
                                 </StackPanel>
                             </Border>
@@ -610,8 +627,30 @@
                                     automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Section.Timeline"
                                     automation:AutomationProperties.Name="قسم الخط الزمني">
                                 <StackPanel>
-                                    <TextBlock Text="الخط الزمني للطلبات" FontSize="13" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" Margin="0,0,0,8" />
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="ما الذي حدث ومتى؟" FontSize="13" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" VerticalAlignment="Center" />
+                                        <Border Grid.Column="1"
+                                                CornerRadius="9"
+                                                Padding="7,2"
+                                                Background="#F8FAFC"
+                                                BorderBrush="{StaticResource Brush.Border}"
+                                                BorderThickness="1">
+                                            <TextBlock Text="{Binding TimelineStationsLabel}"
+                                                       FontSize="9"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource Brush.Muted}" />
+                                        </Border>
+                                    </Grid>
                                     <Border Height="1" Background="{StaticResource Brush.Border}" Margin="0,0,0,12" />
+                                    <TextBlock Text="{Binding TimelineSummaryText}"
+                                               FontSize="10.4"
+                                               Foreground="{StaticResource Brush.Muted}"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,10" />
                                     <ItemsControl ItemsSource="{Binding Timeline}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
@@ -660,7 +699,7 @@
                                             Command="{Binding ShowGuaranteeRequestsCommand}"
                                             automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Timeline.ShowAllRequests"
                                             automation:AutomationProperties.Name="عرض جميع الطلبات من الخط الزمني">
-                                        <TextBlock Text="عرض جميع الطلبات" FontSize="10.5" Foreground="{StaticResource Brush.Blue}" />
+                                        <TextBlock Text="انتقل إلى الطلبات الكاملة" FontSize="10.5" Foreground="{StaticResource Brush.Blue}" />
                                     </Button>
                                 </StackPanel>
                             </Border>
@@ -673,9 +712,26 @@
                                     automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Section.Outputs"
                                     automation:AutomationProperties.Name="قسم المخرجات المرتبطة">
                                 <StackPanel>
-                                    <TextBlock Text="مخرجات مرتبطة" FontSize="13" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" Margin="0,0,0,8" />
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="المخرجات والأثر" FontSize="13" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" VerticalAlignment="Center" />
+                                        <Border Grid.Column="1"
+                                                CornerRadius="9"
+                                                Padding="7,2"
+                                                Background="#F8FAFC"
+                                                BorderBrush="{StaticResource Brush.Border}"
+                                                BorderThickness="1">
+                                            <TextBlock Text="{Binding OutputsAvailabilityLabel}"
+                                                       FontSize="9"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource Brush.Muted}" />
+                                        </Border>
+                                    </Grid>
                                     <Border Height="1" Background="{StaticResource Brush.Border}" Margin="0,0,0,10" />
-                                    <TextBlock Text="هنا تظهر أحدث الطلبات التي لديها خطاب طلب أو مستند رد بنك جاهز للفتح مباشرة."
+                                    <TextBlock Text="{Binding OutputsSummaryText}"
                                                FontSize="10.4"
                                                Foreground="{StaticResource Brush.Muted}"
                                                TextWrapping="Wrap"
@@ -774,19 +830,46 @@
                                     automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Section.Attachments"
                                     automation:AutomationProperties.Name="قسم المرفقات">
                                 <StackPanel>
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8" FlowDirection="RightToLeft">
-                                        <TextBlock Text="المرفقات" FontSize="13" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" VerticalAlignment="Center" />
-                                        <Viewbox Width="14" Height="14" Margin="0,0,6,0" VerticalAlignment="Center">
-                                            <Path Data="{StaticResource Icon.Paperclip}" Stroke="{StaticResource Brush.Text}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                        </Viewbox>
-                                    </StackPanel>
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Orientation="Horizontal" FlowDirection="RightToLeft">
+                                            <TextBlock Text="الأدلة والمرفقات" FontSize="13" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" VerticalAlignment="Center" />
+                                            <Viewbox Width="14" Height="14" Margin="0,0,6,0" VerticalAlignment="Center">
+                                                <Path Data="{StaticResource Icon.Paperclip}" Stroke="{StaticResource Brush.Text}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                            </Viewbox>
+                                        </StackPanel>
+                                        <Border Grid.Column="1"
+                                                CornerRadius="9"
+                                                Padding="7,2"
+                                                Background="#F8FAFC"
+                                                BorderBrush="{StaticResource Brush.Border}"
+                                                BorderThickness="1">
+                                            <TextBlock Text="{Binding OutputShortcutsSummaryText}"
+                                                       FontSize="9"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource Brush.Muted}" />
+                                        </Border>
+                                    </Grid>
                                     <Border Height="1" Background="{StaticResource Brush.Border}" Margin="0,0,0,10" />
-                                    <TextBlock Text="المرفقات الرسمية محفوظة هنا، بينما مخرجات الطلبات تبقى ضمن قسم المخرجات المرتبطة."
+                                    <TextBlock Text="{Binding AttachmentsSummaryText}"
                                                FontSize="10.4"
                                                Foreground="{StaticResource Brush.Muted}"
                                                TextWrapping="Wrap"
                                                Margin="0,0,0,10" />
-                                    <WrapPanel FlowDirection="RightToLeft" Margin="0,0,0,10">
+                                    <WrapPanel FlowDirection="RightToLeft" Margin="0,0,0,10" Visibility="Collapsed">
+                                        <WrapPanel.Style>
+                                            <Style TargetType="WrapPanel">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasOutputShortcuts}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </WrapPanel.Style>
                                         <Button Command="{Binding OpenOutputLetterCommand}"
                                                 CommandParameter="{Binding LatestLetterOutput}"
                                                 Margin="0,0,10,6">
@@ -818,7 +901,7 @@
                                             <TextBlock Text="أحدث رد بنك" FontSize="10.3" Foreground="{StaticResource Brush.Blue}" />
                                         </Button>
                                     </WrapPanel>
-                                    <TextBlock Text="المرفقات الرسمية"
+                                    <TextBlock Text="{Binding OfficialAttachmentsHeading}"
                                                FontSize="10.8"
                                                FontWeight="SemiBold"
                                                Foreground="{StaticResource Brush.Text}"
