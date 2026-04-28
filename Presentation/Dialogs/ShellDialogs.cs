@@ -2081,6 +2081,7 @@ namespace GuaranteeManager
         private readonly Button _openAttachmentsButton = new();
         private readonly Button _openLetterButton = new();
         private readonly Button _openResponseButton = new();
+        private readonly Button _openGuaranteeFileButton = new();
         private readonly Button _exportHistoryButton = new();
         private readonly Button _printHistoryButton = new();
         private Action? _nextStepAction;
@@ -2443,6 +2444,11 @@ namespace GuaranteeManager
 
         private UIElement BuildActions()
         {
+            _openGuaranteeFileButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
+            _openGuaranteeFileButton.Content = "ملف الضمان";
+            UiInstrumentation.Identify(_openGuaranteeFileButton, "Dialog.GuaranteeHistory.OpenGuaranteeFileButton", "فتح ملف الضمان من السجل");
+            _openGuaranteeFileButton.Click += (_, _) => OpenGuaranteeFile();
+
             _openAttachmentsButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             _openAttachmentsButton.Content = "فتح مرفقات الإصدار";
             UiInstrumentation.Identify(_openAttachmentsButton, "Dialog.GuaranteeHistory.OpenAttachmentsButton", "فتح مرفقات الإصدار");
@@ -2480,12 +2486,13 @@ namespace GuaranteeManager
 
             var actions = new System.Windows.Controls.Primitives.UniformGrid
             {
-                Columns = 7,
+                Columns = 8,
                 FlowDirection = FlowDirection.LeftToRight
             };
 
             foreach (Button button in new[]
                      {
+                         _openGuaranteeFileButton,
                          _openAttachmentsButton,
                          _openLetterButton,
                          _openResponseButton,
@@ -2643,10 +2650,13 @@ namespace GuaranteeManager
             if (_tabs.SelectedIndex == 1)
             {
                 UpdateRequestDetails();
-                return;
+            }
+            else
+            {
+                UpdateVersionDetails();
             }
 
-            UpdateVersionDetails();
+            UpdateHistoryActionsAvailability();
         }
 
         private void UpdateVersionDetails()
@@ -2857,13 +2867,18 @@ namespace GuaranteeManager
                 return;
             }
 
+            ApplySelectedRequestFileNextStep(selected, tone);
+        }
+
+        private void ApplySelectedRequestFileNextStep(WorkflowRequest selected, Tone tone)
+        {
             ApplyNextStepState(
-                "لا توجد وثائق مباشرة لهذا الطلب من داخل السجل.",
-                "إذا كنت توثق المراجعة أو تشاركها، فالتصدير هو الخطوة التالية الأقرب من هذا الموضع.",
-                "تصدير السجل",
-                ExportHistory,
-                _exportHistoryButton.IsEnabled,
-                Tone.Info);
+                "لا توجد وثائق مباشرة لهذا الطلب من داخل السجل، وأقرب متابعة هي فتحه داخل ملف الضمان.",
+                "سيعود بك هذا إلى ملف الضمان مع إبراز الطلب نفسه حتى تكمل القرار من البيت الرسمي للعمل.",
+                "فتح الطلب في ملف الضمان",
+                OpenGuaranteeFile,
+                CanOpenGuaranteeFile(),
+                tone);
         }
 
         private void ApplyDetailState(
@@ -3047,8 +3062,87 @@ namespace GuaranteeManager
         private void UpdateHistoryActionsAvailability()
         {
             bool hasHistoryRecords = _history.Count > 0 || _requests.Count > 0;
+            bool canOpenGuaranteeFile = CanOpenGuaranteeFile();
+            _openGuaranteeFileButton.IsEnabled = canOpenGuaranteeFile;
+            _openGuaranteeFileButton.ToolTip = canOpenGuaranteeFile
+                ? $"يفتح {BuildGuaranteeFileHandoffSectionText(ResolveGuaranteeFileHandoffArea(out _))} مع سياق السجل الحالي."
+                : "لا يمكن الوصول إلى ملف الضمان من هذه النافذة حاليًا.";
+            ToolTipService.SetShowOnDisabled(_openGuaranteeFileButton, true);
             _exportHistoryButton.IsEnabled = hasHistoryRecords;
             _printHistoryButton.IsEnabled = hasHistoryRecords;
+        }
+
+        private bool CanOpenGuaranteeFile()
+        {
+            return Application.Current.MainWindow?.DataContext is ShellViewModel;
+        }
+
+        private GuaranteeFileFocusArea ResolveGuaranteeFileHandoffArea(out int? requestIdToFocus)
+        {
+            requestIdToFocus = null;
+
+            if (_tabs.SelectedIndex == 1 && SelectedRequest is WorkflowRequest selectedRequest)
+            {
+                requestIdToFocus = selectedRequest.Id;
+                return GuaranteeFileFocusArea.Requests;
+            }
+
+            if (_tabs.SelectedIndex == 0 && SelectedVersion is { AttachmentCount: > 0 })
+            {
+                return GuaranteeFileFocusArea.Attachments;
+            }
+
+            GuaranteeFileFocusArea suggestedArea = _row.SuggestedFocusArea == GuaranteeFileFocusArea.None
+                ? GuaranteeFileFocusArea.ExecutiveSummary
+                : _row.SuggestedFocusArea;
+            if (suggestedArea == GuaranteeFileFocusArea.Requests)
+            {
+                requestIdToFocus = ResolveContextRequestId();
+            }
+
+            return suggestedArea;
+        }
+
+        private int? ResolveContextRequestId()
+        {
+            return SelectedRequest?.Id
+                   ?? _requests
+                       .OrderBy(request => request.Status == RequestStatus.Pending ? 0 : 1)
+                       .ThenByDescending(request => request.RequestDate)
+                       .ThenByDescending(request => request.SequenceNumber)
+                       .FirstOrDefault()
+                       ?.Id;
+        }
+
+        private static string BuildGuaranteeFileHandoffSectionText(GuaranteeFileFocusArea focusArea)
+        {
+            return focusArea switch
+            {
+                GuaranteeFileFocusArea.Requests => "الطلب المحدد داخل ملف الضمان",
+                GuaranteeFileFocusArea.Series => "الخط الزمني داخل ملف الضمان",
+                GuaranteeFileFocusArea.Outputs => "المخرجات داخل ملف الضمان",
+                GuaranteeFileFocusArea.Attachments => "المرفقات داخل ملف الضمان",
+                GuaranteeFileFocusArea.Actions => "الإجراءات السريعة داخل ملف الضمان",
+                _ => "ملف الضمان"
+            };
+        }
+
+        private void OpenGuaranteeFile()
+        {
+            if (Application.Current.MainWindow?.DataContext is not ShellViewModel shell)
+            {
+                MessageBox.Show("تعذر الوصول إلى ملف الضمان من هذه النافذة حاليًا.", "سجل الضمان", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            GuaranteeFileFocusArea focusArea = ResolveGuaranteeFileHandoffArea(out int? requestIdToFocus);
+            shell.SelectGuaranteeCommand.Execute(_row);
+            shell.QueueGuaranteeFileOpenFocus(focusArea, requestIdToFocus, _row.RootId);
+            Close();
+
+            Application.Current.Dispatcher.BeginInvoke(
+                new Action(() => GuaranteeFileDialog.ShowFor(shell, _row)),
+                System.Windows.Threading.DispatcherPriority.Background);
         }
 
         private void OpenSelectedAttachments()
