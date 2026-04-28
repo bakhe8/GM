@@ -60,7 +60,8 @@ namespace GuaranteeManager
             IReadOnlyList<WorkflowRequestListItem> pendingRequests)
         {
             IEnumerable<DashboardWorkItem> query = allItems;
-            query = DashboardScopeFilters.Normalize(scopeFilter) switch
+            string normalizedScope = DashboardScopeFilters.Normalize(scopeFilter);
+            query = normalizedScope switch
             {
                 DashboardScopeFilters.PendingRequests => query.Where(item => item.Scope == DashboardScope.PendingRequests),
                 DashboardScopeFilters.ExpiryFollowUps => query.Where(item =>
@@ -83,12 +84,9 @@ namespace GuaranteeManager
                 .OrderBy(item => item.PriorityRank)
                 .ThenBy(item => item.SortDate)
                 .ThenByDescending(item => item.Amount)
-                .Take(8)
                 .ToList();
 
-            string summary = filtered.Count == 0
-                ? "لا توجد أعمال يومية مطابقة."
-                : $"عرض أعلى {filtered.Count.ToString("N0", CultureInfo.InvariantCulture)} أولويات من أصل {allItems.Count.ToString("N0", CultureInfo.InvariantCulture)}";
+            string summary = BuildSummary(filtered.Count, allItems.Count, normalizedSearch, normalizedScope);
 
             return new DashboardWorkspaceFilterResult(
                 filtered,
@@ -96,7 +94,7 @@ namespace GuaranteeManager
                     hasLastFile ? lastFileGuaranteeNo : "لا يوجد",
                     allItems.Count(item => item.PriorityRank <= 1).ToString("N0", CultureInfo.InvariantCulture),
                     pendingRequests.Count.ToString("N0", CultureInfo.InvariantCulture),
-                    guarantees.Count(item => item.IsExpiringSoon).ToString("N0", CultureInfo.InvariantCulture)),
+                    guarantees.Count(item => item.NeedsExpiryFollowUp || item.IsExpiringSoon).ToString("N0", CultureInfo.InvariantCulture)),
                 summary);
         }
 
@@ -277,13 +275,38 @@ namespace GuaranteeManager
                 TonePalette.Border(tone),
                 WorkspaceSurfaceChrome.BrushFrom("#E09408"));
         }
+
+        private static string BuildSummary(int filteredCount, int totalCount, string normalizedSearch, string normalizedScope)
+        {
+            if (filteredCount == 0)
+            {
+                return "لا توجد أعمال يومية مطابقة.";
+            }
+
+            bool hasSearch = !string.IsNullOrWhiteSpace(normalizedSearch);
+            bool hasScopedLens = !string.Equals(normalizedScope, DashboardScopeFilters.AllWork, StringComparison.Ordinal);
+
+            if (!hasSearch && !hasScopedLens)
+            {
+                return $"عرض {filteredCount.ToString("N0", CultureInfo.InvariantCulture)} عنصر عمل يومي مرتب حسب الأولوية.";
+            }
+
+            string scopeLabel = normalizedScope switch
+            {
+                DashboardScopeFilters.PendingRequests => "الطلبات المعلقة",
+                DashboardScopeFilters.ExpiryFollowUps => "متابعات الانتهاء",
+                _ => "أعمال اليوم"
+            };
+
+            return $"عرض {filteredCount.ToString("N0", CultureInfo.InvariantCulture)} نتيجة ضمن {scopeLabel} من أصل {totalCount.ToString("N0", CultureInfo.InvariantCulture)}.";
+        }
     }
 
     public sealed record DashboardWorkspaceMetrics(
         string LastFile,
         string CriticalWork,
         string PendingRequests,
-        string ExpiringSoon);
+        string FollowUps);
 
     public sealed record DashboardWorkspaceFilterResult(
         IReadOnlyList<DashboardWorkItem> Items,

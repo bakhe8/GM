@@ -34,7 +34,7 @@ namespace GuaranteeManager
         private readonly TextBlock _guaranteeCountValue = BuildMetricValue(22);
         private readonly TextBlock _portfolioAmountValue = BuildMetricValue();
         private readonly TextBlock _pendingValue = BuildMetricValue();
-        private readonly TextBlock _attentionValue = BuildMetricValue();
+        private readonly TextBlock _followUpValue = BuildMetricValue();
         private readonly TextBlock _detailTitle = BuildDetailValue(16, FontWeights.Bold);
         private readonly TextBlock _detailSubtitle = BuildMutedText(11, FontWeights.SemiBold);
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
@@ -220,7 +220,7 @@ namespace GuaranteeManager
             metrics.Children.Add(BuildMetricCard("آخر ملف", _guaranteeCountValue, "#2563EB"));
             metrics.Children.Add(BuildMetricCard("أعمال حرجة", _portfolioAmountValue, "#EF4444"));
             metrics.Children.Add(BuildMetricCard("طلبات معلقة", _pendingValue, "#E09408"));
-            metrics.Children.Add(BuildMetricCard("قريب الانتهاء", _attentionValue, "#0F172A"));
+            metrics.Children.Add(BuildMetricCard("متابعات الانتهاء", _followUpValue, "#0F172A"));
             return metrics;
         }
 
@@ -725,7 +725,7 @@ namespace GuaranteeManager
             _guaranteeCountValue.Text = metrics.LastFile;
             _portfolioAmountValue.Text = metrics.CriticalWork;
             _pendingValue.Text = metrics.PendingRequests;
-            _attentionValue.Text = metrics.ExpiringSoon;
+            _followUpValue.Text = metrics.FollowUps;
         }
 
         private void ApplyDetailState(DashboardWorkspaceDetailState state)
