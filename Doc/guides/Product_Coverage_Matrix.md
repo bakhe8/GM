@@ -56,7 +56,7 @@
 | `Guarantee Operational Path` | مشبع | `HistoryDialog` بسياق الطلب، `OperationalInquiry -> export report`، `History -> print cancel` | إذا تغيرت dialogs الثقيلة أو save/print integration أو next-step logic | `انتقائي` |
 | `Guarantee Authoring Path` | مشبع | جديد/تعديل، discard prompts، restore focus بعد الحفظ، تمديد/إفراج/تخفيض/استبدال/نقض/تسييل/تحقق | إذا تغيرت قواعد الأهلية أو authoring dialogs أو post-save refresh | `انتقائي` |
 | `Guarantee File structure` | مركز | بداية الملف ووسطه ومخارجه وأزرار إنشاء الطلب صارت تحمل سياق القسم والطلب الناتج | إذا تغيرت bindings / focus / section navigation / action creation | `build/test + فحص مركز عند الحاجة` |
-| `Dashboard / Notifications cross-entry` | مشبع كـ cross-entry فقط | فتح الضمان بسياق صحيح، carry context إلى `Requests/Notifications`، return-to-work clean | إذا تغيرت navigation أو handoff أو session persistence | `انتقائي` |
+| `Dashboard / Notifications cross-entry` | مشبع كـ cross-entry فقط | فتح الضمان بسياق صحيح، carry context إلى `Requests/Notifications`، return-to-work clean، وdetail `متابعات الانتهاء` داخل `اليوم` يفصل `المدة` عن `تاريخ الانتهاء` | إذا تغيرت navigation أو handoff أو session persistence أو detail follow-up في `اليوم` | `انتقائي` |
 | `Reports` | مستقر | feedback لإنشاء التقرير وفتحه، metadata أكثر صدقًا، حفظ فعلي clean | إذا تغير export workflow أو dialogs الحفظ أو latest-output logic | `انتقائي` |
 | `Banks` | مستقر | feedback هادئة لأفعال النسخ | إذا تغير clipboard/status behavior أو daily actions | `عند الحاجة فقط` |
 | `Guarantees list/search/filter` | مستقر | الحفاظ على الاختيار عند بقاء السجل مرئيًا بعد البحث/الفلتر | إذا تغيرت `Refresh()` أو sorting/filter/search logic | `فحص مركز` |

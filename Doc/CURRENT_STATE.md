@@ -180,6 +180,14 @@
   - بل صارت تتبدل إلى:
     - `نوع المتابعة / المستوى / المدة / المسار / الإجراء المقترح`
   - وهذا جعل panel نفسها تقرأ بلغة المتابعة، لا بلغة dashboard عامة
+- ثم أُغلقت الآن أول **فصل حقل انتهاء داخل detail panel** لـ `اليوم`:
+  - داخل `متابعات الانتهاء`
+  - لم تعد اللوحة تكتفي بـ `المدة` كبديل عن كل سياق الانتهاء
+  - بل صار لديها حقل مستقل:
+    - `تاريخ الانتهاء`
+  - مع بقاء `المدة` مخصصة للزمن المتبقي أو المتأخر
+  - وتحقق ذلك حيًا من خلال `Dashboard.Toolbar.ExpiryFollowUpsLens`
+  - وهذا يقلص فجوة التفاصيل التي كانت تدفع المستخدم إلى `Notifications`
 - ثم أُغلق الآن الحكم المعماري على `Notifications` نفسها:
   - لم تعد تستحق top-level مستقلة بعد الآن
   - ثم أُنجز الآن أول **تخفيض فعلي آمن**:
@@ -915,7 +923,7 @@
 ## آخر تحقق معروف
 
 - `dotnet build .\\my_work.sln` ناجح
-- `dotnet test .\\my_work.sln --no-build` ناجح: `64/64`
+- `dotnet test .\\my_work.sln --no-build` ناجح: `65/65`
 - baseline القبول الحالي محفوظ هنا:
   - [UIAcceptance/baselines/2026-04-26-stabilization](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-stabilization)
 - كما توجد جولة قبول ناجحة على بيانات مولدة أثقل هنا:
@@ -1295,4 +1303,4 @@
 
 - `git diff --check` ناجح.
 - `dotnet build .\my_work.sln` ناجح.
-- `dotnet test .\my_work.sln --no-build` ناجح: `64/64`.
+- `dotnet test .\my_work.sln --no-build` ناجح: `65/65`.

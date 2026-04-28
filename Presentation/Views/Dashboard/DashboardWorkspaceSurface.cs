@@ -54,6 +54,7 @@ namespace GuaranteeManager
         private readonly TextBlock _detailPriority = BuildDetailValue(12, FontWeights.Bold);
         private readonly TextBlock _detailReference = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailDue = BuildDetailValue(12, FontWeights.SemiBold);
+        private readonly TextBlock _detailExpiry = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailWorkspace = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailAction = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailNote = BuildMutedText(11, FontWeights.Normal);
@@ -61,6 +62,7 @@ namespace GuaranteeManager
         private readonly TextBlock _detailPriorityLabel = BuildInfoLabel("الأولوية");
         private readonly TextBlock _detailReferenceLabel = BuildInfoLabel("المرجع");
         private readonly TextBlock _detailDueLabel = BuildInfoLabel("الموعد");
+        private readonly TextBlock _detailExpiryLabel = BuildInfoLabel("تاريخ الانتهاء");
         private readonly TextBlock _detailWorkspaceLabel = BuildInfoLabel("المساحة");
         private readonly TextBlock _detailActionLabel = BuildInfoLabel("الإجراء التالي");
         private readonly TextBlock _detailNoteLabel = BuildInfoLabel("ملاحظة تشغيلية");
@@ -73,6 +75,7 @@ namespace GuaranteeManager
         private List<Guarantee> _guarantees = new();
         private List<WorkflowRequestListItem> _pendingRequests = new();
         private List<DashboardWorkItem> _allItems = new();
+        private FrameworkElement? _detailExpiryLine;
 
         public DashboardWorkspaceSurface(
             Func<IReadOnlyList<Guarantee>> loadGuarantees,
@@ -347,6 +350,8 @@ namespace GuaranteeManager
             _detailStatusBadgeBorder.Margin = new Thickness(0, 0, 0, 12);
             _detailStatusBadgeBorder.Child = _detailStatusBadge;
 
+            _detailExpiryLine = BuildInfoLine(_detailExpiryLabel, _detailExpiry);
+
             return new StackPanel
             {
                 Margin = new Thickness(16, 14, 16, 14),
@@ -364,6 +369,7 @@ namespace GuaranteeManager
                     BuildInfoLine(_detailPriorityLabel, _detailPriority),
                     BuildInfoLine(_detailReferenceLabel, _detailReference),
                     BuildInfoLine(_detailDueLabel, _detailDue),
+                    _detailExpiryLine,
                     BuildInfoLine(_detailWorkspaceLabel, _detailWorkspace),
                     BuildInfoLine(_detailActionLabel, _detailAction),
                     BuildInfoBlock(_detailNoteLabel, _detailNote)
@@ -804,6 +810,7 @@ namespace GuaranteeManager
             _detailPriority.Text = state.Priority;
             _detailReference.Text = state.Reference;
             _detailDue.Text = state.Due;
+            _detailExpiry.Text = state.Expiry;
             _detailWorkspace.Text = state.Workspace;
             _detailAction.Text = state.Action;
             _detailNote.Text = state.Note;
@@ -882,10 +889,21 @@ namespace GuaranteeManager
                 _detailPriorityLabel.Text = "المستوى";
                 _detailReferenceLabel.Text = "المرجع";
                 _detailDueLabel.Text = "المدة";
+                _detailExpiryLabel.Text = "تاريخ الانتهاء";
                 _detailWorkspaceLabel.Text = "المسار";
                 _detailActionLabel.Text = "الإجراء المقترح";
                 _detailNoteLabel.Text = "لماذا ظهر اليوم؟";
+                if (_detailExpiryLine != null)
+                {
+                    _detailExpiryLine.Visibility = Visibility.Visible;
+                }
+
                 return;
+            }
+
+            if (_detailExpiryLine != null)
+            {
+                _detailExpiryLine.Visibility = Visibility.Collapsed;
             }
 
             if (detailProfile == DashboardDetailProfile.PendingRequest)
