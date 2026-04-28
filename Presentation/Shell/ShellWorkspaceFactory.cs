@@ -40,10 +40,11 @@ namespace GuaranteeManager
             Action resumeLastFile,
             Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
             Action showGuarantees,
+            Action<string?, string?> showToday,
             Action<string?> showRequests,
-            Action<string?> showNotifications,
             Action<string?> showReports,
-            string? initialSearchText = null)
+            string? initialSearchText = null,
+            string? initialScopeFilter = null)
         {
             return new DashboardWorkspaceSurface(
                 () => _guaranteeData.QueryGuarantees(
@@ -67,11 +68,12 @@ namespace GuaranteeManager
                 resumeLastFile,
                 openGuaranteeContext,
                 showGuarantees,
+                showToday,
                 showRequests,
-                showNotifications,
                 showReports,
                 showGuarantees,
-                initialSearchText);
+                initialSearchText,
+                initialScopeFilter);
         }
 
         public FrameworkElement CreateRequestsWorkspace(

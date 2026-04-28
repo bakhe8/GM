@@ -185,7 +185,7 @@ namespace GuaranteeManager
 
             return new DashboardWorkItem(
                 DashboardScope.ExpiredFollowUp,
-                DashboardTarget.Notifications,
+                DashboardTarget.Today,
                 item.RootId ?? item.Id,
                 null,
                 GuaranteeFileFocusArea.Actions,
@@ -204,8 +204,8 @@ namespace GuaranteeManager
                 $"متأخر {daysLate.ToString("N0", CultureInfo.InvariantCulture)} يوماً",
                 item.GuaranteeType,
                 "راجع الإجراء الآن",
-                "التنبيهات",
-                "فتح التنبيهات",
+                "اليوم",
+                "فتح اليوم",
                 "مراجعة ملف الضمان واتخاذ قرار تشغيل",
                 $"انتهى الضمان وما زالت حالته التشغيلية {item.LifecycleStatusLabel}. يحتاج متابعة للتأكد من الإفراج أو التمديد أو الإقفال التشغيلي.",
                 TonePalette.Foreground(tone),
@@ -226,7 +226,7 @@ namespace GuaranteeManager
 
             return new DashboardWorkItem(
                 DashboardScope.ExpiringSoon,
-                DashboardTarget.Notifications,
+                DashboardTarget.Today,
                 item.RootId ?? item.Id,
                 null,
                 GuaranteeFileFocusArea.Actions,
@@ -245,8 +245,8 @@ namespace GuaranteeManager
                 $"خلال {daysLeft.ToString("N0", CultureInfo.InvariantCulture)} يوم",
                 item.GuaranteeType,
                 "راجع التمديد الآن",
-                "التنبيهات",
-                "فتح التنبيهات",
+                "اليوم",
+                "فتح اليوم",
                 "التأكد من الحاجة إلى تمديد",
                 $"الضمان ضمن نافذة الانتهاء القريبة. يستحسن مراجعة الطلبات المرتبطة والتأكد من الحاجة إلى تمديد أو إقفال مبكر.",
                 TonePalette.Foreground(tone),
@@ -299,6 +299,7 @@ namespace GuaranteeManager
 
     public enum DashboardTarget
     {
+        Today,
         Guarantees,
         Requests,
         Notifications,
@@ -337,6 +338,7 @@ namespace GuaranteeManager
     {
         public string WorkspaceIconKey => Target switch
         {
+            DashboardTarget.Today => "Icon.Notifications",
             DashboardTarget.Requests => "Icon.Requests",
             DashboardTarget.Notifications => "Icon.Notifications",
             DashboardTarget.Reports => "Icon.Reports",
@@ -345,6 +347,7 @@ namespace GuaranteeManager
 
         public string WorkspaceRowActionLabel => Target switch
         {
+            DashboardTarget.Today => "اليوم",
             DashboardTarget.Requests => "الطلبات",
             DashboardTarget.Notifications => "التنبيهات",
             DashboardTarget.Reports => "التقارير",

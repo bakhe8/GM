@@ -1128,10 +1128,15 @@ namespace GuaranteeManager
 
         private void ShowDashboardWorkspace()
         {
-            ShowDashboardWorkspace(null);
+            ShowDashboardWorkspace(null, null);
         }
 
         private void ShowDashboardWorkspace(string? initialSearchText)
+        {
+            ShowDashboardWorkspace(initialSearchText, null);
+        }
+
+        private void ShowDashboardWorkspace(string? initialSearchText, string? initialScopeFilter)
         {
             if (!CanNavigateToWorkspace(ShellWorkspaceKeys.Dashboard))
             {
@@ -1153,10 +1158,11 @@ namespace GuaranteeManager
                     ResumeLastFile,
                     OpenGuaranteeContextFromDashboard,
                     ShowGuaranteesWorkspace,
+                    ShowDashboardWorkspace,
                     ShowRequestsWorkspace,
-                    ShowNotificationsWorkspace,
                     ShowReportsWorkspace,
-                    initialSearchText));
+                    initialSearchText,
+                    initialScopeFilter));
         }
 
         private void ShowGuaranteesWorkspace()

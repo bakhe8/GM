@@ -23,7 +23,7 @@ namespace GuaranteeManager
         private readonly Action<int, GuaranteeFileFocusArea, int?> _openGuaranteeContext;
         private readonly Action _showGuarantees;
         private readonly Action<string?> _showRequests;
-        private readonly Action<string?> _showNotifications;
+        private readonly Action<string?, string?> _showToday;
         private readonly Action<string?> _showReports;
         private readonly Action? _closeRequested;
 
@@ -68,11 +68,12 @@ namespace GuaranteeManager
             Action resumeLastFile,
             Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
             Action showGuarantees,
+            Action<string?, string?> showToday,
             Action<string?> showRequests,
-            Action<string?> showNotifications,
             Action<string?> showReports,
             Action? closeRequested,
-            string? initialSearchText = null)
+            string? initialSearchText = null,
+            string? initialScopeFilter = null)
         {
             _dataService = new DashboardWorkspaceDataService();
             _coordinator = new DashboardWorkspaceCoordinator();
@@ -84,8 +85,8 @@ namespace GuaranteeManager
             _resumeLastFile = resumeLastFile;
             _openGuaranteeContext = openGuaranteeContext;
             _showGuarantees = showGuarantees;
+            _showToday = showToday;
             _showRequests = showRequests;
-            _showNotifications = showNotifications;
             _showReports = showReports;
             _closeRequested = closeRequested;
 
@@ -101,14 +102,33 @@ namespace GuaranteeManager
             ConfigureActionButtons();
             Content = BuildLayout();
             ReloadData();
-            ApplyInitialSearch(initialSearchText);
+            ApplyInitialState(initialSearchText, initialScopeFilter);
         }
 
-        private void ApplyInitialSearch(string? initialSearchText)
+        private void ApplyInitialState(string? initialSearchText, string? initialScopeFilter)
         {
+            if (!string.IsNullOrWhiteSpace(initialScopeFilter))
+            {
+                string targetScope = initialScopeFilter.Trim();
+                foreach (object item in _scopeFilter.Items)
+                {
+                    if (string.Equals(item as string, targetScope, StringComparison.Ordinal))
+                    {
+                        _scopeFilter.SelectedItem = item;
+                        break;
+                    }
+                }
+            }
+
             if (!string.IsNullOrWhiteSpace(initialSearchText))
             {
                 _searchInput.Text = initialSearchText.Trim();
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(initialScopeFilter))
+            {
+                ApplyFilters();
             }
         }
 
@@ -676,9 +696,9 @@ namespace GuaranteeManager
         {
             _coordinator.OpenSelectedWorkspace(
                 SelectedItem,
+                _showToday,
                 _showGuarantees,
                 _showRequests,
-                _showNotifications,
                 _showReports);
         }
 

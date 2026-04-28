@@ -26,9 +26,9 @@ namespace GuaranteeManager
 
         public void OpenSelectedWorkspace(
             DashboardWorkItem? item,
+            Action<string?, string?> showToday,
             Action showGuarantees,
             Action<string?> showRequests,
-            Action<string?> showNotifications,
             Action<string?> showReports)
         {
             if (item == null)
@@ -40,11 +40,14 @@ namespace GuaranteeManager
 
             switch (item.Target)
             {
+                case DashboardTarget.Today:
+                    showToday(initialSearchText, ResolveTodayScope(item));
+                    break;
                 case DashboardTarget.Requests:
                     showRequests(initialSearchText);
                     break;
                 case DashboardTarget.Notifications:
-                    showNotifications(initialSearchText);
+                    showToday(initialSearchText, ResolveTodayScope(item));
                     break;
                 case DashboardTarget.Reports:
                     showReports(initialSearchText);
@@ -72,6 +75,17 @@ namespace GuaranteeManager
             }
 
             showGuarantees();
+        }
+
+        private static string ResolveTodayScope(DashboardWorkItem item)
+        {
+            return item.Scope switch
+            {
+                DashboardScope.PendingRequests => "طلبات معلقة",
+                DashboardScope.ExpiredFollowUp => "منتهية تحتاج متابعة",
+                DashboardScope.ExpiringSoon => "قريبة الانتهاء",
+                _ => "أعمال اليوم"
+            };
         }
 
         private static string? ResolveWorkspaceContext(DashboardWorkItem item)
