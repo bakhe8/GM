@@ -70,6 +70,14 @@ namespace GuaranteeManager
         public int Id { get; }
         public int RootId { get; }
         public string GuaranteeNo { get; }
+        public string AutomationKey => BuildAutomationKey(GuaranteeNo, Id);
+        public string RowAutomationName => $"{GuaranteeNo} | {Beneficiary}";
+        public string RowMoreAutomationId => BuildRowActionAutomationId("More");
+        public string RowMoreAutomationName => $"المزيد | {GuaranteeNo}";
+        public string RowHistoryAutomationId => BuildRowActionAutomationId("History");
+        public string RowHistoryAutomationName => $"تاريخ | {GuaranteeNo}";
+        public string RowOpenFileAutomationId => BuildRowActionAutomationId("OpenFile");
+        public string RowOpenFileAutomationName => $"فتح الملف | {GuaranteeNo}";
         public string Beneficiary { get; }
         public string Bank { get; }
         public ImageSource BankLogo => GetBankLogo(Bank);
@@ -117,6 +125,17 @@ namespace GuaranteeManager
         public bool HasSuggestedFocus => ActionProfile.SuggestedFocusArea != GuaranteeFileFocusArea.None;
 
         public static ImageSource ResolveBankLogo(string bankName) => GetBankLogo(bankName);
+
+        private string BuildRowActionAutomationId(string action)
+            => $"Guarantees.RowAction.{action}.{AutomationKey}";
+
+        private static string BuildAutomationKey(string value, int fallbackId)
+        {
+            string key = string.Concat((value ?? string.Empty).Where(char.IsLetterOrDigit));
+            return string.IsNullOrWhiteSpace(key)
+                ? fallbackId.ToString(CultureInfo.InvariantCulture)
+                : key;
+        }
 
         public static GuaranteeRow FromGuarantee(Guarantee guarantee, IReadOnlyList<WorkflowRequest> relatedRequests)
         {

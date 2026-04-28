@@ -291,7 +291,15 @@
                         <ListBox Grid.Row="1"
                                  Style="{StaticResource ReferenceTableRowsListBox}"
                                  ItemsSource="{Binding Guarantees}"
-                                 SelectedItem="{Binding SelectedGuarantee, Mode=TwoWay}">
+                                 SelectedItem="{Binding SelectedGuarantee, Mode=TwoWay}"
+                                 automation:AutomationProperties.AutomationId="Guarantees.Table.List"
+                                 automation:AutomationProperties.Name="قائمة الضمانات">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource ReferenceTableRowItem}">
+                                    <Setter Property="automation:AutomationProperties.Name" Value="{Binding RowAutomationName}" />
+                                    <Setter Property="automation:AutomationProperties.ItemStatus" Value="{Binding GuaranteeNo}" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Height="40" Margin="6,0" FlowDirection="LeftToRight">
@@ -311,7 +319,11 @@
                                                     MinWidth="26"
                                                     ToolTip="إجراءات إضافية"
                                                     Click="RowMoreButton_Click"
-                                                    Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                    Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    automation:AutomationProperties.AutomationId="{Binding RowMoreAutomationId}"
+                                                    automation:AutomationProperties.Name="{Binding RowMoreAutomationName}"
+                                                    automation:AutomationProperties.HelpText="يفتح قائمة الإجراءات الإضافية لهذا الضمان."
+                                                    automation:AutomationProperties.ItemStatus="{Binding GuaranteeNo}">
                                                 <Button.ContextMenu>
                                                     <ContextMenu MinWidth="168"
                                                                  FlowDirection="RightToLeft"
@@ -512,7 +524,12 @@
                                             </Button>
                                             <Button Style="{StaticResource RowButton}"
                                                     Command="{Binding DataContext.OpenHistoryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}">
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip="فتح سجل الإصدارات والطلبات لهذا الضمان"
+                                                    automation:AutomationProperties.AutomationId="{Binding RowHistoryAutomationId}"
+                                                    automation:AutomationProperties.Name="{Binding RowHistoryAutomationName}"
+                                                    automation:AutomationProperties.HelpText="يفتح سجل الإصدارات والطلبات لهذا الضمان."
+                                                    automation:AutomationProperties.ItemStatus="{Binding GuaranteeNo}">
                                                 <StackPanel Orientation="Horizontal">
                                                     <Viewbox Width="10" Height="10" Margin="0,0,3,0" VerticalAlignment="Center">
                                                         <Path Data="{StaticResource Icon.History}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
@@ -530,7 +547,11 @@
                                                     ToolTip="{Binding OpenFileAction.Hint}"
                                                     ToolTipService.ShowOnDisabled="True"
                                                     Command="{Binding DataContext.OpenGuaranteeFileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}">
+                                                    CommandParameter="{Binding}"
+                                                    automation:AutomationProperties.AutomationId="{Binding RowOpenFileAutomationId}"
+                                                    automation:AutomationProperties.Name="{Binding RowOpenFileAutomationName}"
+                                                    automation:AutomationProperties.HelpText="{Binding OpenFileAction.Hint}"
+                                                    automation:AutomationProperties.ItemStatus="{Binding GuaranteeNo}">
                                                 <StackPanel Orientation="Horizontal">
                                                     <Viewbox Width="10" Height="10" Margin="0,0,3,0" VerticalAlignment="Center">
                                                         <Path Data="{StaticResource Icon.View}" Stroke="White" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
