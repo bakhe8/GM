@@ -485,22 +485,22 @@ namespace GuaranteeManager
 
         public void CopyGuaranteeNo(GuaranteeRow target)
         {
-            CopyValue(target.GuaranteeNo, "رقم الضمان");
+            CopyValue(target.GuaranteeNo, "رقم الضمان", target.GuaranteeNo);
         }
 
         public void CopySupplier(GuaranteeRow target)
         {
-            CopyValue(target.Beneficiary, "اسم المستفيد");
+            CopyValue(target.Beneficiary, "اسم المستفيد", target.GuaranteeNo);
         }
 
         public void CopyReferenceType(GuaranteeRow target)
         {
-            CopyValue(target.ReferenceFieldLabel, "نوع المرجع");
+            CopyValue(target.ReferenceFieldLabel, "نوع المرجع", target.GuaranteeNo);
         }
 
         public void CopyReferenceNumber(GuaranteeRow target)
         {
-            CopyValue(target.ReferenceNumber, "رقم المرجع");
+            CopyValue(target.ReferenceNumber, "رقم المرجع", target.GuaranteeNo);
         }
 
         public void ExportVisibleGuarantees(IReadOnlyList<GuaranteeRow> rows)
@@ -737,7 +737,7 @@ namespace GuaranteeManager
                 : GuaranteeTimeStatus.Active;
         }
 
-        private static void CopyValue(string? value, string label)
+        private static void CopyValue(string? value, string label, string guaranteeNo)
         {
             if (string.IsNullOrWhiteSpace(value) || value == "---")
             {
@@ -750,7 +750,7 @@ namespace GuaranteeManager
                 Clipboard.SetText(value);
                 App.CurrentApp.GetRequiredService<IShellStatusService>().ShowInfo(
                     $"تم نسخ {label}.",
-                    "الحافظة جاهزة للاستخدام");
+                    $"الضمانات • {guaranteeNo}");
             }
             catch (Exception ex)
             {

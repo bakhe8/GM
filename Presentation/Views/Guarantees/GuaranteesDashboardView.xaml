@@ -483,6 +483,8 @@
                                                         <Separator />
 
                                                         <MenuItem Header="تصدير"
+                                                                  ToolTip="تصدير تقرير أو سجل أو مجموعة ضمانات مرتبطة بالصف الحالي"
+                                                                  automation:AutomationProperties.HelpText="تصدير تقرير أو سجل أو مجموعة ضمانات مرتبطة بالصف الحالي"
                                                                   automation:AutomationProperties.AutomationId="Guarantees.RowMenu.Export">
                                                             <MenuItem.Icon>
                                                                 <Viewbox Width="13" Height="13">
@@ -491,24 +493,36 @@
                                                             </MenuItem.Icon>
 
                                                             <MenuItem Header="تقرير الضمان"
+                                                                      ToolTip="تصدير تقرير تفصيلي لهذا الضمان"
                                                                       Command="{Binding PlacementTarget.Tag.ExportGuaranteeReportCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.ExportReport" />
                                                             <MenuItem Header="سجل الضمان"
+                                                                      ToolTip="تصدير سجل الإصدارات والطلبات لهذا الضمان"
                                                                       Command="{Binding PlacementTarget.Tag.ExportGuaranteeHistoryCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.ExportHistory" />
                                                             <Separator />
                                                             <MenuItem Header="ضمانات نفس البنك"
+                                                                      ToolTip="تصدير كل الضمانات المرتبطة ببنك هذا الضمان"
                                                                       Command="{Binding PlacementTarget.Tag.ExportGuaranteesByBankCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.ExportSameBank" />
                                                             <MenuItem Header="ضمانات نفس المستفيد"
+                                                                      ToolTip="تصدير كل الضمانات المرتبطة بنفس المستفيد"
                                                                       Command="{Binding PlacementTarget.Tag.ExportGuaranteesBySupplierCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.ExportSameBeneficiary" />
                                                             <MenuItem Header="نفس الحالة الزمنية"
+                                                                      ToolTip="تصدير الضمانات التي تشارك هذا الضمان نفس الحالة الزمنية"
                                                                       Command="{Binding PlacementTarget.Tag.ExportGuaranteesByTemporalStatusCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.ExportSameTimeStatus" />
                                                         </MenuItem>
 
                                                         <MenuItem Header="نسخ"
+                                                                  ToolTip="نسخ قيم تعريفية من الصف الحالي إلى الحافظة"
+                                                                  automation:AutomationProperties.HelpText="نسخ قيم تعريفية من الصف الحالي إلى الحافظة"
                                                                   automation:AutomationProperties.AutomationId="Guarantees.RowMenu.Copy">
                                                             <MenuItem.Icon>
                                                                 <Viewbox Width="13" Height="13">
@@ -517,17 +531,25 @@
                                                             </MenuItem.Icon>
 
                                                             <MenuItem Header="رقم الضمان"
+                                                                      ToolTip="نسخ رقم الضمان إلى الحافظة"
                                                                       Command="{Binding PlacementTarget.Tag.CopyGuaranteeNoCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CopyGuaranteeNo" />
                                                             <MenuItem Header="اسم المستفيد"
+                                                                      ToolTip="نسخ اسم المستفيد إلى الحافظة"
                                                                       Command="{Binding PlacementTarget.Tag.CopyGuaranteeSupplierCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CopyBeneficiary" />
                                                             <MenuItem Header="نوع المرجع"
+                                                                      ToolTip="نسخ نوع المرجع إلى الحافظة"
                                                                       Command="{Binding PlacementTarget.Tag.CopyGuaranteeReferenceTypeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CopyReferenceType" />
                                                             <MenuItem Header="رقم المرجع"
+                                                                      ToolTip="نسخ رقم المرجع إلى الحافظة"
                                                                       Command="{Binding PlacementTarget.Tag.CopyGuaranteeReferenceNumberCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CopyReferenceNumber" />
                                                         </MenuItem>
                                                     </ContextMenu>
                                                 </Button.ContextMenu>
