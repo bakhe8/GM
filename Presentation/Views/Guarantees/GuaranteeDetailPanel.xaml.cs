@@ -9,8 +9,21 @@ namespace GuaranteeManager
 {
     public partial class GuaranteeDetailPanel : UserControl
     {
+        public static readonly DependencyProperty IsDetachedFileProperty =
+            DependencyProperty.Register(
+                nameof(IsDetachedFile),
+                typeof(bool),
+                typeof(GuaranteeDetailPanel),
+                new PropertyMetadata(false));
+
         private ShellViewModel? _shellViewModel;
         private int _lastAppliedFocusRequestVersion;
+
+        public bool IsDetachedFile
+        {
+            get => (bool)GetValue(IsDetachedFileProperty);
+            private set => SetValue(IsDetachedFileProperty, value);
+        }
 
         public GuaranteeDetailPanel()
         {
@@ -37,6 +50,7 @@ namespace GuaranteeManager
 
         private void GuaranteeDetailPanel_Loaded(object sender, RoutedEventArgs e)
         {
+            IsDetachedFile = Window.GetWindow(this) is Window window && window is not MainWindow;
             TryApplyPendingOrCurrentFocus();
         }
 
