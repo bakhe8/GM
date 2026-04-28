@@ -238,43 +238,6 @@
                             </StackPanel>
                         </Button>
 
-                        <TextBlock Text="متابعة اليوم" Style="{StaticResource NavSectionTitle}" />
-                        <TextBlock Text="عدسة تفصيلية انتقالية حتى تكتمل سعة اليوم" Style="{StaticResource NavSectionHint}" />
-
-                        <!-- التنبيهات مع Badge -->
-                        <Button
-                                Margin="0,2,0,0"
-                                Command="{Binding ShowNotificationsCommand}"
-                                automation:AutomationProperties.AutomationId="Shell.Sidebar.Notifications"
-                                automation:AutomationProperties.Name="التنبيهات"
-                                ToolTip="عدسة متابعة تفصيلية تابعة لليوم">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding CurrentWorkspaceKey}" Value="{x:Static local:ShellWorkspaceKeys.Notifications}">
-                                            <Setter Property="Background" Value="#1D5ED8" />
-                                            <Setter Property="Foreground" Value="White" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                            <StackPanel>
-                                <Grid Width="28" Height="22" HorizontalAlignment="Center">
-                                    <Viewbox Width="20" Height="20" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                        <Path Data="{StaticResource Icon.Notifications}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                    </Viewbox>
-                                    <Border Width="14" Height="14" CornerRadius="7"
-                                            Background="#EF4444"
-                                            HorizontalAlignment="Right" VerticalAlignment="Top"
-                                            Margin="0,-7,-4,0">
-                                        <TextBlock Text="7" FontSize="8" FontWeight="Bold" Foreground="White"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                </Grid>
-                                <TextBlock Text="التنبيهات" Style="{StaticResource NavLabelText}" />
-                            </StackPanel>
-                        </Button>
-
                         <TextBlock Text="التحليلات والمخرجات" Style="{StaticResource NavSectionTitle}" />
                         <TextBlock Text="اقرأ الصورة الكلية ثم أنشئ المخرج المناسب" Style="{StaticResource NavSectionHint}" />
 

@@ -1158,6 +1158,7 @@ namespace GuaranteeManager
                     ResumeLastFile,
                     OpenGuaranteeContextFromDashboard,
                     ShowGuaranteesWorkspace,
+                    ShowNotificationsWorkspace,
                     ShowDashboardWorkspace,
                     ShowRequestsWorkspace,
                     ShowReportsWorkspace,
