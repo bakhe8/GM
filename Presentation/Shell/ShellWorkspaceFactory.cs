@@ -112,7 +112,11 @@ namespace GuaranteeManager
                 initialSearchText);
         }
 
-        public FrameworkElement CreateNotificationsWorkspace(Action closeRequested, string? initialSearchText = null)
+        public FrameworkElement CreateNotificationsWorkspace(
+            Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
+            Action showGuarantees,
+            Action closeRequested,
+            string? initialSearchText = null)
         {
             List<Guarantee> expiring = _database.QueryGuarantees(new GuaranteeQueryOptions
             {
@@ -128,7 +132,7 @@ namespace GuaranteeManager
                 Limit = 10
             });
 
-            return new NotificationsWorkspaceSurface(expiring, expired, closeRequested, initialSearchText);
+            return new NotificationsWorkspaceSurface(expiring, expired, openGuaranteeContext, showGuarantees, closeRequested, initialSearchText);
         }
 
         public FrameworkElement CreateSettingsWorkspace(Action closeRequested, Action refreshAfterDataReset, string? initialSearchText = null)

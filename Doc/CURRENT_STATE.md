@@ -663,7 +663,7 @@
 ## آخر تحقق معروف
 
 - `dotnet build .\\my_work.sln` ناجح
-- `dotnet test .\\my_work.sln --no-build` ناجح: `50/50`
+- `dotnet test .\\my_work.sln --no-build` ناجح: `54/54`
 - baseline القبول الحالي محفوظ هنا:
   - [UIAcceptance/baselines/2026-04-26-stabilization](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/Assets/Documentation/Screenshots/UIAcceptance/baselines/2026-04-26-stabilization)
 - كما توجد جولة قبول ناجحة على بيانات مولدة أثقل هنا:
@@ -702,3 +702,25 @@
   - للـ baseline المعتمد حاليًا
 - [README_v1.1.0-preview.2.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/releases/README_v1.1.0-preview.2.md:1)
   - لوضع النسخة الحالية كإصدار تطويري
+
+## آخر تقدم برمجي
+
+- أُغلقت الآن أول جولة `cross-entry` بين السطوح المختلفة، وخرجت بإصلاحين حقيقيين:
+  - `Dashboard` لم تعد تكتفي بتغيير النص المرئي في أزرار التفاصيل؛ صارت خصائص الأتمتة نفسها (`Name / HelpText / ItemStatus`) تتحدث مع السياق الحالي
+  - `Notifications` لم تعد سطح نسخ فقط؛ صار فيها دخول مباشر إلى `ملف الضمان` عبر `فتح الضمان`
+- التحقق الحي أكد:
+  - `Dashboard.Detail.PrimaryActionButton`
+    - `Name = راجع الإجراء الآن`
+    - `HelpText = مراجعة ملف الضمان واتخاذ قرار تشغيل`
+    - `ItemStatus = BG-2026-0007`
+  - `Dashboard.Detail.OpenWorkspaceButton`
+    - `Name = فتح التنبيهات`
+    - `HelpText = التنبيهات`
+    - `ItemStatus = BG-2026-0007`
+  - `Notifications.Detail.OpenGuaranteeButton` يفتح:
+    - `Name = فتح الضمان BG-2026-0007`
+    - `HelpText = بدء متابعة فورية مع البنك والجهة المستفيدة.`
+    - `ItemStatus = BG-2026-0007`
+    - ثم يفتح `ملف الضمان - BG-2026-0007`
+    - مع ظهور قسم `الإجراءات المتاحة الآن` مباشرة داخل النافذة المفتوحة
+- هذا يجعل مسارات الدخول المتقاطعة الآن أصدق للمستخدم، وأوضح للأداة، وأقرب لفكرة "الوصول لنفس العمل من أكثر من سطح بدون ضياع للسياق"

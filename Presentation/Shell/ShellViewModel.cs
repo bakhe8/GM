@@ -632,6 +632,16 @@ namespace GuaranteeManager
 
         private void OpenGuaranteeContextFromDashboard(int rootId, GuaranteeFileFocusArea area, int? requestIdToFocus)
         {
+            OpenGuaranteeContext("dashboard", rootId, area, requestIdToFocus);
+        }
+
+        private void OpenGuaranteeContextFromNotifications(int rootId, GuaranteeFileFocusArea area, int? requestIdToFocus)
+        {
+            OpenGuaranteeContext("notifications", rootId, area, requestIdToFocus);
+        }
+
+        private void OpenGuaranteeContext(string sourceKey, int rootId, GuaranteeFileFocusArea area, int? requestIdToFocus)
+        {
             if (!CanNavigateToWorkspace(ShellWorkspaceKeys.Guarantees))
             {
                 return;
@@ -666,7 +676,7 @@ namespace GuaranteeManager
             QueueGuaranteeFileOpenFocus(area, requestIdToFocus, row.RootId);
             OpenGuaranteeFile(row);
             _diagnostics.RecordEvent(
-                "dashboard.action",
+                $"{sourceKey}.action",
                 "open-guarantee-context",
                 new
                 {
@@ -674,7 +684,7 @@ namespace GuaranteeManager
                     FocusArea = area.ToString(),
                     requestIdToFocus
                 });
-            WriteDiagnosticsState("dashboard-open-guarantee-context");
+            WriteDiagnosticsState($"{sourceKey}-open-guarantee-context");
         }
 
         private void ApplySmartFilter()
@@ -1268,7 +1278,11 @@ namespace GuaranteeManager
 
             ActivateWorkspace(
                 ShellWorkspaceKeys.Notifications,
-                _workspaceFactory.CreateNotificationsWorkspace(CloseActiveWorkspace, initialSearchText));
+                _workspaceFactory.CreateNotificationsWorkspace(
+                    OpenGuaranteeContextFromNotifications,
+                    ShowGuaranteesWorkspace,
+                    CloseActiveWorkspace,
+                    initialSearchText));
         }
 
         private void ShowSettingsWorkspace()

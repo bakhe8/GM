@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Windows.Automation;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -34,17 +35,24 @@ namespace GuaranteeManager
         private readonly TextBlock _detailAmountHeadline = BuildAmountHeadline();
         private readonly TextBlock _detailAmountCaption = BuildMutedText(11, FontWeights.Normal);
         private readonly TextBlock _detailNote = BuildMutedText(11, FontWeights.Normal);
+        private readonly Button _openGuaranteeButton = new();
         private readonly Action? _closeRequested;
+        private readonly Action<int, GuaranteeFileFocusArea, int?> _openGuaranteeContext;
+        private readonly Action _showGuarantees;
 
         public NotificationsWorkspaceSurface(
             IReadOnlyList<Guarantee> expiring,
             IReadOnlyList<Guarantee> expired,
+            Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
+            Action showGuarantees,
             Action? closeRequested,
             string? initialSearchText = null)
         {
             _dataService = new NotificationsWorkspaceDataService();
             _coordinator = new NotificationsWorkspaceCoordinator();
             _allItems = _dataService.BuildItems(expiring, expired);
+            _openGuaranteeContext = openGuaranteeContext;
+            _showGuarantees = showGuarantees;
             _closeRequested = closeRequested;
             UiInstrumentation.Identify(this, "Notifications.Workspace", "التنبيهات");
             UiInstrumentation.Identify(_searchInput, "Notifications.SearchBox", "بحث التنبيهات");
@@ -330,6 +338,15 @@ namespace GuaranteeManager
 
         private Border BuildDetailActions()
         {
+            _openGuaranteeButton.Content = "فتح الضمان";
+            _openGuaranteeButton.Style = WorkspaceSurfaceChrome.Style("PrimaryButton");
+            _openGuaranteeButton.FontSize = 9.5;
+            _openGuaranteeButton.Click += (_, _) =>
+            {
+                _coordinator.OpenGuaranteeContext(SelectedItem, _openGuaranteeContext, _showGuarantees);
+            };
+            UiInstrumentation.Identify(_openGuaranteeButton, "Notifications.Detail.OpenGuaranteeButton", "فتح الضمان");
+
             var copyGuaranteeButton = new Button
             {
                 Content = "نسخ الرقم",
@@ -382,16 +399,16 @@ namespace GuaranteeManager
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
             });
 
-            var actions = new Grid { FlowDirection = FlowDirection.LeftToRight, Margin = new Thickness(0, 9, 0, 0) };
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            var actions = new WrapPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                Margin = new Thickness(0, 9, 0, 0),
+                ItemWidth = 112,
+                ItemHeight = 34
+            };
+            actions.Children.Add(_openGuaranteeButton);
             actions.Children.Add(copyGuaranteeButton);
-            Grid.SetColumn(copyBankButton, 2);
             actions.Children.Add(copyBankButton);
-            Grid.SetColumn(copyAmountButton, 4);
             actions.Children.Add(copyAmountButton);
             Grid.SetRow(actions, 1);
             grid.Children.Add(actions);
@@ -622,7 +639,22 @@ namespace GuaranteeManager
 
         private void UpdateDetails()
         {
-            ApplyDetailState(_dataService.BuildDetailState(SelectedItem));
+            NotificationWorkspaceItem? selectedItem = SelectedItem;
+            ApplyDetailState(_dataService.BuildDetailState(selectedItem));
+            bool hasSelection = selectedItem != null;
+            _openGuaranteeButton.IsEnabled = hasSelection;
+
+            if (!hasSelection)
+            {
+                AutomationProperties.SetName(_openGuaranteeButton, "فتح الضمان");
+                AutomationProperties.SetHelpText(_openGuaranteeButton, "اختر تنبيهًا أولًا لفتح ملف الضمان المرتبط به.");
+                AutomationProperties.SetItemStatus(_openGuaranteeButton, "---");
+                return;
+            }
+
+            AutomationProperties.SetName(_openGuaranteeButton, $"فتح الضمان {selectedItem!.GuaranteeNo}");
+            AutomationProperties.SetHelpText(_openGuaranteeButton, selectedItem.FollowUpAction);
+            AutomationProperties.SetItemStatus(_openGuaranteeButton, selectedItem.GuaranteeNo);
         }
 
         private void ApplyMetrics(NotificationsWorkspaceMetrics metrics)

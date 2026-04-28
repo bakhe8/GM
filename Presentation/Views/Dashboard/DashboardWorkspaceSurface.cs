@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Automation;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -727,6 +728,12 @@ namespace GuaranteeManager
             _detailNote.Text = state.Note;
             _primaryActionButton.Content = state.PrimaryActionButtonLabel;
             _openWorkspaceButton.Content = state.WorkspaceButtonLabel;
+            AutomationProperties.SetName(_primaryActionButton, state.PrimaryActionButtonLabel);
+            AutomationProperties.SetHelpText(_primaryActionButton, state.Action);
+            AutomationProperties.SetItemStatus(_primaryActionButton, state.Reference);
+            AutomationProperties.SetName(_openWorkspaceButton, state.WorkspaceButtonLabel);
+            AutomationProperties.SetHelpText(_openWorkspaceButton, state.Workspace);
+            AutomationProperties.SetItemStatus(_openWorkspaceButton, state.Reference);
             _primaryActionButton.IsEnabled = state.CanRunPrimaryAction;
             _openWorkspaceButton.IsEnabled = state.CanOpenWorkspace;
             _copyReferenceButton.IsEnabled = state.CanRunPrimaryAction;
