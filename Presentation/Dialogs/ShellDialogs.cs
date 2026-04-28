@@ -742,7 +742,12 @@ namespace GuaranteeManager
 
         private void OnClosing(object? sender, CancelEventArgs e)
         {
-            if (_allowCloseWithoutPrompt || !_isDirty)
+            if (_allowCloseWithoutPrompt)
+            {
+                return;
+            }
+
+            if (!_isDirty || !HasMeaningfulChanges())
             {
                 return;
             }
@@ -754,6 +759,36 @@ namespace GuaranteeManager
             }
 
             e.Cancel = true;
+        }
+
+        private bool HasMeaningfulChanges()
+        {
+            string guaranteeNo = _guaranteeNoInput.Text.Trim();
+            string supplier = _supplierInput.Text.Trim();
+            string beneficiary = _beneficiaryInput.Text.Trim();
+            string bank = GetComboText(_bankInput);
+            string guaranteeType = GetComboText(_typeInput);
+            string amountText = _amountInput.Text.Replace(",", string.Empty, StringComparison.Ordinal).Trim();
+            string expiryText = _expiryInput.Text.Trim();
+            string referenceNumber = _referenceNumberInput.Text.Trim();
+            string notes = _notesInput.Text.Trim();
+            GuaranteeReferenceType referenceType = (_referenceTypeInput.SelectedItem as ReferenceTypeOption)?.Value ?? GuaranteeReferenceType.None;
+
+            bool amountChanged = !decimal.TryParse(amountText, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal amount) || amount != 0;
+            bool expiryChanged = !DateTime.TryParse(expiryText, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime expiryDate)
+                                 || expiryDate.Date != DateTime.Today.AddMonths(6).Date;
+
+            return !string.IsNullOrWhiteSpace(guaranteeNo)
+                   || !string.IsNullOrWhiteSpace(supplier)
+                   || !string.IsNullOrWhiteSpace(beneficiary)
+                   || !string.IsNullOrWhiteSpace(bank)
+                   || !string.IsNullOrWhiteSpace(guaranteeType)
+                   || amountChanged
+                   || expiryChanged
+                   || referenceType != GuaranteeReferenceType.Contract
+                   || !string.IsNullOrWhiteSpace(referenceNumber)
+                   || !string.IsNullOrWhiteSpace(notes)
+                   || _attachmentPaths.Count > 0;
         }
 
         private static string GetComboText(ComboBox comboBox)
@@ -1433,7 +1468,12 @@ namespace GuaranteeManager
 
         private void OnClosing(object? sender, CancelEventArgs e)
         {
-            if (_allowCloseWithoutPrompt || !_isDirty)
+            if (_allowCloseWithoutPrompt)
+            {
+                return;
+            }
+
+            if (!_isDirty || !HasMeaningfulChanges())
             {
                 return;
             }
@@ -1445,6 +1485,38 @@ namespace GuaranteeManager
             }
 
             e.Cancel = true;
+        }
+
+        private bool HasMeaningfulChanges()
+        {
+            string guaranteeNo = _guaranteeNoInput.Text.Trim();
+            string supplier = _supplierInput.Text.Trim();
+            string beneficiary = _beneficiaryInput.Text.Trim();
+            string bank = GetComboText(_bankInput);
+            string guaranteeType = GetComboText(_typeInput);
+            string amountText = _amountInput.Text.Replace(",", string.Empty, StringComparison.Ordinal).Trim();
+            string currentAmountText = _currentGuarantee.Amount.ToString("N2", CultureInfo.InvariantCulture).Replace(",", string.Empty, StringComparison.Ordinal).Trim();
+            string expiryText = _expiryInput.Text.Trim();
+            string currentExpiryText = _currentGuarantee.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+            string referenceNumber = _referenceNumberInput.Text.Trim();
+            string notes = _notesInput.Text.Trim();
+            GuaranteeReferenceType referenceType = (_referenceTypeInput.SelectedItem as ReferenceTypeOption)?.Value ?? GuaranteeReferenceType.None;
+            string effectiveBeneficiary = string.IsNullOrWhiteSpace(beneficiary) ? supplier : beneficiary;
+            string currentBeneficiary = string.IsNullOrWhiteSpace(_currentGuarantee.Beneficiary) ? _currentGuarantee.Supplier : _currentGuarantee.Beneficiary;
+            string currentNotes = _currentGuarantee.Notes?.Trim() ?? string.Empty;
+
+            return !string.Equals(guaranteeNo, _currentGuarantee.GuaranteeNo, StringComparison.Ordinal)
+                   || !string.Equals(supplier, _currentGuarantee.Supplier, StringComparison.Ordinal)
+                   || !string.Equals(effectiveBeneficiary, currentBeneficiary, StringComparison.Ordinal)
+                   || !string.Equals(bank, _currentGuarantee.Bank, StringComparison.Ordinal)
+                   || !string.Equals(guaranteeType, _currentGuarantee.GuaranteeType, StringComparison.Ordinal)
+                   || !string.Equals(amountText, currentAmountText, StringComparison.Ordinal)
+                   || !string.Equals(expiryText, currentExpiryText, StringComparison.Ordinal)
+                   || referenceType != _currentGuarantee.ReferenceType
+                   || !string.Equals(referenceNumber, _currentGuarantee.ReferenceNumber, StringComparison.Ordinal)
+                   || !string.Equals(notes, currentNotes, StringComparison.Ordinal)
+                   || _newAttachmentPaths.Count > 0
+                   || _removedAttachmentIds.Count > 0;
         }
 
         private static string GetComboText(ComboBox comboBox)

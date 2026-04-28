@@ -1353,9 +1353,35 @@ namespace GuaranteeManager
         {
             Refresh();
             SelectedGuarantee = rootIdToRestore > 0
-                ? Guarantees.FirstOrDefault(row => row.RootId == rootIdToRestore) ?? Guarantees.FirstOrDefault()
+                ? ResolveOrSurfaceGuaranteeRow(rootIdToRestore) ?? Guarantees.FirstOrDefault()
                 : Guarantees.FirstOrDefault();
             WriteDiagnosticsState("workflow-change");
+        }
+
+        private GuaranteeRow? ResolveOrSurfaceGuaranteeRow(int rootId)
+        {
+            GuaranteeRow? visibleRow = Guarantees.FirstOrDefault(row => row.RootId == rootId);
+            if (visibleRow != null)
+            {
+                return visibleRow;
+            }
+
+            Guarantee? currentGuarantee = _database.GetCurrentGuaranteeByRootId(rootId);
+            if (currentGuarantee == null)
+            {
+                return null;
+            }
+
+            List<WorkflowRequest> requests = _database.GetWorkflowRequestsByRootId(rootId);
+            GuaranteeRow surfacedRow = GuaranteeRow.FromGuarantee(currentGuarantee, requests);
+            Guarantees.Insert(0, surfacedRow);
+
+            while (Guarantees.Count > PageSize)
+            {
+                Guarantees.RemoveAt(Guarantees.Count - 1);
+            }
+
+            return surfacedRow;
         }
 
         private void RefreshAfterDataReset()
