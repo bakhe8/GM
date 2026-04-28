@@ -85,7 +85,9 @@ namespace GuaranteeManager
             SaveFileDialog dialog = new()
             {
                 Title = "حفظ نسخة احتياطية",
-                FileName = $"guarantees_manual_backup_{DateTime.Now:yyyyMMdd_HHmmss}.db",
+                FileName = $"guarantees_manual_backup_{DateTime.Now:yyyyMMdd_HHmmss}",
+                DefaultExt = ".db",
+                AddExtension = false,
                 Filter = "Database Files|*.db|All Files|*.*"
             };
 
@@ -96,9 +98,15 @@ namespace GuaranteeManager
 
             try
             {
-                _backupService.CreateManualBackup(dialog.FileName);
-                string output = _backupService.LastManualBackupPath ?? dialog.FileName;
-                _diagnostics.RecordEvent("settings.operation", "manual-backup-created", new { OutputPath = output });
+                string targetPath = ResolveManualBackupPath(dialog.FileName);
+                _backupService.CreateManualBackup(targetPath);
+                string output = _backupService.LastManualBackupPath ?? targetPath;
+                _diagnostics.RecordEvent("settings.operation", "manual-backup-created", new
+                {
+                    OutputPath = output,
+                    RequestedPath = dialog.FileName,
+                    NormalizedPath = targetPath
+                });
                 _shellStatus.ShowSuccess("تم إنشاء النسخة الاحتياطية.", $"الإعدادات • {Path.GetFileName(output)}");
             }
             catch (Exception ex)
@@ -106,6 +114,32 @@ namespace GuaranteeManager
                 _diagnostics.RecordEvent("settings.operation", "manual-backup-failed", new { TargetPath = dialog.FileName, ex.Message });
                 MessageBox.Show(ex.Message, "النسخ الاحتياطي", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
+        }
+
+        private static string ResolveManualBackupPath(string requestedPath)
+        {
+            if (string.IsNullOrWhiteSpace(requestedPath))
+            {
+                throw new ArgumentException("مسار النسخة الاحتياطية المطلوب غير صالح.", nameof(requestedPath));
+            }
+
+            string fullPath = Path.GetFullPath(requestedPath);
+            string extension = Path.GetExtension(fullPath);
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                return $"{fullPath}.db";
+            }
+
+            if (string.Equals(extension, ".db", StringComparison.OrdinalIgnoreCase))
+            {
+                string withoutTrailingDb = fullPath[..^extension.Length];
+                if (!string.IsNullOrWhiteSpace(Path.GetExtension(withoutTrailingDb)))
+                {
+                    return withoutTrailingDb;
+                }
+            }
+
+            return fullPath;
         }
 
         public void RestoreManualBackup(Action refreshAfterDataChange)

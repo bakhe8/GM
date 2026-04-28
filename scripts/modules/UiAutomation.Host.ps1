@@ -37,7 +37,19 @@ function Read-UiCapabilitySessionStateRaw {
         return $null
     }
 
-    return Normalize-UiCapabilitySessionState -SessionState ($content | ConvertFrom-Json)
+    try {
+        return Normalize-UiCapabilitySessionState -SessionState ($content | ConvertFrom-Json)
+    }
+    catch {
+        $corruptPath = "{0}.corrupt-{1}.json" -f $path, (Get-Date -Format "yyyyMMdd-HHmmss-fff")
+        try {
+            Move-Item -LiteralPath $path -Destination $corruptPath -Force
+        }
+        catch {
+        }
+
+        return $null
+    }
 }
 
 function Save-UiCapabilitySessionState {
@@ -54,19 +66,29 @@ function Save-UiCapabilitySessionState {
 
     $json = $SessionState | ConvertTo-Json -Depth 10
     $saved = $false
+    $tempPath = "{0}.{1}.{2}.tmp" -f $path, $PID, ([guid]::NewGuid().ToString("N"))
     for ($attempt = 1; $attempt -le 6; $attempt++) {
         try {
-            Set-Content -Path $path -Value $json -Encoding UTF8
+            Set-Content -LiteralPath $tempPath -Value $json -Encoding UTF8
+            Move-Item -LiteralPath $tempPath -Destination $path -Force
             $saved = $true
             break
         }
         catch {
+            if (Test-Path -LiteralPath $tempPath) {
+                Remove-Item -LiteralPath $tempPath -Force -ErrorAction SilentlyContinue
+            }
+
             if ($attempt -ge 6) {
                 throw
             }
 
             Start-Sleep -Milliseconds (60 * $attempt)
         }
+    }
+
+    if (Test-Path -LiteralPath $tempPath) {
+        Remove-Item -LiteralPath $tempPath -Force -ErrorAction SilentlyContinue
     }
 
     if (-not $saved) {
