@@ -41,6 +41,8 @@ namespace GuaranteeManager
         private readonly TextBlock _portfolioAmountValue = BuildMetricValue();
         private readonly TextBlock _pendingValue = BuildMetricValue();
         private readonly TextBlock _followUpValue = BuildMetricValue();
+        private readonly TextBlock _detailPanelHeading = BuildSectionHeading();
+        private readonly TextBlock _detailActionsHeading = BuildSectionHeading(12);
         private readonly TextBlock _detailTitle = BuildDetailValue(16, FontWeights.Bold);
         private readonly TextBlock _detailSubtitle = BuildMutedText(11, FontWeights.SemiBold);
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
@@ -378,13 +380,7 @@ namespace GuaranteeManager
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-            grid.Children.Add(new TextBlock
-            {
-                Text = "اليوم",
-                FontSize = 16,
-                FontWeight = FontWeights.Bold,
-                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
-            });
+            grid.Children.Add(_detailPanelHeading);
 
             var closeButton = new Button
             {
@@ -443,13 +439,7 @@ namespace GuaranteeManager
             var grid = new Grid();
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            grid.Children.Add(new TextBlock
-            {
-                Text = "الخطوة التالية",
-                FontSize = 12,
-                FontWeight = FontWeights.Bold,
-                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
-            });
+            grid.Children.Add(_detailActionsHeading);
 
             var actions = new Grid { FlowDirection = FlowDirection.LeftToRight, Margin = new Thickness(0, 9, 0, 0) };
             actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -878,6 +868,8 @@ namespace GuaranteeManager
         {
             if (detailProfile == DashboardDetailProfile.FollowUp)
             {
+                _detailPanelHeading.Text = "متابعة انتهاء";
+                _detailActionsHeading.Text = "قرار المتابعة";
                 _detailCategoryLabel.Text = "نوع المتابعة";
                 _detailPriorityLabel.Text = "المستوى";
                 _detailReferenceLabel.Text = "المرجع";
@@ -890,6 +882,8 @@ namespace GuaranteeManager
 
             if (detailProfile == DashboardDetailProfile.PendingRequest)
             {
+                _detailPanelHeading.Text = "طلب معلق";
+                _detailActionsHeading.Text = "خطوة الطلب التالية";
                 _detailCategoryLabel.Text = "نوع الطلب";
                 _detailPriorityLabel.Text = "مستوى الانتظار";
                 _detailReferenceLabel.Text = "رقم الضمان";
@@ -900,6 +894,8 @@ namespace GuaranteeManager
                 return;
             }
 
+            _detailPanelHeading.Text = "اليوم";
+            _detailActionsHeading.Text = "الخطوة التالية";
             _detailCategoryLabel.Text = "الفئة";
             _detailPriorityLabel.Text = "الأولوية";
             _detailReferenceLabel.Text = "المرجع";
@@ -930,6 +926,16 @@ namespace GuaranteeManager
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                 TextAlignment = TextAlignment.Right,
                 TextWrapping = TextWrapping.Wrap
+            };
+        }
+
+        private static TextBlock BuildSectionHeading(double size = 16)
+        {
+            return new TextBlock
+            {
+                FontSize = size,
+                FontWeight = FontWeights.Bold,
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
             };
         }
 
