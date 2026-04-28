@@ -690,7 +690,26 @@ namespace GuaranteeManager
             }
 
             SelectedGuarantee = target;
+            GuaranteeFileFocusArea focusArea = target.SuggestedFocusArea == GuaranteeFileFocusArea.None
+                ? GuaranteeFileFocusArea.ExecutiveSummary
+                : target.SuggestedFocusArea;
+            QueueGuaranteeFileOpenFocus(focusArea, ResolveInitialFileFocusRequestId(target, focusArea), target.RootId);
             GuaranteeFileDialog.ShowFor(this, target);
+        }
+
+        private int? ResolveInitialFileFocusRequestId(GuaranteeRow target, GuaranteeFileFocusArea focusArea)
+        {
+            if (focusArea != GuaranteeFileFocusArea.Requests)
+            {
+                return null;
+            }
+
+            return _database.GetWorkflowRequestsByRootId(target.RootId)
+                .OrderBy(request => request.Status == RequestStatus.Pending ? 0 : 1)
+                .ThenByDescending(request => request.RequestDate)
+                .ThenByDescending(request => request.SequenceNumber)
+                .FirstOrDefault()
+                ?.Id;
         }
 
         private void OpenGuaranteeContextFromDashboard(int rootId, GuaranteeFileFocusArea area, int? requestIdToFocus)

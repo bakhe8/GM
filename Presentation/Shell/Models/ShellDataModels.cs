@@ -544,7 +544,7 @@ namespace GuaranteeManager
                 outputCount,
                 letterCount,
                 responseCount,
-                ActionEligibility.Enabled("يفتح ملف الضمان في مساحة أوسع للعمل اليومي المركّز."),
+                ActionEligibility.Enabled("يفتح ملف الضمان على القسم الأنسب لحالته الحالية."),
                 registerResponse,
                 openAttachments,
                 openRequests,
