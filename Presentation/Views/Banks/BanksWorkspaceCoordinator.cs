@@ -1,11 +1,19 @@
 using System;
 using System.Windows;
+using GuaranteeManager.Services;
 using MessageBox = GuaranteeManager.Services.AppMessageBox;
 
 namespace GuaranteeManager
 {
     public sealed class BanksWorkspaceCoordinator
     {
+        private readonly IShellStatusService _shellStatus;
+
+        public BanksWorkspaceCoordinator()
+        {
+            _shellStatus = App.CurrentApp.GetRequiredService<IShellStatusService>();
+        }
+
         public void CopyBank(BankWorkspaceItem? item)
         {
             if (item == null)
@@ -13,7 +21,7 @@ namespace GuaranteeManager
                 return;
             }
 
-            CopyText(item.Bank, "اسم البنك");
+            CopyText(item.Bank, "اسم البنك", $"البنوك • {item.Bank}");
         }
 
         public void CopyAmount(BankWorkspaceItem? item)
@@ -23,7 +31,7 @@ namespace GuaranteeManager
                 return;
             }
 
-            CopyText(item.AmountDisplay, "قيمة البنك");
+            CopyText(item.AmountDisplay, "إجمالي قيمة البنك", $"البنوك • {item.Bank}");
         }
 
         public void CopyBeneficiary(BankWorkspaceItem? item)
@@ -33,14 +41,15 @@ namespace GuaranteeManager
                 return;
             }
 
-            CopyText(item.TopBeneficiary, "المستفيد");
+            CopyText(item.TopBeneficiary, "اسم المستفيد الأعلى", $"البنوك • {item.Bank}");
         }
 
-        private static void CopyText(string value, string label)
+        private void CopyText(string value, string label, string secondaryText)
         {
             try
             {
                 Clipboard.SetText(value);
+                _shellStatus.ShowInfo($"تم نسخ {label}.", secondaryText);
             }
             catch (Exception ex)
             {
