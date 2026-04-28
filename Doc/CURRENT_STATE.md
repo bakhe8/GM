@@ -763,3 +763,16 @@
     - من بطاقة `BG-2026-0041`
     - ثم قيمة `Requests.SearchBox = BG-2026-0041`
 - بهذا صار `Dashboard` لا يكتفي بفتح surface صحيحة شكليًا، بل يعيد المستخدم إلى **نفس العمل** داخلها بسياق مباشر ومقروء
+- ثم أُغلقت جولة `return-to-work` الأولى cleanly من `Notifications`:
+  - `Notifications -> فتح الضمان -> إغلاق ملف الضمان`
+  - وبعد الرجوع بقي:
+    - `Notifications.SearchBox = BG-2026-0007`
+    - `Notifications.Detail.OpenGuaranteeButton`
+      - `Name = فتح الضمان BG-2026-0007`
+      - `ItemStatus = BG-2026-0007`
+  - كما بقيت النافذة الرئيسية وحدها مفتوحة من غير حوار عالق
+  - وتحدّثت session نفسها كما ينبغي:
+    - `CurrentWorkspaceKey = Notifications`
+    - `HasLastFile = true`
+    - `LastFileGuaranteeNo = BG-2026-0007`
+- هذا يعني أن الرجوع بعد الفتح لم يعد فقط “يعمل”، بل يحافظ أيضًا على **نقطة العمل** التي انطلق منها المستخدم

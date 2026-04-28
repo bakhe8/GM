@@ -625,3 +625,30 @@
 - `Dashboard` لم تعد تفتح surface عامة فقط
 - صارت تعيد المستخدم إلى surface صحيحة **وبسياق جاهز للعمل**
 - وهذا يقفل حلقة مهمة جدًا في `cross-entry`: الوصول من dashboard إلى العمل المقصود، لا إلى الشاشة المقصودة فقط
+
+### الجولة 7 — Return to work after opening
+
+بعد إقفال حمل السياق من `Dashboard`، اختُبرت نقطة الرجوع نفسها من `Notifications`:
+
+- `Notifications -> فتح الضمان`
+- ثم إغلاق `ملف الضمان`
+- ثم متابعة العمل من السطح نفسه
+
+النتيجة خرجت cleanly بدون bug جديد:
+
+- بقيت قيمة البحث كما هي:
+  - `Notifications.SearchBox = BG-2026-0007`
+- وبقيت بطاقة العمل نفسها واضحة:
+  - `Notifications.Detail.OpenGuaranteeButton`
+    - `Name = فتح الضمان BG-2026-0007`
+    - `ItemStatus = BG-2026-0007`
+- كما بقيت session صادقة بعد الرجوع:
+  - `CurrentWorkspaceKey = Notifications`
+  - `HasLastFile = true`
+  - `LastFileGuaranteeNo = BG-2026-0007`
+
+الخلاصة:
+
+- `cross-entry` لم تعد جيدة عند الدخول فقط
+- بل صارت جيدة أيضًا عند **الرجوع إلى نفس نقطة العمل** بعد فتح الملف وإغلاقه
+- ولم يظهر في هذه الجولة ما يستحق إصلاحًا برمجيًا جديدًا في المنتج
