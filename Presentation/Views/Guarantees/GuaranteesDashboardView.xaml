@@ -345,7 +345,8 @@
                                                                   ToolTip="{Binding PlacementTarget.DataContext.RegisterResponseAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                   ToolTipService.ShowOnDisabled="True"
                                                                   Command="{Binding PlacementTarget.Tag.RegisterBankResponseCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                  automation:AutomationProperties.AutomationId="Guarantees.RowMenu.RegisterResponse">
                                                             <MenuItem.Icon>
                                                                 <Viewbox Width="13" Height="13">
                                                                     <Path Data="{StaticResource Icon.Banks}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
@@ -353,61 +354,60 @@
                                                             </MenuItem.Icon>
                                                         </MenuItem>
 
-                                                        <MenuItem Header="تعديل الضمان"
-                                                                  IsEnabled="{Binding PlacementTarget.DataContext.EditAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  ToolTip="{Binding PlacementTarget.DataContext.EditAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  ToolTipService.ShowOnDisabled="True"
-                                                                  Command="{Binding PlacementTarget.Tag.EditGuaranteeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
-                                                            <MenuItem.Icon>
-                                                                <Viewbox Width="13" Height="13">
-                                                                    <Path Data="{StaticResource Icon.Document}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                                </Viewbox>
-                                                            </MenuItem.Icon>
-                                                        </MenuItem>
-
-                                                        <MenuItem Header="فتح الملف"
-                                                                  IsEnabled="{Binding PlacementTarget.DataContext.OpenFileAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  ToolTip="{Binding PlacementTarget.DataContext.OpenFileAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  ToolTipService.ShowOnDisabled="True"
-                                                                  Command="{Binding PlacementTarget.Tag.OpenGuaranteeFileCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                                        <MenuItem Header="الملف والمراجعة"
+                                                                  ToolTip="فتح الملف أو مراجعة الطلبات والسجل والمرفقات لهذا الضمان"
+                                                                  automation:AutomationProperties.AutomationId="Guarantees.RowMenu.ReviewOpen">
                                                             <MenuItem.Icon>
                                                                 <Viewbox Width="13" Height="13">
                                                                     <Path Data="{StaticResource Icon.View}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                                                 </Viewbox>
                                                             </MenuItem.Icon>
-                                                        </MenuItem>
 
-                                                        <MenuItem Header="عرض المرفقات"
-                                                                  IsEnabled="{Binding PlacementTarget.DataContext.OpenAttachmentsAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  ToolTip="{Binding PlacementTarget.DataContext.OpenAttachmentsAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  ToolTipService.ShowOnDisabled="True"
-                                                                  Command="{Binding PlacementTarget.Tag.ShowRowAttachmentsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
-                                                            <MenuItem.Icon>
-                                                                <Viewbox Width="13" Height="13">
-                                                                    <Path Data="{StaticResource Icon.Paperclip}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                                </Viewbox>
-                                                            </MenuItem.Icon>
-                                                        </MenuItem>
+                                                            <MenuItem Header="فتح الملف"
+                                                                      IsEnabled="{Binding PlacementTarget.DataContext.OpenFileAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      ToolTip="{Binding PlacementTarget.DataContext.OpenFileAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      ToolTipService.ShowOnDisabled="True"
+                                                                      Command="{Binding PlacementTarget.Tag.OpenGuaranteeFileCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.OpenFile" />
 
-                                                        <MenuItem Header="طلبات الضمان"
-                                                                  IsEnabled="{Binding PlacementTarget.DataContext.OpenRequestsAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  ToolTip="{Binding PlacementTarget.DataContext.OpenRequestsAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  ToolTipService.ShowOnDisabled="True"
-                                                                  Command="{Binding PlacementTarget.Tag.ShowRowRequestsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
-                                                            <MenuItem.Icon>
-                                                                <Viewbox Width="13" Height="13">
-                                                                    <Path Data="{StaticResource Icon.Requests}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                                </Viewbox>
-                                                            </MenuItem.Icon>
+                                                            <MenuItem Header="طلبات الضمان"
+                                                                      IsEnabled="{Binding PlacementTarget.DataContext.OpenRequestsAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      ToolTip="{Binding PlacementTarget.DataContext.OpenRequestsAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      ToolTipService.ShowOnDisabled="True"
+                                                                      Command="{Binding PlacementTarget.Tag.ShowRowRequestsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.OpenRequests" />
+
+                                                            <MenuItem Header="سجل الضمان"
+                                                                      ToolTip="فتح سجل الإصدارات والطلبات لهذا الضمان"
+                                                                      Command="{Binding PlacementTarget.Tag.OpenHistoryCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.OpenHistory" />
+
+                                                            <MenuItem Header="عرض المرفقات"
+                                                                      IsEnabled="{Binding PlacementTarget.DataContext.OpenAttachmentsAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      ToolTip="{Binding PlacementTarget.DataContext.OpenAttachmentsAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      ToolTipService.ShowOnDisabled="True"
+                                                                      Command="{Binding PlacementTarget.Tag.ShowRowAttachmentsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.OpenAttachments" />
+
+                                                            <Separator />
+
+                                                            <MenuItem Header="تعديل الضمان"
+                                                                      IsEnabled="{Binding PlacementTarget.DataContext.EditAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      ToolTip="{Binding PlacementTarget.DataContext.EditAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      ToolTipService.ShowOnDisabled="True"
+                                                                      Command="{Binding PlacementTarget.Tag.EditGuaranteeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.EditGuarantee" />
                                                         </MenuItem>
 
                                                         <MenuItem Header="استعلامات تشغيلية"
                                                                   Tag="InquiryActionsHost"
-                                                                  ToolTip="جوابات مباشرة من نفس السجل مع إظهار سبب الإتاحة أو المنع لكل استعلام">
+                                                                  ToolTip="جوابات مباشرة من نفس السجل مع إظهار سبب الإتاحة أو المنع لكل استعلام"
+                                                                  automation:AutomationProperties.AutomationId="Guarantees.RowMenu.Inquiries">
                                                             <MenuItem.Icon>
                                                                 <Viewbox Width="13" Height="13">
                                                                     <Path Data="{StaticResource Icon.Search}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
@@ -417,7 +417,8 @@
 
                                                         <Separator />
 
-                                                        <MenuItem Header="إنشاء طلب">
+                                                        <MenuItem Header="إنشاء طلب"
+                                                                  automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CreateRequest">
                                                             <MenuItem.Icon>
                                                                 <Viewbox Width="13" Height="13">
                                                                     <Path Data="{StaticResource Icon.Requests}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
@@ -471,7 +472,8 @@
 
                                                         <Separator />
 
-                                                        <MenuItem Header="تصدير">
+                                                        <MenuItem Header="تصدير"
+                                                                  automation:AutomationProperties.AutomationId="Guarantees.RowMenu.Export">
                                                             <MenuItem.Icon>
                                                                 <Viewbox Width="13" Height="13">
                                                                     <Path Data="{StaticResource Icon.Document}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
@@ -496,7 +498,8 @@
                                                                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
                                                         </MenuItem>
 
-                                                        <MenuItem Header="نسخ">
+                                                        <MenuItem Header="نسخ"
+                                                                  automation:AutomationProperties.AutomationId="Guarantees.RowMenu.Copy">
                                                             <MenuItem.Icon>
                                                                 <Viewbox Width="13" Height="13">
                                                                     <Path Data="{StaticResource Icon.Document}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
