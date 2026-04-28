@@ -928,7 +928,7 @@ namespace GuaranteeManager
 
         private void OpenLetter()
         {
-            _coordinator.OpenLetter(SelectedRequest);
+            _coordinator.OpenLetter(SelectedItem);
         }
 
         private void OpenCurrentGuarantee()

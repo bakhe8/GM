@@ -71,7 +71,7 @@ namespace GuaranteeManager
             WorkflowRequest request = selectedItem.Item.Request;
             if (request.HasResponseDocument)
             {
-                OpenResponse(request);
+                OpenResponse(selectedItem);
                 return;
             }
 
@@ -84,25 +84,29 @@ namespace GuaranteeManager
             AttachResponseDocument(selectedItem, reloadRequests);
         }
 
-        public void OpenLetter(WorkflowRequest? request)
+        public void OpenLetter(RequestListDisplayItem? selectedItem)
         {
+            WorkflowRequest? request = selectedItem?.Item.Request;
             if (request is { HasLetter: true })
             {
                 TryOpenWorkflowDocument(
                     () => _workflow.OpenRequestLetter(request),
                     "خطاب الطلب",
-                    "تعذر فتح خطاب الطلب. الملف غير موجود.");
+                    "تعذر فتح خطاب الطلب. الملف غير موجود.",
+                    () => _shellStatus.ShowInfo("تم فتح خطاب الطلب.", $"الطلبات • {selectedItem?.Item.GuaranteeNo ?? "---"}"));
             }
         }
 
-        public void OpenResponse(WorkflowRequest? request)
+        public void OpenResponse(RequestListDisplayItem? selectedItem)
         {
+            WorkflowRequest? request = selectedItem?.Item.Request;
             if (request is { HasResponseDocument: true })
             {
                 TryOpenWorkflowDocument(
                     () => _workflow.OpenResponseDocument(request),
                     "رد البنك",
-                    "تعذر فتح رد البنك. الملف غير موجود.");
+                    "تعذر فتح رد البنك. الملف غير موجود.",
+                    () => _shellStatus.ShowInfo("تم فتح رد البنك.", $"الطلبات • {selectedItem?.Item.GuaranteeNo ?? "---"}"));
             }
         }
 
@@ -254,11 +258,12 @@ namespace GuaranteeManager
                 $"تم إنشاء طلب تمديد للضمان {guarantee.GuaranteeNo}.");
         }
 
-        private static void TryOpenWorkflowDocument(Action openAction, string title, string missingMessage)
+        private static void TryOpenWorkflowDocument(Action openAction, string title, string missingMessage, Action? onSuccess = null)
         {
             try
             {
                 openAction();
+                onSuccess?.Invoke();
             }
             catch (FileNotFoundException)
             {
