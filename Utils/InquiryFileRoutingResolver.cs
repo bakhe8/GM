@@ -11,19 +11,24 @@ namespace GuaranteeManager.Utils
 
             if (StartsWith(inquiryResult, "last-event:"))
             {
-                focusArea = GuaranteeFileFocusArea.ExecutiveSummary;
+                focusArea = GuaranteeFileFocusArea.Series;
                 return true;
             }
 
-            if (StartsWith(inquiryResult, "outstanding:") ||
+            if (StartsWith(inquiryResult, "outstanding-") ||
                 StartsWith(inquiryResult, "extension-timing:") ||
                 StartsWith(inquiryResult, "expired-no-extension:") ||
-                StartsWith(inquiryResult, "release-evidence:") ||
+                StartsWith(inquiryResult, "reduction-source:"))
+            {
+                focusArea = GuaranteeFileFocusArea.Requests;
+                return true;
+            }
+
+            if (StartsWith(inquiryResult, "release-evidence:") ||
                 StartsWith(inquiryResult, "liquidation-evidence:") ||
-                StartsWith(inquiryResult, "reduction-source:") ||
                 StartsWith(inquiryResult, "response-link:"))
             {
-                focusArea = GuaranteeFileFocusArea.Actions;
+                focusArea = GuaranteeFileFocusArea.Outputs;
                 return true;
             }
 

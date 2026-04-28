@@ -335,12 +335,14 @@ namespace GuaranteeManager
                 _latestInquiryResult = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasLatestInquiryResult));
+                OnPropertyChanged(nameof(HasLatestInquirySuggestedSection));
                 OnPropertyChanged(nameof(LatestInquirySuggestedSectionLabel));
                 RaiseInquiryCommandStates();
             }
         }
 
         public bool HasLatestInquiryResult => LatestInquiryResult != null;
+        public bool HasLatestInquirySuggestedSection => ResolveLatestInquirySuggestedArea(LatestInquiryResult) != GuaranteeFileFocusArea.None;
         public GuaranteeOutputPreviewItem? LatestLetterOutput
         {
             get => _latestLetterOutput;
@@ -921,10 +923,10 @@ namespace GuaranteeManager
 
         private void FocusLatestInquirySection()
         {
-            GuaranteeFileFocusArea area = ResolveLatestInquirySuggestedArea(LatestInquiryResult);
-            if (area != GuaranteeFileFocusArea.None)
+            if (LatestInquiryResult != null &&
+                InquiryFileRoutingResolver.TryResolve(LatestInquiryResult, out GuaranteeFileFocusArea area, out int? requestIdToFocus))
             {
-                FocusGuaranteeSection(area);
+                FocusGuaranteeSection(area, requestIdToFocus);
             }
         }
 
@@ -1657,22 +1659,27 @@ namespace GuaranteeManager
 
         private static GuaranteeFileFocusArea ResolveLatestInquirySuggestedArea(OperationalInquiryResult? result)
         {
-            return result?.InquiryKey switch
+            if (result == null)
             {
-                "guarantee.response-link-status" => GuaranteeFileFocusArea.Outputs,
-                "guarantee.extension-timing" or "guarantee.outstanding-extension" or "guarantee.outstanding-release" or "guarantee.outstanding-liquidation" or "guarantee.reduction-source" => GuaranteeFileFocusArea.Requests,
-                "guarantee.expired-without-extension" => GuaranteeFileFocusArea.Requests,
-                "guarantee.release-evidence" or "guarantee.liquidation-evidence" => GuaranteeFileFocusArea.Outputs,
-                "guarantee.last-event" => GuaranteeFileFocusArea.Series,
-                "bank.pending-requests" or "supplier.latest-activity" => GuaranteeFileFocusArea.Requests,
-                _ => GuaranteeFileFocusArea.None
-            };
+                return GuaranteeFileFocusArea.None;
+            }
+
+            return InquiryFileRoutingResolver.TryResolve(result, out GuaranteeFileFocusArea area, out _)
+                ? area
+                : GuaranteeFileFocusArea.None;
         }
 
         private static string ResolveLatestInquirySuggestedLabel(OperationalInquiryResult? result)
         {
-            return ResolveLatestInquirySuggestedArea(result) switch
+            if (result == null ||
+                !InquiryFileRoutingResolver.TryResolve(result, out GuaranteeFileFocusArea area, out int? requestIdToFocus))
             {
+                return "لا يوجد قسم مقترح";
+            }
+
+            return area switch
+            {
+                GuaranteeFileFocusArea.Requests when requestIdToFocus.HasValue => "انتقل إلى الطلب المرتبط",
                 GuaranteeFileFocusArea.Requests => "انتقل إلى الطلبات المرتبطة",
                 GuaranteeFileFocusArea.Series => "انتقل إلى الخط الزمني",
                 GuaranteeFileFocusArea.Attachments => "انتقل إلى المرفقات",
@@ -1788,7 +1795,9 @@ namespace GuaranteeManager
                 diagnosticsSelection.Supplier,
                 diagnosticsSelection.Bank,
                 SelectedOperationalInquiryOption?.Id ?? string.Empty,
-                HasLatestInquiryResult));
+                HasLatestInquiryResult,
+                HasLatestInquirySuggestedSection,
+                LatestInquirySuggestedSectionLabel));
         }
 
         private ShellDiagnosticsSelection ResolveDiagnosticsSelection()

@@ -322,6 +322,18 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </StackPanel.Style>
+                                        <Border CornerRadius="9"
+                                                Padding="7,2"
+                                                Background="#F8FAFC"
+                                                BorderBrush="{StaticResource Brush.Border}"
+                                                BorderThickness="1"
+                                                HorizontalAlignment="Right"
+                                                Margin="0,0,0,8">
+                                            <TextBlock Text="{Binding LatestInquiryResult.Subject}"
+                                                       FontSize="9"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource Brush.Muted}" />
+                                        </Border>
                                         <TextBlock Text="{Binding LatestInquiryResult.Title}"
                                                    FontSize="11.2"
                                                    FontWeight="Bold"
@@ -373,12 +385,9 @@
                                                     <Style TargetType="Button" BasedOn="{StaticResource PlainLinkButton}">
                                                         <Setter Property="Visibility" Value="Collapsed" />
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding LatestInquirySuggestedSectionLabel}" Value="لا يوجد قسم مقترح">
-                                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                            </DataTrigger>
-                                                            <Trigger Property="IsEnabled" Value="True">
+                                                            <DataTrigger Binding="{Binding HasLatestInquirySuggestedSection}" Value="True">
                                                                 <Setter Property="Visibility" Value="Visible" />
-                                                            </Trigger>
+                                                            </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Button.Style>
@@ -391,25 +400,52 @@
                                                     automation:AutomationProperties.Name="فتح آخر جواب تشغيلي">
                                                 <TextBlock Text="فتح الجواب" FontSize="10.3" Foreground="{StaticResource Brush.Blue}" />
                                             </Button>
-                                            <Button Style="{StaticResource PlainLinkButton}"
-                                                    Command="{Binding OpenLatestInquiryHistoryCommand}"
+                                            <Button Command="{Binding OpenLatestInquiryHistoryCommand}"
                                                     Margin="0,0,10,6"
                                                     automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.LatestInquiry.OpenHistory"
                                                     automation:AutomationProperties.Name="فتح السجل من آخر جواب">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource PlainLinkButton}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding LatestInquiryResult.CanOpenHistory}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
                                                 <TextBlock Text="فتح السجل" FontSize="10.3" Foreground="{StaticResource Brush.Blue}" />
                                             </Button>
-                                            <Button Style="{StaticResource PlainLinkButton}"
-                                                    Command="{Binding OpenLatestInquiryLetterCommand}"
+                                            <Button Command="{Binding OpenLatestInquiryLetterCommand}"
                                                     Margin="0,0,10,6"
                                                     automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.LatestInquiry.OpenLetter"
                                                     automation:AutomationProperties.Name="فتح خطاب الطلب من آخر جواب">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource PlainLinkButton}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding LatestInquiryResult.CanOpenRequestLetter}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
                                                 <TextBlock Text="خطاب الطلب" FontSize="10.3" Foreground="{StaticResource Brush.Blue}" />
                                             </Button>
-                                            <Button Style="{StaticResource PlainLinkButton}"
-                                                    Command="{Binding OpenLatestInquiryResponseCommand}"
+                                            <Button Command="{Binding OpenLatestInquiryResponseCommand}"
                                                     Margin="0,0,0,6"
                                                     automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.LatestInquiry.OpenResponse"
                                                     automation:AutomationProperties.Name="فتح رد البنك من آخر جواب">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource PlainLinkButton}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding LatestInquiryResult.CanOpenResponseDocument}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
                                                 <TextBlock Text="رد البنك" FontSize="10.3" Foreground="{StaticResource Brush.Blue}" />
                                             </Button>
                                         </WrapPanel>
