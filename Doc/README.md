@@ -30,6 +30,8 @@
   - backlog polish قصيرة ومركزة للنسخة `preview.2` بعد إغلاق parity، مبنية على مراجعة السطوح الحالية.
 - `guides/Program_Transition_Plan.md`
   - خطة الانتقال الرسمية من تطوير الأداة إلى تطوير البرنامج الأصلي، مع أول ثلاث ساحات تنفيذ فعلية وقاعدة blocker-driven للأداة.
+- `guides/Product_Coverage_Matrix.md`
+  - مصفوفة التغطية الحالية للمنتج: ما الذي صار مشبعًا، ومتى نعيد الفحص، ومتى لا تكون الأداة مبررة.
 - `guides/UIAutomation_Tooling_Roadmap.md`
   - خارطة الطريق الرسمية لتطوير أداة الفحص والتشغيل البصري/السلوكي نفسها، بما في ذلك إعادة الهيكلة التدريجية والاختبارات الرجعية.
 - `guides/UIAutomation_Adaptive_Capabilities_Roadmap.md`

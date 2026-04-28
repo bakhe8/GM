@@ -45,6 +45,8 @@
 - والأداة تدخل **وضع support blocker-driven**
 - والمرجع التنفيذي لهذا الانتقال هنا:
   - [guides/Program_Transition_Plan.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Program_Transition_Plan.md:1)
+- كما صار عندنا الآن مرجع صريح يمنع إعادة الجولات المشبعة ويضبط متى نستخدم الأداة ومتى لا نستخدمها:
+  - [guides/Product_Coverage_Matrix.md](c:/Users/Bakheet/Documents/Projects/Work/my_work/Doc/guides/Product_Coverage_Matrix.md:1)
 - وبدأت الآن أول جولة تنفيذ فعلية من هذا الانتقال على `Settings`:
   - أُغلقت فجوة صمت صغيرة في `نسخ المسار` و`فتح المسار` عبر الشريط السفلي
   - كما صارت حالة النجاح الهادئ نفسها قابلة للقراءة من الأداة عبر `Shell.Status.Primary`
