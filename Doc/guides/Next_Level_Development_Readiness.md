@@ -31,7 +31,7 @@
 - `Requests`
 - `Guarantee Operational Path`
 - `Guarantee Authoring Path`
-- `Dashboard / Notifications cross-entry`
+- `Dashboard / follow-up routing`
 - `Reports`
 - `Banks`
 - `Guarantees search/filter/selection`

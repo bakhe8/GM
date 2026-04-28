@@ -224,17 +224,30 @@
     - `Dashboard.Workspace`
     - `Dashboard.Filter.ExpiryFollowUpKind`
     - وملخص `المتابعات المنتهية`
-  - وحتى `ShowNotificationsCommand` القديم صار يوجه إلى `اليوم / متابعات الانتهاء`
+  - ثم حُذف `ShowNotificationsCommand` القديم في خطوة إزالة السطح
+- ثم أُزيل الآن سطح `Notifications` نفسه من الكود التشغيلي:
+  - حُذف:
+    - `NotificationsWorkspaceSurface`
+    - `NotificationsWorkspaceDataService`
+    - `NotificationsWorkspaceCoordinator`
+  - وحُذف مفتاح `ShellWorkspaceKeys.Notifications`
+  - وحُذف إنشاء `CreateNotificationsWorkspace`
+  - وحُذف dialog التنبيهات القديم غير المستدعى
+  - وبذلك لم تعد `Notifications`:
+    - وجهة سايدبار
+    - ولا alias بحث
+    - ولا workspace factory
+    - ولا surface مخفيًا ينتظر طريقًا قديمًا
 - ثم أُغلق الآن الحكم المعماري على `Notifications` نفسها:
-  - لم تعد تستحق top-level مستقلة بعد الآن
-  - ثم أُنجز الآن أول **تخفيض فعلي آمن**:
+  - لم تعد موجودة كواجهة مستقلة بعد الآن
+  - ثم أُنجز الآن **تخفيض فعلي كامل للسطح**:
     - خرجت `التنبيهات` من السايدبار العليا
     - ثم تحوّل زر المتابعة داخل `اليوم` إلى عدسة محلية بدل فتح `Notifications`:
       - `Dashboard.Toolbar.ExpiryFollowUpsLens`
       - يعرض `متابعات الانتهاء` داخل `اليوم`
   - لذلك صارت `Notifications` تُعامل الآن كالتالي:
-    - **عدسة انتقالية تفصيلية**
-    - لا **وجهة تنقل عليا**
+    - **قرارًا تاريخيًا موثقًا**
+    - لا **واجهة قائمة في التطبيق**
 - ثم أُغلقت الآن **بوابة الجرد المعماري الكامل قبل الإصلاحات التالية**:
   - صار عندنا مرجعان جديدان يغطيان:
     - البرنامج كله
@@ -268,7 +281,8 @@
     - `الضمانات`
   - ثم خُفضت `التنبيهات` خطوة إضافية:
     - لم تعد تظهر في السايدبار أصلًا
-    - وصار الوصول إليها من داخل `اليوم` كعدسة انتقالية فقط
+    - ولم تعد موجودة كـ workspace مستقل
+    - وصارت المتابعة نفسها داخل `اليوم / متابعات الانتهاء`
   - `التقارير` و`البنوك` صارتا تحت:
     - `التحليلات والمخرجات`
   - و`الإعدادات` صارت تحت:
@@ -1332,7 +1346,7 @@
 - `Recovered_Context_From_Stuck_Codex_Thread_2026-04-28.md` أصبح واضحًا أنه snapshot تاريخي لا يقود الأولوية الحالية.
 - `Navigation_Architecture_Map.md` و`UI_System_Map.md` صارا يقرآن السايدبار كبيوت حُسمت، لا كقائمة مسطحة ما زالت تنتظر القرار.
 - `Surface_Audit_Matrix.md` صار يحتوي ملاحظة قراءة حالية تمنع اعتبار توصيات `Requests` ووسط `Guarantee File` القديمة كأولوية مفتوحة من جديد.
-- `Product_Coverage_Matrix.md` صار يميّز `Dashboard / Notifications cross-entry` عن نضج `اليوم` الكامل، ويضع `Guarantee File structure` كفحص مركز عند الدلتا لا كـ WIP واسع.
+- `Product_Coverage_Matrix.md` صار يميّز `Dashboard / follow-up routing` بعد حذف سطح `Notifications`، ويضع `Guarantee File structure` كفحص مركز عند الدلتا لا كـ WIP واسع.
 - `Next_Level_Development_Readiness.md` و`Preview2_Polish_Backlog.md` صارا موسومين كلحظات سابقة أو ذاكرة polish، لا كحالة clean/status راهنة.
 - أدلة المستخدم السريعة والنهائية صارت تستخدم `اليوم` و`الضمانات` بدل خلط `الرئيسية` و`المتابعات` كبيوت قديمة.
 

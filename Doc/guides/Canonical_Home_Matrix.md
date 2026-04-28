@@ -22,12 +22,12 @@
 
 | الوظيفة / المسار | البيت الرسمي | الظهور الثانوي المسموح | القرار المعماري |
 |---|---|---|---|
-| بدء اليوم وتحديد الأولوية | `اليوم` (`Dashboard + Notifications`) | `Requests` عبر العودة للسياق | دمج `Notifications` داخل `اليوم` |
+| بدء اليوم وتحديد الأولوية | `اليوم` (`Dashboard`) | `Requests` عبر العودة للسياق | `متابعات الانتهاء` داخل `اليوم` بعد حذف `Notifications` |
 | مراجعة الطلبات اليومية المعلقة | `Requests` | `Guarantee File` على مستوى preview أو handoff | يبقى في `Requests` |
 | تسجيل رد البنك | `Requests` | `Guarantee File` عند وجود طلبات مرتبطة | canonical في `Requests` |
 | إلحاق مستند رد البنك | `Requests` | `Guarantee File` عند وجود طلبات مرتبطة | canonical في `Requests` |
 | فتح خطاب الطلب / رد البنك | `Requests` | `HistoryDialog` / `OperationalInquiryDialog` / `Guarantee File` | يبقى قريبًا من السياق لكن canonical من `Requests` |
-| فتح ضمان واتخاذ قرار | `Guarantees` / `Guarantee File` | `Dashboard`, `Notifications`, `Requests` كدخول سياقي | canonical في `Guarantees` |
+| فتح ضمان واتخاذ قرار | `Guarantees` / `Guarantee File` | `Dashboard`, `Requests` كدخول سياقي | canonical في `Guarantees` |
 | إنشاء ضمان جديد | `Guarantees` | لا حاجة لبيت ثانوي حقيقي | يبقى في `Guarantees` |
 | تعديل ضمان | `Guarantee File` | `Guarantees` كدخول إلى الملف | canonical في `Guarantee File` |
 | إطلاق أفعال authoring الثقيلة (`تمديد`, `إفراج`, `تخفيض`, `استبدال`, `نقض`, `تسييل`, `تحقق`) | `Guarantee File` | `Requests` فقط في صور محدودة جدًا عند eligibility واضحة | تُعاد مركزة في `Guarantee File` |
@@ -36,7 +36,7 @@
 | تصدير تقرير ضمان واحد | `OperationalInquiryDialog` | `Guarantee File` عند الحاجة | يبقى سياقيًا |
 | تصديرات batch والتقارير العامة | `Reports` | `Requests` / `Guarantees` عبر shortcuts محدودة | تُعاد مركزة في `Reports` |
 | تحليل البنوك | `التحليلات والمخرجات` | لا حاجة top-level مستقلة | تُدمج `Banks` تحت العائلة التحليلية |
-| فتح التنبيهات والانطلاق منها | `اليوم` | `Notifications` كعدسة انتقالية تفصيلية فقط | تُخفض `Notifications` من top-level إلى lens ثم تُسحب من السايدبار عند اكتمال Today |
+| فتح التنبيهات والانطلاق منها | `اليوم / متابعات الانتهاء` | لا واجهة بديلة قائمة؛ aliases التنبيهات تعود إلى `اليوم` | أُزيل سطح `Notifications` من الكود |
 | النسخ الاحتياطي / الاسترجاع / reseed | `Settings` | لا شيء | يبقى في `Settings` |
 
 ## وظائف تحتاج تهدئة لا حذف
@@ -66,7 +66,7 @@
 - تبقى shortcuts مفيدة
 - لكن البيت الرسمي للإخراج الجماعي هو `Reports`
 
-### 3. فتح الضمان من Dashboard/Notifications/Requests
+### 3. فتح الضمان من Dashboard/Requests
 
 **الحكم:**
 
@@ -78,20 +78,20 @@
 
 ### Notifications
 
-لا ينبغي أن تستمر كوجهة عليا مساوية لـ:
+أُغلقت كوجهة وكسطح تشغيلي.
 
-- `Requests`
-- `Guarantees`
+وظيفتها الرسمية انتقلت إلى:
 
-هي أهم من أن تُلغى، لكنها أضيق من أن تبقى top-level مستقلة.
+- `اليوم / متابعات الانتهاء`
+- aliases البحث الشامل:
+  - `التنبيهات`
+  - `المتابعات`
 
 **الحكم الحالي الأدق:**
 
 - لا تبقى top-level
-- لكن لا نحذف surface نفسها الآن
-- بل نعاملها كـ:
-  - deep lens انتقالية
-  - لحين أن تصبح `اليوم` قادرة على حمل follow-up الطويلة كاملة
+- لا تبقى surface
+- لا تُفتح كمسار مستقل
 
 ### Banks
 
@@ -133,7 +133,7 @@
 
 نراجع:
 
-- كيف يندمج `Dashboard` و`Notifications`
+- كيف يستمر `Dashboard` في حمل follow-up بعد حذف `Notifications`
 - دون أن نفقد جمال التصميم أو وضوح الأولوية
 
 ### التحليلات والمخرجات

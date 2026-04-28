@@ -117,29 +117,6 @@ namespace GuaranteeManager
                 initialSearchText);
         }
 
-        public FrameworkElement CreateNotificationsWorkspace(
-            Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
-            Action showGuarantees,
-            Action closeRequested,
-            string? initialSearchText = null)
-        {
-            List<Guarantee> expiring = _database.QueryGuarantees(new GuaranteeQueryOptions
-            {
-                TimeStatus = GuaranteeTimeStatus.ExpiringSoon,
-                SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo,
-                Limit = 10
-            });
-
-            List<Guarantee> expired = _database.QueryGuarantees(new GuaranteeQueryOptions
-            {
-                TimeStatus = GuaranteeTimeStatus.Expired,
-                SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo,
-                Limit = 10
-            });
-
-            return new NotificationsWorkspaceSurface(expiring, expired, openGuaranteeContext, showGuarantees, closeRequested, initialSearchText);
-        }
-
         public FrameworkElement CreateSettingsWorkspace(Action closeRequested, Action refreshAfterDataReset, string? initialSearchText = null)
         {
             return new SettingsWorkspaceSurface(closeRequested, refreshAfterDataReset, initialSearchText);

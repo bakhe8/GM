@@ -148,7 +148,6 @@ namespace GuaranteeManager
             ShowRequestsCommand = new RelayCommand(_ => ShowRequestsWorkspace());
             ShowBanksCommand = new RelayCommand(_ => ShowBanksWorkspace());
             ShowReportsCommand = new RelayCommand(_ => ShowReportsWorkspace());
-            ShowNotificationsCommand = new RelayCommand(_ => ShowDashboardWorkspace(null, DashboardScopeFilters.ExpiryFollowUps));
             ShowSettingsCommand = new RelayCommand(_ => ShowSettingsWorkspace());
             ExecuteGlobalSearchCommand = new RelayCommand(_ => ExecuteGlobalSearch());
             ExitCommand = new RelayCommand(_ => RequestExit());
@@ -264,7 +263,6 @@ namespace GuaranteeManager
         public ICommand ShowRequestsCommand { get; }
         public ICommand ShowBanksCommand { get; }
         public ICommand ShowReportsCommand { get; }
-        public ICommand ShowNotificationsCommand { get; }
         public ICommand ShowSettingsCommand { get; }
         public ICommand ExecuteGlobalSearchCommand { get; }
         public ICommand ExitCommand { get; }
@@ -482,7 +480,6 @@ namespace GuaranteeManager
             ShellWorkspaceKeys.Requests => "الطلبات",
             ShellWorkspaceKeys.Banks => "البنوك",
             ShellWorkspaceKeys.Reports => "التحليلات والمخرجات",
-            ShellWorkspaceKeys.Notifications => "التنبيهات",
             ShellWorkspaceKeys.Settings => "الإعدادات",
             _ => "إدارة الضمانات البنكية"
         };
@@ -727,11 +724,6 @@ namespace GuaranteeManager
         private void OpenGuaranteeContextFromDashboard(int rootId, GuaranteeFileFocusArea area, int? requestIdToFocus)
         {
             OpenGuaranteeContext("dashboard", rootId, area, requestIdToFocus);
-        }
-
-        private void OpenGuaranteeContextFromNotifications(int rootId, GuaranteeFileFocusArea area, int? requestIdToFocus)
-        {
-            OpenGuaranteeContext("notifications", rootId, area, requestIdToFocus);
         }
 
         private void OpenGuaranteeContext(string sourceKey, int rootId, GuaranteeFileFocusArea area, int? requestIdToFocus)
@@ -1186,11 +1178,6 @@ namespace GuaranteeManager
                 case ShellWorkspaceKeys.Reports:
                     ShowReportsWorkspace(plan.SearchText);
                     break;
-                case ShellWorkspaceKeys.Notifications:
-                    ShowDashboardWorkspace(
-                        plan.HasSearchText ? plan.SearchText : null,
-                        DashboardScopeFilters.ExpiryFollowUps);
-                    break;
                 case ShellWorkspaceKeys.Settings:
                     ShowSettingsWorkspace(plan.SearchText);
                     break;
@@ -1380,27 +1367,6 @@ namespace GuaranteeManager
             ActivateWorkspace(
                 ShellWorkspaceKeys.Reports,
                 _workspaceFactory.CreateReportsWorkspace(ShowBanksWorkspace, CloseActiveWorkspace, initialSearchText));
-        }
-
-        private void ShowNotificationsWorkspace()
-        {
-            ShowNotificationsWorkspace(null);
-        }
-
-        private void ShowNotificationsWorkspace(string? initialSearchText)
-        {
-            if (!CanNavigateToWorkspace(ShellWorkspaceKeys.Notifications))
-            {
-                return;
-            }
-
-            ActivateWorkspace(
-                ShellWorkspaceKeys.Notifications,
-                _workspaceFactory.CreateNotificationsWorkspace(
-                    OpenGuaranteeContextFromNotifications,
-                    ShowGuaranteesWorkspace,
-                    CloseActiveWorkspace,
-                    initialSearchText));
         }
 
         private void ShowSettingsWorkspace()

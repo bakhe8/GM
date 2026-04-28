@@ -127,64 +127,32 @@
 
 ## 3) التنبيهات (`NotificationsWorkspaceSurface`)
 
-### الدور الحالي
+### الحالة الحالية
 
-عدسة متابعة تفصيلية لعائلة `اليوم`.
+أُزيل هذا السطح من الكود التشغيلي.
 
-### موضعها الحالي
+لم يعد يوجد:
 
-- لم تعد عنصرًا في السايدبار العليا
-- تُفتح الآن من داخل `اليوم` عبر زر toolbar ثانوي انتقالي
+- `NotificationsWorkspaceSurface`
+- `NotificationsWorkspaceDataService`
+- `NotificationsWorkspaceCoordinator`
+- `ShellWorkspaceKeys.Notifications`
+- `CreateNotificationsWorkspace`
 
-### المكونات الرئيسية
+البديل الرسمي الآن هو:
 
-#### Toolbar
-
-- `Notifications.Toolbar.Reset`
-- فلتر المستوى:
-  - `Notifications.Filter.Level`
-  - `كل التنبيهات`
-  - `قريب الانتهاء`
-  - `منتهي`
-- بحث:
-  - `Notifications.SearchBox`
-
-#### Metrics
-
-- `قريب الانتهاء`
-- `منتهي`
-- `إجمالي القيمة`
-- `أقرب تاريخ`
-
-#### Table
-
-- `Notifications.Table.List`
-- أعمدة:
-  - الإجراءات
-  - المستوى
-  - الأيام
-  - تاريخ الانتهاء
-  - القيمة
-  - البنك
-  - المستفيد
-  - رقم الضمان
-
-#### Detail Panel
-
-- `Notifications.Detail.OpenGuaranteeButton`
-- copy actions داخل التفاصيل
-- معلومات:
-  - المرجع
-  - المدة
-  - تاريخ الانتهاء
-  - الإجراء المقترح
-  - القيمة
-  - الملاحظة
+- `اليوم / متابعات الانتهاء`
+- `Dashboard.Filter.ExpiryFollowUpKind`
+- aliases البحث الشامل:
+  - `التنبيهات`
+  - `المتابعات`
+  - `notifications`
+  - `alerts`
 
 ### القراءة المعمارية
 
-- لا تُعامل كبيت top-level طويل الأمد
-- تُعامل كـ **detail lens** تابعة لـ `اليوم`
+- لا يوجد surface باسم `Notifications` يجب صقله
+- أي مكوّن follow-up جديد يضاف داخل `DashboardWorkspaceSurface`
 
 ---
 
@@ -756,11 +724,6 @@ Queue-first surface لتنفيذ الطلب الحالي.
 ### `ReportPickerDialog`
 
 - اختيار تقرير من catalogue قديمة/مساندة
-
-### `AlertsDialog`
-
-- تبويب `قريب الانتهاء`
-- تبويب `منتهي`
 
 ### `SettingsDialog`
 

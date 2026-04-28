@@ -11,7 +11,7 @@ This folder is the official WPF presentation surface for the current UI rebuild.
   - Contains workspace surfaces shown from sidebar navigation.
   - `Guarantees/GuaranteesDashboardView.xaml`: the approved guarantees workspace, including toolbar, KPI cards, guarantees table, paging, and guidance cards.
   - `Guarantees/GuaranteeDetailPanel.xaml`: the approved right-side guarantee detail panel, timeline, attachments, and quick actions.
-  - Current workspaces are grouped by feature: `Requests`, `Banks`, `Reports`, `Notifications`, `Settings`, and shared workspace chrome in `Common`.
+  - Current workspaces are grouped by feature: `Dashboard`, `Requests`, `Banks`, `Reports`, `Settings`, and shared workspace chrome in `Common`.
 - `Dialogs/`
   - Contains modal and side workflow dialogs used by the shell and workspace actions.
 - `Themes/`

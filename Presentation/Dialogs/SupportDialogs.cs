@@ -123,50 +123,6 @@ namespace GuaranteeManager
         }
     }
 
-    public sealed class AlertsDialog : Window
-    {
-        private AlertsDialog(IReadOnlyList<Guarantee> expiring, IReadOnlyList<Guarantee> expired)
-        {
-            Title = "التنبيهات";
-            Width = 560;
-            Height = 420;
-            WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = new FontFamily("Segoe UI, Tahoma");
-            Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
-
-            var tabs = new TabControl { Margin = new Thickness(16) };
-            tabs.Items.Add(BuildGuaranteeTab("قريب الانتهاء", expiring));
-            tabs.Items.Add(BuildGuaranteeTab("منتهي", expired));
-            Content = tabs;
-        }
-
-        public static void ShowFor(IReadOnlyList<Guarantee> expiring, IReadOnlyList<Guarantee> expired)
-        {
-            App.CurrentApp.GetRequiredService<SecondaryWindowManager>().ShowDialog(
-                "alerts-summary",
-                () => new AlertsDialog(expiring, expired),
-                "التنبيهات",
-                "نافذة التنبيهات مفتوحة بالفعل.");
-        }
-
-        private static TabItem BuildGuaranteeTab(string title, IReadOnlyList<Guarantee> guarantees)
-        {
-            var list = new ListBox();
-            foreach (Guarantee guarantee in guarantees)
-            {
-                list.Items.Add($"{guarantee.GuaranteeNo} | {guarantee.Supplier} | {guarantee.Bank} | {guarantee.ExpiryDate:yyyy/MM/dd}");
-            }
-
-            if (list.Items.Count == 0)
-            {
-                list.Items.Add("لا توجد عناصر");
-            }
-
-            return new TabItem { Header = title, Content = list };
-        }
-    }
-
     public sealed class SettingsDialog : Window
     {
         private SettingsDialog()

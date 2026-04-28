@@ -71,9 +71,6 @@ namespace GuaranteeManager
                 case DashboardTarget.Requests:
                     showRequests(initialSearchText, item.RequestId);
                     break;
-                case DashboardTarget.Notifications:
-                    showToday(initialSearchText, ResolveTodayScope(item));
-                    break;
                 case DashboardTarget.Reports:
                     showReports(initialSearchText);
                     break;

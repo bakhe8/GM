@@ -539,7 +539,6 @@ namespace GuaranteeManager
         Today,
         Guarantees,
         Requests,
-        Notifications,
         Reports
     }
 
@@ -577,7 +576,6 @@ namespace GuaranteeManager
         {
             DashboardTarget.Today => "Icon.Dashboard",
             DashboardTarget.Requests => "Icon.Requests",
-            DashboardTarget.Notifications => "Icon.Notifications",
             DashboardTarget.Reports => "Icon.Reports",
             _ => "Icon.Guarantees"
         };
@@ -586,7 +584,6 @@ namespace GuaranteeManager
         {
             DashboardTarget.Today => "ركّز",
             DashboardTarget.Requests => "الطلبات",
-            DashboardTarget.Notifications => "التنبيهات",
             DashboardTarget.Reports => "التقارير",
             _ => "الضمانات"
         };

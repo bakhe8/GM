@@ -7,7 +7,6 @@ namespace GuaranteeManager
         public const string Requests = "Requests";
         public const string Banks = "Banks";
         public const string Reports = "Reports";
-        public const string Notifications = "Notifications";
         public const string Settings = "Settings";
     }
 }

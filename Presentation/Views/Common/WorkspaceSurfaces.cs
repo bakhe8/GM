@@ -496,25 +496,6 @@ namespace GuaranteeManager
                 closeRequested);
         }
 
-        public static SimpleWorkspaceSurface CreateNotificationsWorkspace(
-            IReadOnlyList<Guarantee> expiring,
-            IReadOnlyList<Guarantee> expired,
-            Action? closeRequested)
-        {
-            return new SimpleWorkspaceSurface(
-                "التنبيهات",
-                "متابعة الضمانات التي تحتاج انتباهاً تشغيلياً سريعاً.",
-                [
-                    new SimpleWorkspaceSection(
-                        "قريب الانتهاء",
-                        expiring.Select(FormatGuaranteeAlert).DefaultIfEmpty("لا توجد ضمانات قريبة الانتهاء.").ToList()),
-                    new SimpleWorkspaceSection(
-                        "منتهي",
-                        expired.Select(FormatGuaranteeAlert).DefaultIfEmpty("لا توجد ضمانات منتهية ضمن النتائج الحالية.").ToList())
-                ],
-                closeRequested);
-        }
-
         public static SimpleWorkspaceSurface CreateSettingsWorkspace(Action? closeRequested)
         {
             return new SimpleWorkspaceSurface(
