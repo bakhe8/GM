@@ -28,7 +28,7 @@ namespace GuaranteeManager
             DashboardWorkItem? item,
             Action<string?, string?> showToday,
             Action showGuarantees,
-            Action<string?> showRequests,
+            Action<string?, int?> showRequests,
             Action<string?> showReports)
         {
             if (item == null)
@@ -44,7 +44,7 @@ namespace GuaranteeManager
                     showToday(initialSearchText, ResolveTodayScope(item));
                     break;
                 case DashboardTarget.Requests:
-                    showRequests(initialSearchText);
+                    showRequests(initialSearchText, item.RequestId);
                     break;
                 case DashboardTarget.Notifications:
                     showToday(initialSearchText, ResolveTodayScope(item));

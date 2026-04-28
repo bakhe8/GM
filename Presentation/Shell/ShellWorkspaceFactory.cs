@@ -41,7 +41,7 @@ namespace GuaranteeManager
             Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
             Action showGuarantees,
             Action<string?, string?> showToday,
-            Action<string?> showRequests,
+            Action<string?, int?> showRequests,
             Action<string?> showReports,
             string? initialSearchText = null,
             string? initialScopeFilter = null)
@@ -80,7 +80,8 @@ namespace GuaranteeManager
             Action<int> refreshAfterWorkflowChange,
             Action closeRequested,
             Action? selectionChanged = null,
-            string? initialSearchText = null)
+            string? initialSearchText = null,
+            int? initialRequestId = null)
         {
             WorkflowRequestQueryOptions options = new()
             {
@@ -96,7 +97,8 @@ namespace GuaranteeManager
                 refreshAfterWorkflowChange,
                 closeRequested,
                 selectionChanged,
-                initialSearchText);
+                initialSearchText,
+                initialRequestId);
         }
 
         public FrameworkElement CreateBanksWorkspace(Action closeRequested, string? initialSearchText = null)

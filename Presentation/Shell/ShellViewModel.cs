@@ -1268,6 +1268,11 @@ namespace GuaranteeManager
 
         private void ShowRequestsWorkspace(string? initialSearchText)
         {
+            ShowRequestsWorkspace(initialSearchText, null);
+        }
+
+        private void ShowRequestsWorkspace(string? initialSearchText, int? initialRequestId)
+        {
             if (!CanNavigateToWorkspace(ShellWorkspaceKeys.Requests))
             {
                 return;
@@ -1286,7 +1291,8 @@ namespace GuaranteeManager
                             WriteDiagnosticsState("requests-selection");
                         }
                     },
-                    initialSearchText));
+                    initialSearchText,
+                    initialRequestId));
         }
 
         private void CloseActiveWorkspace()

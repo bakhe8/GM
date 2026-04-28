@@ -22,8 +22,8 @@ namespace GuaranteeManager
         private readonly Action _resumeLastFile;
         private readonly Action<int, GuaranteeFileFocusArea, int?> _openGuaranteeContext;
         private readonly Action _showGuarantees;
-        private readonly Action<string?> _showRequests;
         private readonly Action<string?, string?> _showToday;
+        private readonly Action<string?, int?> _showRequests;
         private readonly Action<string?> _showReports;
         private readonly Action? _closeRequested;
 
@@ -84,7 +84,7 @@ namespace GuaranteeManager
             Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
             Action showGuarantees,
             Action<string?, string?> showToday,
-            Action<string?> showRequests,
+            Action<string?, int?> showRequests,
             Action<string?> showReports,
             Action? closeRequested,
             string? initialSearchText = null,
