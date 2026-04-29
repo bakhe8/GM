@@ -34,13 +34,19 @@ namespace GuaranteeManager
         private readonly TextBlock _detailExpiring = BuildDetailValue(12, FontWeights.Bold);
         private readonly TextBlock _detailExpired = BuildDetailValue(12, FontWeights.Bold);
         private readonly TextBlock _detailShare = BuildDetailValue(12, FontWeights.SemiBold);
+        private readonly Action<string?> _showGuaranteesForBank;
         private readonly Action? _closeRequested;
 
-        public BanksWorkspaceSurface(IReadOnlyList<Guarantee> guarantees, Action? closeRequested, string? initialSearchText = null)
+        public BanksWorkspaceSurface(
+            IReadOnlyList<Guarantee> guarantees,
+            Action<string?> showGuaranteesForBank,
+            Action? closeRequested,
+            string? initialSearchText = null)
         {
             _dataService = new BanksWorkspaceDataService();
             _coordinator = new BanksWorkspaceCoordinator();
             _allBanks = _dataService.BuildItems(guarantees);
+            _showGuaranteesForBank = showGuaranteesForBank;
             _closeRequested = closeRequested;
             UiInstrumentation.Identify(this, "Banks.Workspace", "البنوك");
             UiInstrumentation.Identify(_searchInput, "Banks.SearchBox", "بحث البنوك");
@@ -471,8 +477,7 @@ namespace GuaranteeManager
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(10, 0, 0, 0)
             };
-            actions.Children.Add(CreateRowButton("نسخ", "Icon.Document", item, CopyRowBank_Click));
-            actions.Children.Add(CreateRowButton("عرض", "Icon.View", item, SelectRow_Click));
+            actions.Children.Add(CreateRowButton("عرض", "Icon.View", item, ShowBankGuarantees_Click));
             Grid.SetColumn(actions, 0);
             row.Children.Add(actions);
 
@@ -575,15 +580,10 @@ namespace GuaranteeManager
             return stack;
         }
 
-        private void SelectRow_Click(object sender, RoutedEventArgs e)
+        private void ShowBankGuarantees_Click(object sender, RoutedEventArgs e)
         {
             SelectRowFromSender(sender);
-        }
-
-        private void CopyRowBank_Click(object sender, RoutedEventArgs e)
-        {
-            SelectRowFromSender(sender);
-            _coordinator.CopyBank(SelectedItem);
+            _showGuaranteesForBank(SelectedItem?.Bank);
         }
 
         private void SelectRowFromSender(object sender)

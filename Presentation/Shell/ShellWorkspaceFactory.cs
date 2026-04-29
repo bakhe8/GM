@@ -101,10 +101,10 @@ namespace GuaranteeManager
                 initialRequestId);
         }
 
-        public FrameworkElement CreateBanksWorkspace(Action closeRequested, string? initialSearchText = null)
+        public FrameworkElement CreateBanksWorkspace(Action<string?> showGuaranteesForBank, Action closeRequested, string? initialSearchText = null)
         {
             List<Guarantee> guarantees = _database.QueryGuarantees(new GuaranteeQueryOptions());
-            return new BanksWorkspaceSurface(guarantees, closeRequested, initialSearchText);
+            return new BanksWorkspaceSurface(guarantees, showGuaranteesForBank, closeRequested, initialSearchText);
         }
 
         public FrameworkElement CreateReportsWorkspace(Action closeRequested, string? initialSearchText = null)

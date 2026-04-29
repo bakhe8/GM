@@ -1185,6 +1185,23 @@ namespace GuaranteeManager
             ActivateWorkspace(ShellWorkspaceKeys.Guarantees, null);
         }
 
+        private void ShowGuaranteesForBank(string? bank)
+        {
+            if (!CanNavigateToWorkspace(ShellWorkspaceKeys.Guarantees))
+            {
+                return;
+            }
+
+            string selectedBank = string.IsNullOrWhiteSpace(bank) ? AllBanksLabel : bank.Trim();
+            ActivateWorkspace(ShellWorkspaceKeys.Guarantees, null);
+            SetGuaranteeFilters(
+                string.Empty,
+                selectedBank,
+                AllTypesLabel,
+                FilterOption.AllTimeStatuses);
+            _shellStatus.ShowInfo("تم عرض ضمانات البنك.", $"الضمانات • {selectedBank}");
+        }
+
         private void ResumeLastFile()
         {
             if (!HasLastFile)
@@ -1288,7 +1305,7 @@ namespace GuaranteeManager
 
             ActivateWorkspace(
                 ShellWorkspaceKeys.Banks,
-                _workspaceFactory.CreateBanksWorkspace(CloseActiveWorkspace, initialSearchText));
+                _workspaceFactory.CreateBanksWorkspace(ShowGuaranteesForBank, CloseActiveWorkspace, initialSearchText));
         }
 
         private void ShowReportsWorkspace()
