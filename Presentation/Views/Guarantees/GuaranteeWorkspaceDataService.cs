@@ -162,17 +162,6 @@ namespace GuaranteeManager
 
                     List<Guarantee> history = _database.GetGuaranteeHistory(guarantee.Id);
                     row.SetAttachments(BuildSeriesAttachments(history));
-
-                    List<GuaranteeRow> versionRows = history
-                        .Where(version => version.Id != guarantee.Id)
-                        .Select(version => GuaranteeRow.FromGuarantee(
-                            version,
-                            relatedRequests
-                                .Where(request => request.BaseVersionId == version.Id || request.ResultVersionId == version.Id)
-                                .ToList()))
-                        .ToList();
-
-                    row.SetVersionRows(versionRows);
                     return row;
                 })
                 .ToList();

@@ -25,8 +25,6 @@ namespace GuaranteeManager
     public sealed class GuaranteeRow : INotifyPropertyChanged
     {
         private static readonly Dictionary<string, ImageSource> BankLogoCache = new(StringComparer.OrdinalIgnoreCase);
-        private IReadOnlyList<GuaranteeRow> _versionRows = Array.Empty<GuaranteeRow>();
-        private bool _isVersionsExpanded;
 
         private GuaranteeRow(
             Guarantee guarantee,
@@ -81,8 +79,6 @@ namespace GuaranteeManager
         public string RowMoreAutomationName => $"المزيد | {GuaranteeNo}";
         public string RowRequestsAutomationId => BuildRowActionAutomationId("Requests");
         public string RowRequestsAutomationName => $"الطلبات | {GuaranteeNo}";
-        public string RowVersionsAutomationId => BuildRowActionAutomationId("Versions");
-        public string RowVersionsAutomationName => $"الإصدارات | {GuaranteeNo}";
         public string Beneficiary { get; }
         public string Bank { get; }
         public ImageSource BankLogo => GetBankLogo(Bank);
@@ -130,34 +126,10 @@ namespace GuaranteeManager
         public string SuggestedFocusLabel => ActionProfile.SuggestedFocusLabel;
         public GuaranteeFileFocusArea SuggestedFocusArea => ActionProfile.SuggestedFocusArea;
         public bool HasSuggestedFocus => ActionProfile.SuggestedFocusArea != GuaranteeFileFocusArea.None;
-        public IReadOnlyList<GuaranteeRow> VersionRows => _versionRows;
-        public bool HasVersionRows => _versionRows.Count > 0;
-
-        public bool IsVersionsExpanded
-        {
-            get => _isVersionsExpanded;
-            set
-            {
-                if (_isVersionsExpanded == value)
-                {
-                    return;
-                }
-
-                _isVersionsExpanded = value;
-                OnPropertyChanged();
-            }
-        }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public static ImageSource ResolveBankLogo(string bankName) => GetBankLogo(bankName);
-
-        public void SetVersionRows(IReadOnlyList<GuaranteeRow> versionRows)
-        {
-            _versionRows = versionRows;
-            OnPropertyChanged(nameof(VersionRows));
-            OnPropertyChanged(nameof(HasVersionRows));
-        }
 
         public void SetAttachments(IReadOnlyList<AttachmentRecord> attachments)
         {

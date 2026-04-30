@@ -106,7 +106,6 @@ namespace GuaranteeManager
             CreateReplacementRequestCommand = new RelayCommand(parameter => CreateReplacementRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             RegisterBankResponseCommand = new RelayCommand(parameter => RegisterBankResponse(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             ShowRowRequestsCommand = new RelayCommand(parameter => ShowRowRequests(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
-            ToggleGuaranteeVersionsCommand = new RelayCommand(parameter => ToggleGuaranteeVersions(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow row && row.HasVersionRows);
             CopyGuaranteeNoCommand = new RelayCommand(parameter => CopyGuaranteeNo(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
             CopyGuaranteeSupplierCommand = new RelayCommand(parameter => CopyGuaranteeSupplier(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
             CopyGuaranteeReferenceTypeCommand = new RelayCommand(parameter => CopyGuaranteeReferenceType(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
@@ -203,7 +202,6 @@ namespace GuaranteeManager
         public ICommand CreateReplacementRequestCommand { get; }
         public ICommand RegisterBankResponseCommand { get; }
         public ICommand ShowRowRequestsCommand { get; }
-        public ICommand ToggleGuaranteeVersionsCommand { get; }
         public ICommand CopyGuaranteeNoCommand { get; }
         public ICommand CopyGuaranteeSupplierCommand { get; }
         public ICommand CopyGuaranteeReferenceTypeCommand { get; }
@@ -1044,14 +1042,6 @@ namespace GuaranteeManager
                 row,
                 target => ShowRequestsForGuarantee(target, ResolveContextRequestId(target)),
                 syncSelection: true);
-        }
-
-        private static void ToggleGuaranteeVersions(GuaranteeRow? row)
-        {
-            if (row != null)
-            {
-                row.IsVersionsExpanded = !row.IsVersionsExpanded;
-            }
         }
 
         private static string FormatOfficialAttachmentCount(int count)

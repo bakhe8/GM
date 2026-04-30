@@ -285,21 +285,6 @@
                                             <ColumnDefinition Width="1.30*" />
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
-                                            <Button Style="{StaticResource RowButton}"
-                                                    Width="28"
-                                                    MinWidth="28"
-                                                    Padding="0"
-                                                    Command="{Binding DataContext.ToggleGuaranteeVersionsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}"
-                                                    ToolTip="عرض إصدارات هذا الضمان تحت الصف"
-                                                    automation:AutomationProperties.AutomationId="{Binding RowVersionsAutomationId}"
-                                                    automation:AutomationProperties.Name="{Binding RowVersionsAutomationName}"
-                                                    automation:AutomationProperties.HelpText="يعرض إصدارات هذا الضمان تحت نفس الصف."
-                                                    automation:AutomationProperties.ItemStatus="{Binding GuaranteeNo}">
-                                                <Viewbox Width="10" Height="10" VerticalAlignment="Center">
-                                                    <Path Data="{StaticResource Icon.ChevronDown}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                    </Viewbox>
-                                                </Button>
                                             <Button Style="{StaticResource PrimaryButton}"
                                                     Height="26"
                                                     MinWidth="70"
@@ -344,73 +329,6 @@
                                         <TextBlock Grid.Column="8" Text="{Binding VersionLabel}" Style="{StaticResource TableCellCenter}" />
                                         <TextBlock Grid.Column="9" Text="{Binding GuaranteeNo}" Style="{StaticResource TableCellRight}" />
                                     </Grid>
-                                    <ItemsControl ItemsSource="{Binding VersionRows}">
-                                        <ItemsControl.Style>
-                                            <Style TargetType="ItemsControl">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsVersionsExpanded}" Value="True">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </ItemsControl.Style>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Height="34"
-                                                        Margin="6,0"
-                                                        Background="#F8FAFC"
-                                                        BorderBrush="#E7EDF5"
-                                                        BorderThickness="0,1,0,0"
-                                                        Cursor="Hand"
-                                                        ToolTip="عرض بيانات هذا الإصدار في اللوحة الجانبية">
-                                                    <Button Style="{StaticResource PlainLinkButton}"
-                                                            HorizontalContentAlignment="Stretch"
-                                                            VerticalContentAlignment="Stretch"
-                                                            Command="{Binding DataContext.SelectGuaranteeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                            CommandParameter="{Binding}"
-                                                            automation:AutomationProperties.AutomationId="{Binding RowAutomationName}"
-                                                            automation:AutomationProperties.Name="{Binding RowAutomationName}">
-                                                    <Grid FlowDirection="LeftToRight">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="2.75*" />
-                                                            <ColumnDefinition Width="1.18*" />
-                                                            <ColumnDefinition Width="1.15*" />
-                                                            <ColumnDefinition Width="1.00*" />
-                                                            <ColumnDefinition Width="1.00*" />
-                                                            <ColumnDefinition Width="1.15*" />
-                                                            <ColumnDefinition Width="1.34*" />
-                                                            <ColumnDefinition Width="1.48*" />
-                                                            <ColumnDefinition Width="0.74*" />
-                                                            <ColumnDefinition Width="1.30*" />
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock Grid.Column="1"
-                                                                   Text="{Binding WorkStatus}"
-                                                                   Style="{StaticResource TableCellCenter}"
-                                                                   FontSize="9.5"
-                                                                   Foreground="{Binding WorkBrush}" />
-                                                        <TextBlock Grid.Column="2"
-                                                                   Text="{Binding TimeStatus}"
-                                                                   Style="{StaticResource TableCellCenter}"
-                                                                   FontSize="9.5"
-                                                                   Foreground="{Binding TimeBrush}" />
-                                                        <TextBlock Grid.Column="3" Text="{Binding ExpiryDate}" Style="{StaticResource TableCellCenter}" />
-                                                        <TextBlock Grid.Column="4" Text="{Binding IssueDate}" Style="{StaticResource TableCellCenter}" />
-                                                        <TextBlock Grid.Column="5" Text="{Binding Amount}" Style="{StaticResource TableCellCenter}" />
-                                                        <StackPanel Grid.Column="6" Orientation="Horizontal" FlowDirection="RightToLeft" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
-                                                            <Image Source="{Binding BankLogo}" Width="14" Height="14" RenderOptions.BitmapScalingMode="HighQuality" />
-                                                            <Border Width="8" />
-                                                            <TextBlock Text="{Binding Bank}" Style="{StaticResource TableCellText}" TextAlignment="Right" VerticalAlignment="Center" />
-                                                        </StackPanel>
-                                                        <TextBlock Grid.Column="7" Text="{Binding Beneficiary}" Style="{StaticResource TableCellRight}" />
-                                                        <TextBlock Grid.Column="8" Text="{Binding VersionLabel}" Style="{StaticResource TableCellCenter}" />
-                                                        <TextBlock Grid.Column="9" Text="{Binding GuaranteeNo}" Style="{StaticResource TableCellRight}" />
-                                                    </Grid>
-                                                    </Button>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
                                     </StackPanel>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
