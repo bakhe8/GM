@@ -750,17 +750,40 @@ namespace GuaranteeManager.Services
                 return "تسجيل السجل الرسمي";
             }
 
-            return IsTerminalLifecycle(version.LifecycleStatus)
-                ? GetTerminalLifecycleEventName(version.LifecycleStatus)
-                : $"إنشاء الإصدار v{version.VersionNumber}";
+            return $"إنشاء الإصدار v{version.VersionNumber}";
         }
 
         private static string BuildVersionTimelineDetails(Guarantee version)
         {
             string financialSummary = $"الانتهاء: {version.ExpiryDate:yyyy-MM-dd} | المبلغ: {version.Amount:N2}";
-            return IsTerminalLifecycle(version.LifecycleStatus)
-                ? $"الحالة التشغيلية: {version.LifecycleStatusLabel} | حدث دورة حياة | {financialSummary}"
-                : $"الحالة التشغيلية: {version.LifecycleStatusLabel} | {financialSummary}";
+            return $"الشروط المحفوظة لهذا الإصدار | {financialSummary}";
+        }
+
+        private static string BuildResponseTimelineDetails(WorkflowRequest request)
+        {
+            string detail = $"النتيجة: {request.StatusLabel}";
+            if (request.Status != RequestStatus.Executed)
+            {
+                return detail;
+            }
+
+            string effect = request.Type switch
+            {
+                RequestType.Extension when request.ResultVersionId.HasValue => "نتج إصدار ضمان جديد",
+                RequestType.Reduction when request.ResultVersionId.HasValue => "نتج إصدار ضمان جديد",
+                RequestType.Verification when request.ResultVersionId.HasValue => "تم اعتماد مستند رسمي على سجل الضمان",
+                RequestType.Release => "تم إنهاء دورة حياة الضمان بالإفراج",
+                RequestType.Liquidation => "تم إنهاء دورة حياة الضمان بالتسييل",
+                RequestType.Replacement => string.IsNullOrWhiteSpace(request.ReplacementGuaranteeNo)
+                    ? "تم استبدال الضمان بضمان بديل"
+                    : $"تم استبدال الضمان بالضمان {request.ReplacementGuaranteeNo}",
+                RequestType.Annulment => "مسار قديم ملغى",
+                _ => string.Empty
+            };
+
+            return string.IsNullOrWhiteSpace(effect)
+                ? detail
+                : $"{detail} | {effect}";
         }
 
         private static void AddFacts(
@@ -830,7 +853,7 @@ namespace GuaranteeManager.Services
                 {
                     Timestamp = request.ResponseRecordedAt!.Value,
                     Title = $"تسجيل استجابة البنك على {request.TypeLabel}",
-                    Details = $"النتيجة: {request.StatusLabel}"
+                    Details = BuildResponseTimelineDetails(request)
                 });
 
             foreach (OperationalInquiryTimelineEntry entry in versionEntries

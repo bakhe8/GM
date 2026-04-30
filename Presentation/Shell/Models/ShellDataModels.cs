@@ -729,6 +729,16 @@ namespace GuaranteeManager
                 tone);
         }
 
+        public static TimelineItem FromEvent(GuaranteeTimelineEvent timelineEvent)
+        {
+            return new TimelineItem(
+                timelineEvent.OccurredAt,
+                timelineEvent.Title,
+                timelineEvent.Details,
+                timelineEvent.Status,
+                ParseTone(timelineEvent.ToneKey));
+        }
+
         public static TimelineItem RequestCreated(WorkflowRequest request)
         {
             string detail = $"القيمة المطلوبة: {request.RequestedValueLabel}";
@@ -779,20 +789,10 @@ namespace GuaranteeManager
                     Tone.Success);
             }
 
-            if (IsTerminalLifecycle(version.LifecycleStatus))
-            {
-                return new TimelineItem(
-                    version.CreatedAt,
-                    GetTerminalLifecycleTitle(version.LifecycleStatus),
-                    GetTerminalLifecycleDetail(version),
-                    version.LifecycleStatusLabel,
-                    GetLifecycleTone(version.LifecycleStatus));
-            }
-
             return new TimelineItem(
                 version.CreatedAt,
                 $"إصدار جديد {version.VersionLabel}",
-                $"الحالة التشغيلية: {version.LifecycleStatusLabel} | المبلغ: {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال | الانتهاء: {version.ExpiryDate:yyyy/MM/dd}.",
+                $"تم حفظ شروط هذا الإصدار: المبلغ {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال | الانتهاء {version.ExpiryDate:yyyy/MM/dd}.",
                 "موثق",
                 Tone.Info);
         }
@@ -839,6 +839,13 @@ namespace GuaranteeManager
             RequestStatus.Rejected or RequestStatus.Cancelled => Tone.Danger,
             _ => Tone.Info
         };
+
+        private static Tone ParseTone(string? toneKey)
+        {
+            return Enum.TryParse(toneKey, ignoreCase: true, out Tone tone)
+                ? tone
+                : Tone.Info;
+        }
 
         private static Tone GetLifecycleTone(GuaranteeLifecycleStatus status) => status switch
         {

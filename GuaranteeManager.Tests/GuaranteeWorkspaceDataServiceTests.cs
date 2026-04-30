@@ -99,6 +99,69 @@ namespace GuaranteeManager.Tests
             Assert.DoesNotContain("الإصدار الناتج", responseItem.Detail);
         }
 
+        [Fact]
+        public void BuildSelectionArtifacts_ForReleaseAfterExtension_DatesLifecycleEndFromBankResponseOnly()
+        {
+            DateTime start = new(2026, 4, 28, 8, 0, 0);
+            var original = CreateGuarantee(1, 1, 1, false, start, 1_500_000m);
+            var extended = CreateGuarantee(2, 1, 2, true, start.AddHours(2), 1_500_000m);
+            extended.LifecycleStatus = GuaranteeLifecycleStatus.Released;
+            extended.ExpiryDate = new DateTime(2027, 2, 28);
+
+            var extensionRequest = new WorkflowRequest
+            {
+                Id = 20,
+                RootGuaranteeId = 1,
+                SequenceNumber = 1,
+                BaseVersionId = original.Id,
+                ResultVersionId = extended.Id,
+                Type = RequestType.Extension,
+                Status = RequestStatus.Executed,
+                RequestDate = start.AddHours(1),
+                ResponseRecordedAt = start.AddHours(2),
+                ResponseNotes = "تم تمديد الضمان."
+            };
+            var releaseRequest = new WorkflowRequest
+            {
+                Id = 21,
+                RootGuaranteeId = 1,
+                SequenceNumber = 2,
+                BaseVersionId = extended.Id,
+                Type = RequestType.Release,
+                Status = RequestStatus.Executed,
+                RequestDate = start.AddHours(3),
+                ResponseRecordedAt = start.AddHours(4),
+                ResponseNotes = "تم الإفراج بعد التمديد."
+            };
+
+            var service = new GuaranteeWorkspaceDataService(
+                new TimelineDatabaseStub(new[] { extended, original }, new[] { extensionRequest, releaseRequest }),
+                new ContextActionService());
+            GuaranteeRow row = GuaranteeRow.FromGuarantee(extended, new[] { extensionRequest, releaseRequest });
+
+            GuaranteeSelectionArtifacts artifacts = service.BuildSelectionArtifacts(row);
+
+            Assert.Equal(
+                new[]
+                {
+                    "إنشاء الضمان",
+                    "طلب تمديد",
+                    "تسجيل رد طلب تمديد",
+                    "إصدار جديد v2",
+                    "طلب إفراج",
+                    "تسجيل رد طلب إفراج"
+                },
+                artifacts.Timeline.Select(item => item.Title));
+
+            TimelineItem versionItem = Assert.Single(artifacts.Timeline, item => item.Title == "إصدار جديد v2");
+            Assert.DoesNotContain("إنهاء دورة حياة", versionItem.Detail);
+            Assert.DoesNotContain("مفرج", versionItem.Detail);
+
+            TimelineItem releaseResponse = Assert.Single(artifacts.Timeline, item => item.Title == "تسجيل رد طلب إفراج");
+            Assert.Equal("12:00:00", releaseResponse.Time);
+            Assert.Contains("تم إنهاء دورة حياة الضمان بالإفراج", releaseResponse.Detail);
+        }
+
         private static Guarantee CreateGuarantee(
             int id,
             int? rootId,
@@ -137,6 +200,7 @@ namespace GuaranteeManager.Tests
             }
 
             public List<Guarantee> GetGuaranteeHistory(int guaranteeId) => _history;
+            public List<GuaranteeTimelineEvent> GetGuaranteeTimelineEvents(int guaranteeId) => new();
 
             public List<WorkflowRequest> GetWorkflowRequestsByRootId(int rootId)
                 => _requests.Where(request => request.RootGuaranteeId == rootId).ToList();

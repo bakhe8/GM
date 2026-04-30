@@ -15,6 +15,7 @@ namespace GuaranteeManager.Services
         int CountAttachments();
         List<Guarantee> SearchGuarantees(string query);
         List<Guarantee> GetGuaranteeHistory(int guaranteeId);
+        List<GuaranteeTimelineEvent> GetGuaranteeTimelineEvents(int guaranteeId);
         int SaveWorkflowRequest(WorkflowRequest req);
         bool HasPendingWorkflowRequest(int rootId, RequestType requestType);
         int GetPendingWorkflowRequestCount();

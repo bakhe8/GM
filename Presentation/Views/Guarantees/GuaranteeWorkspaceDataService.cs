@@ -218,12 +218,13 @@ namespace GuaranteeManager
 
             List<WorkflowRequest> requests = _database.GetWorkflowRequestsByRootId(selectedGuarantee.RootId);
             List<Guarantee> history = _database.GetGuaranteeHistory(selectedGuarantee.Id);
+            List<GuaranteeTimelineEvent> storedEvents = _database.GetGuaranteeTimelineEvents(selectedGuarantee.Id);
             List<WorkflowRequest> contextRequests = selectedGuarantee.IsCurrentVersion
                 ? requests
                 : requests
                     .Where(request => request.BaseVersionId == selectedGuarantee.Id || request.ResultVersionId == selectedGuarantee.Id)
                     .ToList();
-            List<TimelineItem> timeline = BuildTimeline(selectedGuarantee, history, contextRequests);
+            List<TimelineItem> timeline = BuildTimeline(selectedGuarantee, history, contextRequests, storedEvents);
 
             List<AttachmentItem> attachments = selectedGuarantee.Attachments
                 .Take(3)
@@ -337,8 +338,21 @@ namespace GuaranteeManager
         private static List<TimelineItem> BuildTimeline(
             GuaranteeRow selectedGuarantee,
             IReadOnlyList<Guarantee> history,
-            IReadOnlyList<WorkflowRequest> contextRequests)
+            IReadOnlyList<WorkflowRequest> contextRequests,
+            IReadOnlyList<GuaranteeTimelineEvent> storedEvents)
         {
+            List<GuaranteeTimelineEvent> selectedEvents = (selectedGuarantee.IsCurrentVersion
+                ? storedEvents
+                : storedEvents.Where(item => item.GuaranteeId == selectedGuarantee.Id))
+                .OrderBy(item => item.OccurredAt)
+                .ThenBy(item => item.SortOrder)
+                .ThenBy(item => item.Id)
+                .ToList();
+            if (selectedEvents.Count > 0)
+            {
+                return selectedEvents.Select(TimelineItem.FromEvent).ToList();
+            }
+
             Dictionary<int, Guarantee> versionsById = history.ToDictionary(version => version.Id);
             List<Guarantee> versionEvents = (selectedGuarantee.IsCurrentVersion
                 ? history
@@ -355,7 +369,7 @@ namespace GuaranteeManager
                 events.Add(new TimelineEvent(version.CreatedAt, priority, TimelineItem.FromVersion(version)));
             }
 
-            foreach (Guarantee version in BuildStatusChangeVersions(versionEvents))
+            foreach (Guarantee version in BuildStatusChangeVersions(versionEvents, contextRequests))
             {
                 events.Add(new TimelineEvent(version.CreatedAt, 60, TimelineItem.StatusChanged(version)));
             }
@@ -401,19 +415,54 @@ namespace GuaranteeManager
                 .ToList();
         }
 
-        private static IEnumerable<Guarantee> BuildStatusChangeVersions(IReadOnlyList<Guarantee> versions)
+        private static IEnumerable<Guarantee> BuildStatusChangeVersions(
+            IReadOnlyList<Guarantee> versions,
+            IReadOnlyCollection<WorkflowRequest> requests)
         {
             Guarantee? previous = null;
             foreach (Guarantee version in versions)
             {
-                if (previous != null && version.LifecycleStatus != previous.LifecycleStatus)
+                if ((previous != null && version.LifecycleStatus != previous.LifecycleStatus)
+                    || (previous == null && IsTerminalLifecycle(version.LifecycleStatus)))
                 {
-                    yield return version;
+                    if (!IsLifecycleExplainedByWorkflowResponse(version, requests))
+                    {
+                        yield return version;
+                    }
                 }
 
                 previous = version;
             }
         }
+
+        private static bool IsLifecycleExplainedByWorkflowResponse(
+            Guarantee version,
+            IReadOnlyCollection<WorkflowRequest> requests)
+        {
+            RequestType? expectedType = version.LifecycleStatus switch
+            {
+                GuaranteeLifecycleStatus.Released => RequestType.Release,
+                GuaranteeLifecycleStatus.Liquidated => RequestType.Liquidation,
+                GuaranteeLifecycleStatus.Replaced => RequestType.Replacement,
+                _ => null
+            };
+
+            if (!expectedType.HasValue)
+            {
+                return false;
+            }
+
+            return requests.Any(request =>
+                request.Type == expectedType.Value
+                && request.Status == RequestStatus.Executed
+                && request.ResponseRecordedAt.HasValue
+                && (request.BaseVersionId == version.Id || request.ResultVersionId == version.Id));
+        }
+
+        private static bool IsTerminalLifecycle(GuaranteeLifecycleStatus status)
+            => status is GuaranteeLifecycleStatus.Released
+                or GuaranteeLifecycleStatus.Liquidated
+                or GuaranteeLifecycleStatus.Replaced;
 
         private static IEnumerable<AttachmentRecord> BuildAttachmentEventSource(IReadOnlyList<Guarantee> versions)
         {

@@ -100,6 +100,12 @@ namespace GuaranteeManager.Services
             return _guaranteeRepository.GetGuaranteeHistory(guaranteeId);
         }
 
+        public List<GuaranteeTimelineEvent> GetGuaranteeTimelineEvents(int guaranteeId)
+        {
+            using var connection = SqliteConnectionFactory.Open(_connectionString);
+            return GuaranteeEventStore.GetEventsForGuarantee(connection, guaranteeId);
+        }
+
         public int SaveWorkflowRequest(WorkflowRequest req)
         {
             return _workflowRequestRepository.SaveWorkflowRequest(req);

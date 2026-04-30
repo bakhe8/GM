@@ -39,6 +39,8 @@ namespace GuaranteeManager.Services
                 GuaranteeSchemaManager.EnsureVersioningAndMetadataSchema(connection);
                 GuaranteeSchemaManager.EnsureCurrentGuaranteeIntegrity(connection);
                 WorkflowSchemaManager.NormalizeLegacyCreatedBy(connection);
+                GuaranteeEventStore.EnsureSchema(connection);
+                GuaranteeEventStore.BackfillMissingEvents(connection);
                 _attachmentStorage.RecoverStagedFiles(connection);
                 _workflowResponseStorage.RecoverStagedFiles(connection);
             }
