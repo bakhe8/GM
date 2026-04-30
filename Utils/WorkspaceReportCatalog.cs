@@ -12,7 +12,7 @@ namespace GuaranteeManager.Utils
             new("portfolio.all", "المحفظة الكاملة", "تصدير قائمة الضمانات كما هي الآن."),
             new("portfolio.summary", "ملخص المحفظة", "مخرج تنفيذي يجمع الضمانات والطلبات."),
             new("portfolio.expiring", "قريب الانتهاء", "الضمانات التي تقترب من نهاية المدة."),
-            new("portfolio.expired", "منتهية وتحتاج متابعة", "الضمانات المنتهية زمنيًا التي ما زالت بحاجة إلى إجراء تشغيلي."),
+            new("portfolio.expired", "منتهية وتحتاج إفراج", "الضمانات المنتهية زمنيًا التي ما زالت بحاجة إلى إفراج/إعادة للبنك."),
             new("portfolio.no-attachments", "الضمانات بلا مرفقات", "السجلات الحالية التي لا تحتوي على أي مرفقات."),
             new("portfolio.versions.no-attachments", "الإصدارات بلا مرفقات", "كل الإصدارات في السجل الكامل التي لا تحتوي على مرفقات.")
         ];
@@ -37,7 +37,7 @@ namespace GuaranteeManager.Utils
             new("operational.active-purchase-order-only", "ضمانات أوامر الشراء السارية", "تقرير يعرض الضمانات السارية المرتبطة بأوامر الشراء فقط."),
             new("operational.contract-released-last-week", "إفراجات العقود خلال آخر أسبوع", "تقرير يعرض الإفراجات المنفذة للضمانات المرتبطة بالعقود خلال آخر أسبوع مكتمل."),
             new("operational.employee-contract-requests-last-month", "طلبات موظف للعقود", "تقرير يطلب اسم الموظف ثم يعرض طلبات التمديد والإفراج التي أنشأها للعقود خلال الشهر الماضي."),
-            new("operational.expired-po-without-extension", "أوامر شراء منتهية بلا تمديد", "تقرير يعرض ضمانات أوامر الشراء المنتهية التي لا يوجد لها تمديد منفذ."),
+            new("operational.expired-po-without-extension", "أوامر شراء منتهية تحتاج إفراج", "تقرير يعرض ضمانات أوامر الشراء المنتهية التي تحتاج إفراجًا أو إعادة للبنك."),
             new("daily.followup", "متابعة يومية", "مخرج متابعة يومية يجمع أهم الضمانات والطلبات."),
             new("stats.bank", "إحصائية حسب البنك", "تجميع المحفظة حسب البنوك."),
             new("stats.supplier", "إحصائية حسب المورد", "تجميع المحفظة حسب الموردين.")
@@ -353,25 +353,14 @@ namespace GuaranteeManager.Utils
 
         private static List<Guarantee> QueryExpiredPurchaseOrderOnlyWithoutExecutedExtension(IDatabaseService databaseService)
         {
-            List<WorkflowRequestListItem> extensionRequests = databaseService.QueryWorkflowRequests(new WorkflowRequestQueryOptions
-            {
-                RequestType = RequestType.Extension,
-                SortMode = WorkflowRequestQuerySortMode.RequestDateDescending
-            });
-            HashSet<int> rootsWithExecutedExtension = extensionRequests
-                .Where(item => item.Request.Status == RequestStatus.Executed)
-                .Select(item => item.RootGuaranteeId)
-                .ToHashSet();
-
             return databaseService.QueryGuarantees(new GuaranteeQueryOptions
                 {
-                    LifecycleStatus = GuaranteeLifecycleStatus.Active,
                     ReferenceType = GuaranteeReferenceType.PurchaseOrder,
                     RequireReferenceNumber = true,
                     TimeStatus = GuaranteeTimeStatus.Expired,
                     SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
                 })
-                .Where(guarantee => !rootsWithExecutedExtension.Contains(guarantee.RootId ?? guarantee.Id))
+                .Where(guarantee => guarantee.NeedsExpiryFollowUp)
                 .ToList();
         }
 

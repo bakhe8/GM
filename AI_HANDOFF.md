@@ -13,19 +13,18 @@ This file is the short handoff point for continuing work in a new AI/Codex chat 
 
 ## Verified State
 
-- `dotnet test .\my_work.sln` passes.
-- Latest verified result after data reset: `83/83` tests passing.
-- Release verification: `dotnet test -c Release .\my_work.sln` passes `81/81`.
-- The current tree builds before tests as part of `dotnet test`.
+- Debug verification: `dotnet test .\GuaranteeManager.Tests\GuaranteeManager.Tests.csproj --no-restore -p:BaseOutputPath=.\artifacts\testbin\` passes `100/100`.
+- Release verification: `dotnet test -c Release .\my_work.sln --no-restore` passes `98/98`.
+- Debug shell build for UI verification: `dotnet build .\my_work.sln -c Debug --no-restore` passes.
 - `git diff --check` passes with LF/CRLF warnings only.
 - Local development data was reset and regenerated on 2026-04-30:
-  - Old runtime data backup: `C:\Users\Bakheet\AppData\Local\GuaranteeManager_ResetBackups\before_regenerate_20260430_155329`
+  - Old runtime data backup: `C:\Users\Bakheet\AppData\Local\GuaranteeManager_ResetBackups\before_regenerate_20260430_231621`
   - Regenerated runtime data: `51` guarantees, `27` pending requests, `40` attachment files, `63` workflow document files.
 - UI acceptance after regeneration passes:
-  - `.\scripts\run_ui_acceptance.ps1 -Scenario All`
-  - Summary: `Doc\Assets\Documentation\Screenshots\UIAcceptance\20260430-155619\summary.md`
+  - `.\scripts\run_ui_acceptance.ps1 -Scenario All -ReuseRunningSession:$false`
+  - Summary: `Doc\Assets\Documentation\Screenshots\UIAcceptance\20260430-232003\summary.md`
 - UI tooling regression after regeneration passes:
-  - `.\scripts\run_ui_tooling_regression.ps1 -Suite All`
+  - `.\scripts\run_ui_tooling_regression.ps1 -Suite All -ReuseRunningSession:$true`
   - Unit `27/27`, Smoke `10/10`, Integration `70/70`, Freedom `9/9`.
 - UI automation scripts now match the current shell:
   - sidebar smoke uses `اليوم` instead of stale `لوحة التحكم`.
@@ -52,6 +51,9 @@ The current implementation direction is:
 - Request list rows expose base/result/related version labels so lifecycle-ending requests still point to the relevant version.
 - Stale extension/reduction execution is covered by tests: if expiry date or amount changed after request creation, execution is blocked and the request remains pending.
 - Corrected workflow rule: extension/reduction requests may be sequential on the current active version; release/liquidation may be executed after extension/reduction, but release/liquidation are terminal and cannot repeat after execution.
+- Expired guarantees are now operationally blocked for every request type except release/return to bank. Extension, reduction, liquidation, verification, and replacement must be created/executed while the guarantee is active and not expired by date.
+- The guarantee edit path is administrative only: it may correct descriptive text such as supplier/beneficiary/notes/attachments, but it does not change guarantee number, bank, type, amount, expiry date, or reference fields.
+- Reports and daily follow-up should treat expired open guarantees as "needing release/return", not as extension candidates.
 - Seed data is now guarded by `WorkflowRuleInvariantTests.DataSeedingService_GeneratedData_RespectsFinalizedWorkflowRules`, which generates data and validates the finalized workflow invariants, including that no `Annulment` requests are generated.
 
 ## Key Files In This Baseline

@@ -102,7 +102,7 @@ namespace GuaranteeManager.Development
 
                 // ── نشط — منتهية تاريخاً ──────────────────────────────────────────
                 SeedActive_DateExpired_NoRequests();
-                SeedActive_DateExpiredLong_PendingLiquidation();
+                SeedActive_DateExpiredLong_PendingRelease();
 
                 // ── نشط — طلب معلق لكل نوع ────────────────────────────────────────
                 SeedActive_PendingVerification();
@@ -224,11 +224,11 @@ namespace GuaranteeManager.Development
             Save(g, attachmentCount: 1);
         }
 
-        private void SeedActive_DateExpiredLong_PendingLiquidation()
+        private void SeedActive_DateExpiredLong_PendingRelease()
         {
             var g = BuildGuarantee(6, -60, 1_500_000m, GuaranteeReferenceType.PurchaseOrder, "PO-7712");
             var current = Save(g);
-            _workflowService.CreateLiquidationRequest(current.Id, "الضمان منتهي ولم يُسيَّل", "محمد العتيبي");
+            _workflowService.CreateReleaseRequest(current.Id, "الضمان منتهي ويحتاج إعادة/إفراج للبنك", "محمد العتيبي");
         }
 
         // ══════════════════════════════════════════════════════════════════════
@@ -297,15 +297,15 @@ namespace GuaranteeManager.Development
 
         private void SeedActive_LiquidationRejected()
         {
-            var g = BuildGuarantee(4, -10, 700_000m, GuaranteeReferenceType.PurchaseOrder, "PO-7001");
+            var g = BuildGuarantee(4, 40, 700_000m, GuaranteeReferenceType.PurchaseOrder, "PO-7001");
             var current = Save(g, attachmentCount: 0);
-            var req = _workflowService.CreateLiquidationRequest(current.Id, "محاولة تسييل الضمان المنتهي", "عمر الفيصل");
+            var req = _workflowService.CreateLiquidationRequest(current.Id, "محاولة تسييل قبل انتهاء الضمان", "عمر الفيصل");
             _workflowService.RecordBankResponse(req.Id, RequestStatus.Rejected, "رفض البنك التسييل لعدم وجود تخلف رسمي موثق");
         }
 
         private void SeedActive_LiquidationCancelled()
         {
-            var g = BuildGuarantee(5, -15, 1_100_000m, GuaranteeReferenceType.Contract, "عقد-7100");
+            var g = BuildGuarantee(5, 45, 1_100_000m, GuaranteeReferenceType.Contract, "عقد-7100");
             var current = Save(g, attachmentCount: 1);
             var req = _workflowService.CreateLiquidationRequest(current.Id, "طلب تسييل أولي", "سلطان الغامدي");
             _workflowService.RecordBankResponse(req.Id, RequestStatus.Cancelled, "إلغاء طلب التسييل بعد التوصل لتسوية ودية");
@@ -440,7 +440,7 @@ namespace GuaranteeManager.Development
         private void SeedActive_MultiplePending_ReleaseAndLiquidation()
         {
             // طلب إفراج وتسييل معلقان على نفس الضمان — سيناريو تنافسي حدّي
-            var g = BuildGuarantee(0, -5, 1_400_000m, GuaranteeReferenceType.PurchaseOrder, "PO-8100");
+            var g = BuildGuarantee(0, 35, 1_400_000m, GuaranteeReferenceType.PurchaseOrder, "PO-8100");
             var current = Save(g, attachmentCount: 0);
             _workflowService.CreateReleaseRequest(current.Id, "طلب إفراج من الجهة المستفيدة", "جابر الدوسري");
             _workflowService.CreateLiquidationRequest(current.Id, "طلب تسييل موازٍ بسبب التأخر", "جابر الدوسري");
@@ -635,7 +635,7 @@ namespace GuaranteeManager.Development
         private void SeedLiquidated_AutoSuperseded()
         {
             // تخفيض + تحقق معلقان، ينفَّذ التسييل فيُسقطان تلقائياً
-            var g = BuildGuarantee(1, -8, 1_900_000m, GuaranteeReferenceType.PurchaseOrder, "PO-8400");
+            var g = BuildGuarantee(1, 55, 1_900_000m, GuaranteeReferenceType.PurchaseOrder, "PO-8400");
             var current = Save(g, attachmentCount: 0);
 
             _workflowService.CreateVerificationRequest(current.Id, "تحقق سيُسقَط بالتسييل", "سعود المالكي");
@@ -680,10 +680,10 @@ namespace GuaranteeManager.Development
         {
             var g = BuildGuarantee(4, -1, 820_000m, GuaranteeReferenceType.Contract, "عقد-8700");
             var current = Save(g, attachmentCount: 1);
-            // انتهى أمس — يجب أن يُصنَّف كـ "منتهي" في الواجهة
-            _workflowService.CreateVerificationRequest(
+            // انتهى أمس — الإجراء الوحيد المتاح هو الإفراج/إعادة الضمان للبنك.
+            _workflowService.CreateReleaseRequest(
                 current.Id,
-                "تحقق من ضمان انتهى أمس",
+                "إفراج/إعادة ضمان انتهى أمس",
                 "عادل القرني");
         }
 
@@ -736,7 +736,7 @@ namespace GuaranteeManager.Development
 
         private void SeedLiquidated_Simple()
         {
-            var g = BuildGuarantee(4, -15, 1_600_000m, GuaranteeReferenceType.Contract, "عقد-9922");
+            var g = BuildGuarantee(4, 75, 1_600_000m, GuaranteeReferenceType.Contract, "عقد-9922");
             var current = Save(g, attachmentCount: 2);
 
             var liqReq = _workflowService.CreateLiquidationRequest(current.Id, "تسييل بسبب إخلال المقاول بالتزاماته", "عمر العمري");

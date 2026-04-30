@@ -273,7 +273,7 @@ namespace GuaranteeManager
                 recommendation = new DashboardGuidanceCard(
                     "توصيات تشغيلية",
                     $"يوجد {expiredCount.ToString("N0", CultureInfo.InvariantCulture)} ضمان منتهي يحتاج قرارًا.",
-                    "المنتهية تحتاج حسمًا تشغيليًا قبل أن تبقى خارج الدورة بدون أثر واضح في السجل.",
+                    "المنتهية لا تقبل تمديدًا أو تسييلًا؛ الإجراء المتاح هو الإفراج/إعادة الضمان وتوثيق الرد.",
                     "عرض المنتهية",
                     DashboardGuidanceActionKind.FilterExpiredFollowUps,
                     null);
@@ -384,7 +384,7 @@ namespace GuaranteeManager
                 item.RootId ?? item.Id,
                 requestId,
                 focusArea,
-                "منتهية تحتاج متابعة",
+                "منتهية تحتاج إفراج",
                 label,
                 rank,
                 item.Beneficiary,

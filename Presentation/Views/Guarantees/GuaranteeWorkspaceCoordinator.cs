@@ -99,6 +99,16 @@ namespace GuaranteeManager
                 return;
             }
 
+            if (HasOperationalFieldChanges(current, input))
+            {
+                MessageBox.Show(
+                    "التعديل من هذه الواجهة مخصص للتصحيح الإداري الوصفي فقط مثل اسم المورد/المستفيد أو الملاحظات والمرفقات. لا يمكن تغيير رقم الضمان أو البنك أو النوع أو المبلغ أو تاريخ الانتهاء أو بيانات المرجع من هنا لأنها تؤثر في منطق الطلبات ودورة حياة الضمان.",
+                    "تعديل الضمان",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
             ExecuteAction("تعديل الضمان", () =>
             {
                 current.Supplier = input.Supplier;
@@ -117,6 +127,20 @@ namespace GuaranteeManager
                 return GuaranteeActionResult.Success($"تم تحديث الضمان {input.GuaranteeNo} وإنشاء إصدار جديد.", target.RootId);
             });
         }
+
+        private static bool HasOperationalFieldChanges(Guarantee current, EditGuaranteeInput input)
+        {
+            return !GuaranteeDataAccess.GuaranteeNumbersEqual(input.GuaranteeNo, current.GuaranteeNo)
+                   || !SameText(input.Bank, current.Bank)
+                   || !SameText(input.GuaranteeType, current.GuaranteeType)
+                   || input.Amount != current.Amount
+                   || input.ExpiryDate.Date != current.ExpiryDate.Date
+                   || input.ReferenceType != current.ReferenceType
+                   || !SameText(input.ReferenceNumber, current.ReferenceNumber);
+        }
+
+        private static bool SameText(string? left, string? right)
+            => string.Equals((left ?? string.Empty).Trim(), (right ?? string.Empty).Trim(), StringComparison.Ordinal);
 
         public OperationalInquiryResult? RunInquiry(GuaranteeRow target, OperationalInquiryOption option)
         {

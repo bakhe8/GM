@@ -30,14 +30,14 @@
 ## حالة التحقق
 
 - أُعيد تنظيف بيانات التشغيل المحلية وإعادة توليدها من الصفر في 2026-04-30:
-  - نسخة أمان قبل التنظيف: `C:\Users\Bakheet\AppData\Local\GuaranteeManager_ResetBackups\before_regenerate_20260430_155329`
+  - نسخة أمان قبل التنظيف: `C:\Users\Bakheet\AppData\Local\GuaranteeManager_ResetBackups\before_regenerate_20260430_231621`
   - بعد التوليد: `51` ضمانًا، `27` طلبًا معلقًا، `40` ملف مرفق، و`63` ملف خطاب/وثيقة طلب.
-- `dotnet test .\my_work.sln` ناجح بعد إعادة التوليد: `83/83`.
-- `dotnet test -c Release .\my_work.sln` ناجح بعد إعادة التوليد: `81/81`.
+- `dotnet test .\GuaranteeManager.Tests\GuaranteeManager.Tests.csproj --no-restore -p:BaseOutputPath=.\artifacts\testbin\` ناجح بعد إعادة التوليد: `100/100`.
+- `dotnet test -c Release .\my_work.sln --no-restore` ناجح بعد إعادة التوليد: `98/98`.
 - `git diff --check` ناجح، مع تحذيرات LF/CRLF فقط.
-- `.\scripts\run_ui_acceptance.ps1 -Scenario All` ناجح بعد إعادة التوليد.
-  - الملخص: `Doc\Assets\Documentation\Screenshots\UIAcceptance\20260430-155619\summary.md`
-- `.\scripts\run_ui_tooling_regression.ps1 -Suite All` ناجح بعد إعادة التوليد:
+- `.\scripts\run_ui_acceptance.ps1 -Scenario All -ReuseRunningSession:$false` ناجح بعد إعادة التوليد.
+  - الملخص: `Doc\Assets\Documentation\Screenshots\UIAcceptance\20260430-232003\summary.md`
+- `.\scripts\run_ui_tooling_regression.ps1 -Suite All -ReuseRunningSession:$true` ناجح بعد إعادة التوليد:
   - Unit `27/27`
   - Smoke `10/10`
   - Integration `70/70`

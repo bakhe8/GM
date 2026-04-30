@@ -424,19 +424,11 @@ namespace GuaranteeManager
 
             bool hasPendingType(RequestType type) => requests.Any(request => request.Status == RequestStatus.Pending && request.Type == type);
             bool lifecycleClosed = guarantee.LifecycleStatus is GuaranteeLifecycleStatus.Released or GuaranteeLifecycleStatus.Liquidated or GuaranteeLifecycleStatus.Replaced or GuaranteeLifecycleStatus.Closed;
-            bool lifecycleActionBlocked = archivedVersion || guarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active;
 
-            string blockedLifecycleHint = archivedVersion
+            bool isRequestBlocked(RequestType type) => archivedVersion || !WorkflowLifecyclePolicy.CanCreateRequest(guarantee, type);
+            string blockedRequestHint(RequestType type) => archivedVersion
                 ? archivedVersionHint
-                : guarantee.LifecycleStatus switch
-            {
-                GuaranteeLifecycleStatus.Expired => "حالة الضمان التشغيلية منتهية الصلاحية، لذلك لا يمكن إنشاء طلبات تشغيلية جديدة عليه قبل معالجة حالته.",
-                GuaranteeLifecycleStatus.Released => "تم الإفراج عن هذا الضمان، لذلك لا تظهر عليه إجراءات متابعة إنشائية جديدة عادةً.",
-                GuaranteeLifecycleStatus.Liquidated => "هذا الضمان مُسيّل بالفعل، لذلك أغلب إجراءات التغيير الجديدة غير منطقية عليه.",
-                GuaranteeLifecycleStatus.Replaced => "هذا الضمان استُبدل بالفعل، لذلك إجراءات التعديل الإنشائي تنتقل غالبًا إلى الضمان البديل.",
-                GuaranteeLifecycleStatus.Closed => "هذا السجل من حالة قديمة مغلقة، لذا لا يوصى ببدء إجراءات تشغيلية جديدة عليه.",
-                _ => string.Empty
-            };
+                : WorkflowLifecyclePolicy.GetCreateBlockedMessage(type, guarantee);
 
             ActionEligibility enableWhen(bool condition, string enabledHint, string disabledHint)
                 => condition ? ActionEligibility.Enabled(enabledHint) : ActionEligibility.Disabled(disabledHint);
@@ -461,54 +453,52 @@ namespace GuaranteeManager
             ActionEligibility edit = archivedVersion
                 ? ActionEligibility.Disabled(archivedVersionHint)
                 : lifecycleClosed
-                ? ActionEligibility.Enabled($"السجل في حالة {guarantee.LifecycleStatusLabel}. ما زال التعديل متاحًا، لكنه سينشئ إصدارًا جديدًا ينبغي مراجعته بعناية.")
-                : ActionEligibility.Enabled("التعديل متاح وسيُحفظ كسجل إصدار جديد مع الإبقاء على التاريخ الكامل.");
+                ? ActionEligibility.Enabled($"السجل في حالة {guarantee.LifecycleStatusLabel}. التعديل هنا مخصص للتصحيح الإداري الوصفي فقط، مثل الاسم أو الملاحظات.")
+                : ActionEligibility.Enabled("التعديل متاح للتصحيح الإداري الوصفي فقط، ولا يغير مبلغ الضمان أو تاريخه أو بنكه أو رقمه.");
 
             ActionEligibility release = BuildLifecycleAction(
-                lifecycleActionBlocked,
+                isRequestBlocked(RequestType.Release),
                 hasPendingType(RequestType.Release),
-                blockedLifecycleHint,
+                blockedRequestHint(RequestType.Release),
                 "يوجد طلب إفراج معلق بالفعل لهذا الضمان.",
-                "طلب الإفراج متاح عند اكتمال مستندات إنهاء الالتزام.");
+                guarantee.IsExpired || guarantee.LifecycleStatus == GuaranteeLifecycleStatus.Expired
+                    ? "الضمان منتهي الصلاحية؛ المتاح هو الإفراج/إعادة الضمان للبنك وتوثيق الرد."
+                    : "طلب الإفراج متاح عند اكتمال مستندات إنهاء الالتزام.");
 
             ActionEligibility extension = BuildLifecycleAction(
-                lifecycleActionBlocked,
+                isRequestBlocked(RequestType.Extension),
                 hasPendingType(RequestType.Extension),
-                blockedLifecycleHint,
+                blockedRequestHint(RequestType.Extension),
                 "يوجد طلب تمديد معلق بالفعل لهذا الضمان.",
-                guarantee.IsExpired
-                    ? "الضمان منتهٍ حاليًا، وطلب التمديد مناسب لإغلاق فجوة المتابعة."
-                    : guarantee.IsExpiringSoon
+                guarantee.IsExpiringSoon
                         ? "الضمان قريب الانتهاء، وطلب التمديد مناسب في هذا التوقيت."
                         : "طلب التمديد متاح لتمديد استباقي عند الحاجة.");
 
             ActionEligibility reduction = BuildLifecycleAction(
-                lifecycleActionBlocked,
+                isRequestBlocked(RequestType.Reduction),
                 hasPendingType(RequestType.Reduction),
-                blockedLifecycleHint,
+                blockedRequestHint(RequestType.Reduction),
                 "يوجد طلب تخفيض معلق بالفعل لهذا الضمان.",
                 "طلب التخفيض متاح عند الحاجة لتعديل قيمة الضمان.");
 
             ActionEligibility liquidation = BuildLifecycleAction(
-                lifecycleActionBlocked,
+                isRequestBlocked(RequestType.Liquidation),
                 hasPendingType(RequestType.Liquidation),
-                blockedLifecycleHint,
+                blockedRequestHint(RequestType.Liquidation),
                 "يوجد طلب تسييل معلق بالفعل لهذا الضمان.",
-                guarantee.IsExpired
-                    ? "الضمان منتهٍ، وطلب التسييل متاح إذا كانت مبررات المطالبة مكتملة."
-                    : "طلب التسييل متاح عند الحاجة لإثبات المطالبة وتنفيذ أثرها.");
+                "طلب التسييل متاح عند الحاجة لإثبات المطالبة وتنفيذ أثرها قبل انتهاء صلاحية الضمان.");
 
             ActionEligibility verification = BuildLifecycleAction(
-                lifecycleActionBlocked,
+                isRequestBlocked(RequestType.Verification),
                 hasPendingType(RequestType.Verification),
-                blockedLifecycleHint,
+                blockedRequestHint(RequestType.Verification),
                 "يوجد طلب تحقق معلق بالفعل لهذا الضمان.",
                 "طلب التحقق متاح لمراجعة صحة المستندات أو إثبات الحالة.");
 
             ActionEligibility replacement = BuildLifecycleAction(
-                lifecycleActionBlocked,
+                isRequestBlocked(RequestType.Replacement),
                 hasPendingType(RequestType.Replacement),
-                blockedLifecycleHint,
+                blockedRequestHint(RequestType.Replacement),
                 "يوجد طلب استبدال معلق بالفعل لهذا الضمان.",
                 "طلب الاستبدال متاح عند الحاجة لإصدار ضمان بديل.");
 

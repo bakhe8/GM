@@ -705,8 +705,96 @@ namespace GuaranteeManager.Tests
             InvalidOperationException repeatedLiquidation = Assert.Throws<InvalidOperationException>(
                 () => workflow.CreateLiquidationRequest(liquidatedGuarantee.Id, "repeat liquidation", "tester"));
 
-            Assert.Contains("ضمان غير نشط", repeatedRelease.Message);
-            Assert.Contains("ضمان غير نشط", repeatedLiquidation.Message);
+            Assert.Contains("لا يمكن إنشاء طلب إفراج", repeatedRelease.Message);
+            Assert.Contains("لا يمكن إنشاء طلب تسييل", repeatedLiquidation.Message);
+        }
+
+        [Fact]
+        public void CreateReleaseRequest_ForExpiredLifecycle_IsAllowedAndEndsLifecycle()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee seed = _fixture.CreateGuarantee();
+            seed.ExpiryDate = DateTime.Today.AddDays(-5);
+            seed.LifecycleStatus = GuaranteeLifecycleStatus.Expired;
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+
+            WorkflowRequest releaseRequest = workflow.CreateReleaseRequest(current.Id, "return expired guarantee", "tester");
+            workflow.RecordBankResponse(releaseRequest.Id, RequestStatus.Executed, "released after expiry");
+
+            Guarantee releasedGuarantee = database.GetCurrentGuaranteeByRootId(current.RootId ?? current.Id)!;
+            WorkflowRequest executedRequest = database.GetWorkflowRequestById(releaseRequest.Id)!;
+
+            Assert.Equal(GuaranteeLifecycleStatus.Released, releasedGuarantee.LifecycleStatus);
+            Assert.Equal(RequestStatus.Executed, executedRequest.Status);
+        }
+
+        [Fact]
+        public void CreateNonReleaseRequests_ForDateExpiredGuarantee_AreBlocked()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee seed = _fixture.CreateGuarantee();
+            seed.ExpiryDate = DateTime.Today.AddDays(-1);
+            seed.LifecycleStatus = GuaranteeLifecycleStatus.Active;
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+
+            var attempts = new Action[]
+            {
+                () => workflow.CreateExtensionRequest(current.Id, DateTime.Today.AddDays(30), "extension", "tester"),
+                () => workflow.CreateReductionRequest(current.Id, current.Amount - 1m, "reduction", "tester"),
+                () => workflow.CreateLiquidationRequest(current.Id, "liquidation", "tester"),
+                () => workflow.CreateVerificationRequest(current.Id, "verification", "tester"),
+                () => workflow.CreateReplacementRequest(
+                    current.Id,
+                    $"BG-R-{_fixture.NextToken("NO")}",
+                    current.Supplier,
+                    current.Bank,
+                    current.Amount,
+                    DateTime.Today.AddDays(90),
+                    current.GuaranteeType,
+                    current.Beneficiary,
+                    current.ReferenceType,
+                    current.ReferenceNumber,
+                    "replacement",
+                    "tester")
+            };
+
+            foreach (Action attempt in attempts)
+            {
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(attempt);
+                Assert.Contains("منتهي الصلاحية", exception.Message);
+            }
+
+            WorkflowRequest releaseRequest = workflow.CreateReleaseRequest(current.Id, "release", "tester");
+            Assert.Equal(RequestType.Release, releaseRequest.Type);
+        }
+
+        [Fact]
+        public void RecordBankResponse_ExecutedTerminalRequest_SupersedesOtherPendingRequests()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+            int rootId = current.RootId ?? current.Id;
+
+            WorkflowRequest verificationRequest = workflow.CreateVerificationRequest(current.Id, "verification", "tester");
+            WorkflowRequest reductionRequest = workflow.CreateReductionRequest(current.Id, current.Amount - 1m, "reduction", "tester");
+            WorkflowRequest releaseRequest = workflow.CreateReleaseRequest(current.Id, "release", "tester");
+
+            workflow.RecordBankResponse(releaseRequest.Id, RequestStatus.Executed, "released");
+
+            List<WorkflowRequest> requests = database.GetWorkflowRequestsByRootId(rootId);
+            Assert.Equal(RequestStatus.Executed, requests.Single(request => request.Id == releaseRequest.Id).Status);
+            Assert.Equal(RequestStatus.Superseded, requests.Single(request => request.Id == verificationRequest.Id).Status);
+            Assert.Equal(RequestStatus.Superseded, requests.Single(request => request.Id == reductionRequest.Id).Status);
         }
 
         [Fact]

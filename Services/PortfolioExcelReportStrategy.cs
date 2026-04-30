@@ -60,7 +60,7 @@ namespace GuaranteeManager.Services
                 string[,] rows =
                 {
                     { "قريب الانتهاء", expiringSoon.Count.ToString("N0"), "ضمانات تقترب من نهاية مدتها الزمنية.", "المراجعة والتواصل قبل الانتهاء." },
-                    { "منتهية وتحتاج متابعة", expiredActive.Count.ToString("N0"), "ضمانات منتهية زمنيًا وما زالت بحاجة إلى إجراء تشغيلي.", "مراجعة الإجراء المناسب أو توثيق الوضع الحالي." },
+                    { "منتهية وتحتاج إفراج", expiredActive.Count.ToString("N0"), "ضمانات منتهية زمنيًا وما زالت بحاجة إلى إفراج/إعادة للبنك.", "إنشاء أو متابعة طلب الإفراج وتوثيق رد البنك." },
                     { "طلبات معلقة", pendingRequests.Count.ToString("N0"), "طلبات لم يسجل لها رد بنك بعد.", "المتابعة مع البنك أو الجهة المعنية." },
                     { "منفذ بلا مستند رد بنك", executedWithoutResponse.Count.ToString("N0"), "طلبات منفذة لم يُحفظ لها مستند رد بنك.", "استكمال مستندات الإثبات عند الحاجة." }
                 };
@@ -86,9 +86,9 @@ namespace GuaranteeManager.Services
 
                 if (expiredActive.Any())
                 {
-                    var sheet = workbook.Worksheets.Add("منتهية وتحتاج متابعة");
+                    var sheet = workbook.Worksheets.Add("منتهية تحتاج إفراج");
                     sheet.SetRightToLeft(true);
-                    ExcelReportSupport.WriteGuaranteesWorksheet(sheet, expiredActive, "الضمانات المنتهية التي تحتاج متابعة", $"عدد السجلات: {expiredActive.Count}");
+                    ExcelReportSupport.WriteGuaranteesWorksheet(sheet, expiredActive, "الضمانات المنتهية التي تحتاج إفراج/إعادة", $"عدد السجلات: {expiredActive.Count}");
                 }
 
                 if (pendingRequests.Any())

@@ -297,66 +297,68 @@ namespace GuaranteeManager.Services
         {
             List<WorkflowRequestListItem> requests = _databaseService.QueryWorkflowRequests(new WorkflowRequestQueryOptions
             {
-                RequestType = RequestType.Extension,
                 SortMode = WorkflowRequestQuerySortMode.RequestDateDescending
             });
-            HashSet<int> rootsWithExecutedExtension = requests
-                .Where(item => item.Request.Type == RequestType.Extension && item.Request.Status == RequestStatus.Executed)
+            HashSet<int> rootsWithPendingRelease = requests
+                .Where(item => item.Request.Type == RequestType.Release && item.Request.Status == RequestStatus.Pending)
                 .Select(item => item.RootGuaranteeId)
                 .ToHashSet();
 
-            HashSet<int> rootsWithAnyExtensionRequest = requests
-                .Where(item => item.Request.Type == RequestType.Extension)
+            HashSet<int> rootsWithClosedRelease = requests
+                .Where(item => item.Request.Type == RequestType.Release && item.Request.Status != RequestStatus.Pending)
                 .Select(item => item.RootGuaranteeId)
                 .ToHashSet();
 
             List<Guarantee> matchingGuarantees = _databaseService
                 .QueryGuarantees(new GuaranteeQueryOptions
                 {
-                    LifecycleStatus = GuaranteeLifecycleStatus.Active,
                     ReferenceType = GuaranteeReferenceType.PurchaseOrder,
                     RequireReferenceNumber = true,
                     TimeStatus = GuaranteeTimeStatus.Expired,
                     SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
                 })
-                .Where(g => !rootsWithExecutedExtension.Contains(g.RootId ?? g.Id))
+                .Where(g => g.NeedsExpiryFollowUp)
                 .ToList();
 
             decimal totalAmount = matchingGuarantees.Sum(g => g.Amount);
-            int withoutAnyExtensionRequestCount = matchingGuarantees.Count(g => !rootsWithAnyExtensionRequest.Contains(g.RootId ?? g.Id));
-            int withUnexecutedExtensionAttemptCount = matchingGuarantees.Count - withoutAnyExtensionRequestCount;
+            int withPendingReleaseCount = matchingGuarantees.Count(g => rootsWithPendingRelease.Contains(g.RootId ?? g.Id));
+            int withoutPendingReleaseCount = matchingGuarantees.Count - withPendingReleaseCount;
+            int withClosedReleaseAttemptCount = matchingGuarantees.Count(g => rootsWithClosedRelease.Contains(g.RootId ?? g.Id));
 
             OperationalInquiryResult result = new OperationalInquiryResult
             {
-                InquiryKey = "expired-po-without-executed-extension",
-                Title = "كم مبلغ ضمانات أوامر الشراء المنتهية بلا تمديد؟",
-                Subject = "الضمانات المنتهية - أوامر الشراء فقط - بدون تمديد منفذ",
+                InquiryKey = "expired-po-needing-release",
+                Title = "كم مبلغ ضمانات أوامر الشراء المنتهية التي تحتاج إفراجًا؟",
+                Subject = "الضمانات المنتهية - أوامر الشراء فقط - تحتاج إفراج/إعادة",
                 EventDate = DateTime.Now
             };
 
             result.Answer = matchingGuarantees.Any()
-                ? $"إجمالي مبالغ ضمانات أوامر الشراء فقط المنتهية بدون أي تمديد منفذ هو {totalAmount:N2}، موزعة على {matchingGuarantees.Count} ضمانًا/ضمانات."
-                : "لا توجد حاليًا ضمانات أوامر شراء فقط منتهية بدون تمديد منفذ.";
-            result.Explanation = "تم احتساب الضمانات المنتهية زمنيًا، ذات الحالة التشغيلية النشطة، والتي نوع مرجعها أمر شراء، مع استبعاد أي ضمان له طلب تمديد منفذ ضمن السلسلة.";
+                ? $"إجمالي مبالغ ضمانات أوامر الشراء فقط المنتهية التي تحتاج إفراجًا أو إعادة للبنك هو {totalAmount:N2}، موزعة على {matchingGuarantees.Count} ضمانًا/ضمانات."
+                : "لا توجد حاليًا ضمانات أوامر شراء فقط منتهية وتحتاج إفراجًا.";
+            result.Explanation = "تم احتساب الضمانات المنتهية زمنيًا والتي لم تغلق دورة حياتها بعد. بعد الانتهاء لا يُطلب تمديد أو تسييل؛ الإجراء المتاح هو الإفراج/إعادة الضمان للبنك.";
 
             result.Facts.Add(new OperationalInquiryFact { Label = "عدد الضمانات", Value = matchingGuarantees.Count.ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "إجمالي المبالغ", Value = totalAmount.ToString("N2") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "بدون أي طلب تمديد", Value = withoutAnyExtensionRequestCount.ToString("N0") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "بطلبات تمديد غير منفذة", Value = withUnexecutedExtensionAttemptCount.ToString("N0") });
+            result.Facts.Add(new OperationalInquiryFact { Label = "بطلب إفراج معلق", Value = withPendingReleaseCount.ToString("N0") });
+            result.Facts.Add(new OperationalInquiryFact { Label = "بدون طلب إفراج معلق", Value = withoutPendingReleaseCount.ToString("N0") });
+            result.Facts.Add(new OperationalInquiryFact { Label = "لها محاولة إفراج مغلقة", Value = withClosedReleaseAttemptCount.ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "أقدم تاريخ انتهاء", Value = matchingGuarantees.FirstOrDefault()?.ExpiryDate.ToString("yyyy-MM-dd") ?? "---" });
 
             foreach (Guarantee guarantee in matchingGuarantees.Take(10))
             {
                 int rootId = guarantee.RootId ?? guarantee.Id;
-                string extensionState = rootsWithAnyExtensionRequest.Contains(rootId)
-                    ? "له محاولة تمديد غير منفذة"
-                    : "لا يوجد طلب تمديد";
+                string releaseState = rootsWithPendingRelease.Contains(rootId)
+                    ? "له طلب إفراج معلق"
+                    : rootsWithClosedRelease.Contains(rootId)
+                        ? "له محاولة إفراج مغلقة"
+                        : "لا يوجد طلب إفراج معلق";
 
                 result.Timeline.Add(new OperationalInquiryTimelineEntry
                 {
                     Timestamp = guarantee.ExpiryDate,
                     Title = guarantee.GuaranteeNo,
-                    Details = $"{guarantee.Supplier} | {guarantee.ReferenceTypeLabel}: {guarantee.ReferenceNumber} | {guarantee.Amount:N2} | {extensionState}"
+                    Details = $"{guarantee.Supplier} | {guarantee.ReferenceTypeLabel}: {guarantee.ReferenceNumber} | {guarantee.Amount:N2} | {releaseState}"
                 });
             }
 

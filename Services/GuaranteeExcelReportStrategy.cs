@@ -197,10 +197,10 @@ namespace GuaranteeManager.Services
 
             return ExportGuaranteesReport(
                 filteredGuarantees,
-                "تصدير الضمانات المنتهية التي تحتاج متابعة",
+                "تصدير الضمانات المنتهية التي تحتاج إفراج",
                 $"Guarantees_ExpiredFollowUp_{DateTime.Now:yyyyMMdd_HHmm}.xlsx",
-                "الضمانات المنتهية التي تحتاج متابعة",
-                $"يعرض الضمانات المنتهية زمنيًا التي ما زالت بحاجة إلى إجراء تشغيلي. عدد السجلات: {filteredGuarantees.Count}");
+                "الضمانات المنتهية التي تحتاج إفراج/إعادة",
+                $"يعرض الضمانات المنتهية زمنيًا التي ما زالت بحاجة إلى إفراج أو إعادة للبنك. عدد السجلات: {filteredGuarantees.Count}");
         }
 
         public ExcelExportResult ExportGuaranteeStatisticsByBank(IReadOnlyList<Guarantee> guarantees)
@@ -367,10 +367,10 @@ namespace GuaranteeManager.Services
 
             return ExportGuaranteesReport(
                 filteredGuarantees,
-                "حفظ تقرير ضمانات أوامر الشراء المنتهية بلا تمديد",
-                $"Guarantees_PO_Expired_Without_Extension_{DateTime.Now:yyyyMMdd_HHmm}.xlsx",
-                "ضمانات أوامر الشراء المنتهية بلا تمديد منفذ",
-                $"يعرض الضمانات المرتبطة بأوامر الشراء فقط والمنتهية زمنيًا، والتي لا يوجد في سلسلتها طلب تمديد منفذ. عدد السجلات: {filteredGuarantees.Count}");
+                "حفظ تقرير ضمانات أوامر الشراء المنتهية التي تحتاج إفراج",
+                $"Guarantees_PO_Expired_Needing_Release_{DateTime.Now:yyyyMMdd_HHmm}.xlsx",
+                "ضمانات أوامر الشراء المنتهية التي تحتاج إفراج",
+                $"يعرض الضمانات المرتبطة بأوامر الشراء فقط والمنتهية زمنيًا، والتي تحتاج إفراجًا أو إعادة للبنك. عدد السجلات: {filteredGuarantees.Count}");
         }
 
         public bool ExportGuaranteesReportToPath(

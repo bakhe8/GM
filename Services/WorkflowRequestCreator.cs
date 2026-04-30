@@ -23,9 +23,9 @@ namespace GuaranteeManager.Services
             int rootId = guarantee.RootId ?? guarantee.Id;
             string normalizedCreatedBy = WorkflowCreatedByPolicy.NormalizeForNewRequest(createdBy);
 
-            if (guarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active)
+            if (!WorkflowLifecyclePolicy.CanCreateRequest(guarantee, RequestType.Extension))
             {
-                throw new InvalidOperationException("لا يمكن إنشاء طلب تمديد لضمان غير نشط.");
+                throw new InvalidOperationException(WorkflowLifecyclePolicy.GetCreateBlockedMessage(RequestType.Extension, guarantee));
             }
 
             if (requestedExpiryDate.Date <= guarantee.ExpiryDate.Date)
@@ -58,9 +58,9 @@ namespace GuaranteeManager.Services
             int rootId = guarantee.RootId ?? guarantee.Id;
             string normalizedCreatedBy = WorkflowCreatedByPolicy.NormalizeForNewRequest(createdBy);
 
-            if (guarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active)
+            if (!WorkflowLifecyclePolicy.CanCreateRequest(guarantee, RequestType.Reduction))
             {
-                throw new InvalidOperationException("لا يمكن إنشاء طلب تخفيض لضمان غير نشط.");
+                throw new InvalidOperationException(WorkflowLifecyclePolicy.GetCreateBlockedMessage(RequestType.Reduction, guarantee));
             }
 
             if (requestedAmount <= 0 || requestedAmount >= guarantee.Amount)
@@ -93,9 +93,9 @@ namespace GuaranteeManager.Services
             int rootId = guarantee.RootId ?? guarantee.Id;
             string normalizedCreatedBy = WorkflowCreatedByPolicy.NormalizeForNewRequest(createdBy);
 
-            if (guarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active)
+            if (!WorkflowLifecyclePolicy.CanCreateRequest(guarantee, RequestType.Release))
             {
-                throw new InvalidOperationException("لا يمكن إنشاء طلب إفراج لضمان غير نشط.");
+                throw new InvalidOperationException(WorkflowLifecyclePolicy.GetCreateBlockedMessage(RequestType.Release, guarantee));
             }
 
             if (_databaseService.HasPendingWorkflowRequest(rootId, RequestType.Release))
@@ -120,9 +120,9 @@ namespace GuaranteeManager.Services
             int rootId = guarantee.RootId ?? guarantee.Id;
             string normalizedCreatedBy = WorkflowCreatedByPolicy.NormalizeForNewRequest(createdBy);
 
-            if (guarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active)
+            if (!WorkflowLifecyclePolicy.CanCreateRequest(guarantee, RequestType.Liquidation))
             {
-                throw new InvalidOperationException("لا يمكن إنشاء طلب تسييل لضمان غير نشط.");
+                throw new InvalidOperationException(WorkflowLifecyclePolicy.GetCreateBlockedMessage(RequestType.Liquidation, guarantee));
             }
 
             if (_databaseService.HasPendingWorkflowRequest(rootId, RequestType.Liquidation))
@@ -147,9 +147,9 @@ namespace GuaranteeManager.Services
             int rootId = guarantee.RootId ?? guarantee.Id;
             string normalizedCreatedBy = WorkflowCreatedByPolicy.NormalizeForNewRequest(createdBy);
 
-            if (guarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active)
+            if (!WorkflowLifecyclePolicy.CanCreateRequest(guarantee, RequestType.Verification))
             {
-                throw new InvalidOperationException("لا يمكن إنشاء طلب تحقق لضمان غير نشط.");
+                throw new InvalidOperationException(WorkflowLifecyclePolicy.GetCreateBlockedMessage(RequestType.Verification, guarantee));
             }
 
             if (_databaseService.HasPendingWorkflowRequest(rootId, RequestType.Verification))
@@ -186,9 +186,9 @@ namespace GuaranteeManager.Services
             int rootId = guarantee.RootId ?? guarantee.Id;
             string normalizedCreatedBy = WorkflowCreatedByPolicy.NormalizeForNewRequest(createdBy);
 
-            if (guarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active)
+            if (!WorkflowLifecyclePolicy.CanCreateRequest(guarantee, RequestType.Replacement))
             {
-                throw new InvalidOperationException("لا يمكن إنشاء طلب استبدال لضمان غير نشط.");
+                throw new InvalidOperationException(WorkflowLifecyclePolicy.GetCreateBlockedMessage(RequestType.Replacement, guarantee));
             }
 
             if (_databaseService.HasPendingWorkflowRequest(rootId, RequestType.Replacement))

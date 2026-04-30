@@ -37,6 +37,8 @@ namespace GuaranteeManager.Tests
                 var seeding = new DataSeedingService(database, workflow);
 
                 seeding.Seed(clearExistingData: true);
+                DatabaseService.ResetRuntimeInitializationForTesting();
+                DatabaseService.InitializeRuntime();
 
                 List<string> violations = LoadWorkflowInvariantViolations();
 
@@ -78,7 +80,7 @@ namespace GuaranteeManager.Tests
             AddViolations(
                 connection,
                 violations,
-                "Pending requests must match the current lifecycle state.",
+                "Pending requests must match the current lifecycle and expiry state.",
                 @"
                     SELECT wr.Id, wr.RootId, wr.RequestType, currentG.LifecycleStatus
                     FROM WorkflowRequests wr
@@ -86,7 +88,10 @@ namespace GuaranteeManager.Tests
                       ON COALESCE(currentG.RootId, currentG.Id) = wr.RootId
                      AND currentG.IsCurrent = 1
                     WHERE wr.RequestStatus = 'Pending'
-                      AND currentG.LifecycleStatus <> 'Active'",
+                      AND NOT (
+                            (wr.RequestType = 'Release' AND currentG.LifecycleStatus IN ('Active', 'Expired'))
+                         OR (wr.RequestType <> 'Release' AND currentG.LifecycleStatus = 'Active' AND date(currentG.ExpiryDate) >= date('now'))
+                      )",
                 reader => $"request={reader.GetInt32(0)}, root={reader.GetInt32(1)}, type={reader.GetString(2)}, lifecycle={reader.GetString(3)}");
 
             AddViolations(

@@ -409,9 +409,9 @@ namespace GuaranteeManager.Services
         {
             if (request.Type is RequestType.Extension or RequestType.Reduction or RequestType.Release or RequestType.Liquidation or RequestType.Verification or RequestType.Replacement)
             {
-                if (currentGuarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active)
+                if (!WorkflowLifecyclePolicy.CanExecuteRequest(currentGuarantee, request.Type))
                 {
-                    throw new InvalidOperationException($"لا يمكن تنفيذ {request.TypeLabel} لأن حالة الضمان الحالية هي {currentGuarantee.LifecycleStatusLabel}.");
+                    throw new InvalidOperationException(WorkflowLifecyclePolicy.GetExecutionBlockedMessage(request.Type, currentGuarantee));
                 }
             }
 
@@ -447,31 +447,15 @@ namespace GuaranteeManager.Services
                     break;
 
                 case RequestType.Release:
-                    if (currentGuarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active)
-                    {
-                        throw new InvalidOperationException("لا يمكن تنفيذ طلب الإفراج لأن الضمان لم يعد في حالة نشطة.");
-                    }
                     break;
 
                 case RequestType.Liquidation:
-                    if (currentGuarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active)
-                    {
-                        throw new InvalidOperationException("لا يمكن تنفيذ طلب التسييل لأن الضمان لم يعد في حالة نشطة.");
-                    }
                     break;
 
                 case RequestType.Verification:
-                    if (currentGuarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active)
-                    {
-                        throw new InvalidOperationException("لا يمكن تنفيذ طلب التحقق لأن الضمان لم يعد في حالة نشطة.");
-                    }
                     break;
 
                 case RequestType.Replacement:
-                    if (currentGuarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active)
-                    {
-                        throw new InvalidOperationException("لا يمكن تنفيذ طلب الاستبدال لأن الضمان لم يعد في حالة نشطة.");
-                    }
                     break;
 
                 default:

@@ -205,8 +205,8 @@ namespace GuaranteeManager.Services
 
             OperationalInquiryResult result = new OperationalInquiryResult
             {
-                InquiryKey = $"expired-no-extension:{context.RootId}",
-                Title = "لماذا انتهى الضمان ولم يُمدد؟",
+                InquiryKey = $"expired-needing-release:{context.RootId}",
+                Title = "ما وضع الضمان بعد انتهاء صلاحيته؟",
                 Subject = $"الضمان رقم {currentGuarantee.GuaranteeNo}",
                 SelectedGuarantee = context.SelectedGuarantee,
                 CurrentGuarantee = currentGuarantee
@@ -216,7 +216,7 @@ namespace GuaranteeManager.Services
             {
                 result.EventDate = currentGuarantee.ExpiryDate;
                 result.Answer = $"الضمان غير منتهٍ زمنيًا حاليًا، فتاريخ الانتهاء الحالي هو {currentGuarantee.ExpiryDate:yyyy-MM-dd}.";
-                result.Explanation = "لذلك لا ينطبق عليه سيناريو: انتهى ولم يُمدد.";
+                result.Explanation = "لذلك لا ينطبق عليه سيناريو ما بعد انتهاء الصلاحية.";
                 AddFacts(result, currentGuarantee, context.Requests, context.History, null, null);
                 AddTimeline(result, context.History, context.Requests);
                 return result;
@@ -225,57 +225,57 @@ namespace GuaranteeManager.Services
             if (currentGuarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active)
             {
                 result.EventDate = currentGuarantee.ExpiryDate;
-                result.Answer = $"الضمان منتهٍ زمنيًا، لكن حالته التشغيلية الحالية هي {currentGuarantee.LifecycleStatusLabel} وليست نشطة.";
-                result.Explanation = "هذا يعني أن عدم التمديد ليس بالضرورة خلل متابعة؛ لأن السجل لم يعد في حالة تشغيلية تتطلب تمديدًا جديدًا.";
+                result.Answer = $"الضمان منتهٍ زمنيًا، وحالته التشغيلية الحالية هي {currentGuarantee.LifecycleStatusLabel}.";
+                result.Explanation = "إذا كانت الدورة مغلقة بالإفراج أو التسييل أو الاستبدال فلا يحتاج الضمان إجراءً جديدًا.";
                 AddFacts(result, currentGuarantee, context.Requests, context.History, null, null);
                 AddTimeline(result, context.History, context.Requests);
                 return result;
             }
 
-            WorkflowRequest? latestExtension = context.Requests
-                .Where(r => r.Type == RequestType.Extension)
+            WorkflowRequest? latestRelease = context.Requests
+                .Where(r => r.Type == RequestType.Release)
                 .OrderByDescending(GetRelevantRequestDate)
                 .ThenByDescending(r => r.SequenceNumber)
                 .FirstOrDefault();
 
-            result.RelatedRequest = latestExtension;
-            result.EventDate = latestExtension?.ResponseRecordedAt ?? latestExtension?.RequestDate ?? currentGuarantee.ExpiryDate;
+            result.RelatedRequest = latestRelease;
+            result.EventDate = latestRelease?.ResponseRecordedAt ?? latestRelease?.RequestDate ?? currentGuarantee.ExpiryDate;
 
-            if (latestExtension == null)
+            if (latestRelease == null)
             {
-                result.Answer = $"الضمان منتهٍ زمنيًا منذ {currentGuarantee.ExpiryDate:yyyy-MM-dd} ولا يوجد طلب تمديد مسجل له.";
-                result.Explanation = "أقرب تفسير تشغيلي هو أن التمديد لم يُطلب أصلًا على هذه السلسلة.";
+                result.Answer = $"الضمان منتهٍ زمنيًا منذ {currentGuarantee.ExpiryDate:yyyy-MM-dd} ولا يوجد طلب إفراج/إعادة مسجل له.";
+                result.Explanation = "بعد انتهاء الصلاحية لا يُنشأ تمديد أو تسييل؛ المسار العملي هو توثيق الإفراج أو إعادة الضمان للبنك.";
             }
             else
             {
-                result.Answer = latestExtension.Status switch
+                result.Answer = latestRelease.Status switch
                 {
                     RequestStatus.Pending =>
-                        $"الضمان منتهٍ زمنيًا، وآخر طلب تمديد ما زال قيد الانتظار منذ {latestExtension.RequestDate:yyyy-MM-dd} بدون تسجيل رد بنك.",
+                        $"الضمان منتهٍ زمنيًا، وطلب الإفراج/الإعادة ما زال قيد الانتظار منذ {latestRelease.RequestDate:yyyy-MM-dd} بدون تسجيل رد بنك.",
                     RequestStatus.Rejected =>
-                        $"الضمان منتهٍ زمنيًا لأن آخر طلب تمديد رُفض عند تسجيل استجابة البنك بتاريخ {latestExtension.ResponseRecordedAt:yyyy-MM-dd}.",
+                        $"الضمان منتهٍ زمنيًا، وآخر طلب إفراج رُفض عند تسجيل استجابة البنك بتاريخ {latestRelease.ResponseRecordedAt:yyyy-MM-dd}.",
                     RequestStatus.Cancelled =>
-                        $"الضمان منتهٍ زمنيًا لأن آخر طلب تمديد أُلغي قبل التنفيذ.",
+                        "الضمان منتهٍ زمنيًا، وآخر طلب إفراج أُلغي قبل التنفيذ.",
                     RequestStatus.Superseded =>
-                        $"الضمان منتهٍ زمنيًا لأن آخر طلب تمديد أُسقط آليًا نتيجة تغير المسار أو تنفيذ طلب آخر.",
+                        "الضمان منتهٍ زمنيًا، وآخر طلب إفراج أُسقط آليًا نتيجة تنفيذ مسار أقوى.",
                     RequestStatus.Executed =>
-                        $"يوجد طلب تمديد منفذ في السجل، لكن الضمان ما زال منتهيًا زمنيًا حاليًا لأن آخر انتهاء بعد التنفيذ ما زال قد مضى أو لا توجد متابعة أحدث.",
+                        "يوجد طلب إفراج منفذ في السجل، ويجب أن تكون دورة حياة الضمان مغلقة بالإفراج.",
                     _ =>
-                        $"الضمان منتهٍ زمنيًا وآخر طلب تمديد حالته {latestExtension.StatusLabel}."
+                        $"الضمان منتهٍ زمنيًا وآخر طلب إفراج حالته {latestRelease.StatusLabel}."
                 };
 
-                result.Explanation = latestExtension.Status switch
+                result.Explanation = latestRelease.Status switch
                 {
-                    RequestStatus.Pending => "السبب المباشر هو وجود طلب تمديد مفتوح دون استجابة بنك مسجلة حتى الآن.",
-                    RequestStatus.Rejected => "السبب المباشر هو أن البنك لم يعتمد التمديد المطلوب.",
+                    RequestStatus.Pending => "السبب المباشر هو وجود طلب إفراج/إعادة مفتوح دون استجابة بنك مسجلة حتى الآن.",
+                    RequestStatus.Rejected => "البنك لم يعتمد الإفراج المطلوب؛ يلزم مراجعة المستندات أو إنشاء طلب جديد عند الحاجة.",
                     RequestStatus.Cancelled => "السبب المباشر هو إغلاق الطلب إداريًا قبل التنفيذ.",
-                    RequestStatus.Superseded => "السبب المباشر هو أن النظام سجل مسارًا أحدث جعل طلب التمديد السابق غير صالح للتنفيذ.",
-                    RequestStatus.Executed => "يجب مراجعة التسلسل الزمني لأن التنفيذ وحده لا يعني أن الضمان ما زال ساريًا حتى اليوم.",
+                    RequestStatus.Superseded => "النظام سجل مسارًا أحدث جعل طلب الإفراج السابق غير صالح للتنفيذ.",
+                    RequestStatus.Executed => "تنفيذ الإفراج ينهي دورة حياة الضمان ولا ينتج إصدار ضمان جديدًا.",
                     _ => "يجب مراجعة الطلب والسجل الكامل لتحديد السبب النهائي."
                 };
             }
 
-            AddFacts(result, currentGuarantee, context.Requests, context.History, latestExtension, latestExtension?.Status == RequestStatus.Pending ? null : latestExtension);
+            AddFacts(result, currentGuarantee, context.Requests, context.History, latestRelease, latestRelease?.Status == RequestStatus.Pending ? null : latestRelease);
             result.Facts.Add(new OperationalInquiryFact { Label = "تاريخ الانتهاء الحالي", Value = currentGuarantee.ExpiryDate.ToString("yyyy-MM-dd") });
             result.Facts.Add(new OperationalInquiryFact { Label = "أيام منذ الانتهاء", Value = Math.Max(0, (DateTime.Now.Date - currentGuarantee.ExpiryDate.Date).Days).ToString("N0") });
             AddTimeline(result, context.History, context.Requests);

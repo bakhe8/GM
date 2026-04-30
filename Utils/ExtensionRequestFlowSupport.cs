@@ -16,9 +16,9 @@ namespace GuaranteeManager.Utils
 
         public static bool TryValidate(Guarantee guarantee, DateTime? requestedExpiryDate, string createdBy, out string reason)
         {
-            if (guarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active)
+            if (guarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active || guarantee.IsExpired)
             {
-                reason = "طلب التمديد متاح للضمانات النشطة فقط.";
+                reason = "طلب التمديد متاح فقط لضمان نشط ولم تنته صلاحيته. بعد الانتهاء يكون الإجراء المتاح هو الإفراج/إعادة الضمان.";
                 return false;
             }
 

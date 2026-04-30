@@ -14,19 +14,19 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
-        public void Build_ForExpiredLifecycle_DisablesCreationActions()
+        public void Build_ForExpiredLifecycle_AllowsReleaseOnly()
         {
             Guarantee guarantee = CreateGuarantee(GuaranteeLifecycleStatus.Expired);
 
             GuaranteeActionProfile profile = GuaranteeActionProfile.Build(guarantee, new List<WorkflowRequest>());
 
             Assert.False(profile.ExtensionAction.IsEnabled);
-            Assert.False(profile.ReleaseAction.IsEnabled);
+            Assert.True(profile.ReleaseAction.IsEnabled);
             Assert.False(profile.ReductionAction.IsEnabled);
             Assert.False(profile.LiquidationAction.IsEnabled);
             Assert.False(profile.VerificationAction.IsEnabled);
             Assert.False(profile.ReplacementAction.IsEnabled);
-            Assert.Contains("منتهية الصلاحية", profile.ReleaseAction.Hint);
+            Assert.Contains("الإفراج", profile.ReleaseAction.Hint);
         }
 
         [Fact]
