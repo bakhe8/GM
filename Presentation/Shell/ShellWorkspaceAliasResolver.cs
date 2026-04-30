@@ -11,7 +11,6 @@ namespace GuaranteeManager
             {
                 [ShellWorkspaceKeys.Dashboard] = new[] { "اليوم", "لوحة التحكم", "الرئيسية", "dashboard", "home", "today" },
                 [ShellWorkspaceKeys.Guarantees] = new[] { "الضمانات", "ضمان", "guarantees", "guarantee" },
-                [ShellWorkspaceKeys.Requests] = new[] { "الطلبات", "طلبات", "requests", "request" },
                 [ShellWorkspaceKeys.Banks] = new[] { "البنوك", "بنوك", "banks", "bank" },
                 [ShellWorkspaceKeys.Reports] = new[] { "التقارير", "تقارير", "التحليلات", "تحليلات", "المخرجات", "analytics", "analysis", "outputs", "reports", "report" },
                 [ShellWorkspaceKeys.Settings] = new[] { "الإعدادات", "المسارات", "settings", "paths" }
@@ -31,6 +30,19 @@ namespace GuaranteeManager
             "follow-ups"
         };
 
+        private static readonly string[] PendingRequestAliases =
+        {
+            "الطلبات",
+            "طلبات",
+            "الطلبات المنتظرة",
+            "طلبات بانتظار الرد",
+            "طلبات معلقة",
+            "pending requests",
+            "pending request",
+            "requests",
+            "request"
+        };
+
         public static ShellWorkspaceSearchPlan Resolve(string? rawInput, string? currentWorkspaceKey)
         {
             string input = rawInput?.Trim() ?? string.Empty;
@@ -42,6 +54,11 @@ namespace GuaranteeManager
             if (IsFollowUpAlias(input))
             {
                 return CreateFollowUpPlan(string.Empty);
+            }
+
+            if (IsPendingRequestAlias(input))
+            {
+                return CreatePendingRequestsPlan(string.Empty);
             }
 
             if (TryResolveExactAlias(input, out string aliasWorkspace))
@@ -57,6 +74,11 @@ namespace GuaranteeManager
                 if (IsFollowUpAlias(workspaceToken))
                 {
                     return CreateFollowUpPlan(searchText);
+                }
+
+                if (IsPendingRequestAlias(workspaceToken))
+                {
+                    return CreatePendingRequestsPlan(searchText);
                 }
 
                 if (TryResolveExactAlias(workspaceToken, out aliasWorkspace))
@@ -97,10 +119,25 @@ namespace GuaranteeManager
                 initialScopeFilter: scopeFilter);
         }
 
+        private static ShellWorkspaceSearchPlan CreatePendingRequestsPlan(string rawSearchText)
+        {
+            return new ShellWorkspaceSearchPlan(
+                ShellWorkspaceKeys.Dashboard,
+                rawSearchText.Trim(),
+                matchedAlias: true,
+                initialScopeFilter: DashboardScopeFilters.PendingRequests);
+        }
+
         private static bool IsFollowUpAlias(string token)
         {
             string normalized = token.Trim();
             return FollowUpAliases.Any(alias => string.Equals(alias, normalized, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static bool IsPendingRequestAlias(string token)
+        {
+            string normalized = token.Trim();
+            return PendingRequestAliases.Any(alias => string.Equals(alias, normalized, StringComparison.OrdinalIgnoreCase));
         }
 
         private static bool IsExpiredFollowUpToken(string token)

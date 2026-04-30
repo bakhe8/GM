@@ -220,7 +220,7 @@ namespace GuaranteeManager
                 : requests
                     .Where(request => request.BaseVersionId == selectedGuarantee.Id || request.ResultVersionId == selectedGuarantee.Id)
                     .ToList();
-            List<TimelineItem> timeline = BuildTimeline(selectedGuarantee, history, contextRequests, storedEvents);
+            List<TimelineItem> timeline = BuildTimeline(selectedGuarantee, history, contextRequests, storedEvents, focusedRequestId);
 
             List<AttachmentItem> attachments = selectedGuarantee.Attachments
                 .Take(3)
@@ -319,7 +319,8 @@ namespace GuaranteeManager
             GuaranteeRow selectedGuarantee,
             IReadOnlyList<Guarantee> history,
             IReadOnlyList<WorkflowRequest> contextRequests,
-            IReadOnlyList<GuaranteeTimelineEvent> storedEvents)
+            IReadOnlyList<GuaranteeTimelineEvent> storedEvents,
+            int? focusedRequestId)
         {
             List<GuaranteeTimelineEvent> selectedEvents = (selectedGuarantee.IsCurrentVersion
                 ? storedEvents
@@ -345,7 +346,7 @@ namespace GuaranteeManager
                         StringComparer.OrdinalIgnoreCase);
 
                 return selectedEvents
-                    .Select(item => TimelineItem.FromEvent(item, requestsById, attachmentsById, attachmentsByEventKey))
+                    .Select(item => TimelineItem.FromEvent(item, requestsById, attachmentsById, attachmentsByEventKey, focusedRequestId))
                     .ToList();
             }
 
@@ -377,7 +378,8 @@ namespace GuaranteeManager
 
             foreach (WorkflowRequest request in contextRequests)
             {
-                events.Add(new TimelineEvent(request.RequestDate, 20, TimelineItem.RequestCreated(request)));
+                bool isContextTarget = focusedRequestId.HasValue && request.Id == focusedRequestId.Value;
+                events.Add(new TimelineEvent(request.RequestDate, 20, TimelineItem.RequestCreated(request, isContextTarget)));
                 if (request.ResponseRecordedAt.HasValue)
                 {
                     string resultVersionLabel = string.Empty;
@@ -390,7 +392,7 @@ namespace GuaranteeManager
                     events.Add(new TimelineEvent(
                         request.ResponseRecordedAt.Value,
                         30,
-                        TimelineItem.BankResponse(request, resultVersionLabel)));
+                        TimelineItem.BankResponse(request, resultVersionLabel, isContextTarget)));
                 }
             }
 

@@ -2674,7 +2674,7 @@ namespace GuaranteeManager
             bool hasAttachments = guarantee?.Attachments?.Count > 0;
             bool canOpenGuaranteeContext = CanOpenGuaranteeContext();
             string contextButtonText = "الضمانات";
-            string contextButtonHint = "يفتح الضمان في المحفظة أو الطلبات حسب سياق هذا الجواب.";
+            string contextButtonHint = "يفتح الضمان في المحفظة عند السجل الزمني المناسب لسياق هذا الجواب.";
             if (TryResolveGuaranteeContextHandoff(
                     out _,
                     out _,
@@ -3005,8 +3005,8 @@ namespace GuaranteeManager
         {
             return focusArea switch
             {
-                GuaranteeFileFocusArea.Requests => requestIdToFocus.HasValue ? "فتح الطلب" : "طلبات الضمان",
-                GuaranteeFileFocusArea.Outputs => "طلبات الضمان",
+                GuaranteeFileFocusArea.Requests => requestIdToFocus.HasValue ? "فتح حدث الطلب" : "السجل الزمني",
+                GuaranteeFileFocusArea.Outputs => "السجل الزمني",
                 GuaranteeFileFocusArea.Attachments => "المرفقات",
                 _ => "الضمانات"
             };
@@ -3016,9 +3016,9 @@ namespace GuaranteeManager
         {
             return focusArea switch
             {
-                GuaranteeFileFocusArea.Requests when requestIdToFocus.HasValue => "الطلب المرتبط داخل السجل الزمني",
-                GuaranteeFileFocusArea.Requests => "طلبات الضمان",
-                GuaranteeFileFocusArea.Outputs => "طلبات الضمان ومخرجاته",
+                GuaranteeFileFocusArea.Requests when requestIdToFocus.HasValue => "حدث الطلب المرتبط داخل السجل الزمني",
+                GuaranteeFileFocusArea.Requests => "السجل الزمني للضمان",
+                GuaranteeFileFocusArea.Outputs => "مخرجات الطلب داخل السجل الزمني",
                 GuaranteeFileFocusArea.Attachments => "مرفقات الضمان في اللوحة الجانبية",
                 GuaranteeFileFocusArea.Actions => "إجراءات الضمان السريعة في المحفظة",
                 _ => "الضمان المحدد في المحفظة"
@@ -3230,225 +3230,4 @@ namespace GuaranteeManager
         }
     }
 
-    public sealed class RequestsDialog : Window
-    {
-        private readonly Func<IReadOnlyList<WorkflowRequest>> _loadRequests;
-        private readonly IWorkflowService _workflow;
-        private readonly Action _onChanged;
-        private readonly ListBox _list = new();
-        private readonly Button _registerButton = new();
-        private readonly Button _letterButton = new();
-        private readonly Button _responseButton = new();
-        private readonly Button _closeButton = new();
-        private readonly TextBlock _summary = new()
-        {
-            FontSize = 12,
-            FontWeight = FontWeights.SemiBold,
-            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B")),
-            Margin = new Thickness(0, 0, 0, 10)
-        };
-
-        private RequestsDialog(Func<IReadOnlyList<WorkflowRequest>> loadRequests, IWorkflowService workflow, Action? onChanged, int? initialRequestId)
-        {
-            _loadRequests = loadRequests;
-            _workflow = workflow;
-            _onChanged = onChanged ?? (() => { });
-            Title = "طلبات الضمان";
-            UiInstrumentation.Identify(this, "Dialog.GuaranteeRequests", Title);
-            UiInstrumentation.Identify(_list, "Dialog.GuaranteeRequests.List", "قائمة الطلبات");
-            Width = 520;
-            Height = 400;
-            WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = new FontFamily("Segoe UI, Tahoma");
-            Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
-            DialogWindowSupport.Attach(this, nameof(RequestsDialog));
-            PreviewKeyDown += (_, eventArgs) =>
-            {
-                if (eventArgs.Key == Key.Escape)
-                {
-                    Close();
-                    eventArgs.Handled = true;
-                }
-            };
-
-            var root = new DockPanel { Margin = new Thickness(16) };
-            _list.DisplayMemberPath = nameof(RequestDisplayItem.Display);
-            _list.SelectionChanged += (_, _) => UpdateActionAvailability();
-            DockPanel.SetDock(_summary, Dock.Top);
-            root.Children.Add(_summary);
-            root.Children.Add(BuildActions());
-            root.Children.Add(_list);
-            Content = root;
-            ReloadRequests(initialRequestId);
-        }
-
-        public static void ShowFor(
-            Func<IReadOnlyList<WorkflowRequest>> loadRequests,
-            IWorkflowService workflow,
-            Action? onChanged = null,
-            string windowKey = "guarantee-requests",
-            int? initialRequestId = null)
-        {
-            App.CurrentApp.GetRequiredService<SecondaryWindowManager>().ShowDialog(
-                windowKey,
-                () => new RequestsDialog(loadRequests, workflow, onChanged, initialRequestId),
-                "طلبات الضمان",
-                "طلبات هذا الضمان مفتوحة بالفعل.");
-        }
-
-        private StackPanel BuildActions()
-        {
-            var actions = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 12, 0, 0)
-            };
-            DockPanel.SetDock(actions, Dock.Bottom);
-
-            _registerButton.Content = "تسجيل رد";
-            _registerButton.Width = 94;
-            _registerButton.Height = 32;
-            _registerButton.Margin = new Thickness(8, 0, 0, 0);
-            _registerButton.Click += (_, _) => RegisterSelectedResponse();
-            UiInstrumentation.Identify(_registerButton, "Dialog.GuaranteeRequests.RegisterResponseButton", "تسجيل رد");
-            ToolTipService.SetShowOnDisabled(_registerButton, true);
-
-            _letterButton.Content = "فتح الخطاب";
-            _letterButton.Width = 94;
-            _letterButton.Height = 32;
-            _letterButton.Margin = new Thickness(8, 0, 0, 0);
-            _letterButton.Click += (_, _) => OpenLetter();
-            UiInstrumentation.Identify(_letterButton, "Dialog.GuaranteeRequests.OpenLetterButton", "فتح الخطاب");
-            ToolTipService.SetShowOnDisabled(_letterButton, true);
-
-            _responseButton.Content = "فتح الرد";
-            _responseButton.Width = 94;
-            _responseButton.Height = 32;
-            _responseButton.Click += (_, _) => OpenResponse();
-            UiInstrumentation.Identify(_responseButton, "Dialog.GuaranteeRequests.OpenResponseButton", "فتح الرد");
-            ToolTipService.SetShowOnDisabled(_responseButton, true);
-
-            _closeButton.Content = "إغلاق";
-            _closeButton.Width = 94;
-            _closeButton.Height = 32;
-            _closeButton.Margin = new Thickness(8, 0, 0, 0);
-            _closeButton.IsCancel = true;
-            _closeButton.Click += (_, _) => Close();
-            UiInstrumentation.Identify(_closeButton, "Dialog.GuaranteeRequests.CloseButton", "إغلاق طلبات الضمان");
-
-            actions.Children.Add(_registerButton);
-            actions.Children.Add(_letterButton);
-            actions.Children.Add(_responseButton);
-            actions.Children.Add(_closeButton);
-            return actions;
-        }
-
-        private WorkflowRequest? SelectedRequest => (_list.SelectedItem as RequestDisplayItem)?.Request;
-
-        private void ReloadRequests(int? requestIdToSelect = null)
-        {
-            _list.Items.Clear();
-            IReadOnlyList<WorkflowRequest> requests = _loadRequests()
-                .OrderByDescending(item => item.RequestDate)
-                .ThenByDescending(item => item.SequenceNumber)
-                .ToList();
-
-            foreach (WorkflowRequest request in requests)
-            {
-                var item = new RequestDisplayItem(request);
-                _list.Items.Add(item);
-                if (requestIdToSelect.HasValue && request.Id == requestIdToSelect.Value)
-                {
-                    _list.SelectedItem = item;
-                }
-            }
-
-            if (_list.SelectedItem == null && _list.Items.Count > 0)
-            {
-                _list.SelectedIndex = 0;
-            }
-
-            _summary.Text = requests.Count == 0
-                ? "لا توجد طلبات مرتبطة بهذا الضمان."
-                : $"{requests.Count.ToString("N0", CultureInfo.InvariantCulture)} طلب مرتبط بهذا الضمان";
-
-            UpdateActionAvailability();
-        }
-
-        private void RegisterSelectedResponse()
-        {
-            if (SelectedRequest is not { Status: RequestStatus.Pending } request)
-            {
-                MessageBox.Show("اختر طلباً معلقاً أولاً.", "طلبات الضمان", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            if (!BankResponseDialog.TryShow([request], out int requestId, out RequestStatus status, out string notes, out string responsePath))
-            {
-                return;
-            }
-
-            try
-            {
-                _workflow.RecordBankResponse(requestId, status, notes, string.IsNullOrWhiteSpace(responsePath) ? null : responsePath);
-                _onChanged();
-                ReloadRequests(requestId);
-                App.CurrentApp.GetRequiredService<IShellStatusService>().ShowSuccess(
-                    "تم تسجيل رد البنك وتحديث طلبات الضمان.",
-                    "طلبات الضمان • نافذة الطلبات");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "طلبات الضمان", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-        }
-
-        private void OpenLetter()
-        {
-            if (SelectedRequest is { HasLetter: true } request)
-            {
-                _workflow.OpenRequestLetter(request);
-            }
-        }
-
-        private void OpenResponse()
-        {
-            if (SelectedRequest is { HasResponseDocument: true } request)
-            {
-                _workflow.OpenResponseDocument(request);
-            }
-        }
-
-        private void UpdateActionAvailability()
-        {
-            WorkflowRequest? request = SelectedRequest;
-            bool hasSelection = request != null;
-            bool canRegisterResponse = request?.Status == RequestStatus.Pending;
-            bool canOpenLetter = request?.HasLetter == true;
-            bool canOpenResponse = request?.HasResponseDocument == true;
-
-            _registerButton.IsEnabled = canRegisterResponse;
-            _registerButton.ToolTip = !hasSelection
-                ? "اختر طلباً أولاً."
-                : canRegisterResponse
-                    ? "يسجل رد البنك للطلب المحدد."
-                    : "هذا الطلب ليس معلقاً، لذلك لا يحتاج إلى تسجيل رد جديد.";
-
-            _letterButton.IsEnabled = canOpenLetter;
-            _letterButton.ToolTip = !hasSelection
-                ? "اختر طلباً أولاً."
-                : canOpenLetter
-                    ? "يفتح خطاب الطلب المرتبط بهذا السجل."
-                    : "لا يوجد خطاب محفوظ لهذا الطلب.";
-
-            _responseButton.IsEnabled = canOpenResponse;
-            _responseButton.ToolTip = !hasSelection
-                ? "اختر طلباً أولاً."
-                : canOpenResponse
-                    ? "يفتح مستند رد البنك المسجل لهذا الطلب."
-                    : "لا يوجد مستند رد بنك محفوظ لهذا الطلب.";
-        }
-    }
 }

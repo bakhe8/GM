@@ -30,7 +30,7 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
-        public void Build_WithPendingRequest_RoutesToRequestsWorkspace()
+        public void Build_WithPendingRequest_RoutesToTimelineRequests()
         {
             Guarantee guarantee = CreateGuarantee(GuaranteeLifecycleStatus.Active);
             List<WorkflowRequest> requests = new()
@@ -50,7 +50,7 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
-        public void Build_WithWorkflowOutputs_RoutesToRequestsWorkspace()
+        public void Build_WithWorkflowOutputs_RoutesToTimelineOutputs()
         {
             Guarantee guarantee = CreateGuarantee(GuaranteeLifecycleStatus.Active);
             List<WorkflowRequest> requests = new()

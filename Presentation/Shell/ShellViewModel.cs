@@ -85,7 +85,7 @@ namespace GuaranteeManager
                 LoadFilterOptions,
                 RefreshAfterWorkflowChange);
             _sessionCoordinator = new ShellSessionCoordinator();
-            _workspaceFactory = new ShellWorkspaceFactory(_database, workflow, _guaranteeData, new ReportsWorkspaceCoordinator(_database, excel));
+            _workspaceFactory = new ShellWorkspaceFactory(_database, _guaranteeData, new ReportsWorkspaceCoordinator(_database, excel));
             _shellStatus.PropertyChanged += (_, _) =>
             {
                 OnPropertyChanged(nameof(ShellStatusPrimaryText));
@@ -487,7 +487,6 @@ namespace GuaranteeManager
         {
             ShellWorkspaceKeys.Dashboard => "اليوم",
             ShellWorkspaceKeys.Guarantees => "الضمانات",
-            ShellWorkspaceKeys.Requests => "مركز الطلبات",
             ShellWorkspaceKeys.Banks => "البنوك",
             ShellWorkspaceKeys.Reports => "التقارير",
             ShellWorkspaceKeys.Settings => "الإعدادات",
@@ -825,18 +824,14 @@ namespace GuaranteeManager
                 ? GuaranteeFileFocusArea.Series
                 : area;
 
-            if (resolvedArea == GuaranteeFileFocusArea.Requests ||
-                resolvedArea == GuaranteeFileFocusArea.Outputs ||
-                requestIdToFocus.HasValue)
-            {
-                ShowRequestsForGuarantee(row, requestIdToFocus ?? ResolveContextRequestId(row));
-            }
-            else
-            {
-                ShowGuaranteesWorkspace();
-                SelectedGuarantee = row;
-                FocusGuaranteeSection(resolvedArea);
-            }
+            GuaranteeFileFocusArea targetArea = ResolveTimelineTargetArea(resolvedArea, requestIdToFocus);
+            int? targetRequestId = targetArea == GuaranteeFileFocusArea.Requests
+                ? requestIdToFocus ?? ResolveContextRequestId(row)
+                : null;
+
+            ShowGuaranteesWorkspace();
+            SelectedGuarantee = row;
+            FocusGuaranteeSection(targetArea, targetRequestId);
 
             _diagnostics.RecordEvent(
                 $"{sourceKey}.action",
@@ -849,6 +844,25 @@ namespace GuaranteeManager
                     requestIdToFocus
                 });
             WriteDiagnosticsState($"{sourceKey}-route-guarantee-context");
+        }
+
+        private static GuaranteeFileFocusArea ResolveTimelineTargetArea(
+            GuaranteeFileFocusArea requestedArea,
+            int? requestIdToFocus)
+        {
+            if (requestIdToFocus.HasValue || requestedArea == GuaranteeFileFocusArea.Requests)
+            {
+                return GuaranteeFileFocusArea.Requests;
+            }
+
+            if (requestedArea == GuaranteeFileFocusArea.Outputs)
+            {
+                return GuaranteeFileFocusArea.Outputs;
+            }
+
+            return requestedArea == GuaranteeFileFocusArea.None
+                ? GuaranteeFileFocusArea.Series
+                : requestedArea;
         }
 
         private void RunSelectedInquiry()
@@ -974,10 +988,7 @@ namespace GuaranteeManager
                 return;
             }
 
-            ExecuteGuaranteeAction(
-                SelectedGuarantee,
-                target => ShowRequestsForGuarantee(target, item.Request.Id),
-                syncSelection: true);
+            FocusGuaranteeSection(GuaranteeFileFocusArea.Requests, item.Request.Id);
         }
 
         private void RegisterRequestPreviewResponse(GuaranteeRequestPreviewItem? item)
@@ -1031,21 +1042,6 @@ namespace GuaranteeManager
                 2 => "مرفقان رسميان",
                 _ => $"{count.ToString("N0", CultureInfo.InvariantCulture)} مرفقات رسمية"
             };
-        }
-
-        private void ShowRequestsForGuarantee(GuaranteeRow target, int? initialRequestId = null)
-        {
-            ShowRequestsWorkspace(target.GuaranteeNo, initialRequestId);
-            _diagnostics.RecordEvent(
-                "guarantees.action",
-                "show-guarantee-requests",
-                new
-                {
-                    target.RootId,
-                    target.GuaranteeNo,
-                    initialRequestId
-                });
-            WriteDiagnosticsState("guarantee-requests");
         }
 
         private void CopyGuaranteeNo(GuaranteeRow? row)
@@ -1223,9 +1219,6 @@ namespace GuaranteeManager
 
                     ShowGuaranteesWorkspace();
                     break;
-                case ShellWorkspaceKeys.Requests:
-                    ShowRequestsWorkspace(plan.SearchText);
-                    break;
                 case ShellWorkspaceKeys.Banks:
                     ShowBanksWorkspace(plan.SearchText);
                     break;
@@ -1356,40 +1349,6 @@ namespace GuaranteeManager
                     _lastFileState.RootId,
                     _lastFileState.GuaranteeNo
                 });
-        }
-
-        private void ShowRequestsWorkspace()
-        {
-            ShowRequestsWorkspace(null);
-        }
-
-        private void ShowRequestsWorkspace(string? initialSearchText)
-        {
-            ShowRequestsWorkspace(initialSearchText, null);
-        }
-
-        private void ShowRequestsWorkspace(string? initialSearchText, int? initialRequestId)
-        {
-            if (!CanNavigateToWorkspace(ShellWorkspaceKeys.Requests))
-            {
-                return;
-            }
-
-            ActivateWorkspace(
-                ShellWorkspaceKeys.Requests,
-                _workspaceFactory.CreateRequestsWorkspace(
-                    RefreshAfterWorkflowChange,
-                    (rootId, area, requestIdToFocus) => OpenGuaranteeContext("requests", rootId, area, requestIdToFocus),
-                    () =>
-                    {
-                        if (string.Equals(CurrentWorkspaceKey, ShellWorkspaceKeys.Requests, StringComparison.Ordinal)
-                            && ActiveWorkspaceContent is RequestsWorkspaceSurface)
-                        {
-                            WriteDiagnosticsState("requests-selection");
-                        }
-                    },
-                    initialSearchText,
-                    initialRequestId));
         }
 
         private void CloseActiveWorkspace()
@@ -1732,8 +1691,8 @@ namespace GuaranteeManager
 
             return area switch
             {
-                GuaranteeFileFocusArea.Requests when requestIdToFocus.HasValue => "انتقل إلى الطلب المرتبط",
-                GuaranteeFileFocusArea.Requests => "انتقل إلى الطلبات المرتبطة",
+                GuaranteeFileFocusArea.Requests when requestIdToFocus.HasValue => "انتقل إلى حدث الطلب",
+                GuaranteeFileFocusArea.Requests => "انتقل إلى السجل الزمني",
                 GuaranteeFileFocusArea.Series => "انتقل إلى الخط الزمني",
                 GuaranteeFileFocusArea.Attachments => "انتقل إلى السجل الزمني",
                 GuaranteeFileFocusArea.Outputs => "انتقل إلى السجل الزمني",
@@ -1856,22 +1815,6 @@ namespace GuaranteeManager
 
         private ShellDiagnosticsSelection ResolveDiagnosticsSelection()
         {
-            if (string.Equals(CurrentWorkspaceKey, ShellWorkspaceKeys.Requests, StringComparison.Ordinal)
-                && ActiveWorkspaceContent is RequestsWorkspaceSurface requestsWorkspace)
-            {
-                if (requestsWorkspace.SelectedDiagnosticsItem is RequestListDisplayItem requestItem)
-                {
-                    return new ShellDiagnosticsSelection(
-                        requestItem.Item.CurrentGuaranteeId,
-                        requestItem.Item.RootGuaranteeId,
-                        requestItem.GuaranteeNo,
-                        requestItem.Supplier,
-                        requestItem.Bank);
-                }
-
-                return new ShellDiagnosticsSelection(null, null, string.Empty, string.Empty, string.Empty);
-            }
-
             return new ShellDiagnosticsSelection(
                 SelectedGuarantee?.Id,
                 SelectedGuarantee?.RootId,

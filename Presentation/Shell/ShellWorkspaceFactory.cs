@@ -11,18 +11,15 @@ namespace GuaranteeManager
     public sealed class ShellWorkspaceFactory
     {
         private readonly IDatabaseService _database;
-        private readonly IWorkflowService _workflow;
         private readonly GuaranteeWorkspaceDataService _guaranteeData;
         private readonly ReportsWorkspaceCoordinator _reportsWorkspace;
 
         public ShellWorkspaceFactory(
             IDatabaseService database,
-            IWorkflowService workflow,
             GuaranteeWorkspaceDataService guaranteeData,
             ReportsWorkspaceCoordinator reportsWorkspace)
         {
             _database = database;
-            _workflow = workflow;
             _guaranteeData = guaranteeData;
             _reportsWorkspace = reportsWorkspace;
         }
@@ -64,29 +61,6 @@ namespace GuaranteeManager
                 showGuarantees,
                 initialSearchText,
                 initialScopeFilter);
-        }
-
-        public FrameworkElement CreateRequestsWorkspace(
-            Action<int> refreshAfterWorkflowChange,
-            Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
-            Action? selectionChanged = null,
-            string? initialSearchText = null,
-            int? initialRequestId = null)
-        {
-            WorkflowRequestQueryOptions options = new()
-            {
-                SortMode = WorkflowRequestQuerySortMode.ActivityDateDescending
-            };
-
-            return new RequestsWorkspaceSurface(
-                () => _database.QueryWorkflowRequests(options),
-                _database,
-                _workflow,
-                refreshAfterWorkflowChange,
-                openGuaranteeContext,
-                selectionChanged,
-                initialSearchText,
-                initialRequestId);
         }
 
         public FrameworkElement CreateBanksWorkspace(Action<string?> showGuaranteesForBank, string? initialSearchText = null)

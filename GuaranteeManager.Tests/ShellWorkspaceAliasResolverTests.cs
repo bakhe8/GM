@@ -31,17 +31,18 @@ namespace GuaranteeManager.Tests
         {
             ShellWorkspaceSearchPlan plan = ShellWorkspaceAliasResolver.Resolve("الطلبات: تمديد", ShellWorkspaceKeys.Dashboard);
 
-            Assert.Equal(ShellWorkspaceKeys.Requests, plan.TargetWorkspaceKey);
+            Assert.Equal(ShellWorkspaceKeys.Dashboard, plan.TargetWorkspaceKey);
             Assert.Equal("تمديد", plan.SearchText);
+            Assert.Equal(DashboardScopeFilters.PendingRequests, plan.InitialScopeFilter);
             Assert.True(plan.MatchedAlias);
         }
 
         [Fact]
         public void Resolve_UnaliasedSearch_UsesCurrentWorkspaceWhenNotDashboard()
         {
-            ShellWorkspaceSearchPlan plan = ShellWorkspaceAliasResolver.Resolve("مورد", ShellWorkspaceKeys.Requests);
+            ShellWorkspaceSearchPlan plan = ShellWorkspaceAliasResolver.Resolve("مورد", ShellWorkspaceKeys.Banks);
 
-            Assert.Equal(ShellWorkspaceKeys.Requests, plan.TargetWorkspaceKey);
+            Assert.Equal(ShellWorkspaceKeys.Banks, plan.TargetWorkspaceKey);
             Assert.Equal("مورد", plan.SearchText);
             Assert.False(plan.MatchedAlias);
         }

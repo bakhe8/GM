@@ -606,7 +606,7 @@ namespace GuaranteeManager
         {
             return suggestedArea switch
             {
-                GuaranteeFileFocusArea.Requests => "ينقلك إلى السجل الزمني وطلبات هذا الضمان داخل اللوحة الجانبية.",
+                GuaranteeFileFocusArea.Requests => "ينقلك إلى السجل الزمني حيث تظهر طلبات هذا الضمان وأدلتها.",
                 GuaranteeFileFocusArea.Outputs => "ينقلك إلى السجل الزمني حيث يظهر أثر المخرجات المرتبطة بهذا الضمان.",
                 GuaranteeFileFocusArea.Attachments => "ينقلك إلى السجل الزمني حيث تظهر الأدلة والمرفقات الرسمية.",
                 GuaranteeFileFocusArea.Series => "ينقلك إلى لوحة الضمان الجانبية عند الخط الزمني لهذا الضمان.",
@@ -658,7 +658,8 @@ namespace GuaranteeManager
             AttachmentRecord? evidenceAttachment = null,
             WorkflowRequest? evidenceRequest = null,
             int? evidenceGuaranteeId = null,
-            string evidenceKey = "")
+            string evidenceKey = "",
+            bool isContextTarget = false)
             : this(
                 timestamp.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
                 timestamp.ToString("HH:mm:ss", CultureInfo.InvariantCulture),
@@ -670,12 +671,13 @@ namespace GuaranteeManager
                 evidenceAttachment,
                 evidenceRequest,
                 evidenceGuaranteeId,
-                evidenceKey)
+                evidenceKey,
+                isContextTarget)
         {
         }
 
-        public TimelineItem(string date, string title, string detail, string status, Tone tone)
-            : this(date, string.Empty, title, detail, status, tone)
+        public TimelineItem(string date, string title, string detail, string status, Tone tone, bool isContextTarget = false)
+            : this(date, string.Empty, title, detail, status, tone, isContextTarget: isContextTarget)
         {
         }
 
@@ -690,7 +692,8 @@ namespace GuaranteeManager
             AttachmentRecord? evidenceAttachment = null,
             WorkflowRequest? evidenceRequest = null,
             int? evidenceGuaranteeId = null,
-            string evidenceKey = "")
+            string evidenceKey = "",
+            bool isContextTarget = false)
         {
             Date = date;
             Time = time;
@@ -700,6 +703,7 @@ namespace GuaranteeManager
             Brush = TonePalette.Foreground(tone);
             StatusBackground = TonePalette.Background(tone);
             StatusBorder = TonePalette.Border(tone);
+            IsContextTarget = isContextTarget;
             EvidenceKey = evidenceKey ?? string.Empty;
             EvidenceActionKind = NormalizeEvidenceActionKind(evidenceActionKind, evidenceAttachment, evidenceRequest, evidenceGuaranteeId);
             EvidenceAttachment = EvidenceActionKind == TimelineEvidenceActionKind.Attachment ? evidenceAttachment : null;
@@ -727,6 +731,9 @@ namespace GuaranteeManager
         public Brush Brush { get; }
         public Brush StatusBackground { get; }
         public Brush StatusBorder { get; }
+        public bool IsContextTarget { get; }
+        public string ContextLabel => IsContextTarget ? "الحدث المفتوح الآن" : string.Empty;
+        public string ContextAutomationStatus => IsContextTarget ? "هذا هو حدث الطلب الذي تم فتحه من قائمة أعمال اليوم." : string.Empty;
         public TimelineEvidenceActionKind EvidenceActionKind { get; }
         public string EvidenceKey { get; }
         public AttachmentRecord? EvidenceAttachment { get; }
@@ -764,7 +771,8 @@ namespace GuaranteeManager
             GuaranteeTimelineEvent timelineEvent,
             IReadOnlyDictionary<int, WorkflowRequest>? requestsById = null,
             IReadOnlyDictionary<int, AttachmentRecord>? attachmentsById = null,
-            IReadOnlyDictionary<string, AttachmentRecord>? attachmentsByEventKey = null)
+            IReadOnlyDictionary<string, AttachmentRecord>? attachmentsByEventKey = null,
+            int? focusedRequestId = null)
         {
             ResolveEvidence(
                 timelineEvent,
@@ -775,26 +783,38 @@ namespace GuaranteeManager
                 out AttachmentRecord? evidenceAttachment,
                 out WorkflowRequest? evidenceRequest);
 
+            string detail = timelineEvent.Details;
+            if (string.Equals(timelineEvent.EventType, "WorkflowRequestCreated", StringComparison.Ordinal)
+                && evidenceRequest != null)
+            {
+                detail = AppendRequestAgeDetail(detail, evidenceRequest);
+            }
+
             return new TimelineItem(
                 timelineEvent.OccurredAt,
                 timelineEvent.Title,
-                timelineEvent.Details,
+                detail,
                 timelineEvent.Status,
                 ParseTone(timelineEvent.ToneKey),
                 evidenceActionKind,
                 evidenceAttachment,
                 evidenceRequest,
                 timelineEvent.GuaranteeId,
-                timelineEvent.EventKey);
+                timelineEvent.EventKey,
+                timelineEvent.WorkflowRequestId.HasValue
+                    && focusedRequestId.HasValue
+                    && timelineEvent.WorkflowRequestId.Value == focusedRequestId.Value);
         }
 
-        public static TimelineItem RequestCreated(WorkflowRequest request)
+        public static TimelineItem RequestCreated(WorkflowRequest request, bool isContextTarget = false)
         {
             string detail = $"القيمة المطلوبة: {request.RequestedValueLabel}";
             if (!string.IsNullOrWhiteSpace(request.Notes))
             {
                 detail += $" | {request.Notes.Trim()}";
             }
+
+            detail = AppendRequestAgeDetail(detail, request);
 
             return new TimelineItem(
                 request.RequestDate,
@@ -804,10 +824,11 @@ namespace GuaranteeManager
                 request.Status == RequestStatus.Pending ? Tone.Warning : Tone.Info,
                 TimelineEvidenceActionKind.RequestLetter,
                 evidenceRequest: request,
-                evidenceKey: $"workflow-request-created:{request.Id.ToString(CultureInfo.InvariantCulture)}");
+                evidenceKey: $"workflow-request-created:{request.Id.ToString(CultureInfo.InvariantCulture)}",
+                isContextTarget: isContextTarget);
         }
 
-        public static TimelineItem BankResponse(WorkflowRequest request, string resultVersionLabel)
+        public static TimelineItem BankResponse(WorkflowRequest request, string resultVersionLabel, bool isContextTarget = false)
         {
             string detail = WorkflowRequestDisplayText.BuildDetail(request);
             string effectDetail = BuildBankResponseEffectDetail(request, resultVersionLabel);
@@ -829,7 +850,8 @@ namespace GuaranteeManager
                 GetRequestTone(request.Status),
                 TimelineEvidenceActionKind.ResponseDocument,
                 evidenceRequest: request,
-                evidenceKey: $"workflow-response:{request.Id.ToString(CultureInfo.InvariantCulture)}");
+                evidenceKey: $"workflow-response:{request.Id.ToString(CultureInfo.InvariantCulture)}",
+                isContextTarget: isContextTarget);
         }
 
         public static TimelineItem FromVersion(Guarantee version)
@@ -900,6 +922,24 @@ namespace GuaranteeManager
 
         public static TimelineItem VersionCreated(string date, string versionLabel, string status)
             => new(date, $"إنشاء الإصدار {versionLabel}", "تم حفظ هذا الإصدار ضمن سجل الضمان الرسمي", status, Tone.Info);
+
+        private static string AppendRequestAgeDetail(string detail, WorkflowRequest request)
+        {
+            if (detail.Contains("عمر الطلب", StringComparison.OrdinalIgnoreCase))
+            {
+                return detail;
+            }
+
+            DateTime referenceDate = request.Status == RequestStatus.Pending
+                ? DateTime.Today
+                : (request.ResponseRecordedAt?.Date ?? DateTime.Today);
+            int days = Math.Max(0, (referenceDate - request.RequestDate.Date).Days);
+            string ageText = request.Status == RequestStatus.Pending
+                ? $"ينتظر {days.ToString("N0", CultureInfo.InvariantCulture)} يوم"
+                : $"استغرق {days.ToString("N0", CultureInfo.InvariantCulture)} يوم";
+
+            return $"{detail} | عمر الطلب: {ageText}";
+        }
 
         private static Tone GetRequestTone(RequestStatus status) => status switch
         {
@@ -1196,7 +1236,7 @@ namespace GuaranteeManager
         public Brush StatusBorder { get; }
         public bool IsContextTarget { get; }
         public string ContextLabel => IsContextTarget ? "الطلب المفتوح الآن" : string.Empty;
-        public string ContextAutomationStatus => IsContextTarget ? "هذا هو الطلب الذي تم فتح مركز الطلبات منه." : string.Empty;
+        public string ContextAutomationStatus => IsContextTarget ? "هذا هو الطلب الذي تم فتح السجل الزمني عليه." : string.Empty;
         public bool CanRegisterResponse => Request.Status == RequestStatus.Pending;
         public bool CanOpenLetter => Request.HasLetter;
         public bool CanOpenResponse => Request.HasResponseDocument;

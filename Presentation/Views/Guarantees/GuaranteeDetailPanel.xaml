@@ -272,52 +272,71 @@
                                                     <Ellipse x:Name="DotHollow" Width="10" Height="10" Stroke="{Binding Brush}" StrokeThickness="1.5" Fill="White" Visibility="Collapsed" />
                                                 </Grid>
                                             </Grid>
-                                            <StackPanel Grid.Column="2" FlowDirection="RightToLeft">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding Title}" FontSize="11.2" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" />
-                                                    <Border CornerRadius="9" Padding="7,2" Margin="6,0,0,0"
-                                                            Background="{Binding StatusBackground}" BorderBrush="{Binding StatusBorder}" BorderThickness="1">
-                                                        <TextBlock Text="{Binding Status}" FontSize="9" FontWeight="SemiBold" Foreground="{Binding Brush}" />
-                                                    </Border>
-                                                    <Button Style="{StaticResource IconOnlyButton}"
-                                                            Width="{Binding EvidenceActionWidth}"
-                                                            Height="{Binding EvidenceActionHeight}"
-                                                            MinWidth="{Binding EvidenceActionWidth}"
-                                                            Margin="4,0,0,0"
-                                                            ToolTip="{Binding EvidenceActionHint}"
-                                                            Command="{Binding DataContext.OpenTimelineEvidenceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                            CommandParameter="{Binding}"
-                                                            Visibility="{Binding HasEvidenceAction, Converter={StaticResource TrueToVisibleCollapsedConverter}}"
-                                                            automation:AutomationProperties.AutomationId="{Binding EvidenceActionAutomationId}"
-                                                            automation:AutomationProperties.Name="{Binding EvidenceActionLabel}">
-                                                        <Grid>
-                                                            <Border Width="18"
-                                                                    Height="18"
-                                                                    CornerRadius="9"
-                                                                    Background="#F8FAFC"
-                                                                    BorderBrush="#D8E1EE"
-                                                                    BorderThickness="1"
-                                                                    Visibility="{Binding IsOpenEvidenceAction, Converter={StaticResource TrueToVisibleCollapsedConverter}}">
-                                                                <Viewbox Width="10.5" Height="10.5">
-                                                                    <Path Data="{StaticResource Icon.Paperclip}" Stroke="#2563EB" StrokeThickness="2.1" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                                </Viewbox>
-                                                            </Border>
-                                                            <Border Height="18"
-                                                                    Width="18"
-                                                                    CornerRadius="9"
-                                                                    Background="#EFF6FF"
-                                                                    BorderBrush="#BFDBFE"
-                                                                    BorderThickness="1"
-                                                                    Visibility="{Binding IsAttachEvidenceAction, Converter={StaticResource TrueToVisibleCollapsedConverter}}">
-                                                                <Viewbox Width="10.5" Height="10.5">
-                                                                    <Path Data="{StaticResource Icon.NewTransaction}" Stroke="#2563EB" StrokeThickness="2.1" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                                </Viewbox>
-                                                            </Border>
-                                                        </Grid>
-                                                    </Button>
+                                            <Border x:Name="EventContentFrame"
+                                                    Grid.Column="2"
+                                                    Padding="0"
+                                                    BorderThickness="0"
+                                                    CornerRadius="8"
+                                                    Background="Transparent"
+                                                    BorderBrush="Transparent"
+                                                    automation:AutomationProperties.ItemStatus="{Binding ContextAutomationStatus}">
+                                                <StackPanel FlowDirection="RightToLeft">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding Title}" FontSize="11.2" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" />
+                                                        <Border CornerRadius="9" Padding="7,2" Margin="6,0,0,0"
+                                                                Background="{Binding StatusBackground}" BorderBrush="{Binding StatusBorder}" BorderThickness="1">
+                                                            <TextBlock Text="{Binding Status}" FontSize="9" FontWeight="SemiBold" Foreground="{Binding Brush}" />
+                                                        </Border>
+                                                        <Border x:Name="ContextBadge"
+                                                                CornerRadius="9"
+                                                                Padding="7,2"
+                                                                Margin="6,0,0,0"
+                                                                Background="#EFF6FF"
+                                                                BorderBrush="#BFDBFE"
+                                                                BorderThickness="1"
+                                                                Visibility="Collapsed">
+                                                            <TextBlock Text="{Binding ContextLabel}" FontSize="9" FontWeight="SemiBold" Foreground="#1D4ED8" />
+                                                        </Border>
+                                                        <Button Style="{StaticResource IconOnlyButton}"
+                                                                Width="{Binding EvidenceActionWidth}"
+                                                                Height="{Binding EvidenceActionHeight}"
+                                                                MinWidth="{Binding EvidenceActionWidth}"
+                                                                Margin="4,0,0,0"
+                                                                ToolTip="{Binding EvidenceActionHint}"
+                                                                Command="{Binding DataContext.OpenTimelineEvidenceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                Visibility="{Binding HasEvidenceAction, Converter={StaticResource TrueToVisibleCollapsedConverter}}"
+                                                                automation:AutomationProperties.AutomationId="{Binding EvidenceActionAutomationId}"
+                                                                automation:AutomationProperties.Name="{Binding EvidenceActionLabel}">
+                                                            <Grid>
+                                                                <Border Width="18"
+                                                                        Height="18"
+                                                                        CornerRadius="9"
+                                                                        Background="#F8FAFC"
+                                                                        BorderBrush="#D8E1EE"
+                                                                        BorderThickness="1"
+                                                                        Visibility="{Binding IsOpenEvidenceAction, Converter={StaticResource TrueToVisibleCollapsedConverter}}">
+                                                                    <Viewbox Width="10.5" Height="10.5">
+                                                                        <Path Data="{StaticResource Icon.Paperclip}" Stroke="#2563EB" StrokeThickness="2.1" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                                    </Viewbox>
+                                                                </Border>
+                                                                <Border Height="18"
+                                                                        Width="18"
+                                                                        CornerRadius="9"
+                                                                        Background="#EFF6FF"
+                                                                        BorderBrush="#BFDBFE"
+                                                                        BorderThickness="1"
+                                                                        Visibility="{Binding IsAttachEvidenceAction, Converter={StaticResource TrueToVisibleCollapsedConverter}}">
+                                                                    <Viewbox Width="10.5" Height="10.5">
+                                                                        <Path Data="{StaticResource Icon.NewTransaction}" Stroke="#2563EB" StrokeThickness="2.1" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                                    </Viewbox>
+                                                                </Border>
+                                                            </Grid>
+                                                        </Button>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{StaticResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap" />
                                                 </StackPanel>
-                                                <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{StaticResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap" />
-                                            </StackPanel>
+                                            </Border>
                                         </Grid>
                                         <DataTemplate.Triggers>
                                             <DataTrigger Binding="{Binding Status}" Value="قيد الانتظار">
@@ -326,6 +345,14 @@
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding Status}" Value="مكتمل">
                                                 <Setter TargetName="CheckIcon" Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsContextTarget}" Value="True">
+                                                <Setter TargetName="EventContentFrame" Property="Background" Value="#F8FBFF" />
+                                                <Setter TargetName="EventContentFrame" Property="BorderBrush" Value="#BFDBFE" />
+                                                <Setter TargetName="EventContentFrame" Property="BorderThickness" Value="1" />
+                                                <Setter TargetName="EventContentFrame" Property="Padding" Value="8,6" />
+                                                <Setter TargetName="EventContentFrame" Property="Margin" Value="0,-5,0,0" />
+                                                <Setter TargetName="ContextBadge" Property="Visibility" Value="Visible" />
                                             </DataTrigger>
                                         </DataTemplate.Triggers>
                                     </DataTemplate>
