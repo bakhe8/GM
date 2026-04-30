@@ -370,6 +370,18 @@
                             </Style>
                         </WrapPanel.Resources>
                         <Button Style="{StaticResource ActionStripButton}"
+                                BorderBrush="#93C5FD"
+                                Background="#EFF6FF"
+                                Foreground="#1D4ED8"
+                                Content="تسجيل رد"
+                                IsEnabled="{Binding SelectedGuarantee.RegisterResponseAction.IsEnabled}"
+                                ToolTip="{Binding SelectedGuarantee.RegisterResponseAction.Hint}"
+                                ToolTipService.ShowOnDisabled="True"
+                                Command="{Binding RegisterBankResponseCommand}"
+                                CommandParameter="{Binding SelectedGuarantee}"
+                                automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.RegisterResponse"
+                                automation:AutomationProperties.Name="تسجيل رد البنك" />
+                        <Button Style="{StaticResource ActionStripButton}"
                                 Content="تعديل"
                                 IsEnabled="{Binding SelectedGuarantee.EditAction.IsEnabled}"
                                 ToolTip="{Binding SelectedGuarantee.EditAction.Hint}"
