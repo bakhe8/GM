@@ -329,6 +329,74 @@ namespace GuaranteeManager.Services
             return list;
         }
 
+        public Dictionary<int, IReadOnlyList<AttachmentRecord>> GetSeriesAttachmentsByRootIds(IReadOnlyCollection<int> rootIds)
+        {
+            using var scope = SimpleLogger.BeginScope("GuaranteeRepository.GetSeriesAttachmentsByRootIds");
+            List<int> distinctRootIds = (rootIds ?? Array.Empty<int>())
+                .Where(rootId => rootId > 0)
+                .Distinct()
+                .ToList();
+
+            Dictionary<int, IReadOnlyList<AttachmentRecord>> result = distinctRootIds
+                .ToDictionary(rootId => rootId, _ => (IReadOnlyList<AttachmentRecord>)new List<AttachmentRecord>());
+
+            if (distinctRootIds.Count == 0)
+            {
+                return result;
+            }
+
+            try
+            {
+                using var connection = SqliteConnectionFactory.Open(_connectionString);
+                var command = connection.CreateCommand();
+
+                var parameterNames = new List<string>();
+                for (int index = 0; index < distinctRootIds.Count; index++)
+                {
+                    string parameterName = $"$root{index}";
+                    parameterNames.Add(parameterName);
+                    command.Parameters.AddWithValue(parameterName, distinctRootIds[index]);
+                }
+
+                command.CommandText = $@"
+                    SELECT a.Id, a.GuaranteeId, a.OriginalFileName, a.SavedFileName, a.FileExtension,
+                           a.UploadedAt, a.DocumentType, a.TimelineEventKey, COALESCE(g.RootId, g.Id) AS RootId
+                    FROM Attachments a
+                    INNER JOIN Guarantees g ON g.Id = a.GuaranteeId
+                    WHERE COALESCE(g.RootId, g.Id) IN ({string.Join(", ", parameterNames)})
+                    ORDER BY RootId, a.UploadedAt DESC, a.Id DESC";
+
+                var attachmentsByRoot = new Dictionary<int, List<AttachmentRecord>>();
+                using SqliteDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    AttachmentRecord attachment = GuaranteeDataAccess.MapAttachment(reader);
+                    int rootId = reader.GetInt32(8);
+                    if (!attachmentsByRoot.TryGetValue(rootId, out List<AttachmentRecord>? bucket))
+                    {
+                        bucket = new List<AttachmentRecord>();
+                        attachmentsByRoot[rootId] = bucket;
+                    }
+
+                    bucket.Add(attachment);
+                }
+
+                foreach ((int rootId, List<AttachmentRecord> attachments) in attachmentsByRoot)
+                {
+                    result[rootId] = BuildSeriesAttachments(attachments);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw OperationFailure.LogAndWrap(
+                    ex,
+                    "GuaranteeRepository.GetSeriesAttachmentsByRootIds",
+                    "تعذر تحميل مرفقات سلاسل الضمانات المعروضة.");
+            }
+
+            return result;
+        }
+
         public List<Guarantee> SearchGuarantees(string query)
         {
             return QueryGuarantees(new GuaranteeQueryOptions
@@ -837,6 +905,21 @@ namespace GuaranteeManager.Services
                     ? attachments
                     : new List<AttachmentRecord>();
             }
+        }
+
+        private static IReadOnlyList<AttachmentRecord> BuildSeriesAttachments(IReadOnlyList<AttachmentRecord> attachments)
+        {
+            return attachments
+                .GroupBy(
+                    attachment => string.IsNullOrWhiteSpace(attachment.SavedFileName)
+                        ? $"attachment:{attachment.Id.ToString(CultureInfo.InvariantCulture)}"
+                        : attachment.SavedFileName,
+                    StringComparer.OrdinalIgnoreCase)
+                .Select(group => group
+                    .OrderByDescending(attachment => attachment.UploadedAt)
+                    .First())
+                .OrderByDescending(attachment => attachment.UploadedAt)
+                .ToList();
         }
     }
 }

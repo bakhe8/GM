@@ -147,6 +147,11 @@ namespace GuaranteeManager
                 .ToDictionary(
                     rootId => rootId,
                     rootId => _database.GetWorkflowRequestsByRootId(rootId));
+            Dictionary<int, IReadOnlyList<AttachmentRecord>> attachmentsByRootId = _database.GetSeriesAttachmentsByRootIds(
+                currentGuarantees
+                    .Select(guarantee => guarantee.RootId ?? guarantee.Id)
+                    .Distinct()
+                    .ToList());
 
             List<GuaranteeRow> rows = currentGuarantees
                 .Select(guarantee =>
@@ -159,9 +164,11 @@ namespace GuaranteeManager
                     GuaranteeRow row = GuaranteeRow.FromGuarantee(
                         guarantee,
                         relatedRequests);
+                    if (attachmentsByRootId.TryGetValue(rootId, out IReadOnlyList<AttachmentRecord>? attachments))
+                    {
+                        row.SetAttachments(attachments);
+                    }
 
-                    List<Guarantee> history = _database.GetGuaranteeHistory(guarantee.Id);
-                    row.SetAttachments(BuildSeriesAttachments(history));
                     return row;
                 })
                 .ToList();
@@ -306,22 +313,6 @@ namespace GuaranteeManager
         private static string FormatMeta(decimal amount)
         {
             return $"إجمالي القيمة {amount.ToString("N0", CultureInfo.InvariantCulture)} ريال";
-        }
-
-        private static IReadOnlyList<AttachmentRecord> BuildSeriesAttachments(IReadOnlyList<Guarantee> history)
-        {
-            return history
-                .SelectMany(version => version.Attachments)
-                .GroupBy(
-                    attachment => string.IsNullOrWhiteSpace(attachment.SavedFileName)
-                        ? $"attachment:{attachment.Id.ToString(CultureInfo.InvariantCulture)}"
-                        : attachment.SavedFileName,
-                    System.StringComparer.OrdinalIgnoreCase)
-                .Select(group => group
-                    .OrderByDescending(attachment => attachment.UploadedAt)
-                    .First())
-                .OrderByDescending(attachment => attachment.UploadedAt)
-                .ToList();
         }
 
         private static List<TimelineItem> BuildTimeline(

@@ -50,10 +50,14 @@ namespace GuaranteeManager.Services
 
         public static List<GuaranteeTimelineEvent> GetEventsForGuarantee(
             SqliteConnection connection,
-            int guaranteeId)
+            int guaranteeId,
+            bool backfillMissing = true)
         {
             EnsureSchema(connection);
-            BackfillMissingEvents(connection);
+            if (backfillMissing)
+            {
+                BackfillMissingEvents(connection);
+            }
 
             int? rootId = ResolveRootId(connection, guaranteeId);
             if (!rootId.HasValue)

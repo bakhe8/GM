@@ -9,7 +9,9 @@ namespace GuaranteeManager.Services
     public class DatabaseService : IDatabaseService
     {
         private static readonly object RuntimeInitializationLock = new();
+        private static readonly object TimelineEventBackfillLock = new();
         private static bool _runtimeInitialized;
+        private static bool _timelineEventsDirty = true;
         private static readonly Dictionary<string, string> SupportedUniqueValueColumns = new(StringComparer.OrdinalIgnoreCase)
         {
             ["Supplier"] = "Supplier",
@@ -49,6 +51,7 @@ namespace GuaranteeManager.Services
                     new WorkflowResponseStorageService());
                 initializer.Initialize();
                 _runtimeInitialized = true;
+                MarkTimelineEventsClean();
             }
         }
 
@@ -57,32 +60,70 @@ namespace GuaranteeManager.Services
             lock (RuntimeInitializationLock)
             {
                 _runtimeInitialized = false;
+                MarkTimelineEventsDirty();
+            }
+        }
+
+        private static void MarkTimelineEventsDirty()
+        {
+            lock (TimelineEventBackfillLock)
+            {
+                _timelineEventsDirty = true;
+            }
+        }
+
+        private static void MarkTimelineEventsClean()
+        {
+            lock (TimelineEventBackfillLock)
+            {
+                _timelineEventsDirty = false;
+            }
+        }
+
+        private static void EnsureTimelineEventsCurrent(SqliteConnection connection)
+        {
+            lock (TimelineEventBackfillLock)
+            {
+                if (!_timelineEventsDirty)
+                {
+                    return;
+                }
+
+                GuaranteeEventStore.BackfillMissingEvents(connection);
+                _timelineEventsDirty = false;
             }
         }
 
         public void SaveGuarantee(Guarantee g, List<string> tempFilePaths)
         {
             _guaranteeRepository.SaveGuarantee(g, tempFilePaths);
+            MarkTimelineEventsDirty();
         }
 
         public void SaveGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> attachments)
         {
             _guaranteeRepository.SaveGuaranteeWithAttachments(g, attachments);
+            MarkTimelineEventsDirty();
         }
 
         public void AddGuaranteeAttachments(int guaranteeId, List<AttachmentInput> attachments)
         {
             _guaranteeRepository.AddAttachments(guaranteeId, attachments);
+            MarkTimelineEventsDirty();
         }
 
         public int UpdateGuarantee(Guarantee g, List<string> newTempFiles, List<AttachmentRecord> removedAttachments)
         {
-            return _guaranteeRepository.UpdateGuarantee(g, newTempFiles, removedAttachments);
+            int newGuaranteeId = _guaranteeRepository.UpdateGuarantee(g, newTempFiles, removedAttachments);
+            MarkTimelineEventsDirty();
+            return newGuaranteeId;
         }
 
         public int UpdateGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> newAttachments, List<AttachmentRecord> removedAttachments)
         {
-            return _guaranteeRepository.UpdateGuaranteeWithAttachments(g, newAttachments, removedAttachments);
+            int newGuaranteeId = _guaranteeRepository.UpdateGuaranteeWithAttachments(g, newAttachments, removedAttachments);
+            MarkTimelineEventsDirty();
+            return newGuaranteeId;
         }
 
         public List<Guarantee> QueryGuarantees(GuaranteeQueryOptions options)
@@ -105,15 +146,24 @@ namespace GuaranteeManager.Services
             return _guaranteeRepository.GetGuaranteeHistory(guaranteeId);
         }
 
+        public Dictionary<int, IReadOnlyList<AttachmentRecord>> GetSeriesAttachmentsByRootIds(IReadOnlyCollection<int> rootIds)
+        {
+            return _guaranteeRepository.GetSeriesAttachmentsByRootIds(rootIds);
+        }
+
         public List<GuaranteeTimelineEvent> GetGuaranteeTimelineEvents(int guaranteeId)
         {
             using var connection = SqliteConnectionFactory.Open(_connectionString);
-            return GuaranteeEventStore.GetEventsForGuarantee(connection, guaranteeId);
+            GuaranteeEventStore.EnsureSchema(connection);
+            EnsureTimelineEventsCurrent(connection);
+            return GuaranteeEventStore.GetEventsForGuarantee(connection, guaranteeId, backfillMissing: false);
         }
 
         public int SaveWorkflowRequest(WorkflowRequest req)
         {
-            return _workflowRequestRepository.SaveWorkflowRequest(req);
+            int requestId = _workflowRequestRepository.SaveWorkflowRequest(req);
+            MarkTimelineEventsDirty();
+            return requestId;
         }
 
         public bool HasPendingWorkflowRequest(int rootId, RequestType requestType)
@@ -161,6 +211,7 @@ namespace GuaranteeManager.Services
                 responseOriginalFileName,
                 responseSavedFileName,
                 resultVersionId);
+            MarkTimelineEventsDirty();
         }
 
         public void AttachWorkflowResponseDocument(
@@ -174,6 +225,7 @@ namespace GuaranteeManager.Services
                 responseNotes,
                 responseOriginalFileName,
                 responseSavedFileName);
+            MarkTimelineEventsDirty();
         }
 
         public List<Guarantee> SearchGuarantees(string query)
@@ -194,13 +246,15 @@ namespace GuaranteeManager.Services
             string responseSavedFileName,
             string? responseAttachmentSourcePath = null)
         {
-            return _workflowExecutionProcessor.ExecuteExtensionWorkflowRequest(
+            int resultVersionId = _workflowExecutionProcessor.ExecuteExtensionWorkflowRequest(
                 requestId,
                 newExpiryDate,
                 responseNotes,
                 responseOriginalFileName,
                 responseSavedFileName,
                 responseAttachmentSourcePath);
+            MarkTimelineEventsDirty();
+            return resultVersionId;
         }
 
         public int ExecuteReductionWorkflowRequest(
@@ -211,13 +265,15 @@ namespace GuaranteeManager.Services
             string responseSavedFileName,
             string? responseAttachmentSourcePath = null)
         {
-            return _workflowExecutionProcessor.ExecuteReductionWorkflowRequest(
+            int resultVersionId = _workflowExecutionProcessor.ExecuteReductionWorkflowRequest(
                 requestId,
                 newAmount,
                 responseNotes,
                 responseOriginalFileName,
                 responseSavedFileName,
                 responseAttachmentSourcePath);
+            MarkTimelineEventsDirty();
+            return resultVersionId;
         }
 
         public int ExecuteReleaseWorkflowRequest(
@@ -227,12 +283,14 @@ namespace GuaranteeManager.Services
             string responseSavedFileName,
             string? responseAttachmentSourcePath = null)
         {
-            return _workflowExecutionProcessor.ExecuteReleaseWorkflowRequest(
+            int resultGuaranteeId = _workflowExecutionProcessor.ExecuteReleaseWorkflowRequest(
                 requestId,
                 responseNotes,
                 responseOriginalFileName,
                 responseSavedFileName,
                 responseAttachmentSourcePath);
+            MarkTimelineEventsDirty();
+            return resultGuaranteeId;
         }
 
         public int ExecuteLiquidationWorkflowRequest(
@@ -242,12 +300,14 @@ namespace GuaranteeManager.Services
             string responseSavedFileName,
             string? responseAttachmentSourcePath = null)
         {
-            return _workflowExecutionProcessor.ExecuteLiquidationWorkflowRequest(
+            int resultGuaranteeId = _workflowExecutionProcessor.ExecuteLiquidationWorkflowRequest(
                 requestId,
                 responseNotes,
                 responseOriginalFileName,
                 responseSavedFileName,
                 responseAttachmentSourcePath);
+            MarkTimelineEventsDirty();
+            return resultGuaranteeId;
         }
 
         public int? ExecuteVerificationWorkflowRequest(
@@ -258,13 +318,15 @@ namespace GuaranteeManager.Services
             string? responseAttachmentSourcePath = null,
             bool promoteResponseDocumentToOfficialAttachment = false)
         {
-            return _workflowExecutionProcessor.ExecuteVerificationWorkflowRequest(
+            int? resultGuaranteeId = _workflowExecutionProcessor.ExecuteVerificationWorkflowRequest(
                 requestId,
                 responseNotes,
                 responseOriginalFileName,
                 responseSavedFileName,
                 responseAttachmentSourcePath,
                 promoteResponseDocumentToOfficialAttachment);
+            MarkTimelineEventsDirty();
+            return resultGuaranteeId;
         }
 
         public int ExecuteReplacementWorkflowRequest(
@@ -283,7 +345,7 @@ namespace GuaranteeManager.Services
             string responseSavedFileName,
             string? responseAttachmentSourcePath = null)
         {
-            return _workflowExecutionProcessor.ExecuteReplacementWorkflowRequest(
+            int replacementGuaranteeId = _workflowExecutionProcessor.ExecuteReplacementWorkflowRequest(
                 requestId,
                 replacementGuaranteeNo,
                 replacementSupplier,
@@ -298,11 +360,14 @@ namespace GuaranteeManager.Services
                 responseOriginalFileName,
                 responseSavedFileName,
                 responseAttachmentSourcePath);
+            MarkTimelineEventsDirty();
+            return replacementGuaranteeId;
         }
 
         public void DeleteAttachment(AttachmentRecord att)
         {
             _guaranteeRepository.DeleteAttachment(att);
+            MarkTimelineEventsDirty();
         }
 
         public void AddBankReference(string bankName)
@@ -406,12 +471,16 @@ namespace GuaranteeManager.Services
 
         public int CreateNewVersion(Guarantee newG, int sourceId, List<string> newTempFiles, List<AttachmentRecord> inheritedAttachments)
         {
-            return _guaranteeRepository.CreateNewVersion(newG, sourceId, newTempFiles, inheritedAttachments);
+            int newGuaranteeId = _guaranteeRepository.CreateNewVersion(newG, sourceId, newTempFiles, inheritedAttachments);
+            MarkTimelineEventsDirty();
+            return newGuaranteeId;
         }
 
         public int CreateNewVersionWithAttachments(Guarantee newG, int sourceId, List<AttachmentInput> newAttachments, List<AttachmentRecord> inheritedAttachments)
         {
-            return _guaranteeRepository.CreateNewVersionWithAttachments(newG, sourceId, newAttachments, inheritedAttachments);
+            int newGuaranteeId = _guaranteeRepository.CreateNewVersionWithAttachments(newG, sourceId, newAttachments, inheritedAttachments);
+            MarkTimelineEventsDirty();
+            return newGuaranteeId;
         }
     }
 }

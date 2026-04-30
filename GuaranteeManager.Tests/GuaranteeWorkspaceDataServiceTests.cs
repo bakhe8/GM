@@ -311,6 +311,14 @@ namespace GuaranteeManager.Tests
             }
 
             public List<Guarantee> GetGuaranteeHistory(int guaranteeId) => _history;
+            public Dictionary<int, IReadOnlyList<AttachmentRecord>> GetSeriesAttachmentsByRootIds(IReadOnlyCollection<int> rootIds)
+                => _history
+                    .GroupBy(guarantee => guarantee.RootId ?? guarantee.Id)
+                    .Where(group => rootIds.Contains(group.Key))
+                    .ToDictionary(
+                        group => group.Key,
+                        group => (IReadOnlyList<AttachmentRecord>)group.SelectMany(guarantee => guarantee.Attachments).ToList());
+
             public List<GuaranteeTimelineEvent> GetGuaranteeTimelineEvents(int guaranteeId) => _events.ToList();
 
             public List<WorkflowRequest> GetWorkflowRequestsByRootId(int rootId)
