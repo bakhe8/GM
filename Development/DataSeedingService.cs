@@ -581,7 +581,7 @@ namespace GuaranteeManager.Development
 
         private void SeedActive_ComplexChain_ExtendedThenReduced_PendingVerification()
         {
-            // سلسلة: أصلي → ممتد (v2) → مخفَّض (v3) → تحقق معلق
+            // سلسلة: أصلي -> ممتد (الثاني) -> مخفَّض (الثالث) -> تحقق معلق
             var g = BuildGuarantee(7, 60, 4_000_000m, GuaranteeReferenceType.Contract, "عقد-5790");
             var current = Save(g, attachmentCount: 1);
 

@@ -849,7 +849,7 @@ namespace GuaranteeManager
 
             return new TimelineItem(
                 version.CreatedAt,
-                $"إصدار جديد {version.VersionLabel}",
+                $"الإصدار {version.VersionLabel}",
                 $"تم حفظ شروط هذا الإصدار: المبلغ {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال | الانتهاء {version.ExpiryDate:yyyy/MM/dd}.",
                 "موثق",
                 Tone.Info,

@@ -53,7 +53,7 @@ namespace GuaranteeManager.Tests
                     && item.Details.Contains("تم إنهاء دورة حياة الضمان بالإفراج", StringComparison.Ordinal));
             Assert.Contains(
                 result.Timeline,
-                item => item.Title == $"إنشاء الإصدار v{extended.VersionNumber}"
+                item => item.Title == $"إنشاء الإصدار {extended.VersionLabel}"
                     && item.Details.Contains("الشروط المحفوظة لهذا الإصدار", StringComparison.Ordinal));
         }
     }

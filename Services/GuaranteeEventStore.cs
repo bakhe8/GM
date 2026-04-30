@@ -122,7 +122,7 @@ namespace GuaranteeManager.Services
                     eventType: isFirstVersion ? "GuaranteeCreated" : "GuaranteeVersionCreated",
                     occurredAt: version.CreatedAt,
                     sortOrder: isFirstVersion ? 10 : 50,
-                    title: isFirstVersion ? "إنشاء الضمان" : $"إصدار جديد {version.VersionLabel}",
+                    title: isFirstVersion ? "إنشاء الضمان" : $"الإصدار {version.VersionLabel}",
                     details: isFirstVersion
                         ? $"تم إنشاء الضمان بقيمة {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال وانتهاء {version.ExpiryDate:yyyy/MM/dd}."
                         : $"تم حفظ شروط هذا الإصدار: المبلغ {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال | الانتهاء {version.ExpiryDate:yyyy/MM/dd}.",

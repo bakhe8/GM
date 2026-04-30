@@ -438,7 +438,7 @@ namespace GuaranteeManager.Tests
             Assert.Null(executedRequest.ResultVersionId);
             Assert.Equal(1, requestListItem.BaseVersionNumber);
             Assert.Null(requestListItem.ResultVersionNumber);
-            Assert.Equal("v1", requestListItem.RelatedVersionLabel);
+            Assert.Equal("الأول", requestListItem.RelatedVersionLabel);
         }
 
         [Fact]

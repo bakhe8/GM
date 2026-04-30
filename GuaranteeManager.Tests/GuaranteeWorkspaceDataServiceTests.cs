@@ -222,13 +222,13 @@ namespace GuaranteeManager.Tests
                     "إنشاء الضمان",
                     "طلب تمديد",
                     "تسجيل رد طلب تمديد",
-                    "إصدار جديد v2",
+                    "الإصدار الثاني",
                     "طلب إفراج",
                     "تسجيل رد طلب إفراج"
                 },
                 artifacts.Timeline.Select(item => item.Title));
 
-            TimelineItem versionItem = Assert.Single(artifacts.Timeline, item => item.Title == "إصدار جديد v2");
+            TimelineItem versionItem = Assert.Single(artifacts.Timeline, item => item.Title == "الإصدار الثاني");
             Assert.DoesNotContain("إنهاء دورة حياة", versionItem.Detail);
             Assert.DoesNotContain("مفرج", versionItem.Detail);
 

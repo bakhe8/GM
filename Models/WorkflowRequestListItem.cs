@@ -21,9 +21,9 @@ namespace GuaranteeManager.Models
 
         public string LifecycleStatusLabel => GuaranteeLifecycleStatusDisplay.GetLabel(LifecycleStatus);
 
-        public string CurrentVersionLabel => $"v{CurrentVersionNumber}";
+        public string CurrentVersionLabel => GuaranteeVersionDisplay.GetLabel(CurrentVersionNumber);
         public int RelatedVersionNumber => ResultVersionNumber ?? (BaseVersionNumber > 0 ? BaseVersionNumber : CurrentVersionNumber);
-        public string RelatedVersionLabel => $"v{RelatedVersionNumber}";
+        public string RelatedVersionLabel => GuaranteeVersionDisplay.GetLabel(RelatedVersionNumber);
         public string RequestDateLabel => Request.RequestDate.ToString("yyyy-MM-dd");
         public string ResponseDateLabel => Request.ResponseRecordedAt?.ToString("yyyy-MM-dd") ?? "---";
         public bool IsPending => Request.Status == RequestStatus.Pending;

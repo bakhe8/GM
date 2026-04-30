@@ -662,9 +662,9 @@ namespace GuaranteeManager.Services
                 result.Answer = request.Type switch
                 {
                     RequestType.Extension when resultGuarantee != null =>
-                        $"آخر ما حدث هو تنفيذ طلب تمديد بتاريخ {dateText}، ونتج عنه تحديث تاريخ الانتهاء إلى {resultGuarantee.ExpiryDate:yyyy-MM-dd} في الإصدار v{resultGuarantee.VersionNumber}.",
+                        $"آخر ما حدث هو تنفيذ طلب تمديد بتاريخ {dateText}، ونتج عنه تحديث تاريخ الانتهاء إلى {resultGuarantee.ExpiryDate:yyyy-MM-dd} في الإصدار {resultGuarantee.VersionLabel}.",
                     RequestType.Reduction when resultGuarantee != null =>
-                        $"آخر ما حدث هو تنفيذ طلب تخفيض بتاريخ {dateText}، ونتج عنه تحديث مبلغ الضمان إلى {resultGuarantee.Amount:N2} في الإصدار v{resultGuarantee.VersionNumber}.",
+                        $"آخر ما حدث هو تنفيذ طلب تخفيض بتاريخ {dateText}، ونتج عنه تحديث مبلغ الضمان إلى {resultGuarantee.Amount:N2} في الإصدار {resultGuarantee.VersionLabel}.",
                     RequestType.Release =>
                         $"آخر ما حدث هو تنفيذ طلب إفراج بتاريخ {dateText}، وأصبحت الحالة التشغيلية الحالية للضمان {currentGuarantee.LifecycleStatusLabel}.",
                     RequestType.Liquidation =>
@@ -710,7 +710,7 @@ namespace GuaranteeManager.Services
             if (latestVersion.VersionNumber <= 1 && !hasRequests)
             {
                 result.Answer =
-                    $"آخر ما حدث هو تسجيل الضمان لأول مرة بتاريخ {latestVersion.CreatedAt:yyyy-MM-dd}، وما زال السجل الحالي في الإصدار v1.";
+                    $"آخر ما حدث هو تسجيل الضمان لأول مرة بتاريخ {latestVersion.CreatedAt:yyyy-MM-dd}، وما زال السجل الحالي في الإصدار {latestVersion.VersionLabel}.";
                 result.Explanation = "لا توجد طلبات محفوظة مرتبطة بهذا الضمان بعد.";
                 return;
             }
@@ -725,7 +725,7 @@ namespace GuaranteeManager.Services
             }
 
             result.Answer =
-                $"آخر ما حدث هو تحديث السجل الرسمي إلى الإصدار v{latestVersion.VersionNumber} بتاريخ {latestVersion.CreatedAt:yyyy-MM-dd HH:mm}.";
+                $"آخر ما حدث هو تحديث السجل الرسمي إلى الإصدار {latestVersion.VersionLabel} بتاريخ {latestVersion.CreatedAt:yyyy-MM-dd HH:mm}.";
             result.Explanation =
                 $"الحالة الزمنية الحالية هي {currentGuarantee.StatusLabel}، والحالة التشغيلية الحالية هي {currentGuarantee.LifecycleStatusLabel}.";
         }
@@ -750,7 +750,7 @@ namespace GuaranteeManager.Services
                 return "تسجيل السجل الرسمي";
             }
 
-            return $"إنشاء الإصدار v{version.VersionNumber}";
+            return $"إنشاء الإصدار {version.VersionLabel}";
         }
 
         private static string BuildVersionTimelineDetails(Guarantee version)
@@ -797,7 +797,7 @@ namespace GuaranteeManager.Services
             result.Facts.Add(new OperationalInquiryFact { Label = "رقم الضمان", Value = currentGuarantee.GuaranteeNo });
             result.Facts.Add(new OperationalInquiryFact { Label = "المورد", Value = currentGuarantee.Supplier });
             result.Facts.Add(new OperationalInquiryFact { Label = "البنك", Value = currentGuarantee.Bank });
-            result.Facts.Add(new OperationalInquiryFact { Label = "الإصدار الحالي", Value = $"v{currentGuarantee.VersionNumber}" });
+            result.Facts.Add(new OperationalInquiryFact { Label = "الإصدار الحالي", Value = currentGuarantee.VersionLabel });
             result.Facts.Add(new OperationalInquiryFact { Label = "الحالة الزمنية", Value = currentGuarantee.StatusLabel });
             result.Facts.Add(new OperationalInquiryFact { Label = "الحالة التشغيلية", Value = currentGuarantee.LifecycleStatusLabel });
             result.Facts.Add(new OperationalInquiryFact { Label = "عدد الإصدارات", Value = history.Count.ToString() });

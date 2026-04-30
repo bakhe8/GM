@@ -1040,7 +1040,7 @@ namespace GuaranteeManager
                 : $"المستفيد: {effectiveBeneficiary}";
 
             SetConsequenceState(
-                "سيُنشأ ضمان جديد كإصدار أول (v1).",
+                "سيُنشأ ضمان جديد كالإصدار الأول.",
                 $"{guaranteeNo} • {bank} • {guaranteeType} • {amount.ToString("N2", CultureInfo.InvariantCulture)} ريال • {expiryDate:yyyy/MM/dd}",
                 $"{beneficiarySummary} • {referenceSummary} • {attachmentSummary}",
                 warningState: false);
@@ -1868,7 +1868,7 @@ namespace GuaranteeManager
                 : $"المرفقات: +{addedAttachments.ToString("N0", CultureInfo.InvariantCulture)} / -{removedAttachments.ToString("N0", CultureInfo.InvariantCulture)}";
 
             SetConsequenceState(
-                $"سيُنشأ إصدار جديد v{_currentGuarantee.VersionNumber + 1} لهذا الضمان.",
+                $"سيُنشأ الإصدار {GuaranteeVersionDisplay.GetLabel(_currentGuarantee.VersionNumber + 1)} لهذا الضمان.",
                 $"أبرز التغييرات: {changedFieldsSummary}.",
                 $"{attachmentSummary} • الإصدار الحالي {_currentGuarantee.VersionLabel} سيبقى محفوظًا في السجل.",
                 warningState: false,
