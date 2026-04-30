@@ -2605,7 +2605,6 @@ namespace GuaranteeManager
                 RequestType.Extension or RequestType.Reduction => "الإصدار الناتج",
                 RequestType.Replacement => "الضمان البديل",
                 RequestType.Release or RequestType.Liquidation => "أثر التنفيذ",
-                RequestType.Annulment => "أثر مسار قديم",
                 RequestType.Verification when request.ResultVersionId.HasValue => "المستند المعتمد",
                 _ => "أثر الطلب"
             };
@@ -2628,8 +2627,6 @@ namespace GuaranteeManager
                     result.CurrentGuarantee?.LifecycleStatusLabel ?? "مفرج",
                 RequestType.Liquidation =>
                     result.CurrentGuarantee?.LifecycleStatusLabel ?? "مسيّل",
-                RequestType.Annulment =>
-                    result.CurrentGuarantee?.LifecycleStatusLabel ?? "مسار قديم ملغى",
                 RequestType.Verification when request.ResultVersionId.HasValue =>
                     result.ResultGuarantee?.VersionLabel ?? "مرفق رسمي",
                 _ =>
@@ -2682,7 +2679,7 @@ namespace GuaranteeManager
             if (TryResolveGuaranteeContextHandoff(
                     out _,
                     out _,
-                    out GuaranteeFileFocusArea contextArea,
+                    out GuaranteeFocusArea contextArea,
                     out int? contextRequestId,
                     out _))
             {
@@ -2690,15 +2687,15 @@ namespace GuaranteeManager
                 contextButtonHint = $"يفتح {BuildGuaranteeHandoffSectionText(contextArea, contextRequestId)}.";
             }
 
-            Button openGuaranteeFileButton = WorkspaceSurfaceChrome.ActionButton(contextButtonText, "White", "#D8E1EE", "#1F2937");
-            openGuaranteeFileButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            UiInstrumentation.Identify(openGuaranteeFileButton, "Dialog.OperationalInquiry.OpenGuaranteeFileButton", "فتح وجهة الضمان من الاستعلام");
-            openGuaranteeFileButton.IsEnabled = canOpenGuaranteeContext;
-            openGuaranteeFileButton.ToolTip = canOpenGuaranteeContext
+            Button openGuaranteeContextButton = WorkspaceSurfaceChrome.ActionButton(contextButtonText, "White", "#D8E1EE", "#1F2937");
+            openGuaranteeContextButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
+            UiInstrumentation.Identify(openGuaranteeContextButton, "Dialog.OperationalInquiry.OpenGuaranteeContextButton", "فتح وجهة الضمان من الاستعلام");
+            openGuaranteeContextButton.IsEnabled = canOpenGuaranteeContext;
+            openGuaranteeContextButton.ToolTip = canOpenGuaranteeContext
                 ? contextButtonHint
                 : "لا يوجد ضمان محدد يمكن فتحه من هذا الجواب.";
-            ToolTipService.SetShowOnDisabled(openGuaranteeFileButton, true);
-            openGuaranteeFileButton.Click += (_, _) => OpenGuaranteeContext();
+            ToolTipService.SetShowOnDisabled(openGuaranteeContextButton, true);
+            openGuaranteeContextButton.Click += (_, _) => OpenGuaranteeContext();
 
             Button attachmentsButton = WorkspaceSurfaceChrome.ActionButton("مرفقات الإصدار", "White", "#D8E1EE", "#1F2937");
             attachmentsButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
@@ -2753,7 +2750,7 @@ namespace GuaranteeManager
 
             foreach (Button button in new[]
                      {
-                         openGuaranteeFileButton,
+                         openGuaranteeContextButton,
                          attachmentsButton,
                          openLetterButton,
                          openResponseButton,
@@ -2970,13 +2967,13 @@ namespace GuaranteeManager
         private bool TryResolveGuaranteeContextHandoff(
             out ShellViewModel shell,
             out GuaranteeRow row,
-            out GuaranteeFileFocusArea focusArea,
+            out GuaranteeFocusArea focusArea,
             out int? requestIdToFocus,
             out bool hasInquiryRoute)
         {
             shell = null!;
             row = null!;
-            focusArea = GuaranteeFileFocusArea.None;
+            focusArea = GuaranteeFocusArea.None;
             requestIdToFocus = null;
             hasInquiryRoute = false;
 
@@ -2992,11 +2989,11 @@ namespace GuaranteeManager
             List<WorkflowRequest> requests = _database.GetWorkflowRequestsByRootId(rootId);
             row = GuaranteeRow.FromGuarantee(currentGuarantee, requests);
 
-            hasInquiryRoute = InquiryFileRoutingResolver.TryResolve(_result, out focusArea, out requestIdToFocus);
+            hasInquiryRoute = InquiryContextRoutingResolver.TryResolve(_result, out focusArea, out requestIdToFocus);
             if (!hasInquiryRoute)
             {
-                focusArea = row.SuggestedFocusArea == GuaranteeFileFocusArea.None
-                    ? GuaranteeFileFocusArea.ExecutiveSummary
+                focusArea = row.SuggestedFocusArea == GuaranteeFocusArea.None
+                    ? GuaranteeFocusArea.ExecutiveSummary
                     : row.SuggestedFocusArea;
                 requestIdToFocus = null;
             }
@@ -3005,26 +3002,26 @@ namespace GuaranteeManager
             return true;
         }
 
-        private static string BuildGuaranteeContextButtonText(GuaranteeFileFocusArea focusArea, int? requestIdToFocus)
+        private static string BuildGuaranteeContextButtonText(GuaranteeFocusArea focusArea, int? requestIdToFocus)
         {
             return focusArea switch
             {
-                GuaranteeFileFocusArea.Requests => requestIdToFocus.HasValue ? "فتح حدث الطلب" : "السجل الزمني",
-                GuaranteeFileFocusArea.Outputs => "السجل الزمني",
-                GuaranteeFileFocusArea.Attachments => "المرفقات",
+                GuaranteeFocusArea.Requests => requestIdToFocus.HasValue ? "فتح حدث الطلب" : "السجل الزمني",
+                GuaranteeFocusArea.Outputs => "السجل الزمني",
+                GuaranteeFocusArea.Attachments => "المرفقات",
                 _ => "الضمانات"
             };
         }
 
-        private string BuildGuaranteeHandoffSectionText(GuaranteeFileFocusArea focusArea, int? requestIdToFocus)
+        private string BuildGuaranteeHandoffSectionText(GuaranteeFocusArea focusArea, int? requestIdToFocus)
         {
             return focusArea switch
             {
-                GuaranteeFileFocusArea.Requests when requestIdToFocus.HasValue => "حدث الطلب المرتبط داخل السجل الزمني",
-                GuaranteeFileFocusArea.Requests => "السجل الزمني للضمان",
-                GuaranteeFileFocusArea.Outputs => "مخرجات الطلب داخل السجل الزمني",
-                GuaranteeFileFocusArea.Attachments => "مرفقات الضمان في اللوحة الجانبية",
-                GuaranteeFileFocusArea.Actions => "إجراءات الضمان السريعة في المحفظة",
+                GuaranteeFocusArea.Requests when requestIdToFocus.HasValue => "حدث الطلب المرتبط داخل السجل الزمني",
+                GuaranteeFocusArea.Requests => "السجل الزمني للضمان",
+                GuaranteeFocusArea.Outputs => "مخرجات الطلب داخل السجل الزمني",
+                GuaranteeFocusArea.Attachments => "مرفقات الضمان في اللوحة الجانبية",
+                GuaranteeFocusArea.Actions => "إجراءات الضمان السريعة في المحفظة",
                 _ => "الضمان المحدد في المحفظة"
             };
         }
@@ -3034,7 +3031,7 @@ namespace GuaranteeManager
             if (!TryResolveGuaranteeContextHandoff(
                     out ShellViewModel shell,
                     out GuaranteeRow row,
-                    out GuaranteeFileFocusArea focusArea,
+                    out GuaranteeFocusArea focusArea,
                     out int? requestIdToFocus,
                     out _))
             {
@@ -3108,7 +3105,7 @@ namespace GuaranteeManager
             if (TryResolveGuaranteeContextHandoff(
                     out _,
                     out _,
-                    out GuaranteeFileFocusArea focusArea,
+                    out GuaranteeFocusArea focusArea,
                     out int? requestIdToFocus,
                     out bool hasInquiryRoute) &&
                 hasInquiryRoute)

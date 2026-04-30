@@ -9,9 +9,9 @@ namespace GuaranteeManager.Tests
     public sealed class GuaranteeActionProfileTests
     {
         [Fact]
-        public void Build_DoesNotExposeAnnulmentAction()
+        public void RequestTypes_DoNotExposeAnnulment()
         {
-            Assert.Null(typeof(GuaranteeActionProfile).GetProperty("AnnulmentAction"));
+            Assert.DoesNotContain("Annulment", Enum.GetNames<RequestType>());
         }
 
         [Fact]
@@ -46,8 +46,8 @@ namespace GuaranteeManager.Tests
 
             GuaranteeActionProfile profile = GuaranteeActionProfile.Build(guarantee, requests);
 
-            Assert.Equal(GuaranteeFileFocusArea.Requests, profile.SuggestedFocusArea);
-            Assert.Contains("السجل الزمني", profile.OpenFileAction.Hint);
+            Assert.Equal(GuaranteeFocusArea.Requests, profile.SuggestedFocusArea);
+            Assert.Contains("السجل", profile.SuggestedFocusLabel);
         }
 
         [Fact]
@@ -67,8 +67,8 @@ namespace GuaranteeManager.Tests
 
             GuaranteeActionProfile profile = GuaranteeActionProfile.Build(guarantee, requests);
 
-            Assert.Equal(GuaranteeFileFocusArea.Outputs, profile.SuggestedFocusArea);
-            Assert.Contains("المخرجات", profile.OpenFileAction.Hint);
+            Assert.Equal(GuaranteeFocusArea.Outputs, profile.SuggestedFocusArea);
+            Assert.Contains("مخرجات", profile.SummaryTitle);
         }
 
         private static Guarantee CreateGuarantee(GuaranteeLifecycleStatus status)

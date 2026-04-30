@@ -48,7 +48,7 @@ namespace GuaranteeManager
             }
         }
 
-        private void OnGuaranteeFocusRequested(GuaranteeFileFocusArea area, int? requestIdToFocus)
+        private void OnGuaranteeFocusRequested(GuaranteeFocusArea area, int? requestIdToFocus)
         {
             if (_shellViewModel != null)
             {
@@ -59,21 +59,21 @@ namespace GuaranteeManager
             ApplyFocus(area);
         }
 
-        private FrameworkElement ResolveAreaElement(GuaranteeFileFocusArea area)
+        private FrameworkElement ResolveAreaElement(GuaranteeFocusArea area)
         {
             return area switch
             {
-                GuaranteeFileFocusArea.Attachments => TimelineAnchor,
-                GuaranteeFileFocusArea.Outputs => TimelineAnchor,
-                GuaranteeFileFocusArea.Actions => ActionsAnchor,
+                GuaranteeFocusArea.Attachments => TimelineAnchor,
+                GuaranteeFocusArea.Outputs => TimelineAnchor,
+                GuaranteeFocusArea.Actions => ActionsAnchor,
                 _ => TimelineAnchor
             };
         }
 
-        private void ApplyAreaFocus(GuaranteeFileFocusArea area)
+        private void ApplyAreaFocus(GuaranteeFocusArea area)
         {
             FrameworkElement target = ResolveAreaElement(area);
-            if (area != GuaranteeFileFocusArea.Actions && RootScrollViewer.Content is Visual content)
+            if (area != GuaranteeFocusArea.Actions && RootScrollViewer.Content is Visual content)
             {
                 try
                 {
@@ -102,7 +102,7 @@ namespace GuaranteeManager
             }
         }
 
-        private void ApplyFocus(GuaranteeFileFocusArea area)
+        private void ApplyFocus(GuaranteeFocusArea area)
         {
             Dispatcher.BeginInvoke(() => ApplyAreaFocus(area), DispatcherPriority.Loaded);
         }

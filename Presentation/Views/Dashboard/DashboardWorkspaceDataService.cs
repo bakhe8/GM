@@ -326,7 +326,7 @@ namespace GuaranteeManager
                 DashboardScope.PendingRequests,
                 item.RootGuaranteeId,
                 item.Request.Id,
-                GuaranteeFileFocusArea.Requests,
+                GuaranteeFocusArea.Requests,
                 DashboardScopeFilters.PendingRequests,
                 label,
                 rank,
@@ -368,9 +368,9 @@ namespace GuaranteeManager
                 : ("عاجل", Tone.Warning, 1);
             bool hasPendingRequest = pendingRequest != null;
             int? requestId = pendingRequest?.Request.Id;
-            GuaranteeFileFocusArea focusArea = hasPendingRequest
-                ? GuaranteeFileFocusArea.Requests
-                : GuaranteeFileFocusArea.Actions;
+            GuaranteeFocusArea focusArea = hasPendingRequest
+                ? GuaranteeFocusArea.Requests
+                : GuaranteeFocusArea.Actions;
             string primaryAction = hasPendingRequest ? "راجع الطلب" : "راجع الضمان";
             string nextAction = hasPendingRequest
                 ? $"افتح {pendingRequest!.Request.TypeLabel} المعلق وسجل رد البنك عند وصوله"
@@ -418,9 +418,9 @@ namespace GuaranteeManager
             };
             bool hasPendingRequest = pendingRequest != null;
             int? requestId = pendingRequest?.Request.Id;
-            GuaranteeFileFocusArea focusArea = hasPendingRequest
-                ? GuaranteeFileFocusArea.Requests
-                : GuaranteeFileFocusArea.Actions;
+            GuaranteeFocusArea focusArea = hasPendingRequest
+                ? GuaranteeFocusArea.Requests
+                : GuaranteeFocusArea.Actions;
             string primaryAction = hasPendingRequest ? "راجع الطلب" : "راجع التمديد";
             string nextAction = hasPendingRequest
                 ? $"راجع {pendingRequest!.Request.TypeLabel} المعلق قبل إنشاء متابعة جديدة"
@@ -565,7 +565,7 @@ namespace GuaranteeManager
         DashboardScope Scope,
         int RootGuaranteeId,
         int? RequestId,
-        GuaranteeFileFocusArea PrimaryFocusArea,
+        GuaranteeFocusArea PrimaryFocusArea,
         string CategoryLabel,
         string PriorityLabel,
         int PriorityRank,

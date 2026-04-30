@@ -611,7 +611,6 @@ namespace GuaranteeManager.Services
                 RequestType.Reduction => "طلب تخفيض",
                 RequestType.Verification => "طلب تحقق",
                 RequestType.Replacement => "طلب استبدال",
-                RequestType.Annulment => "طلب قديم ملغى",
                 _ => requestType.ToString()
             };
         }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -32,7 +32,7 @@ namespace GuaranteeManager
         private GuaranteeRow? _selectedTableGuarantee;
         private int? _focusedGuaranteeRequestId;
         private int _guaranteeFocusRequestVersion;
-        private GuaranteeFileFocusArea _currentGuaranteeFocusArea = GuaranteeFileFocusArea.None;
+        private GuaranteeFocusArea _currentGuaranteeFocusArea = GuaranteeFocusArea.None;
         private OperationalInquiryResult? _latestInquiryResult;
         private GuaranteeOutputPreviewItem? _latestLetterOutput;
         private GuaranteeOutputPreviewItem? _latestResponseOutput;
@@ -178,7 +178,7 @@ namespace GuaranteeManager
             ? "اختصارات آخر المستندات الناتجة"
             : "لا توجد اختصارات لمستندات ناتجة الآن";
         public int GuaranteeFocusRequestVersion => _guaranteeFocusRequestVersion;
-        public GuaranteeFileFocusArea CurrentGuaranteeFocusArea => _currentGuaranteeFocusArea;
+        public GuaranteeFocusArea CurrentGuaranteeFocusArea => _currentGuaranteeFocusArea;
         public int? CurrentGuaranteeFocusRequestId => _focusedGuaranteeRequestId;
         public ObservableCollection<FilterOption> TimeStatusOptions { get; } = new();
         public ObservableCollection<string> BankOptions { get; } = new();
@@ -242,7 +242,7 @@ namespace GuaranteeManager
                 if (_focusedGuaranteeRequestId.HasValue)
                 {
                     _focusedGuaranteeRequestId = null;
-                    RaiseGuaranteeFileSectionTextProperties();
+                    RaiseGuaranteeContextSectionTextProperties();
                 }
 
                 OnPropertyChanged();
@@ -316,7 +316,7 @@ namespace GuaranteeManager
         }
 
         public bool HasLatestInquiryResult => LatestInquiryResult != null;
-        public bool HasLatestInquirySuggestedSection => ResolveLatestInquirySuggestedArea(LatestInquiryResult) != GuaranteeFileFocusArea.None;
+        public bool HasLatestInquirySuggestedSection => ResolveLatestInquirySuggestedArea(LatestInquiryResult) != GuaranteeFocusArea.None;
         public GuaranteeOutputPreviewItem? LatestLetterOutput
         {
             get => _latestLetterOutput;
@@ -558,7 +558,7 @@ namespace GuaranteeManager
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        public event Action<GuaranteeFileFocusArea, int?>? GuaranteeFocusRequested;
+        public event Action<GuaranteeFocusArea, int?>? GuaranteeFocusRequested;
 
         public static ShellViewModel Create(
             IDatabaseService database,
@@ -773,12 +773,12 @@ namespace GuaranteeManager
                 ?.Id;
         }
 
-        private void OpenGuaranteeContextFromDashboard(int rootId, GuaranteeFileFocusArea area, int? requestIdToFocus)
+        private void OpenGuaranteeContextFromDashboard(int rootId, GuaranteeFocusArea area, int? requestIdToFocus)
         {
             OpenGuaranteeContext("dashboard", rootId, area, requestIdToFocus);
         }
 
-        private void OpenGuaranteeContext(string sourceKey, int rootId, GuaranteeFileFocusArea area, int? requestIdToFocus)
+        private void OpenGuaranteeContext(string sourceKey, int rootId, GuaranteeFocusArea area, int? requestIdToFocus)
         {
             if (!CanNavigateToWorkspace(ShellWorkspaceKeys.Guarantees))
             {
@@ -815,17 +815,17 @@ namespace GuaranteeManager
 
         public void RouteGuaranteeContext(
             GuaranteeRow row,
-            GuaranteeFileFocusArea area,
+            GuaranteeFocusArea area,
             int? requestIdToFocus,
             string sourceKey = "guarantee")
         {
             SelectedGuarantee = row;
-            GuaranteeFileFocusArea resolvedArea = area == GuaranteeFileFocusArea.None
-                ? GuaranteeFileFocusArea.Series
+            GuaranteeFocusArea resolvedArea = area == GuaranteeFocusArea.None
+                ? GuaranteeFocusArea.Series
                 : area;
 
-            GuaranteeFileFocusArea targetArea = ResolveTimelineTargetArea(resolvedArea, requestIdToFocus);
-            int? targetRequestId = targetArea == GuaranteeFileFocusArea.Requests
+            GuaranteeFocusArea targetArea = ResolveTimelineTargetArea(resolvedArea, requestIdToFocus);
+            int? targetRequestId = targetArea == GuaranteeFocusArea.Requests
                 ? requestIdToFocus ?? ResolveContextRequestId(row)
                 : null;
 
@@ -846,22 +846,22 @@ namespace GuaranteeManager
             WriteDiagnosticsState($"{sourceKey}-route-guarantee-context");
         }
 
-        private static GuaranteeFileFocusArea ResolveTimelineTargetArea(
-            GuaranteeFileFocusArea requestedArea,
+        private static GuaranteeFocusArea ResolveTimelineTargetArea(
+            GuaranteeFocusArea requestedArea,
             int? requestIdToFocus)
         {
-            if (requestIdToFocus.HasValue || requestedArea == GuaranteeFileFocusArea.Requests)
+            if (requestIdToFocus.HasValue || requestedArea == GuaranteeFocusArea.Requests)
             {
-                return GuaranteeFileFocusArea.Requests;
+                return GuaranteeFocusArea.Requests;
             }
 
-            if (requestedArea == GuaranteeFileFocusArea.Outputs)
+            if (requestedArea == GuaranteeFocusArea.Outputs)
             {
-                return GuaranteeFileFocusArea.Outputs;
+                return GuaranteeFocusArea.Outputs;
             }
 
-            return requestedArea == GuaranteeFileFocusArea.None
-                ? GuaranteeFileFocusArea.Series
+            return requestedArea == GuaranteeFocusArea.None
+                ? GuaranteeFocusArea.Series
                 : requestedArea;
         }
 
@@ -988,7 +988,7 @@ namespace GuaranteeManager
                 return;
             }
 
-            FocusGuaranteeSection(GuaranteeFileFocusArea.Requests, item.Request.Id);
+            FocusGuaranteeSection(GuaranteeFocusArea.Requests, item.Request.Id);
         }
 
         private void RegisterRequestPreviewResponse(GuaranteeRequestPreviewItem? item)
@@ -1028,7 +1028,7 @@ namespace GuaranteeManager
         private void FocusLatestInquirySection()
         {
             if (LatestInquiryResult != null &&
-                InquiryFileRoutingResolver.TryResolve(LatestInquiryResult, out GuaranteeFileFocusArea area, out int? requestIdToFocus))
+                InquiryContextRoutingResolver.TryResolve(LatestInquiryResult, out GuaranteeFocusArea area, out int? requestIdToFocus))
             {
                 FocusGuaranteeSection(area, requestIdToFocus);
             }
@@ -1079,7 +1079,7 @@ namespace GuaranteeManager
             ExecuteGuaranteeAction(row, _guaranteeWorkspace.CopyExpiryDate, syncSelection: true);
         }
 
-        public void FocusGuaranteeSection(GuaranteeFileFocusArea area, int? requestIdToFocus = null)
+        public void FocusGuaranteeSection(GuaranteeFocusArea area, int? requestIdToFocus = null)
         {
             if (SelectedGuarantee == null)
             {
@@ -1087,12 +1087,12 @@ namespace GuaranteeManager
             }
 
             _currentGuaranteeFocusArea = area;
-            int? nextFocusedRequestId = area == GuaranteeFileFocusArea.Requests ? requestIdToFocus : null;
+            int? nextFocusedRequestId = area == GuaranteeFocusArea.Requests ? requestIdToFocus : null;
             _guaranteeFocusRequestVersion++;
             if (_focusedGuaranteeRequestId != nextFocusedRequestId)
             {
                 _focusedGuaranteeRequestId = nextFocusedRequestId;
-                RaiseGuaranteeFileSectionTextProperties();
+                RaiseGuaranteeContextSectionTextProperties();
                 RefreshSelectedGuaranteeArtifacts();
             }
 
@@ -1487,7 +1487,7 @@ namespace GuaranteeManager
 
             if (requestIdToFocus.HasValue && SelectedGuarantee?.RootId == rootIdToRestore)
             {
-                FocusGuaranteeSection(GuaranteeFileFocusArea.Requests, requestIdToFocus);
+                FocusGuaranteeSection(GuaranteeFocusArea.Requests, requestIdToFocus);
             }
 
             WriteDiagnosticsState("workflow-change");
@@ -1585,10 +1585,10 @@ namespace GuaranteeManager
 
             LatestLetterOutput = GuaranteeOutputsPreview.FirstOrDefault(item => item.CanOpenLetter);
             LatestResponseOutput = GuaranteeOutputsPreview.FirstOrDefault(item => item.CanOpenResponse);
-            RaiseGuaranteeFileSectionTextProperties();
+            RaiseGuaranteeContextSectionTextProperties();
         }
 
-        private void RaiseGuaranteeFileSectionTextProperties()
+        private void RaiseGuaranteeContextSectionTextProperties()
         {
             OnPropertyChanged(nameof(GuaranteeRequestsSummaryText));
             OnPropertyChanged(nameof(GuaranteeRequestsContextLabel));
@@ -1669,34 +1669,34 @@ namespace GuaranteeManager
             set => SetProperty(ref _globalSearchText, value);
         }
 
-        private static GuaranteeFileFocusArea ResolveLatestInquirySuggestedArea(OperationalInquiryResult? result)
+        private static GuaranteeFocusArea ResolveLatestInquirySuggestedArea(OperationalInquiryResult? result)
         {
             if (result == null)
             {
-                return GuaranteeFileFocusArea.None;
+                return GuaranteeFocusArea.None;
             }
 
-            return InquiryFileRoutingResolver.TryResolve(result, out GuaranteeFileFocusArea area, out _)
+            return InquiryContextRoutingResolver.TryResolve(result, out GuaranteeFocusArea area, out _)
                 ? area
-                : GuaranteeFileFocusArea.None;
+                : GuaranteeFocusArea.None;
         }
 
         private static string ResolveLatestInquirySuggestedLabel(OperationalInquiryResult? result)
         {
             if (result == null ||
-                !InquiryFileRoutingResolver.TryResolve(result, out GuaranteeFileFocusArea area, out int? requestIdToFocus))
+                !InquiryContextRoutingResolver.TryResolve(result, out GuaranteeFocusArea area, out int? requestIdToFocus))
             {
                 return "لا يوجد قسم مقترح";
             }
 
             return area switch
             {
-                GuaranteeFileFocusArea.Requests when requestIdToFocus.HasValue => "انتقل إلى حدث الطلب",
-                GuaranteeFileFocusArea.Requests => "انتقل إلى السجل الزمني",
-                GuaranteeFileFocusArea.Series => "انتقل إلى الخط الزمني",
-                GuaranteeFileFocusArea.Attachments => "انتقل إلى السجل الزمني",
-                GuaranteeFileFocusArea.Outputs => "انتقل إلى السجل الزمني",
-                GuaranteeFileFocusArea.Actions => "انتقل إلى الإجراءات",
+                GuaranteeFocusArea.Requests when requestIdToFocus.HasValue => "انتقل إلى حدث الطلب",
+                GuaranteeFocusArea.Requests => "انتقل إلى السجل الزمني",
+                GuaranteeFocusArea.Series => "انتقل إلى الخط الزمني",
+                GuaranteeFocusArea.Attachments => "انتقل إلى السجل الزمني",
+                GuaranteeFocusArea.Outputs => "انتقل إلى السجل الزمني",
+                GuaranteeFocusArea.Actions => "انتقل إلى الإجراءات",
                 _ => "لا يوجد قسم مقترح"
             };
         }

@@ -777,7 +777,6 @@ namespace GuaranteeManager.Services
                 RequestType.Replacement => string.IsNullOrWhiteSpace(request.ReplacementGuaranteeNo)
                     ? "تم استبدال الضمان بضمان بديل"
                     : $"تم استبدال الضمان بالضمان {request.ReplacementGuaranteeNo}",
-                RequestType.Annulment => "مسار قديم ملغى",
                 _ => string.Empty
             };
 

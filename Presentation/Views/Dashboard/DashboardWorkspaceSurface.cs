@@ -20,7 +20,7 @@ namespace GuaranteeManager
         private readonly bool _hasLastFile;
         private readonly string _lastFileGuaranteeNo;
         private readonly string _lastFileSummary;
-        private readonly Action<int, GuaranteeFileFocusArea, int?> _openGuaranteeContext;
+        private readonly Action<int, GuaranteeFocusArea, int?> _openGuaranteeContext;
         private readonly Action _showGuarantees;
         private readonly ReferenceTablePagerController _pager;
 
@@ -79,7 +79,7 @@ namespace GuaranteeManager
             bool hasLastFile,
             string lastFileGuaranteeNo,
             string lastFileSummary,
-            Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
+            Action<int, GuaranteeFocusArea, int?> openGuaranteeContext,
             Action showGuarantees,
             string? initialSearchText = null,
             string? initialScopeFilter = null)

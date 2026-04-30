@@ -1,6 +1,6 @@
 namespace GuaranteeManager.Models
 {
-    public enum GuaranteeFileFocusArea
+    public enum GuaranteeFocusArea
     {
         None = 0,
         ExecutiveSummary,

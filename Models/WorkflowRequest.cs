@@ -21,8 +21,7 @@ namespace GuaranteeManager.Models
         Liquidation,
         Reduction,
         Verification,
-        Replacement,
-        Annulment // Legacy only: no new annulment requests are created or executed.
+        Replacement
     }
 
     public class WorkflowRequest
@@ -101,7 +100,6 @@ namespace GuaranteeManager.Models
             RequestType.Liquidation => "تسييل",
             RequestType.Verification => "تحقق",
             RequestType.Replacement => string.IsNullOrWhiteSpace(ReplacementGuaranteeNo) ? "استبدال" : ReplacementGuaranteeNo,
-            RequestType.Annulment => "مسار ملغى",
             _ => "---"
         };
 
@@ -114,7 +112,6 @@ namespace GuaranteeManager.Models
             RequestType.Reduction => "طلب تخفيض",
             RequestType.Verification => "طلب تحقق",
             RequestType.Replacement => "طلب استبدال",
-            RequestType.Annulment => "طلب قديم ملغى",
             _ => "طلب غير معروف"
         };
 

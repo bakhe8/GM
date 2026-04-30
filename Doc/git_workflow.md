@@ -103,5 +103,3 @@
 - `Doc/releases/README_v1.1.0-preview.3.md`
 - `Doc/Assets/Documentation/Screenshots/README.md`
 - `missing_features_report.md` فقط إذا ظهر backlog جديد فعلًا
-
-أما المواد الموجودة داخل `Doc/archive/` فهي مرجع تاريخي وليست جزءًا من دورة التحديث اليومية.

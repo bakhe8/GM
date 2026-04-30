@@ -3,15 +3,15 @@ using GuaranteeManager.Models;
 
 namespace GuaranteeManager.Utils
 {
-    internal static class InquiryFileRoutingResolver
+    internal static class InquiryContextRoutingResolver
     {
-        public static bool TryResolve(OperationalInquiryResult inquiryResult, out GuaranteeFileFocusArea focusArea, out int? requestIdToFocus)
+        public static bool TryResolve(OperationalInquiryResult inquiryResult, out GuaranteeFocusArea focusArea, out int? requestIdToFocus)
         {
             requestIdToFocus = inquiryResult.RelatedRequest?.Id;
 
             if (StartsWith(inquiryResult, "last-event:"))
             {
-                focusArea = GuaranteeFileFocusArea.Series;
+                focusArea = GuaranteeFocusArea.Series;
                 return true;
             }
 
@@ -20,7 +20,7 @@ namespace GuaranteeManager.Utils
                 StartsWith(inquiryResult, "expired-no-extension:") ||
                 StartsWith(inquiryResult, "reduction-source:"))
             {
-                focusArea = GuaranteeFileFocusArea.Requests;
+                focusArea = GuaranteeFocusArea.Requests;
                 return true;
             }
 
@@ -28,11 +28,11 @@ namespace GuaranteeManager.Utils
                 StartsWith(inquiryResult, "liquidation-evidence:") ||
                 StartsWith(inquiryResult, "response-link:"))
             {
-                focusArea = GuaranteeFileFocusArea.Outputs;
+                focusArea = GuaranteeFocusArea.Outputs;
                 return true;
             }
 
-            focusArea = GuaranteeFileFocusArea.Series;
+            focusArea = GuaranteeFocusArea.Series;
             return false;
         }
 

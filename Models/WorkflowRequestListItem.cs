@@ -43,7 +43,6 @@ namespace GuaranteeManager.Models
             RequestType.Liquidation => "الحالة التشغيلية الحالية",
             RequestType.Verification => "الحالة التشغيلية الحالية",
             RequestType.Replacement => "رقم الضمان الحالي",
-            RequestType.Annulment => "الحالة التشغيلية",
             _ => "الحقل الحالي"
         };
         public string RequestedValueFieldLabel => Request.Type switch
@@ -54,7 +53,6 @@ namespace GuaranteeManager.Models
             RequestType.Liquidation => "الإجراء المطلوب",
             RequestType.Verification => "الإجراء المطلوب",
             RequestType.Replacement => "رقم الضمان البديل",
-            RequestType.Annulment => "المسار",
             _ => "الحقل المطلوب"
         };
         public string CurrentValueLabel => Request.Type switch
@@ -65,7 +63,6 @@ namespace GuaranteeManager.Models
             RequestType.Liquidation => LifecycleStatusLabel,
             RequestType.Verification => LifecycleStatusLabel,
             RequestType.Replacement => GuaranteeNo,
-            RequestType.Annulment => "ملغى",
             _ => "---"
         };
         public string RequestedValueLabel => Request.RequestedValueLabel;

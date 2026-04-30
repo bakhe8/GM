@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -107,12 +107,10 @@ namespace GuaranteeManager
         public bool HasResponseOutputs => ActionProfile.ResponseOutputCount > 0;
         public bool HasLetterOutputs => ActionProfile.LetterOutputCount > 0;
         public bool HasOfficialAttachments => Attachments.Count > 0;
-        public ActionEligibility OpenFileAction => ActionProfile.OpenFileAction;
         public ActionEligibility RegisterResponseAction => ActionProfile.RegisterResponseAction;
         public ActionEligibility OpenAttachmentsAction => Attachments.Count > 0
             ? ActionEligibility.Enabled($"يوجد {Attachments.Count.ToString("N0", CultureInfo.InvariantCulture)} مرفق رسمي متاح للفتح من هذه اللوحة.")
             : ActionProfile.OpenAttachmentsAction;
-        public ActionEligibility OpenRequestsAction => ActionProfile.OpenRequestsAction;
         public ActionEligibility EditAction => ActionProfile.EditAction;
         public ActionEligibility ReleaseAction => ActionProfile.ReleaseAction;
         public ActionEligibility ExtensionAction => ActionProfile.ExtensionAction;
@@ -123,8 +121,8 @@ namespace GuaranteeManager
         public string ActionSummaryTitle => ActionProfile.SummaryTitle;
         public string ActionSummaryDetail => ActionProfile.SummaryDetail;
         public string SuggestedFocusLabel => ActionProfile.SuggestedFocusLabel;
-        public GuaranteeFileFocusArea SuggestedFocusArea => ActionProfile.SuggestedFocusArea;
-        public bool HasSuggestedFocus => ActionProfile.SuggestedFocusArea != GuaranteeFileFocusArea.None;
+        public GuaranteeFocusArea SuggestedFocusArea => ActionProfile.SuggestedFocusArea;
+        public bool HasSuggestedFocus => ActionProfile.SuggestedFocusArea != GuaranteeFocusArea.None;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -359,10 +357,8 @@ namespace GuaranteeManager
             int outputCount,
             int letterOutputCount,
             int responseOutputCount,
-            ActionEligibility openFileAction,
             ActionEligibility registerResponseAction,
             ActionEligibility openAttachmentsAction,
-            ActionEligibility openRequestsAction,
             ActionEligibility editAction,
             ActionEligibility releaseAction,
             ActionEligibility extensionAction,
@@ -372,7 +368,7 @@ namespace GuaranteeManager
             ActionEligibility replacementAction,
             string summaryTitle,
             string summaryDetail,
-            GuaranteeFileFocusArea suggestedFocusArea,
+            GuaranteeFocusArea suggestedFocusArea,
             string suggestedFocusLabel)
         {
             PendingRequestCount = pendingRequestCount;
@@ -380,10 +376,8 @@ namespace GuaranteeManager
             OutputCount = outputCount;
             LetterOutputCount = letterOutputCount;
             ResponseOutputCount = responseOutputCount;
-            OpenFileAction = openFileAction;
             RegisterResponseAction = registerResponseAction;
             OpenAttachmentsAction = openAttachmentsAction;
-            OpenRequestsAction = openRequestsAction;
             EditAction = editAction;
             ReleaseAction = releaseAction;
             ExtensionAction = extensionAction;
@@ -402,10 +396,8 @@ namespace GuaranteeManager
         public int OutputCount { get; }
         public int LetterOutputCount { get; }
         public int ResponseOutputCount { get; }
-        public ActionEligibility OpenFileAction { get; }
         public ActionEligibility RegisterResponseAction { get; }
         public ActionEligibility OpenAttachmentsAction { get; }
-        public ActionEligibility OpenRequestsAction { get; }
         public ActionEligibility EditAction { get; }
         public ActionEligibility ReleaseAction { get; }
         public ActionEligibility ExtensionAction { get; }
@@ -415,7 +407,7 @@ namespace GuaranteeManager
         public ActionEligibility ReplacementAction { get; }
         public string SummaryTitle { get; }
         public string SummaryDetail { get; }
-        public GuaranteeFileFocusArea SuggestedFocusArea { get; }
+        public GuaranteeFocusArea SuggestedFocusArea { get; }
         public string SuggestedFocusLabel { get; }
 
         public static GuaranteeActionProfile Build(Guarantee guarantee, IReadOnlyList<WorkflowRequest> requests)
@@ -444,11 +436,6 @@ namespace GuaranteeManager
                     pendingCount > 0,
                     $"يوجد {pendingCount.ToString("N0", CultureInfo.InvariantCulture)} طلب معلق يمكن تسجيل رد البنك عليه من هذا الملف.",
                     "لا يوجد طلب معلق لهذا الضمان حاليًا، لذلك لا يتوفر تسجيل رد مباشر.");
-
-            ActionEligibility openRequests = enableWhen(
-                requests.Count > 0,
-                $"يوجد {requests.Count.ToString("N0", CultureInfo.InvariantCulture)} طلب مرتبط بهذا الضمان، ويمكن فتحها من هنا.",
-                "لا توجد طلبات مرتبطة بهذه السلسلة حتى الآن.");
 
             ActionEligibility openAttachments = enableWhen(
                 guarantee.Attachments.Count > 0,
@@ -509,7 +496,7 @@ namespace GuaranteeManager
 
             string summaryTitle;
             string summaryDetail;
-            GuaranteeFileFocusArea suggestedArea;
+            GuaranteeFocusArea suggestedArea;
             string suggestedLabel;
 
             WorkflowRequest? latestPending = requests
@@ -525,8 +512,8 @@ namespace GuaranteeManager
                     ? "لا توجد طلبات مرتبطة مباشرة بهذا الإصدار. راجع بياناته ومرفقاته الرسمية من اللوحة الجانبية."
                     : $"يوجد {requests.Count.ToString("N0", CultureInfo.InvariantCulture)} طلب مرتبط بهذا الإصدار في السلسلة.";
                 suggestedArea = guarantee.Attachments.Count > 0
-                    ? GuaranteeFileFocusArea.Attachments
-                    : GuaranteeFileFocusArea.Series;
+                    ? GuaranteeFocusArea.Attachments
+                    : GuaranteeFocusArea.Series;
                 suggestedLabel = guarantee.Attachments.Count > 0 ? "راجع المرفقات" : "راجع السجل";
             }
             else if (pendingCount > 0)
@@ -535,42 +522,42 @@ namespace GuaranteeManager
                 summaryDetail = latestPending == null
                     ? "المتابعة الأقرب الآن هي مراجعة السجل الزمني وتسجيل رد البنك عند وصوله."
                     : $"أقرب نقطة متابعة الآن: {latestPending.TypeLabel} بتاريخ {latestPending.RequestDate:yyyy/MM/dd}.";
-                suggestedArea = GuaranteeFileFocusArea.Requests;
+                suggestedArea = GuaranteeFocusArea.Requests;
                 suggestedLabel = "راجع السجل";
             }
             else if (guarantee.NeedsExpiryFollowUp)
             {
                 summaryTitle = "الضمان منتهٍ ويحتاج متابعة مباشرة";
                 summaryDetail = "لا توجد طلبات معلقة حاليًا، لذا الأفضل البدء من السجل الزمني أو الاستعلامات لمعرفة سبب بقاء الضمان دون إغلاق.";
-                suggestedArea = GuaranteeFileFocusArea.Requests;
+                suggestedArea = GuaranteeFocusArea.Requests;
                 suggestedLabel = "راجع السجل";
             }
             else if (outputCount > 0)
             {
                 summaryTitle = "توجد مخرجات جاهزة للفتح من داخل الملف";
                 summaryDetail = $"المتوفر الآن: {letterCount.ToString("N0", CultureInfo.InvariantCulture)} خطاب طلب و{responseCount.ToString("N0", CultureInfo.InvariantCulture)} رد بنك مرتبط.";
-                suggestedArea = GuaranteeFileFocusArea.Outputs;
+                suggestedArea = GuaranteeFocusArea.Outputs;
                 suggestedLabel = "افتح المخرجات";
             }
             else if (guarantee.IsExpiringSoon)
             {
                 summaryTitle = "الضمان قريب الانتهاء";
                 summaryDetail = "راجع التمديد أو المستندات الداعمة قبل الوصول إلى حالة منتهٍ تحتاج متابعة.";
-                suggestedArea = GuaranteeFileFocusArea.ExecutiveSummary;
+                suggestedArea = GuaranteeFocusArea.ExecutiveSummary;
                 suggestedLabel = "ارجع إلى الملخص";
             }
             else if (guarantee.Attachments.Count > 0)
             {
                 summaryTitle = "المرفقات الرسمية متاحة داخل الملف";
                 summaryDetail = "يمكنك البدء من المرفقات إذا كان المطلوب مراجعة المستند الرسمي قبل أي إجراء.";
-                suggestedArea = GuaranteeFileFocusArea.Attachments;
+                suggestedArea = GuaranteeFocusArea.Attachments;
                 suggestedLabel = "افتح المرفقات";
             }
             else
             {
                 summaryTitle = "الملف مستقر تشغيليًا في الوقت الحالي";
                 summaryDetail = "لا توجد طلبات معلقة أو مخرجات ملحّة الآن، ويمكن استخدام الملف كنقطة مراجعة سريعة.";
-                suggestedArea = GuaranteeFileFocusArea.ExecutiveSummary;
+                suggestedArea = GuaranteeFocusArea.ExecutiveSummary;
                 suggestedLabel = "افتح الملخص";
             }
 
@@ -580,10 +567,8 @@ namespace GuaranteeManager
                 outputCount,
                 letterCount,
                 responseCount,
-                ActionEligibility.Enabled(BuildOpenFileHint(suggestedArea)),
                 registerResponse,
                 openAttachments,
-                openRequests,
                 edit,
                 release,
                 extension,
@@ -595,20 +580,6 @@ namespace GuaranteeManager
                 summaryDetail,
                 suggestedArea,
                 suggestedLabel);
-        }
-
-        private static string BuildOpenFileHint(GuaranteeFileFocusArea suggestedArea)
-        {
-            return suggestedArea switch
-            {
-                GuaranteeFileFocusArea.Requests => "ينقلك إلى السجل الزمني حيث تظهر طلبات هذا الضمان وأدلتها.",
-                GuaranteeFileFocusArea.Outputs => "ينقلك إلى السجل الزمني حيث يظهر أثر المخرجات المرتبطة بهذا الضمان.",
-                GuaranteeFileFocusArea.Attachments => "ينقلك إلى السجل الزمني حيث تظهر الأدلة والمرفقات الرسمية.",
-                GuaranteeFileFocusArea.Series => "ينقلك إلى لوحة الضمان الجانبية عند الخط الزمني لهذا الضمان.",
-                GuaranteeFileFocusArea.Actions => "ينقلك إلى الإجراءات السريعة المناسبة للحالة الحالية داخل لوحة الضمان.",
-                GuaranteeFileFocusArea.ExecutiveSummary => "ينقلك إلى الضمان المحدد داخل المحفظة.",
-                _ => "ينقلك إلى الوجهة الأنسب لحالة الضمان الحالية."
-            };
         }
 
         private static ActionEligibility BuildLifecycleAction(
@@ -1132,8 +1103,6 @@ namespace GuaranteeManager
                     string.IsNullOrWhiteSpace(request.ReplacementGuaranteeNo)
                         ? "تم إنشاء ضمان بديل"
                         : $"الضمان البديل: {request.ReplacementGuaranteeNo}",
-                RequestType.Annulment =>
-                    "مسار قديم ملغى",
                 _ => string.Empty
             };
         }
@@ -1172,19 +1141,10 @@ namespace GuaranteeManager
             string actor = string.IsNullOrWhiteSpace(request.CreatedBy) ? "النظام" : request.CreatedBy;
             if (request.Status == RequestStatus.Pending)
             {
-                return request.Type == RequestType.Annulment
-                    ? $"طلب قديم ملغى من قبل {actor}"
-                    : $"تم رفع الطلب من قبل {actor}";
+                return $"تم رفع الطلب من قبل {actor}";
             }
 
             string responseNotes = request.ResponseNotes?.Trim() ?? string.Empty;
-            if (request.Type == RequestType.Annulment)
-            {
-                return string.IsNullOrWhiteSpace(responseNotes)
-                    ? "مسار قديم ملغى ولا يُستخدم في العمل الحالي."
-                    : responseNotes;
-            }
-
             return string.IsNullOrWhiteSpace(responseNotes)
                 ? "تم تحديث حالة الطلب"
                 : responseNotes;

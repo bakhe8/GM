@@ -34,7 +34,7 @@ namespace GuaranteeManager
             bool hasLastFile,
             string lastFileGuaranteeNo,
             string lastFileSummary,
-            Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
+            Action<int, GuaranteeFocusArea, int?> openGuaranteeContext,
             Action showGuarantees,
             string? initialSearchText = null,
             string? initialScopeFilter = null)

@@ -157,7 +157,7 @@ namespace GuaranteeManager.Tests
                 scope,
                 42,
                 null,
-                GuaranteeFileFocusArea.Actions,
+                GuaranteeFocusArea.Actions,
                 category,
                 priority,
                 rank,

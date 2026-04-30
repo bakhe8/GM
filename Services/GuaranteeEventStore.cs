@@ -72,6 +72,14 @@ namespace GuaranteeManager.Services
                        OccurredAt, SortOrder, Title, Details, Status, ToneKey
                 FROM GuaranteeEvents
                 WHERE RootId = $rootId
+                  AND (
+                        WorkflowRequestId IS NULL
+                     OR EXISTS (
+                            SELECT 1
+                            FROM WorkflowRequests wr
+                            WHERE wr.Id = GuaranteeEvents.WorkflowRequestId
+                        )
+                  )
                 ORDER BY OccurredAt ASC, SortOrder ASC, Id ASC";
             command.Parameters.AddWithValue("$rootId", rootId.Value);
 
@@ -377,7 +385,6 @@ namespace GuaranteeManager.Services
                     RequestType.Replacement => string.IsNullOrWhiteSpace(request.ReplacementGuaranteeNo)
                         ? "تم إنشاء ضمان بديل"
                         : $"الضمان البديل: {request.ReplacementGuaranteeNo}",
-                    RequestType.Annulment => "مسار قديم ملغى",
                     _ => string.Empty
                 }
                 : string.Empty;

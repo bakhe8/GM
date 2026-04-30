@@ -62,7 +62,7 @@ namespace GuaranteeManager
 
         public void RunPrimaryAction(
             DashboardWorkItem? item,
-            Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
+            Action<int, GuaranteeFocusArea, int?> openGuaranteeContext,
             Action showGuarantees)
         {
             if (item == null)

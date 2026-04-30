@@ -68,6 +68,7 @@ namespace GuaranteeManager.Services
                 return;
             }
 
+            RemoveRetiredWorkflowRequestTypes(connection);
             EnsureWorkflowIndexes(connection);
         }
 
@@ -141,6 +142,18 @@ namespace GuaranteeManager.Services
                     ON WorkflowRequests(RootId, RequestType) 
                     WHERE RequestStatus = 'Pending';";
             indexCommand.ExecuteNonQuery();
+        }
+
+        private static void RemoveRetiredWorkflowRequestTypes(SqliteConnection connection, SqliteTransaction? transaction = null)
+        {
+            var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = "DELETE FROM WorkflowRequests WHERE RequestType = 'Annulment'";
+            int deleted = command.ExecuteNonQuery();
+            if (deleted > 0)
+            {
+                SimpleLogger.Log($"RemoveRetiredWorkflowRequestTypes: removed {deleted} retired workflow request row(s).");
+            }
         }
 
         private static void NormalizeWorkflowSequenceNumbers(SqliteConnection connection, SqliteTransaction? transaction = null)
@@ -350,6 +363,7 @@ namespace GuaranteeManager.Services
                     FROM WorkflowRequests_Old;";
                 migrateCommand.ExecuteNonQuery();
 
+                RemoveRetiredWorkflowRequestTypes(connection, transaction);
                 EnsureWorkflowIndexes(connection, transaction);
 
                 var dropCommand = connection.CreateCommand();
