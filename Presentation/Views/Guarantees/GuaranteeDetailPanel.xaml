@@ -359,11 +359,18 @@
                 <StackPanel>
                     <TextBlock Text="القرار والعمل الآن" FontSize="12" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" Margin="0,0,0,9" />
                     <WrapPanel FlowDirection="RightToLeft">
-                        <Button Style="{StaticResource BaseButton}"
+                        <WrapPanel.Resources>
+                            <Style x:Key="ActionStripButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                                <Setter Property="Height" Value="31" />
+                                <Setter Property="MinWidth" Value="78" />
+                                <Setter Property="Width" Value="84" />
+                                <Setter Property="FontSize" Value="9" />
+                                <Setter Property="Margin" Value="0,0,6,6" />
+                                <Setter Property="Padding" Value="2,0" />
+                            </Style>
+                        </WrapPanel.Resources>
+                        <Button Style="{StaticResource ActionStripButton}"
                                 Content="تعديل"
-                                FontSize="9"
-                                Margin="0,0,6,6"
-                                Padding="2,0"
                                 IsEnabled="{Binding SelectedGuarantee.EditAction.IsEnabled}"
                                 ToolTip="{Binding SelectedGuarantee.EditAction.Hint}"
                                 ToolTipService.ShowOnDisabled="True"
@@ -371,11 +378,8 @@
                                 CommandParameter="{Binding SelectedGuarantee}"
                                 automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Edit"
                                 automation:AutomationProperties.Name="تعديل الضمان" />
-                        <Button Style="{StaticResource BaseButton}"
+                        <Button Style="{StaticResource ActionStripButton}"
                                 Content="تمديد"
-                                FontSize="9"
-                                Margin="0,0,6,6"
-                                Padding="2,0"
                                 IsEnabled="{Binding SelectedGuarantee.ExtensionAction.IsEnabled}"
                                 ToolTip="{Binding SelectedGuarantee.ExtensionAction.Hint}"
                                 ToolTipService.ShowOnDisabled="True"
@@ -383,14 +387,20 @@
                                 CommandParameter="{Binding SelectedGuarantee}"
                                 automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Extension"
                                 automation:AutomationProperties.Name="إنشاء طلب تمديد" />
-                        <Button Style="{StaticResource BaseButton}"
+                        <Button Style="{StaticResource ActionStripButton}"
+                                Content="تخفيض"
+                                IsEnabled="{Binding SelectedGuarantee.ReductionAction.IsEnabled}"
+                                ToolTip="{Binding SelectedGuarantee.ReductionAction.Hint}"
+                                ToolTipService.ShowOnDisabled="True"
+                                Command="{Binding CreateReductionRequestCommand}"
+                                CommandParameter="{Binding SelectedGuarantee}"
+                                automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Reduction"
+                                automation:AutomationProperties.Name="إنشاء طلب تخفيض" />
+                        <Button Style="{StaticResource ActionStripButton}"
                                 BorderBrush="#97DBAE"
                                 Background="#F5FFF7"
                                 Foreground="#15803D"
                                 Content="إفراج"
-                                FontSize="9"
-                                Margin="0,0,0,6"
-                                Padding="2,0"
                                 IsEnabled="{Binding SelectedGuarantee.ReleaseAction.IsEnabled}"
                                 ToolTip="{Binding SelectedGuarantee.ReleaseAction.Hint}"
                                 ToolTipService.ShowOnDisabled="True"
@@ -398,6 +408,39 @@
                                 CommandParameter="{Binding SelectedGuarantee}"
                                 automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Release"
                                 automation:AutomationProperties.Name="إنشاء طلب إفراج" />
+                        <Button Style="{StaticResource ActionStripButton}"
+                                BorderBrush="#F9B4B4"
+                                Background="#FFF7F7"
+                                Foreground="#B91C1C"
+                                Content="تسييل"
+                                IsEnabled="{Binding SelectedGuarantee.LiquidationAction.IsEnabled}"
+                                ToolTip="{Binding SelectedGuarantee.LiquidationAction.Hint}"
+                                ToolTipService.ShowOnDisabled="True"
+                                Command="{Binding CreateLiquidationRequestCommand}"
+                                CommandParameter="{Binding SelectedGuarantee}"
+                                automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Liquidation"
+                                automation:AutomationProperties.Name="إنشاء طلب تسييل" />
+                        <Button Style="{StaticResource ActionStripButton}"
+                                BorderBrush="#A7C7FF"
+                                Background="#F5F9FF"
+                                Foreground="#1D4ED8"
+                                Content="تحقق"
+                                IsEnabled="{Binding SelectedGuarantee.VerificationAction.IsEnabled}"
+                                ToolTip="{Binding SelectedGuarantee.VerificationAction.Hint}"
+                                ToolTipService.ShowOnDisabled="True"
+                                Command="{Binding CreateVerificationRequestCommand}"
+                                CommandParameter="{Binding SelectedGuarantee}"
+                                automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Verification"
+                                automation:AutomationProperties.Name="إنشاء طلب تحقق" />
+                        <Button Style="{StaticResource ActionStripButton}"
+                                Content="استبدال"
+                                IsEnabled="{Binding SelectedGuarantee.ReplacementAction.IsEnabled}"
+                                ToolTip="{Binding SelectedGuarantee.ReplacementAction.Hint}"
+                                ToolTipService.ShowOnDisabled="True"
+                                Command="{Binding CreateReplacementRequestCommand}"
+                                CommandParameter="{Binding SelectedGuarantee}"
+                                automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Replacement"
+                                automation:AutomationProperties.Name="إنشاء طلب استبدال" />
                     </WrapPanel>
                 </StackPanel>
             </Border>
