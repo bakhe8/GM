@@ -67,7 +67,7 @@ namespace GuaranteeManager
                 FlowDirection = FlowDirection.LeftToRight
             };
             root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(310) });
+            root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(400) });
 
             var main = new Grid
             {

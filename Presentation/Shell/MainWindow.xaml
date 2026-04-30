@@ -141,7 +141,7 @@
         <Grid Grid.Row="1" FlowDirection="LeftToRight">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="310" />
+                <ColumnDefinition Width="400" />
                 <ColumnDefinition Width="57" />
             </Grid.ColumnDefinitions>
 
