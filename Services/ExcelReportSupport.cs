@@ -143,8 +143,8 @@ namespace GuaranteeManager.Services
                 "القيمة المطلوبة",
                 "تاريخ الطلب",
                 "تاريخ الرد",
-                "الإصدار الحالي",
-                "معرّف السجل الناتج",
+                "إصدار الطلب",
+                "أثر التنفيذ",
                 "خطاب الطلب",
                 "مستند رد البنك",
                 "ملاحظات الطلب",
@@ -184,9 +184,19 @@ namespace GuaranteeManager.Services
                 requestDateCell.Value = item.Request.RequestDate;
                 requestDateCell.Style.DateFormat.Format = "yyyy-MM-dd";
 
-                worksheet.Cell(row, 15).Value = item.Request.ResponseRecordedAt?.ToString("yyyy-MM-dd") ?? "---";
-                worksheet.Cell(row, 16).Value = item.CurrentVersionLabel;
-                worksheet.Cell(row, 17).Value = item.Request.ResultVersionId?.ToString() ?? "---";
+                IXLCell responseDateCell = worksheet.Cell(row, 15);
+                if (item.Request.ResponseRecordedAt.HasValue)
+                {
+                    responseDateCell.Value = item.Request.ResponseRecordedAt.Value;
+                    responseDateCell.Style.DateFormat.Format = "yyyy-MM-dd";
+                }
+                else
+                {
+                    responseDateCell.Value = "---";
+                }
+
+                worksheet.Cell(row, 16).Value = item.RelatedVersionLabel;
+                worksheet.Cell(row, 17).Value = BuildWorkflowExecutionEffectSummary(item);
 
                 IXLCell letterCell = worksheet.Cell(row, 18);
                 letterCell.Value = item.Request.HasLetter ? "موجود" : "---";
@@ -227,7 +237,7 @@ namespace GuaranteeManager.Services
                 "مفرج",
                 "مسيّل",
                 "مستبدل",
-                "مغلق (قديم)"
+                "تحتاج إفراج/إعادة"
             };
 
             WriteTitle(worksheet, 1, headers.Length, reportTitle, reportSubtitle);
@@ -248,7 +258,7 @@ namespace GuaranteeManager.Services
                 worksheet.Cell(excelRow, 7).Value = row.ReleasedCount;
                 worksheet.Cell(excelRow, 8).Value = row.LiquidatedCount;
                 worksheet.Cell(excelRow, 9).Value = row.ReplacedCount;
-                worksheet.Cell(excelRow, 10).Value = row.ClosedCount;
+                worksheet.Cell(excelRow, 10).Value = row.ExpiryFollowUpCount;
             }
 
             ApplyTableStyle(worksheet, 4, rows.Count + 4, headers.Length);
@@ -324,6 +334,7 @@ namespace GuaranteeManager.Services
             range.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
             range.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
             range.Style.Alignment.WrapText = true;
+            range.SetAutoFilter();
         }
 
         internal static void ApplyHeaderStyle(IXLCell cell)
@@ -381,6 +392,28 @@ namespace GuaranteeManager.Services
                 RequestType.Verification => "طلب تحقق",
                 RequestType.Replacement => "طلب استبدال",
                 _ => "طلب غير معروف"
+            };
+        }
+
+        private static string BuildWorkflowExecutionEffectSummary(WorkflowRequestListItem item)
+        {
+            if (item.Request.Status != RequestStatus.Executed)
+            {
+                return "---";
+            }
+
+            return item.Request.Type switch
+            {
+                RequestType.Extension or RequestType.Reduction when item.ResultVersionNumber.HasValue =>
+                    $"نتج الإصدار {GuaranteeVersionDisplay.GetLabel(item.ResultVersionNumber.Value)}",
+                RequestType.Verification when item.ResultVersionNumber.HasValue =>
+                    $"اعتماد مستند رسمي على الإصدار {GuaranteeVersionDisplay.GetLabel(item.ResultVersionNumber.Value)}",
+                RequestType.Release => "إنهاء دورة الحياة بالإفراج",
+                RequestType.Liquidation => "إنهاء دورة الحياة بالتسييل",
+                RequestType.Replacement => string.IsNullOrWhiteSpace(item.Request.ReplacementGuaranteeNo)
+                    ? "إنهاء دورة الحياة بالاستبدال"
+                    : $"استبدال بضمان {item.Request.ReplacementGuaranteeNo}",
+                _ => "منفذ بلا إصدار جديد"
             };
         }
 
@@ -448,7 +481,7 @@ namespace GuaranteeManager.Services
                     ReleasedCount = group.Count(item => item.LifecycleStatus == GuaranteeLifecycleStatus.Released),
                     LiquidatedCount = group.Count(item => item.LifecycleStatus == GuaranteeLifecycleStatus.Liquidated),
                     ReplacedCount = group.Count(item => item.LifecycleStatus == GuaranteeLifecycleStatus.Replaced),
-                    ClosedCount = group.Count(item => item.LifecycleStatus == GuaranteeLifecycleStatus.Closed)
+                    ExpiryFollowUpCount = group.Count(item => item.NeedsExpiryFollowUp)
                 })
                 .OrderByDescending(row => row.TotalAmount)
                 .ThenByDescending(row => row.Count)
@@ -468,6 +501,6 @@ namespace GuaranteeManager.Services
         public int ReleasedCount { get; set; }
         public int LiquidatedCount { get; set; }
         public int ReplacedCount { get; set; }
-        public int ClosedCount { get; set; }
+        public int ExpiryFollowUpCount { get; set; }
     }
 }

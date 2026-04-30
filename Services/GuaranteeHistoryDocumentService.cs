@@ -38,18 +38,45 @@ namespace GuaranteeManager.Services
                 return false;
             }
 
+            return WriteHistoryWorkbookToPath(summaryGuarantee, orderedHistory, orderedRequests, dialog.FileName);
+        }
+
+        internal bool ExportHistoryToExcelToPath(
+            Guarantee guarantee,
+            IReadOnlyList<Guarantee> history,
+            IReadOnlyList<WorkflowRequest> requests,
+            string outputPath)
+        {
+            ResetLastOutputPath();
+            List<Guarantee> orderedHistory = OrderHistory(history);
+            List<WorkflowRequest> orderedRequests = OrderRequests(requests);
+            if (orderedHistory.Count == 0 && orderedRequests.Count == 0)
+            {
+                return false;
+            }
+
+            Guarantee summaryGuarantee = ResolveSummaryGuarantee(guarantee, orderedHistory);
+            return WriteHistoryWorkbookToPath(summaryGuarantee, orderedHistory, orderedRequests, outputPath);
+        }
+
+        private bool WriteHistoryWorkbookToPath(
+            Guarantee summaryGuarantee,
+            IReadOnlyList<Guarantee> orderedHistory,
+            IReadOnlyList<WorkflowRequest> orderedRequests,
+            string outputPath)
+        {
             using var workbook = new XLWorkbook();
             WriteOverviewWorksheet(workbook, summaryGuarantee, orderedHistory, orderedRequests);
             WriteVersionsWorksheet(workbook, summaryGuarantee, orderedHistory);
             WriteRequestsWorksheet(workbook, summaryGuarantee, orderedHistory, orderedRequests);
 
-            ExcelExportResult result = ExcelReportSupport.SaveWorkbook(workbook, dialog.FileName);
+            ExcelExportResult result = ExcelReportSupport.SaveWorkbook(workbook, outputPath);
             if (!result.Exported)
             {
                 return false;
             }
 
-            LastOutputPath = dialog.FileName;
+            LastOutputPath = outputPath;
             return true;
         }
 
@@ -131,6 +158,7 @@ namespace GuaranteeManager.Services
 
             Guarantee current = ResolveSummaryGuarantee(guarantee, orderedHistory);
             string beneficiary = ResolveBeneficiary(current);
+            string supplier = ExcelReportSupport.ValueOrDash(current.Supplier);
             int pendingRequests = orderedRequests.Count(item => item.Status == RequestStatus.Pending);
             int totalAttachments = orderedHistory.Sum(item => item.AttachmentCount);
             string firstCreated = orderedHistory.LastOrDefault()?.CreatedAt.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) ?? "---";
@@ -141,7 +169,7 @@ namespace GuaranteeManager.Services
                 1,
                 8,
                 $"سجل الضمان {current.GuaranteeNo}",
-                $"{beneficiary} | {current.Bank}");
+                $"{supplier} | {current.Bank}");
 
             ExcelReportSupport.WriteSummaryPair(
                 worksheet,
@@ -170,7 +198,8 @@ namespace GuaranteeManager.Services
 
             int row = 9;
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "رقم الضمان", current.GuaranteeNo, "المرجع الرئيسي", BuildReferenceSummary(current));
-            ExcelReportSupport.WriteOverviewRow(worksheet, row++, "المستفيد", beneficiary, "البنك", current.Bank);
+            ExcelReportSupport.WriteOverviewRow(worksheet, row++, "المورد", supplier, "البنك", current.Bank);
+            ExcelReportSupport.WriteOverviewRow(worksheet, row++, "المستفيد", beneficiary, "نوع الضمان", ExcelReportSupport.ValueOrDash(current.GuaranteeType));
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "القيمة الحالية", $"{current.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال", "تاريخ الانتهاء", current.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture));
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "الطلبات المعلقة", pendingRequests.ToString("N0", CultureInfo.InvariantCulture), "إجمالي المرفقات", totalAttachments.ToString("N0", CultureInfo.InvariantCulture));
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "أول إنشاء", firstCreated, "آخر تحديث", lastUpdated);
@@ -189,14 +218,14 @@ namespace GuaranteeManager.Services
             IXLWorksheet worksheet = workbook.Worksheets.Add("الإصدارات");
             worksheet.RightToLeft = true;
 
-            string beneficiary = ResolveBeneficiary(guarantee);
+            string supplier = ExcelReportSupport.ValueOrDash(guarantee.Supplier);
             string[] headers =
             {
                 "الإصدار",
                 "الحفظ",
                 "الحالة الزمنية",
                 "الحالة التشغيلية",
-                "المستفيد",
+                "المورد",
                 "البنك",
                 "القيمة",
                 "تاريخ الإدخال",
@@ -211,7 +240,7 @@ namespace GuaranteeManager.Services
                 1,
                 headers.Length,
                 $"إصدارات الضمان {guarantee.GuaranteeNo}",
-                $"{beneficiary} | {guarantee.Bank}");
+                $"{supplier} | {guarantee.Bank}");
             ExcelReportSupport.WriteHeaderRow(worksheet, 4, headers);
 
             for (int i = 0; i < orderedHistory.Count; i++)
@@ -229,7 +258,7 @@ namespace GuaranteeManager.Services
                 IXLCell lifecycleCell = worksheet.Cell(row, 4);
                 lifecycleCell.Value = item.LifecycleStatusLabel;
 
-                worksheet.Cell(row, 5).Value = ResolveBeneficiary(item);
+                worksheet.Cell(row, 5).Value = ExcelReportSupport.ValueOrDash(item.Supplier);
                 worksheet.Cell(row, 6).Value = item.Bank;
 
                 IXLCell amountCell = worksheet.Cell(row, 7);
@@ -272,7 +301,7 @@ namespace GuaranteeManager.Services
             IXLWorksheet worksheet = workbook.Worksheets.Add("الطلبات");
             worksheet.RightToLeft = true;
 
-            string beneficiary = ResolveBeneficiary(guarantee);
+            string supplier = ExcelReportSupport.ValueOrDash(guarantee.Supplier);
             string[] headers =
             {
                 "التسلسل",
@@ -293,7 +322,7 @@ namespace GuaranteeManager.Services
                 1,
                 headers.Length,
                 $"طلبات السلسلة {guarantee.GuaranteeNo}",
-                $"{beneficiary} | {guarantee.Bank}");
+                $"{supplier} | {guarantee.Bank}");
             ExcelReportSupport.WriteHeaderRow(worksheet, 4, headers);
 
             for (int i = 0; i < orderedRequests.Count; i++)
@@ -333,7 +362,7 @@ namespace GuaranteeManager.Services
             IReadOnlyList<WorkflowRequest> orderedRequests)
         {
             Guarantee current = ResolveSummaryGuarantee(guarantee, orderedHistory);
-            string beneficiary = ResolveBeneficiary(current);
+            string supplier = ExcelReportSupport.ValueOrDash(current.Supplier);
             int totalAttachments = orderedHistory.Sum(item => item.AttachmentCount);
             int pendingRequests = orderedRequests.Count(item => item.Status == RequestStatus.Pending);
 
@@ -351,11 +380,12 @@ namespace GuaranteeManager.Services
             };
 
             document.Blocks.Add(BuildTitleParagraph($"سجل الضمان {current.GuaranteeNo}", 18, FontWeights.Bold, "#0F172A", new Thickness(0, 0, 0, 2)));
-            document.Blocks.Add(BuildTitleParagraph($"{beneficiary} | {current.Bank}", 11.5, FontWeights.SemiBold, "#64748B", new Thickness(0, 0, 0, 16)));
+            document.Blocks.Add(BuildTitleParagraph($"{supplier} | {current.Bank}", 11.5, FontWeights.SemiBold, "#64748B", new Thickness(0, 0, 0, 16)));
 
             document.Blocks.Add(BuildSummaryTable(new[]
             {
                 ("رقم الضمان", current.GuaranteeNo, "الإصدار الحالي", current.VersionLabel),
+                ("المورد", supplier, "البنك", current.Bank),
                 ("الحالة الزمنية", current.StatusLabel, "الحالة التشغيلية", current.LifecycleStatusLabel),
                 ("عدد الإصدارات", orderedHistory.Count.ToString("N0", CultureInfo.InvariantCulture), "عدد الطلبات", orderedRequests.Count.ToString("N0", CultureInfo.InvariantCulture)),
                 ("الطلبات المعلقة", pendingRequests.ToString("N0", CultureInfo.InvariantCulture), "إجمالي المرفقات", totalAttachments.ToString("N0", CultureInfo.InvariantCulture))
