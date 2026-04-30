@@ -202,16 +202,77 @@ namespace GuaranteeManager.Tests
 
             using var workbook = new XLWorkbook(outputPath);
             IXLWorksheet overview = workbook.Worksheet("ملخص السجل");
+            IXLWorksheet health = workbook.Worksheet("سلامة السجل");
             IXLWorksheet versions = workbook.Worksheet("الإصدارات");
             List<string> versionHeaders = ReadHeaderRow(versions, 4, 12);
 
             Assert.Contains("شركة الخدمات الطبية", overview.Cell(2, 1).GetString());
+            Assert.Contains("سلامة سجل الضمان", health.Cell(1, 1).GetString());
             Assert.Equal("المورد", overview.Cell(10, 1).GetString());
             Assert.Equal("شركة الخدمات الطبية", overview.Cell(10, 2).GetString());
             Assert.DoesNotContain("المستفيد", ReadColumn(overview, 1, 9, 15));
             Assert.Contains("المورد", versionHeaders);
             Assert.DoesNotContain("المستفيد", versionHeaders);
             Assert.Equal("شركة الخدمات الطبية", versions.Cell(5, 5).GetString());
+        }
+
+        [Fact]
+        public void HistoryWorkbook_AddsHealthWorksheetWithActionableFindings()
+        {
+            Guarantee guarantee = _fixture.CreateGuarantee("BG-HISTORY-HEALTH");
+            guarantee.Id = 2001;
+            guarantee.RootId = 2001;
+            guarantee.Supplier = "شركة تحتاج متابعة";
+            guarantee.Bank = "بنك الاختبار";
+            guarantee.IsCurrent = true;
+            guarantee.VersionNumber = 1;
+            guarantee.ExpiryDate = DateTime.Today.AddDays(-10);
+            guarantee.LifecycleStatus = GuaranteeLifecycleStatus.Active;
+            guarantee.Attachments = [];
+
+            var pendingRelease = new WorkflowRequest
+            {
+                SequenceNumber = 1,
+                BaseVersionId = guarantee.Id,
+                Type = RequestType.Release,
+                Status = RequestStatus.Pending,
+                RequestDate = DateTime.Today.AddDays(-6),
+                LetterSavedFileName = "release-letter.html"
+            };
+            var executedExtensionWithoutResponse = new WorkflowRequest
+            {
+                SequenceNumber = 2,
+                BaseVersionId = guarantee.Id,
+                Type = RequestType.Extension,
+                Status = RequestStatus.Executed,
+                RequestDate = DateTime.Today.AddDays(-4),
+                ResponseRecordedAt = DateTime.Today.AddDays(-2),
+                ResultVersionId = guarantee.Id,
+                LetterSavedFileName = "extension-letter.html"
+            };
+
+            string outputPath = _fixture.CreateArtifactPath(".xlsx");
+            var service = new GuaranteeHistoryDocumentService();
+
+            bool exported = service.ExportHistoryToExcelToPath(
+                guarantee,
+                new[] { guarantee },
+                new[] { pendingRelease, executedExtensionWithoutResponse },
+                outputPath);
+
+            Assert.True(exported);
+
+            using var workbook = new XLWorkbook(outputPath);
+            IXLWorksheet health = workbook.Worksheet("سلامة السجل");
+            string usedText = string.Join(
+                "|",
+                health.CellsUsed().Select(cell => cell.GetString()));
+
+            Assert.Contains("انتهاء الضمان", usedText);
+            Assert.Contains("طلبات معلقة", usedText);
+            Assert.Contains("مستندات رد البنك", usedText);
+            Assert.Contains("مرفقات الضمان", usedText);
+            Assert.Contains("إلحاق مستند رد البنك", usedText);
         }
 
         private static List<string> ReadHeaderRow(IXLWorksheet worksheet, int row, int columns)
