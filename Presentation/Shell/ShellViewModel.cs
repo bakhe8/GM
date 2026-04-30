@@ -117,7 +117,6 @@ namespace GuaranteeManager
             OpenOutputLetterCommand = new RelayCommand(parameter => OpenOutputLetter(parameter as GuaranteeOutputPreviewItem), parameter => parameter is GuaranteeOutputPreviewItem item && item.CanOpenLetter);
             OpenOutputResponseCommand = new RelayCommand(parameter => OpenOutputResponse(parameter as GuaranteeOutputPreviewItem), parameter => parameter is GuaranteeOutputPreviewItem item && item.CanOpenResponse);
             ShowAllAttachmentsCommand = new RelayCommand(_ => ShowAllAttachments(), _ => SelectedGuarantee != null);
-            ShowGuaranteeRequestsCommand = new RelayCommand(_ => ShowGuaranteeRequests(), _ => SelectedGuarantee != null);
             ResumeLastFileCommand = new RelayCommand(_ => ResumeLastFile(), _ => HasLastFile);
             ShowDashboardCommand = new RelayCommand(_ => ShowDashboardWorkspace());
             ShowGuaranteesCommand = new RelayCommand(_ => ShowGuaranteesWorkspace());
@@ -211,7 +210,6 @@ namespace GuaranteeManager
         public ICommand OpenOutputLetterCommand { get; }
         public ICommand OpenOutputResponseCommand { get; }
         public ICommand ShowAllAttachmentsCommand { get; }
-        public ICommand ShowGuaranteeRequestsCommand { get; }
         public ICommand ResumeLastFileCommand { get; }
         public ICommand ShowDashboardCommand { get; }
         public ICommand ShowGuaranteesCommand { get; }
@@ -969,13 +967,6 @@ namespace GuaranteeManager
             ExecuteGuaranteeAction(SelectedGuarantee, target => _guaranteeWorkspace.ShowAttachments(target, showEmptyMessage: true));
         }
 
-        private void ShowGuaranteeRequests()
-        {
-            ExecuteGuaranteeAction(
-                SelectedGuarantee,
-                target => ShowRequestsForGuarantee(target, _focusedGuaranteeRequestId ?? ResolveContextRequestId(target)));
-        }
-
         private void OpenRequestPreview(GuaranteeRequestPreviewItem? item)
         {
             if (item == null)
@@ -1669,7 +1660,6 @@ namespace GuaranteeManager
                          CopyGuaranteeIssueDateCommand,
                          CopyGuaranteeExpiryDateCommand,
                          ShowAllAttachmentsCommand,
-                         ShowGuaranteeRequestsCommand,
                          OpenTimelineEvidenceCommand,
                          OpenOutputLetterCommand,
                          OpenOutputResponseCommand

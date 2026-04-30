@@ -331,12 +331,6 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                            <Button Style="{StaticResource PlainLinkButton}"
-                                    Command="{Binding ShowGuaranteeRequestsCommand}"
-                                    automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Timeline.ShowAllRequests"
-                                    automation:AutomationProperties.Name="فتح مركز الطلبات من الخط الزمني">
-                                <TextBlock Text="فتح مركز الطلبات" FontSize="10.5" Foreground="{StaticResource Brush.Blue}" />
-                            </Button>
                         </StackPanel>
                     </Border>
 
