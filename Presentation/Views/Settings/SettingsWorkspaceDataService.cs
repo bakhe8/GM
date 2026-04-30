@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows.Media;
@@ -43,19 +42,13 @@ namespace GuaranteeManager
                     item.Path.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase));
             }
 
-            List<SettingPathItem> filtered = query.ToList();
-            string summary = filtered.Count == 0
-                ? "لا توجد مسارات مطابقة."
-                : $"عرض 1 - {filtered.Count.ToString("N0", CultureInfo.InvariantCulture)} من أصل {allItems.Count.ToString("N0", CultureInfo.InvariantCulture)} عنصر";
-
             return new SettingsWorkspaceFilterResult(
-                filtered,
+                query.ToList(),
                 new SettingsWorkspaceMetrics(
                     File.Exists(AppPaths.DatabasePath) ? "موجودة" : "غير موجودة",
                     Directory.Exists(AppPaths.AttachmentsFolder) ? "جاهزة" : "تحتاج إنشاء",
                     Directory.Exists(AppPaths.WorkflowLettersFolder) ? "جاهزة" : "تحتاج إنشاء",
-                    Directory.Exists(AppPaths.WorkflowResponsesFolder) ? "جاهزة" : "تحتاج إنشاء"),
-                summary);
+                    Directory.Exists(AppPaths.WorkflowResponsesFolder) ? "جاهزة" : "تحتاج إنشاء"));
         }
 
         public SettingsWorkspaceDetailState BuildDetailState(SettingPathItem? selectedItem)
@@ -99,8 +92,7 @@ namespace GuaranteeManager
 
     public sealed record SettingsWorkspaceFilterResult(
         IReadOnlyList<SettingPathItem> Items,
-        SettingsWorkspaceMetrics Metrics,
-        string Summary);
+        SettingsWorkspaceMetrics Metrics);
 
     public sealed record SettingsWorkspaceDetailState(
         string Title,

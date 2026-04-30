@@ -383,10 +383,16 @@ namespace GuaranteeManager.Services
                         currentG.Amount,
                         currentG.ExpiryDate,
                         currentG.VersionNumber,
-                        currentG.LifecycleStatus
+                        currentG.LifecycleStatus,
+                        baseG.VersionNumber,
+                        resultG.VersionNumber
                     FROM WorkflowRequests wr
                     INNER JOIN Guarantees currentG
-                        ON currentG.RootId = wr.RootId AND currentG.IsCurrent = 1");
+                        ON currentG.RootId = wr.RootId AND currentG.IsCurrent = 1
+                    LEFT JOIN Guarantees baseG
+                        ON baseG.Id = wr.BaseVersionId
+                    LEFT JOIN Guarantees resultG
+                        ON resultG.Id = wr.ResultVersionId");
             }
 
             SqliteCommand command = connection.CreateCommand();
@@ -589,7 +595,9 @@ namespace GuaranteeManager.Services
                 CurrentAmount = reader.IsDBNull(25) ? 0m : reader.GetDecimal(25),
                 CurrentExpiryDate = reader.IsDBNull(26) ? DateTime.MinValue : PersistedDateTime.Parse(reader.GetString(26)),
                 CurrentVersionNumber = reader.IsDBNull(27) ? 1 : reader.GetInt32(27),
-                LifecycleStatus = reader.IsDBNull(28) ? GuaranteeLifecycleStatus.Active : GuaranteeDataAccess.ParseLifecycleStatus(reader.GetString(28))
+                LifecycleStatus = reader.IsDBNull(28) ? GuaranteeLifecycleStatus.Active : GuaranteeDataAccess.ParseLifecycleStatus(reader.GetString(28)),
+                BaseVersionNumber = reader.IsDBNull(29) ? 1 : reader.GetInt32(29),
+                ResultVersionNumber = reader.IsDBNull(30) ? null : reader.GetInt32(30)
             };
         }
 
@@ -603,7 +611,7 @@ namespace GuaranteeManager.Services
                 RequestType.Reduction => "طلب تخفيض",
                 RequestType.Verification => "طلب تحقق",
                 RequestType.Replacement => "طلب استبدال",
-                RequestType.Annulment => "طلب نقض",
+                RequestType.Annulment => "طلب قديم ملغى",
                 _ => requestType.ToString()
             };
         }

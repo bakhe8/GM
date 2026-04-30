@@ -29,6 +29,7 @@ namespace GuaranteeManager
         private readonly ShellSessionCoordinator _sessionCoordinator;
         private readonly ShellWorkspaceFactory _workspaceFactory;
         private GuaranteeRow? _selectedGuarantee;
+        private GuaranteeRow? _selectedTableGuarantee;
         private int? _focusedGuaranteeRequestId;
         private int _guaranteeFocusRequestVersion;
         private GuaranteeFileFocusArea _currentGuaranteeFocusArea = GuaranteeFileFocusArea.None;
@@ -50,6 +51,8 @@ namespace GuaranteeManager
         private string _footerSummary = "لا توجد عناصر";
         private string _searchText = string.Empty;
         private string _globalSearchText = string.Empty;
+        private int _currentGuaranteePage = 1;
+        private int _totalGuaranteePages = 1;
         private FilterOption _selectedTimeStatus = FilterOption.AllTimeStatuses;
         private string _selectedBank = AllBanksLabel;
         private string _selectedGuaranteeType = AllTypesLabel;
@@ -62,7 +65,6 @@ namespace GuaranteeManager
             IDatabaseService database,
             IWorkflowService workflow,
             IExcelService excel,
-            IGuaranteeHistoryDocumentService historyDocuments,
             IOperationalInquiryService inquiry,
             IContextActionService contextActionService,
             INavigationGuard navigationGuard,
@@ -78,7 +80,6 @@ namespace GuaranteeManager
                 _database,
                 workflow,
                 excel,
-                historyDocuments,
                 inquiry,
                 shellStatus,
                 LoadFilterOptions,
@@ -93,29 +94,26 @@ namespace GuaranteeManager
             };
             CreateNewGuaranteeCommand = new RelayCommand(_ => CreateNewGuarantee());
             EditGuaranteeCommand = new RelayCommand(parameter => EditGuarantee(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
-            ApplySmartFilterCommand = new RelayCommand(_ => ApplySmartFilter());
+            PreviousGuaranteePageCommand = new RelayCommand(_ => MoveGuaranteePage(-1), _ => CanGoToPreviousGuaranteePage);
+            NextGuaranteePageCommand = new RelayCommand(_ => MoveGuaranteePage(1), _ => CanGoToNextGuaranteePage);
+            GoToGuaranteePageCommand = new RelayCommand(GoToGuaranteePage, CanGoToGuaranteePage);
             SelectGuaranteeCommand = new RelayCommand(parameter => SelectGuarantee(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
-            OpenHistoryCommand = new RelayCommand(parameter => OpenHistory(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             CreateExtensionRequestCommand = new RelayCommand(parameter => CreateExtensionRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             CreateReleaseRequestCommand = new RelayCommand(parameter => CreateReleaseRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             CreateReductionRequestCommand = new RelayCommand(parameter => CreateReductionRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             CreateLiquidationRequestCommand = new RelayCommand(parameter => CreateLiquidationRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             CreateVerificationRequestCommand = new RelayCommand(parameter => CreateVerificationRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             CreateReplacementRequestCommand = new RelayCommand(parameter => CreateReplacementRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
-            CreateAnnulmentRequestCommand = new RelayCommand(parameter => CreateAnnulmentRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             RegisterBankResponseCommand = new RelayCommand(parameter => RegisterBankResponse(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
-            ShowRowAttachmentsCommand = new RelayCommand(parameter => ShowRowAttachments(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
             ShowRowRequestsCommand = new RelayCommand(parameter => ShowRowRequests(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
+            ToggleGuaranteeVersionsCommand = new RelayCommand(parameter => ToggleGuaranteeVersions(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow row && row.HasVersionRows);
             CopyGuaranteeNoCommand = new RelayCommand(parameter => CopyGuaranteeNo(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
             CopyGuaranteeSupplierCommand = new RelayCommand(parameter => CopyGuaranteeSupplier(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
             CopyGuaranteeReferenceTypeCommand = new RelayCommand(parameter => CopyGuaranteeReferenceType(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
             CopyGuaranteeReferenceNumberCommand = new RelayCommand(parameter => CopyGuaranteeReferenceNumber(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
-            ExportVisibleGuaranteesCommand = new RelayCommand(_ => ExportVisibleGuarantees(), _ => Guarantees.Count > 0);
-            ExportGuaranteeReportCommand = new RelayCommand(parameter => ExportGuaranteeReport(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
-            ExportGuaranteeHistoryCommand = new RelayCommand(parameter => ExportGuaranteeHistory(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
-            ExportGuaranteesByBankCommand = new RelayCommand(parameter => ExportGuaranteesByBank(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
-            ExportGuaranteesBySupplierCommand = new RelayCommand(parameter => ExportGuaranteesBySupplier(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
-            ExportGuaranteesByTemporalStatusCommand = new RelayCommand(parameter => ExportGuaranteesByTemporalStatus(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
+            CopyGuaranteeTypeCommand = new RelayCommand(parameter => CopyGuaranteeType(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
+            CopyGuaranteeIssueDateCommand = new RelayCommand(parameter => CopyGuaranteeIssueDate(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
+            CopyGuaranteeExpiryDateCommand = new RelayCommand(parameter => CopyGuaranteeExpiryDate(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
             OpenAttachmentCommand = new RelayCommand(parameter => OpenAttachment(parameter as AttachmentItem), parameter => parameter is AttachmentItem);
             OpenOutputLetterCommand = new RelayCommand(parameter => OpenOutputLetter(parameter as GuaranteeOutputPreviewItem), parameter => parameter is GuaranteeOutputPreviewItem item && item.CanOpenLetter);
             OpenOutputResponseCommand = new RelayCommand(parameter => OpenOutputResponse(parameter as GuaranteeOutputPreviewItem), parameter => parameter is GuaranteeOutputPreviewItem item && item.CanOpenResponse);
@@ -150,7 +148,9 @@ namespace GuaranteeManager
                 : "الأقرب للتنفيذ الآن";
         public string TimelineSummaryText => Timeline.Count == 0
             ? "سجل المراحل الرئيسية لهذا الضمان سيظهر هنا عند توفر طلبات أو أحداث موثقة."
-            : "راجع هذا التسلسل لفهم آخر ما تغيّر قبل فتح طلب أو مخرج أو مرفق.";
+            : SelectedGuarantee?.IsCurrentVersion == false
+                ? "يعرض هذا القسم أحداث هذا الإصدار بترتيبها من الأقدم إلى الأحدث."
+            : "يعرض هذا التسلسل أحداث الضمان منذ الإنشاء وحتى أحدث حدث موثق.";
         public string TimelineStationsLabel => $"{Timeline.Count.ToString("N0", CultureInfo.InvariantCulture)} محطات مرتبطة";
         public string OutputsSummaryText
         {
@@ -173,7 +173,9 @@ namespace GuaranteeManager
             : $"{GuaranteeOutputsPreview.Count.ToString("N0", CultureInfo.InvariantCulture)} مخرجات جاهزة";
         public string AttachmentsSummaryText => Attachments.Count == 0
             ? "لا توجد مرفقات رسمية محفوظة على هذا الملف حاليًا. ستبقى خطابات الطلب وردود البنك داخل قسم المخرجات عند توفرها."
-            : $"هذه هي الأدلة الرسمية المحفوظة على الملف. يوجد {Attachments.Count.ToString("N0", CultureInfo.InvariantCulture)} مرفقات رسمية، بينما تبقى خطابات الطلب وردود البنك ضمن المخرجات.";
+            : SelectedGuarantee?.IsCurrentVersion == false
+                ? $"هذه هي المرفقات الرسمية المحفوظة على الإصدار {SelectedGuarantee.VersionLabel}. يوجد {FormatOfficialAttachmentCount(Attachments.Count)}."
+            : $"هذه هي الأدلة الرسمية المحفوظة على كل إصدارات الملف. يوجد {FormatOfficialAttachmentCount(Attachments.Count)}، بينما تبقى خطابات الطلب وردود البنك ضمن المخرجات.";
         public string OfficialAttachmentsHeading => Attachments.Count == 0
             ? "المرفقات الرسمية"
             : $"المرفقات الرسمية ({Attachments.Count.ToString("N0", CultureInfo.InvariantCulture)})";
@@ -187,32 +189,30 @@ namespace GuaranteeManager
         public ObservableCollection<FilterOption> TimeStatusOptions { get; } = new();
         public ObservableCollection<string> BankOptions { get; } = new();
         public ObservableCollection<string> GuaranteeTypeOptions { get; } = new();
+        public ObservableCollection<ReferenceTablePagerButtonItem> GuaranteePagerButtons { get; } = new();
         public ObservableCollection<OperationalInquiryOption> OperationalInquiryOptions { get; } = new();
         public ICommand CreateNewGuaranteeCommand { get; }
         public ICommand EditGuaranteeCommand { get; }
-        public ICommand ApplySmartFilterCommand { get; }
+        public ICommand PreviousGuaranteePageCommand { get; }
+        public ICommand NextGuaranteePageCommand { get; }
+        public ICommand GoToGuaranteePageCommand { get; }
         public ICommand SelectGuaranteeCommand { get; }
-        public ICommand OpenHistoryCommand { get; }
         public ICommand CreateExtensionRequestCommand { get; }
         public ICommand CreateReleaseRequestCommand { get; }
         public ICommand CreateReductionRequestCommand { get; }
         public ICommand CreateLiquidationRequestCommand { get; }
         public ICommand CreateVerificationRequestCommand { get; }
         public ICommand CreateReplacementRequestCommand { get; }
-        public ICommand CreateAnnulmentRequestCommand { get; }
         public ICommand RegisterBankResponseCommand { get; }
-        public ICommand ShowRowAttachmentsCommand { get; }
         public ICommand ShowRowRequestsCommand { get; }
+        public ICommand ToggleGuaranteeVersionsCommand { get; }
         public ICommand CopyGuaranteeNoCommand { get; }
         public ICommand CopyGuaranteeSupplierCommand { get; }
         public ICommand CopyGuaranteeReferenceTypeCommand { get; }
         public ICommand CopyGuaranteeReferenceNumberCommand { get; }
-        public ICommand ExportVisibleGuaranteesCommand { get; }
-        public ICommand ExportGuaranteeReportCommand { get; }
-        public ICommand ExportGuaranteeHistoryCommand { get; }
-        public ICommand ExportGuaranteesByBankCommand { get; }
-        public ICommand ExportGuaranteesBySupplierCommand { get; }
-        public ICommand ExportGuaranteesByTemporalStatusCommand { get; }
+        public ICommand CopyGuaranteeTypeCommand { get; }
+        public ICommand CopyGuaranteeIssueDateCommand { get; }
+        public ICommand CopyGuaranteeExpiryDateCommand { get; }
         public ICommand OpenAttachmentCommand { get; }
         public ICommand OpenOutputLetterCommand { get; }
         public ICommand OpenOutputResponseCommand { get; }
@@ -247,6 +247,7 @@ namespace GuaranteeManager
                 }
 
                 _selectedGuarantee = value;
+                SynchronizeSelectedTableGuarantee(value);
                 if (_focusedGuaranteeRequestId.HasValue)
                 {
                     _focusedGuaranteeRequestId = null;
@@ -261,6 +262,29 @@ namespace GuaranteeManager
                 RefreshSelectedGuaranteeArtifacts();
                 UpdateSelectedOperationalInquiryDescription();
                 RaiseSelectionCommandStates();
+            }
+        }
+
+        public GuaranteeRow? SelectedTableGuarantee
+        {
+            get => _selectedTableGuarantee;
+            set
+            {
+                if (ReferenceEquals(_selectedTableGuarantee, value))
+                {
+                    return;
+                }
+
+                _selectedTableGuarantee = value;
+                OnPropertyChanged();
+                if (value != null
+                    && !ReferenceEquals(_selectedGuarantee, value)
+                    && (_selectedGuarantee == null
+                        || _selectedGuarantee.IsCurrentVersion
+                        || _selectedGuarantee.RootId != value.RootId))
+                {
+                    SelectedGuarantee = value;
+                }
             }
         }
 
@@ -422,6 +446,40 @@ namespace GuaranteeManager
             private set => SetProperty(ref _footerSummary, value);
         }
 
+        public int CurrentGuaranteePage
+        {
+            get => _currentGuaranteePage;
+            private set
+            {
+                if (SetProperty(ref _currentGuaranteePage, value))
+                {
+                    OnPropertyChanged(nameof(CanGoToPreviousGuaranteePage));
+                    OnPropertyChanged(nameof(CanGoToNextGuaranteePage));
+                    RaiseGuaranteePagerCommandStates();
+                }
+            }
+        }
+
+        public int TotalGuaranteePages
+        {
+            get => _totalGuaranteePages;
+            private set
+            {
+                if (SetProperty(ref _totalGuaranteePages, Math.Max(1, value)))
+                {
+                    OnPropertyChanged(nameof(CanGoToPreviousGuaranteePage));
+                    OnPropertyChanged(nameof(CanGoToNextGuaranteePage));
+                    RaiseGuaranteePagerCommandStates();
+                }
+            }
+        }
+
+        public string GuaranteePageSizeText => PageSize.ToString(CultureInfo.InvariantCulture);
+
+        public bool CanGoToPreviousGuaranteePage => CurrentGuaranteePage > 1;
+
+        public bool CanGoToNextGuaranteePage => CurrentGuaranteePage < TotalGuaranteePages;
+
         public FrameworkElement? ActiveWorkspaceContent
         {
             get => _activeWorkspaceContent;
@@ -462,8 +520,9 @@ namespace GuaranteeManager
             get => _searchText;
             set
             {
-                if (SetProperty(ref _searchText, value))
+                if (SetProperty(ref _searchText, value ?? string.Empty))
                 {
+                    ResetGuaranteePagination();
                     Refresh();
                 }
             }
@@ -476,6 +535,7 @@ namespace GuaranteeManager
             {
                 if (SetProperty(ref _selectedTimeStatus, value ?? FilterOption.AllTimeStatuses))
                 {
+                    ResetGuaranteePagination();
                     Refresh();
                 }
             }
@@ -488,6 +548,7 @@ namespace GuaranteeManager
             {
                 if (SetProperty(ref _selectedBank, string.IsNullOrWhiteSpace(value) ? AllBanksLabel : value))
                 {
+                    ResetGuaranteePagination();
                     Refresh();
                 }
             }
@@ -500,6 +561,7 @@ namespace GuaranteeManager
             {
                 if (SetProperty(ref _selectedGuaranteeType, string.IsNullOrWhiteSpace(value) ? AllTypesLabel : value))
                 {
+                    ResetGuaranteePagination();
                     Refresh();
                 }
             }
@@ -512,14 +574,13 @@ namespace GuaranteeManager
             IDatabaseService database,
             IWorkflowService workflow,
             IExcelService excel,
-            IGuaranteeHistoryDocumentService historyDocuments,
             IOperationalInquiryService inquiry,
             IContextActionService contextActionService,
             INavigationGuard navigationGuard,
             IShellStatusService shellStatus,
             IUiDiagnosticsService diagnostics)
         {
-            var viewModel = new ShellViewModel(database, workflow, excel, historyDocuments, inquiry, contextActionService, navigationGuard, shellStatus, diagnostics);
+            var viewModel = new ShellViewModel(database, workflow, excel, inquiry, contextActionService, navigationGuard, shellStatus, diagnostics);
             viewModel.LoadFilterOptions();
             viewModel.Refresh();
             viewModel.ShowDashboardWorkspace();
@@ -558,7 +619,8 @@ namespace GuaranteeManager
                 SelectedGuaranteeType,
                 AllTypesLabel,
                 SelectedTimeStatus.Value,
-                PageSize);
+                PageSize,
+                CurrentGuaranteePage);
 
             Guarantees.Clear();
             foreach (GuaranteeRow row in snapshot.Rows)
@@ -576,15 +638,14 @@ namespace GuaranteeManager
             ExpiringSoonMeta = snapshot.ExpiringSoonMeta;
             ActiveCount = snapshot.ActiveCount;
             ActiveMeta = snapshot.ActiveMeta;
+            TotalGuaranteePages = snapshot.TotalPages;
+            CurrentGuaranteePage = snapshot.CurrentPage;
+            RefreshGuaranteePagerButtons();
             FooterSummary = snapshot.FooterSummary;
 
             _trackSelectedGuaranteeAsLastFile = false;
             SelectedGuarantee = ResolvePreferredVisibleGuarantee(previousSelection);
             _trackSelectedGuaranteeAsLastFile = true;
-            if (ExportVisibleGuaranteesCommand is RelayCommand exportCommand)
-            {
-                exportCommand.RaiseCanExecuteChanged();
-            }
 
             WriteDiagnosticsState("refresh");
         }
@@ -608,6 +669,77 @@ namespace GuaranteeManager
             }
 
             return Guarantees.FirstOrDefault();
+        }
+
+        private void SynchronizeSelectedTableGuarantee(GuaranteeRow? selected)
+        {
+            GuaranteeRow? tableRow = selected == null
+                ? null
+                : selected.IsCurrentVersion
+                    ? Guarantees.FirstOrDefault(row => ReferenceEquals(row, selected) || row.Id == selected.Id)
+                    : Guarantees.FirstOrDefault(row => row.RootId == selected.RootId);
+
+            if (ReferenceEquals(_selectedTableGuarantee, tableRow))
+            {
+                return;
+            }
+
+            _selectedTableGuarantee = tableRow;
+            OnPropertyChanged(nameof(SelectedTableGuarantee));
+        }
+
+        private void ResetGuaranteePagination()
+        {
+            CurrentGuaranteePage = 1;
+        }
+
+        private void MoveGuaranteePage(int delta)
+        {
+            GoToGuaranteePage(CurrentGuaranteePage + delta);
+        }
+
+        private void GoToGuaranteePage(object? parameter)
+        {
+            if (parameter is int pageNumber)
+            {
+                GoToGuaranteePage(pageNumber);
+            }
+        }
+
+        private void GoToGuaranteePage(int pageNumber)
+        {
+            int targetPage = Math.Clamp(pageNumber, 1, TotalGuaranteePages);
+            if (targetPage == CurrentGuaranteePage)
+            {
+                return;
+            }
+
+            CurrentGuaranteePage = targetPage;
+            Refresh();
+        }
+
+        private bool CanGoToGuaranteePage(object? parameter)
+        {
+            return parameter is int pageNumber
+                   && pageNumber >= 1
+                   && pageNumber <= TotalGuaranteePages;
+        }
+
+        private void RefreshGuaranteePagerButtons()
+        {
+            GuaranteePagerButtons.Clear();
+            foreach (int pageNumber in ReferenceTablePagerController.BuildVisiblePageNumbers(CurrentGuaranteePage, TotalGuaranteePages).Reverse())
+            {
+                string label = pageNumber.ToString(CultureInfo.InvariantCulture);
+                GuaranteePagerButtons.Add(new ReferenceTablePagerButtonItem(
+                    pageNumber,
+                    label,
+                    pageNumber == CurrentGuaranteePage,
+                    $"Guarantees.Pager.Page.{label}",
+                    $"الصفحة {label}"));
+            }
+
+            RaiseGuaranteePagerCommandStates();
         }
 
         private void SelectGuarantee(GuaranteeRow? row)
@@ -728,21 +860,6 @@ namespace GuaranteeManager
             WriteDiagnosticsState($"{sourceKey}-route-guarantee-context");
         }
 
-        private void ApplySmartFilter()
-        {
-            SetGuaranteeFilters(
-                string.Empty,
-                AllBanksLabel,
-                AllTypesLabel,
-                TimeStatusOptions.FirstOrDefault(option => option.Value == GuaranteeTimeStatus.ExpiringSoon)
-                ?? FilterOption.AllTimeStatuses);
-        }
-
-        private void OpenHistory(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.OpenHistory);
-        }
-
         private void RunSelectedInquiry()
         {
             GuaranteeRow? target = ResolveTarget(SelectedGuarantee);
@@ -794,11 +911,6 @@ namespace GuaranteeManager
         private void CreateReplacementRequest(GuaranteeRow? row)
         {
             ExecuteGuaranteeAction(row, _guaranteeWorkspace.CreateReplacementRequest);
-        }
-
-        private void CreateAnnulmentRequest(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CreateAnnulmentRequest);
         }
 
         private void RegisterBankResponse(GuaranteeRow? row)
@@ -879,20 +991,30 @@ namespace GuaranteeManager
             }
         }
 
-        private void ShowRowAttachments(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(
-                row,
-                target => _guaranteeWorkspace.ShowAttachments(target, showEmptyMessage: true),
-                syncSelection: true);
-        }
-
         private void ShowRowRequests(GuaranteeRow? row)
         {
             ExecuteGuaranteeAction(
                 row,
                 target => ShowRequestsForGuarantee(target, ResolveContextRequestId(target)),
                 syncSelection: true);
+        }
+
+        private static void ToggleGuaranteeVersions(GuaranteeRow? row)
+        {
+            if (row != null)
+            {
+                row.IsVersionsExpanded = !row.IsVersionsExpanded;
+            }
+        }
+
+        private static string FormatOfficialAttachmentCount(int count)
+        {
+            return count switch
+            {
+                1 => "مرفق رسمي واحد",
+                2 => "مرفقان رسميان",
+                _ => $"{count.ToString("N0", CultureInfo.InvariantCulture)} مرفقات رسمية"
+            };
         }
 
         private void ShowRequestsForGuarantee(GuaranteeRow target, int? initialRequestId = null)
@@ -930,34 +1052,19 @@ namespace GuaranteeManager
             ExecuteGuaranteeAction(row, _guaranteeWorkspace.CopyReferenceNumber, syncSelection: true);
         }
 
-        private void ExportVisibleGuarantees()
+        private void CopyGuaranteeType(GuaranteeRow? row)
         {
-            _guaranteeWorkspace.ExportVisibleGuarantees(Guarantees.ToList());
+            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CopyGuaranteeType, syncSelection: true);
         }
 
-        private void ExportGuaranteeReport(GuaranteeRow? row)
+        private void CopyGuaranteeIssueDate(GuaranteeRow? row)
         {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.ExportGuaranteeReport, syncSelection: true);
+            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CopyIssueDate, syncSelection: true);
         }
 
-        private void ExportGuaranteeHistory(GuaranteeRow? row)
+        private void CopyGuaranteeExpiryDate(GuaranteeRow? row)
         {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.ExportGuaranteeHistory, syncSelection: true);
-        }
-
-        private void ExportGuaranteesByBank(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.ExportGuaranteesByBank, syncSelection: true);
-        }
-
-        private void ExportGuaranteesBySupplier(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.ExportGuaranteesBySupplier, syncSelection: true);
-        }
-
-        private void ExportGuaranteesByTemporalStatus(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.ExportGuaranteesByTemporalStatus, syncSelection: true);
+            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CopyExpiryDate, syncSelection: true);
         }
 
         public void FocusGuaranteeSection(GuaranteeFileFocusArea area, int? requestIdToFocus = null)
@@ -1001,14 +1108,6 @@ namespace GuaranteeManager
             if (LatestInquiryResult != null)
             {
                 _guaranteeWorkspace.ShowInquiryResult(LatestInquiryResult);
-            }
-        }
-
-        private void OpenLatestInquiryHistory()
-        {
-            if (LatestInquiryResult != null)
-            {
-                _guaranteeWorkspace.OpenInquiryHistory(LatestInquiryResult);
             }
         }
 
@@ -1165,12 +1264,8 @@ namespace GuaranteeManager
                     HasLastFile,
                     LastFileGuaranteeNo,
                     LastFileSummary,
-                    ResumeLastFile,
                     OpenGuaranteeContextFromDashboard,
                     ShowGuaranteesWorkspace,
-                    ShowDashboardWorkspace,
-                    ShowRequestsWorkspace,
-                    ShowReportsWorkspace,
                     initialSearchText,
                     initialScopeFilter));
         }
@@ -1268,7 +1363,6 @@ namespace GuaranteeManager
                 ShellWorkspaceKeys.Requests,
                 _workspaceFactory.CreateRequestsWorkspace(
                     RefreshAfterWorkflowChange,
-                    CloseActiveWorkspace,
                     () =>
                     {
                         if (string.Equals(CurrentWorkspaceKey, ShellWorkspaceKeys.Requests, StringComparison.Ordinal)
@@ -1305,7 +1399,7 @@ namespace GuaranteeManager
 
             ActivateWorkspace(
                 ShellWorkspaceKeys.Banks,
-                _workspaceFactory.CreateBanksWorkspace(ShowGuaranteesForBank, CloseActiveWorkspace, initialSearchText));
+                _workspaceFactory.CreateBanksWorkspace(ShowGuaranteesForBank, initialSearchText));
         }
 
         private void ShowReportsWorkspace()
@@ -1322,7 +1416,7 @@ namespace GuaranteeManager
 
             ActivateWorkspace(
                 ShellWorkspaceKeys.Reports,
-                _workspaceFactory.CreateReportsWorkspace(CloseActiveWorkspace, initialSearchText));
+                _workspaceFactory.CreateReportsWorkspace(initialSearchText));
         }
 
         private void ShowSettingsWorkspace()
@@ -1339,7 +1433,7 @@ namespace GuaranteeManager
 
             ActivateWorkspace(
                 ShellWorkspaceKeys.Settings,
-                _workspaceFactory.CreateSettingsWorkspace(CloseActiveWorkspace, RefreshAfterDataReset, initialSearchText));
+                _workspaceFactory.CreateSettingsWorkspace(RefreshAfterDataReset, initialSearchText));
         }
 
         private void RequestExit()
@@ -1536,7 +1630,6 @@ namespace GuaranteeManager
         {
             foreach (ICommand command in new[]
                      {
-                         OpenHistoryCommand,
                          EditGuaranteeCommand,
                          CreateExtensionRequestCommand,
                          CreateReleaseRequestCommand,
@@ -1544,8 +1637,13 @@ namespace GuaranteeManager
                          CreateLiquidationRequestCommand,
                          CreateVerificationRequestCommand,
                          CreateReplacementRequestCommand,
-                         CreateAnnulmentRequestCommand,
                          RegisterBankResponseCommand,
+                         CopyGuaranteeTypeCommand,
+                         CopyGuaranteeNoCommand,
+                         CopyGuaranteeSupplierCommand,
+                         CopyGuaranteeReferenceNumberCommand,
+                         CopyGuaranteeIssueDateCommand,
+                         CopyGuaranteeExpiryDateCommand,
                          ShowAllAttachmentsCommand,
                          ShowGuaranteeRequestsCommand,
                          OpenOutputLetterCommand,
@@ -1565,6 +1663,22 @@ namespace GuaranteeManager
                      {
                          OpenOutputLetterCommand,
                          OpenOutputResponseCommand
+                     })
+            {
+                if (command is RelayCommand relayCommand)
+                {
+                    relayCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        private void RaiseGuaranteePagerCommandStates()
+        {
+            foreach (ICommand command in new[]
+                     {
+                         PreviousGuaranteePageCommand,
+                         NextGuaranteePageCommand,
+                         GoToGuaranteePageCommand
                      })
             {
                 if (command is RelayCommand relayCommand)
@@ -1640,6 +1754,7 @@ namespace GuaranteeManager
 
             if (changed)
             {
+                ResetGuaranteePagination();
                 Refresh();
             }
         }

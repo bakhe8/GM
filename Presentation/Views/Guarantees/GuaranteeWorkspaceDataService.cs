@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -97,23 +98,14 @@ namespace GuaranteeManager
             string selectedGuaranteeType,
             string allTypesLabel,
             GuaranteeTimeStatus? selectedTimeStatus,
-            int pageSize)
+            int pageSize,
+            int pageNumber)
         {
             List<WorkflowRequestListItem> pendingRequests = _database.QueryWorkflowRequests(new WorkflowRequestQueryOptions
             {
                 RequestStatus = RequestStatus.Pending,
                 SortMode = WorkflowRequestQuerySortMode.RequestDateDescending
             });
-
-            List<Guarantee> currentGuarantees = QueryGuarantees(
-                searchText,
-                selectedBank,
-                allBanksLabel,
-                selectedGuaranteeType,
-                allTypesLabel,
-                selectedTimeStatus,
-                includeAttachments: true,
-                limit: pageSize);
 
             List<Guarantee> portfolio = QueryGuarantees(
                 searchText,
@@ -124,6 +116,22 @@ namespace GuaranteeManager
                 selectedTimeStatus,
                 includeAttachments: false,
                 limit: null);
+
+            int totalCount = portfolio.Count;
+            int totalPages = ReferenceTablePagerController.CalculateTotalPages(totalCount, pageSize);
+            int currentPage = System.Math.Clamp(pageNumber, 1, totalPages);
+            int offset = (currentPage - 1) * pageSize;
+
+            List<Guarantee> currentGuarantees = QueryGuarantees(
+                searchText,
+                selectedBank,
+                allBanksLabel,
+                selectedGuaranteeType,
+                allTypesLabel,
+                selectedTimeStatus,
+                includeAttachments: true,
+                limit: pageSize,
+                offset: offset);
 
             HashSet<int> visibleRootIds = portfolio
                 .Select(guarantee => guarantee.RootId ?? guarantee.Id)
@@ -144,11 +152,28 @@ namespace GuaranteeManager
                 .Select(guarantee =>
                 {
                     int rootId = guarantee.RootId ?? guarantee.Id;
-                    return GuaranteeRow.FromGuarantee(
+                    List<WorkflowRequest> relatedRequests = requestsByRootId.TryGetValue(rootId, out List<WorkflowRequest>? rootRequests)
+                        ? rootRequests
+                        : new List<WorkflowRequest>();
+
+                    GuaranteeRow row = GuaranteeRow.FromGuarantee(
                         guarantee,
-                        requestsByRootId.TryGetValue(rootId, out List<WorkflowRequest>? relatedRequests)
-                            ? relatedRequests
-                            : new List<WorkflowRequest>());
+                        relatedRequests);
+
+                    List<Guarantee> history = _database.GetGuaranteeHistory(guarantee.Id);
+                    row.SetAttachments(BuildSeriesAttachments(history));
+
+                    List<GuaranteeRow> versionRows = history
+                        .Where(version => version.Id != guarantee.Id)
+                        .Select(version => GuaranteeRow.FromGuarantee(
+                            version,
+                            relatedRequests
+                                .Where(request => request.BaseVersionId == version.Id || request.ResultVersionId == version.Id)
+                                .ToList()))
+                        .ToList();
+
+                    row.SetVersionRows(versionRows);
+                    return row;
                 })
                 .ToList();
 
@@ -175,7 +200,9 @@ namespace GuaranteeManager
                 FormatMeta(expiringSoon.Sum(guarantee => guarantee.Amount)),
                 active.Count.ToString("N0", CultureInfo.InvariantCulture),
                 FormatMeta(active.Sum(guarantee => guarantee.Amount)),
-                BuildFooterSummary(portfolio.Count, pageSize));
+                currentPage,
+                totalPages,
+                ReferenceTablePagerController.BuildSummary(totalCount, pageSize, currentPage, "عنصر"));
         }
 
         public GuaranteeSelectionArtifacts BuildSelectionArtifacts(GuaranteeRow? selectedGuarantee, int? focusedRequestId = null)
@@ -189,26 +216,21 @@ namespace GuaranteeManager
                     new List<GuaranteeOutputPreviewItem>());
             }
 
-            List<TimelineItem> timeline = new();
             List<WorkflowRequest> requests = _database.GetWorkflowRequestsByRootId(selectedGuarantee.RootId);
-            foreach (WorkflowRequest request in requests
-                         .OrderByDescending(request => request.RequestDate)
-                         .Take(3))
-            {
-                timeline.Add(TimelineItem.FromRequest(request));
-            }
-
-            if (timeline.Count < 3)
-            {
-                timeline.Add(TimelineItem.Created(selectedGuarantee.IssueDate));
-            }
+            List<Guarantee> history = _database.GetGuaranteeHistory(selectedGuarantee.Id);
+            List<WorkflowRequest> contextRequests = selectedGuarantee.IsCurrentVersion
+                ? requests
+                : requests
+                    .Where(request => request.BaseVersionId == selectedGuarantee.Id || request.ResultVersionId == selectedGuarantee.Id)
+                    .ToList();
+            List<TimelineItem> timeline = BuildTimeline(selectedGuarantee, history, contextRequests);
 
             List<AttachmentItem> attachments = selectedGuarantee.Attachments
                 .Take(3)
                 .Select(AttachmentItem.FromAttachment)
                 .ToList();
 
-            List<WorkflowRequest> orderedRequests = requests
+            List<WorkflowRequest> orderedRequests = contextRequests
                 .OrderByDescending(request => request.RequestDate)
                 .ThenByDescending(request => request.SequenceNumber)
                 .ToList();
@@ -233,7 +255,7 @@ namespace GuaranteeManager
                     focusedRequestId.HasValue && request.Id == focusedRequestId.Value))
                 .ToList();
 
-            List<GuaranteeOutputPreviewItem> outputItems = requests
+            List<GuaranteeOutputPreviewItem> outputItems = contextRequests
                 .Where(request => request.HasLetter || request.HasResponseDocument)
                 .OrderByDescending(request => request.RequestDate)
                 .ThenByDescending(request => request.SequenceNumber)
@@ -252,7 +274,8 @@ namespace GuaranteeManager
             string allTypesLabel,
             GuaranteeTimeStatus? selectedTimeStatus,
             bool includeAttachments,
-            int? limit)
+            int? limit,
+            int? offset = null)
         {
             return _database.QueryGuarantees(BuildGuaranteeQueryOptions(
                 searchText,
@@ -262,7 +285,8 @@ namespace GuaranteeManager
                 allTypesLabel,
                 selectedTimeStatus,
                 includeAttachments,
-                limit));
+                limit,
+                offset));
         }
 
         private static GuaranteeQueryOptions BuildGuaranteeQueryOptions(
@@ -273,7 +297,8 @@ namespace GuaranteeManager
             string allTypesLabel,
             GuaranteeTimeStatus? selectedTimeStatus,
             bool includeAttachments,
-            int? limit)
+            int? limit,
+            int? offset)
         {
             return new GuaranteeQueryOptions
             {
@@ -283,21 +308,131 @@ namespace GuaranteeManager
                 TimeStatus = selectedTimeStatus,
                 IncludeAttachments = includeAttachments,
                 Limit = limit,
+                Offset = offset,
                 SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
             };
-        }
-
-        private static string BuildFooterSummary(int totalCount, int pageSize)
-        {
-            return totalCount == 0
-                ? "لا توجد عناصر"
-                : $"عرض 1 - {System.Math.Min(pageSize, totalCount).ToString("N0", CultureInfo.InvariantCulture)} من {totalCount.ToString("N0", CultureInfo.InvariantCulture)} عنصر";
         }
 
         private static string FormatMeta(decimal amount)
         {
             return $"إجمالي القيمة {amount.ToString("N0", CultureInfo.InvariantCulture)} ريال";
         }
+
+        private static IReadOnlyList<AttachmentRecord> BuildSeriesAttachments(IReadOnlyList<Guarantee> history)
+        {
+            return history
+                .SelectMany(version => version.Attachments)
+                .GroupBy(
+                    attachment => string.IsNullOrWhiteSpace(attachment.SavedFileName)
+                        ? $"attachment:{attachment.Id.ToString(CultureInfo.InvariantCulture)}"
+                        : attachment.SavedFileName,
+                    System.StringComparer.OrdinalIgnoreCase)
+                .Select(group => group
+                    .OrderByDescending(attachment => attachment.UploadedAt)
+                    .First())
+                .OrderByDescending(attachment => attachment.UploadedAt)
+                .ToList();
+        }
+
+        private static List<TimelineItem> BuildTimeline(
+            GuaranteeRow selectedGuarantee,
+            IReadOnlyList<Guarantee> history,
+            IReadOnlyList<WorkflowRequest> contextRequests)
+        {
+            Dictionary<int, Guarantee> versionsById = history.ToDictionary(version => version.Id);
+            List<Guarantee> versionEvents = (selectedGuarantee.IsCurrentVersion
+                ? history
+                : history.Where(version => version.Id == selectedGuarantee.Id))
+                .OrderBy(version => version.VersionNumber)
+                .ThenBy(version => version.CreatedAt)
+                .ThenBy(version => version.Id)
+                .ToList();
+
+            var events = new List<TimelineEvent>();
+            foreach (Guarantee version in versionEvents)
+            {
+                int priority = version.VersionNumber <= 1 ? 10 : 50;
+                events.Add(new TimelineEvent(version.CreatedAt, priority, TimelineItem.FromVersion(version)));
+            }
+
+            foreach (Guarantee version in BuildStatusChangeVersions(versionEvents))
+            {
+                events.Add(new TimelineEvent(version.CreatedAt, 60, TimelineItem.StatusChanged(version)));
+            }
+
+            foreach (AttachmentRecord attachment in BuildAttachmentEventSource(versionEvents))
+            {
+                events.Add(new TimelineEvent(attachment.UploadedAt, 40, TimelineItem.AttachmentAdded(attachment)));
+            }
+
+            foreach (WorkflowRequest request in contextRequests)
+            {
+                events.Add(new TimelineEvent(request.RequestDate, 20, TimelineItem.RequestCreated(request)));
+                if (request.ResponseRecordedAt.HasValue)
+                {
+                    string resultVersionLabel = string.Empty;
+                    if (request.ResultVersionId.HasValue
+                        && versionsById.TryGetValue(request.ResultVersionId.Value, out Guarantee? resultVersion))
+                    {
+                        resultVersionLabel = resultVersion.VersionLabel;
+                    }
+
+                    events.Add(new TimelineEvent(
+                        request.ResponseRecordedAt.Value,
+                        30,
+                        TimelineItem.BankResponse(request, resultVersionLabel)));
+                }
+            }
+
+            if (events.Count == 0)
+            {
+                events.Add(new TimelineEvent(
+                    selectedGuarantee.ExpiryDateValue,
+                    0,
+                    selectedGuarantee.IsCurrentVersion
+                        ? TimelineItem.Created(selectedGuarantee.IssueDate)
+                        : TimelineItem.VersionCreated(selectedGuarantee.IssueDate, selectedGuarantee.VersionLabel, selectedGuarantee.WorkStatus)));
+            }
+
+            return events
+                .OrderBy(item => item.Timestamp)
+                .ThenBy(item => item.Priority)
+                .Select(item => item.Item)
+                .ToList();
+        }
+
+        private static IEnumerable<Guarantee> BuildStatusChangeVersions(IReadOnlyList<Guarantee> versions)
+        {
+            Guarantee? previous = null;
+            foreach (Guarantee version in versions)
+            {
+                if (previous != null && version.LifecycleStatus != previous.LifecycleStatus)
+                {
+                    yield return version;
+                }
+
+                previous = version;
+            }
+        }
+
+        private static IEnumerable<AttachmentRecord> BuildAttachmentEventSource(IReadOnlyList<Guarantee> versions)
+        {
+            return versions
+                .SelectMany(version => version.Attachments)
+                .GroupBy(
+                    attachment => string.IsNullOrWhiteSpace(attachment.SavedFileName)
+                        ? $"attachment:{attachment.Id.ToString(CultureInfo.InvariantCulture)}"
+                        : attachment.SavedFileName,
+                    StringComparer.OrdinalIgnoreCase)
+                .Select(group => group
+                    .OrderBy(attachment => attachment.UploadedAt)
+                    .ThenBy(attachment => attachment.Id)
+                    .First())
+                .OrderBy(attachment => attachment.UploadedAt)
+                .ThenBy(attachment => attachment.Id);
+        }
+
+        private sealed record TimelineEvent(DateTime Timestamp, int Priority, TimelineItem Item);
     }
 
     public sealed record GuaranteeWorkspaceFilterData(
@@ -317,6 +452,8 @@ namespace GuaranteeManager
         string ExpiringSoonMeta,
         string ActiveCount,
         string ActiveMeta,
+        int CurrentPage,
+        int TotalPages,
         string FooterSummary);
 
     public sealed record GuaranteeSelectionArtifacts(

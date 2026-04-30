@@ -280,7 +280,7 @@ namespace GuaranteeManager.Services
                 "تاريخ الطلب",
                 "تاريخ الرد",
                 "الإصدار الأساس",
-                "الإصدار الناتج",
+                "أثر التنفيذ",
                 "القيمة المطلوبة",
                 "المستندات",
                 "منشئ الطلب",
@@ -312,9 +312,7 @@ namespace GuaranteeManager.Services
 
                 worksheet.Cell(row, 5).Value = request.ResponseRecordedAt?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "---";
                 worksheet.Cell(row, 6).Value = ResolveVersionLabel(orderedHistory, request.BaseVersionId);
-                worksheet.Cell(row, 7).Value = request.ResultVersionId.HasValue
-                    ? ResolveVersionLabel(orderedHistory, request.ResultVersionId.Value)
-                    : "---";
+                worksheet.Cell(row, 7).Value = BuildExecutionEffectSummary(request, orderedHistory);
                 worksheet.Cell(row, 8).Value = BuildRequestedValueSummary(request);
                 worksheet.Cell(row, 9).Value = BuildDocumentState(request);
                 worksheet.Cell(row, 10).Value = ExcelReportSupport.ValueOrDash(request.CreatedBy);
@@ -556,6 +554,33 @@ namespace GuaranteeManager.Services
                     ? request.TypeLabel
                     : request.ReplacementGuaranteeNo,
                 _ => request.RequestedValueLabel
+            };
+        }
+
+        private static string BuildExecutionEffectSummary(WorkflowRequest request, IReadOnlyList<Guarantee> history)
+        {
+            if (request.Status != RequestStatus.Executed)
+            {
+                return "---";
+            }
+
+            return request.Type switch
+            {
+                RequestType.Extension or RequestType.Reduction when request.ResultVersionId.HasValue =>
+                    ResolveVersionLabel(history, request.ResultVersionId.Value),
+                RequestType.Verification when request.ResultVersionId.HasValue =>
+                    $"مرفق رسمي على {ResolveVersionLabel(history, request.ResultVersionId.Value)}",
+                RequestType.Release =>
+                    "إنهاء بالإفراج",
+                RequestType.Liquidation =>
+                    "إنهاء بالتسييل",
+                RequestType.Replacement =>
+                    string.IsNullOrWhiteSpace(request.ReplacementGuaranteeNo)
+                        ? "ضمان بديل"
+                        : $"ضمان بديل {request.ReplacementGuaranteeNo}",
+                RequestType.Annulment =>
+                    "مسار قديم ملغى",
+                _ => "---"
             };
         }
 

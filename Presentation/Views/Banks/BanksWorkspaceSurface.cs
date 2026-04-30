@@ -6,13 +6,14 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using GuaranteeManager.Models;
+using GuaranteeManager.Services;
+using MessageBox = GuaranteeManager.Services.AppMessageBox;
 
 namespace GuaranteeManager
 {
     public sealed class BanksWorkspaceSurface : UserControl
     {
         private readonly BanksWorkspaceDataService _dataService;
-        private readonly BanksWorkspaceCoordinator _coordinator;
         private readonly List<BankWorkspaceItem> _allBanks;
         private readonly ListBox _list = new();
         private readonly TextBox _searchInput = new();
@@ -20,7 +21,6 @@ namespace GuaranteeManager
         private readonly TextBlock _summary = BuildMutedText(12, FontWeights.SemiBold);
         private readonly TextBlock _bankCountValue = BuildMetricValue();
         private readonly TextBlock _guaranteeCountValue = BuildMetricValue();
-        private readonly TextBlock _activeValue = BuildMetricValue();
         private readonly TextBlock _amountValue = BuildMetricValue();
         private readonly Image _detailLogo = new() { Width = 36, Height = 36 };
         private readonly TextBlock _detailTitle = BuildDetailValue(16, FontWeights.Bold);
@@ -35,19 +35,21 @@ namespace GuaranteeManager
         private readonly TextBlock _detailExpired = BuildDetailValue(12, FontWeights.Bold);
         private readonly TextBlock _detailShare = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly Action<string?> _showGuaranteesForBank;
-        private readonly Action? _closeRequested;
+        private readonly Action<string> _addBankReference;
+        private readonly ReferenceTablePagerController _pager;
 
         public BanksWorkspaceSurface(
             IReadOnlyList<Guarantee> guarantees,
+            IReadOnlyList<string> bankReferences,
             Action<string?> showGuaranteesForBank,
-            Action? closeRequested,
+            Action<string> addBankReference,
             string? initialSearchText = null)
         {
             _dataService = new BanksWorkspaceDataService();
-            _coordinator = new BanksWorkspaceCoordinator();
-            _allBanks = _dataService.BuildItems(guarantees);
+            _allBanks = _dataService.BuildItems(guarantees, bankReferences);
             _showGuaranteesForBank = showGuaranteesForBank;
-            _closeRequested = closeRequested;
+            _addBankReference = addBankReference;
+            _pager = new ReferenceTablePagerController("Banks", "بنك", 10, ApplyFilters);
             UiInstrumentation.Identify(this, "Banks.Workspace", "البنوك");
             UiInstrumentation.Identify(_searchInput, "Banks.SearchBox", "بحث البنوك");
             UiInstrumentation.Identify(_sortFilter, "Banks.Filter.Sort", "ترتيب البنوك");
@@ -82,72 +84,36 @@ namespace GuaranteeManager
 
         private UIElement BuildToolbarBlock()
         {
-            var stack = new StackPanel();
-            stack.Children.Add(BuildHomeHeader());
-            stack.Children.Add(BuildToolbar());
-            return stack;
-        }
-
-        private Border BuildHomeHeader()
-        {
-            var card = WorkspaceSurfaceChrome.Card(new Thickness(16, 14, 16, 14));
-            card.Margin = new Thickness(0, 0, 0, 10);
-
-            var content = new StackPanel();
-            content.Children.Add(new TextBlock
-            {
-                Text = "البنوك",
-                FontSize = 18,
-                FontWeight = FontWeights.Bold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
-                TextAlignment = TextAlignment.Right
-            });
-            content.Children.Add(new TextBlock
-            {
-                Text = "تعامل مع البنوك وتوزيع الضمانات حسب البنك والقيمة والحالة",
-                FontSize = 11.5,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
-                Margin = new Thickness(0, 6, 0, 0),
-                TextWrapping = TextWrapping.Wrap,
-                TextAlignment = TextAlignment.Right
-            });
-
-            card.Child = content;
-            return card;
+            return BuildToolbar();
         }
 
         private Grid BuildToolbar()
         {
             var toolbar = new Grid { FlowDirection = FlowDirection.LeftToRight };
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-            var resetButton = WorkspaceSurfaceChrome.ToolbarButton("إعادة ضبط", primary: true, automationId: "Banks.Toolbar.Reset");
-            resetButton.Click += (_, _) =>
-            {
-                _searchInput.Text = string.Empty;
-                _sortFilter.SelectedIndex = 0;
-                ApplyFilters();
-            };
-            Grid.SetColumn(resetButton, 0);
-            toolbar.Children.Add(resetButton);
 
             _sortFilter.Style = WorkspaceSurfaceChrome.Style("FilterComboBox");
             _sortFilter.Items.Add("الأعلى قيمة");
             _sortFilter.Items.Add("الأكثر عدداً");
             _sortFilter.Items.Add("الأعلى نشاطاً");
             _sortFilter.SelectedIndex = 0;
-            _sortFilter.SelectionChanged += (_, _) => ApplyFilters();
-            Grid.SetColumn(_sortFilter, 2);
+            _sortFilter.SelectionChanged += (_, _) =>
+            {
+                _pager.ResetToFirstPage();
+                ApplyFilters();
+            };
+            Grid.SetColumn(_sortFilter, 0);
             toolbar.Children.Add(_sortFilter);
 
-            _searchInput.TextChanged += (_, _) => ApplyFilters();
+            _searchInput.TextChanged += (_, _) =>
+            {
+                _pager.ResetToFirstPage();
+                ApplyFilters();
+            };
             var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث باسم البنك أو المستفيد الأعلى...");
-            Grid.SetColumn(searchBox, 4);
+            Grid.SetColumn(searchBox, 2);
             toolbar.Children.Add(searchBox);
 
             return toolbar;
@@ -157,19 +123,19 @@ namespace GuaranteeManager
         {
             var metrics = new System.Windows.Controls.Primitives.UniformGrid
             {
-                Columns = 4
+                Columns = 3
             };
             metrics.Children.Add(BuildMetricCard("عدد البنوك", _bankCountValue, "#2563EB"));
             metrics.Children.Add(BuildMetricCard("إجمالي الضمانات", _guaranteeCountValue, "#0F172A"));
-            metrics.Children.Add(BuildMetricCard("الضمانات النشطة", _activeValue, "#16A34A"));
             metrics.Children.Add(BuildMetricCard("إجمالي القيمة", _amountValue, "#E09408"));
+            WorkspaceSurfaceChrome.ApplyMetricCardSpacing(metrics);
             return metrics;
         }
 
         private Border BuildMetricCard(string label, TextBlock value, string accent)
         {
             var card = WorkspaceSurfaceChrome.Card(new Thickness(14, 10, 14, 10));
-            card.Margin = new Thickness(0, 0, 10, 0);
+            card.Margin = new Thickness(0);
 
             var stack = new StackPanel();
             stack.Children.Add(new TextBlock
@@ -220,47 +186,7 @@ namespace GuaranteeManager
 
         private Grid BuildTableFooter()
         {
-            var footer = new Grid
-            {
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePager")
-            };
-
-            var buttons = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            buttons.Children.Add(new Button
-            {
-                Content = "←",
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePagerButton")
-            });
-            buttons.Children.Add(new Button
-            {
-                Content = "1",
-                Margin = new Thickness(6, 0, 0, 0),
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePagerActiveButton")
-            });
-            buttons.Children.Add(new Button
-            {
-                Content = "10",
-                MinWidth = 46,
-                Margin = new Thickness(12, 0, 0, 0),
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePagerButton")
-            });
-            buttons.Children.Add(new TextBlock
-            {
-                Text = "لكل صفحة",
-                FontSize = 11,
-                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Muted"),
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(8, 0, 0, 0)
-            });
-            footer.Children.Add(buttons);
-
-            _summary.Style = WorkspaceSurfaceChrome.Style("ReferenceTableFooterSummary");
-            footer.Children.Add(_summary);
-            return footer;
+            return _pager.BuildFooter(_summary);
         }
 
         private Border BuildDetailPanel()
@@ -282,96 +208,66 @@ namespace GuaranteeManager
                 Margin = new Thickness(16, 14, 16, 14),
                 Children =
                 {
-                    BuildDetailHeader(),
                     BuildLogoHeader(),
-                    _detailStatusBadgeBorder,
                     _detailAmountHeadline,
                     _detailAmountCaption,
                     new Border { Height = 1, Background = WorkspaceSurfaceChrome.BrushFrom("#EDF2F7"), Margin = new Thickness(0, 13, 0, 12) },
-                    WorkspaceSurfaceChrome.InfoLine("عدد الضمانات", _detailCount),
-                    WorkspaceSurfaceChrome.InfoLine("نشطة", _detailActive),
-                    WorkspaceSurfaceChrome.InfoLine("قريبة الانتهاء", _detailExpiring),
-                    WorkspaceSurfaceChrome.InfoLine("منتهية", _detailExpired),
-                    WorkspaceSurfaceChrome.InfoLine("حصة المحفظة", _detailShare)
+                    WorkspaceSurfaceChrome.DetailFactLine("عدد الضمانات", _detailCount, "Icon.Guarantees"),
+                    WorkspaceSurfaceChrome.DetailFactLine("نشطة", _detailActive, "Icon.Check"),
+                    WorkspaceSurfaceChrome.DetailFactLine("قريبة الانتهاء", _detailExpiring, "Icon.Calendar"),
+                    WorkspaceSurfaceChrome.DetailFactLine("منتهية", _detailExpired, "Icon.Close"),
+                    WorkspaceSurfaceChrome.DetailFactLine("حصة المحفظة", _detailShare, "Icon.Reports")
                 }
             };
         }
 
-        private UIElement BuildDetailHeader()
+        private UIElement BuildLogoHeader()
         {
-            var grid = new Grid { Margin = new Thickness(0, 0, 0, 12) };
+            var grid = new Grid
+            {
+                Margin = new Thickness(0, 0, 0, 12),
+                FlowDirection = FlowDirection.LeftToRight
+            };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-            grid.Children.Add(new TextBlock
-            {
-                Text = "تفاصيل البنك",
-                FontSize = 16,
-                FontWeight = FontWeights.Bold,
-                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
-            });
+            _detailStatusBadgeBorder.Margin = new Thickness(0);
+            _detailStatusBadgeBorder.VerticalAlignment = VerticalAlignment.Center;
+            grid.Children.Add(_detailStatusBadgeBorder);
 
-            var closeButton = new Button
+            var row = new StackPanel
             {
-                Width = 28,
-                Height = 28,
-                Content = "×",
-                Background = Brushes.Transparent,
-                BorderThickness = new Thickness(0),
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B")
+                Orientation = Orientation.Horizontal,
+                FlowDirection = FlowDirection.RightToLeft,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center
             };
-            closeButton.Click += (_, _) => _closeRequested?.Invoke();
-            Grid.SetColumn(closeButton, 1);
-            grid.Children.Add(closeButton);
-            return grid;
-        }
-
-        private UIElement BuildLogoHeader()
-        {
-            var row = new StackPanel { Orientation = Orientation.Horizontal, FlowDirection = FlowDirection.RightToLeft };
             row.Children.Add(_detailLogo);
 
             var textStack = new StackPanel { Margin = new Thickness(10, 0, 0, 0) };
-            textStack.Children.Add(_detailTitle);
-            textStack.Children.Add(_detailSubtitle);
+            var titleRow = new StackPanel { Orientation = Orientation.Horizontal, FlowDirection = FlowDirection.RightToLeft };
+            titleRow.Children.Add(_detailTitle);
+            textStack.Children.Add(titleRow);
+
+            var subtitleRow = new StackPanel { Orientation = Orientation.Horizontal, FlowDirection = FlowDirection.RightToLeft };
+            subtitleRow.Children.Add(_detailSubtitle);
+            textStack.Children.Add(subtitleRow);
             row.Children.Add(textStack);
-            return row;
+            Grid.SetColumn(row, 1);
+            grid.Children.Add(row);
+            return grid;
         }
 
         private Border BuildDetailActions()
         {
-            var copyNameButton = new Button
+            var addBankButton = new Button
             {
-                Content = "نسخ الاسم",
-                Style = WorkspaceSurfaceChrome.Style("BaseButton"),
-                FontSize = 9.5
-            };
-            copyNameButton.Click += (_, _) =>
-            {
-                _coordinator.CopyBank(SelectedItem);
-            };
-
-            var copyAmountButton = new Button
-            {
-                Content = "نسخ القيمة",
-                Style = WorkspaceSurfaceChrome.Style("BaseButton"),
-                FontSize = 9.5
-            };
-            copyAmountButton.Click += (_, _) =>
-            {
-                _coordinator.CopyAmount(SelectedItem);
-            };
-
-            var copyBeneficiaryButton = new Button
-            {
-                Content = "نسخ المستفيد",
+                Content = "إضافة بنك",
                 Style = WorkspaceSurfaceChrome.Style("PrimaryButton"),
                 FontSize = 9.5
             };
-            copyBeneficiaryButton.Click += (_, _) =>
-            {
-                _coordinator.CopyBeneficiary(SelectedItem);
-            };
+            UiInstrumentation.Identify(addBankButton, "Banks.QuickAction.AddBank", "إضافة بنك");
+            addBankButton.Click += AddBank_Click;
 
             var border = new Border
             {
@@ -394,15 +290,7 @@ namespace GuaranteeManager
 
             var actions = new Grid { FlowDirection = FlowDirection.LeftToRight, Margin = new Thickness(0, 9, 0, 0) };
             actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            actions.Children.Add(copyAmountButton);
-            Grid.SetColumn(copyNameButton, 2);
-            actions.Children.Add(copyNameButton);
-            Grid.SetColumn(copyBeneficiaryButton, 4);
-            actions.Children.Add(copyBeneficiaryButton);
+            actions.Children.Add(addBankButton);
             Grid.SetRow(actions, 1);
             grid.Children.Add(actions);
 
@@ -450,7 +338,8 @@ namespace GuaranteeManager
                 _allBanks,
                 _searchInput.Text,
                 selectedSort);
-            foreach (BankWorkspaceItem item in filtered.Items)
+            IReadOnlyList<BankWorkspaceItem> pageItems = _pager.Page(filtered.Items);
+            foreach (BankWorkspaceItem item in pageItems)
             {
                 _list.Items.Add(BuildRow(item));
             }
@@ -461,7 +350,7 @@ namespace GuaranteeManager
             }
 
             ApplyMetrics(filtered.Metrics);
-            _summary.Text = filtered.Summary;
+            _summary.Text = _pager.BuildSummary();
             UpdateDetails();
         }
 
@@ -586,6 +475,61 @@ namespace GuaranteeManager
             _showGuaranteesForBank(SelectedItem?.Bank);
         }
 
+        private void AddBank_Click(object sender, RoutedEventArgs e)
+        {
+            if (!GuidedTextPromptDialog.TryShow(
+                    "إضافة بنك",
+                    "أدخل اسم البنك الجديد ليظهر في صفحة البنوك وقوائم اختيار البنك.",
+                    "اسم البنك",
+                    "إضافة",
+                    string.Empty,
+                    out string bankName))
+            {
+                return;
+            }
+
+            string normalizedBankName = bankName.Trim();
+            if (_allBanks.Exists(item => item.Bank.Equals(normalizedBankName, StringComparison.OrdinalIgnoreCase)))
+            {
+                MessageBox.Show("هذا البنك موجود بالفعل.", "إضافة بنك", MessageBoxButton.OK, MessageBoxImage.Information);
+                _searchInput.Text = normalizedBankName;
+                SelectBank(normalizedBankName);
+                return;
+            }
+
+            try
+            {
+                _addBankReference(normalizedBankName);
+                _allBanks.Add(BankWorkspaceItem.Empty(normalizedBankName));
+                _searchInput.Text = normalizedBankName;
+                _pager.ResetToFirstPage();
+                ApplyFilters();
+                SelectBank(normalizedBankName);
+                App.CurrentApp.GetRequiredService<IShellStatusService>().ShowInfo(
+                    "تمت إضافة البنك.",
+                    $"البنوك • {normalizedBankName}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "إضافة بنك", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void SelectBank(string bankName)
+        {
+            foreach (object row in _list.Items)
+            {
+                if (row is FrameworkElement frameworkElement
+                    && frameworkElement.Tag is BankWorkspaceItem item
+                    && item.Bank.Equals(bankName, StringComparison.OrdinalIgnoreCase))
+                {
+                    _list.SelectedItem = frameworkElement;
+                    frameworkElement.Focus();
+                    return;
+                }
+            }
+        }
+
         private void SelectRowFromSender(object sender)
         {
             if (sender is not FrameworkElement element || element.Tag is not BankWorkspaceItem item)
@@ -613,7 +557,6 @@ namespace GuaranteeManager
         {
             _bankCountValue.Text = metrics.BankCount;
             _guaranteeCountValue.Text = metrics.GuaranteeCount;
-            _activeValue.Text = metrics.ActiveCount;
             _amountValue.Text = metrics.Amount;
         }
 
@@ -660,6 +603,7 @@ namespace GuaranteeManager
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                 Margin = new Thickness(0, 12, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Left,
                 TextAlignment = TextAlignment.Right
             };
         }

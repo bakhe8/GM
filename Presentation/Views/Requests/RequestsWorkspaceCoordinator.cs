@@ -15,20 +15,17 @@ namespace GuaranteeManager
     {
         private readonly IDatabaseService _database;
         private readonly IWorkflowService _workflow;
-        private readonly IExcelService _excel;
         private readonly IShellStatusService _shellStatus;
         private readonly Action<int> _onChanged;
 
         public RequestsWorkspaceCoordinator(
             IDatabaseService database,
             IWorkflowService workflow,
-            IExcelService excel,
             IShellStatusService shellStatus,
             Action<int>? onChanged)
         {
             _database = database;
             _workflow = workflow;
-            _excel = excel;
             _shellStatus = shellStatus;
             _onChanged = onChanged ?? (_ => { });
         }
@@ -109,80 +106,6 @@ namespace GuaranteeManager
                     () => _shellStatus.ShowInfo("تم فتح رد البنك.", $"الطلبات • {selectedItem?.Item.GuaranteeNo ?? "---"}"));
             }
         }
-
-        public void OpenHistory(RequestListDisplayItem? selectedItem)
-        {
-            if (selectedItem == null)
-            {
-                MessageBox.Show("اختر طلبًا أولًا.", "الطلبات", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            WorkflowRequestListItem item = selectedItem.Item;
-            Guarantee? guarantee = _database.GetCurrentGuaranteeByRootId(item.RootGuaranteeId);
-            if (guarantee == null)
-            {
-                MessageBox.Show("تعذر تحميل الضمان المرتبط بهذا الطلب.", "الطلبات", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            List<WorkflowRequest> requests = _database.GetWorkflowRequestsByRootId(item.RootGuaranteeId);
-            GuaranteeRow row = GuaranteeRow.FromGuarantee(guarantee, requests);
-            List<Guarantee> history = _database.GetGuaranteeHistory(guarantee.Id);
-            HistoryDialog.ShowFor(row, history, requests, item.Request.Id, preferRequestsTab: true);
-        }
-
-        public void ExportPendingSameType(RequestListDisplayItem? selectedItem, IReadOnlyList<WorkflowRequestListItem> allRequests)
-        {
-            if (selectedItem == null)
-            {
-                MessageBox.Show("اختر طلبًا أولًا.", "الطلبات", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            RequestType type = selectedItem.Item.Request.Type;
-            List<WorkflowRequestListItem> matching = allRequests
-                .Where(item => item.Request.Status == RequestStatus.Pending && item.Request.Type == type)
-                .ToList();
-
-            if (matching.Count == 0)
-            {
-                MessageBox.Show("لا توجد طلبات معلقة من نفس النوع حاليًا.", "الطلبات", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            try
-            {
-                if (_excel.ExportPendingWorkflowRequestsByType(type, matching))
-                {
-                    _shellStatus.ShowSuccess(
-                        $"تم تصدير الطلبات المعلقة من نوع {selectedItem.Item.Request.TypeLabel}.",
-                        $"الطلبات • {matching.Count.ToString("N0", CultureInfo.InvariantCulture)} عنصر");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "الطلبات", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-        }
-
-        public void ExportPendingExtensions(IReadOnlyList<WorkflowRequestListItem> allRequests)
-            => ExportPendingByType(RequestType.Extension, "طلبات التمديد المعلقة", allRequests);
-
-        public void ExportPendingReductions(IReadOnlyList<WorkflowRequestListItem> allRequests)
-            => ExportPendingByType(RequestType.Reduction, "طلبات التخفيض المعلقة", allRequests);
-
-        public void ExportPendingReleases(IReadOnlyList<WorkflowRequestListItem> allRequests)
-            => ExportPendingByType(RequestType.Release, "طلبات الإفراج المعلقة", allRequests);
-
-        public void ExportPendingLiquidations(IReadOnlyList<WorkflowRequestListItem> allRequests)
-            => ExportPendingByType(RequestType.Liquidation, "طلبات التسييل المعلقة", allRequests);
-
-        public void ExportPendingVerifications(IReadOnlyList<WorkflowRequestListItem> allRequests)
-            => ExportPendingByType(RequestType.Verification, "طلبات التحقق المعلقة", allRequests);
-
-        public void ExportPendingReplacements(IReadOnlyList<WorkflowRequestListItem> allRequests)
-            => ExportPendingByType(RequestType.Replacement, "طلبات الاستبدال المعلقة", allRequests);
 
         public void CreateExtensionFromEligible(Action<int?> reloadRequests)
         {
@@ -414,40 +337,6 @@ namespace GuaranteeManager
                 $"تم إنشاء طلب استبدال للضمان {guarantee.GuaranteeNo}.");
         }
 
-        public void CreateAnnulmentFromEligible(Action<int?> reloadRequests)
-        {
-            List<Guarantee> guarantees = _workflow.GetGuaranteesEligibleForAnnulment()
-                .Where(item => !_database.HasPendingWorkflowRequest(item.RootId ?? item.Id, RequestType.Annulment))
-                .ToList();
-            Guarantee? guarantee = SelectEligibleGuarantee(
-                "طلب نقض",
-                "اختر ضمانًا مفرجًا عنه أو مسيّلًا لإرسال طلب النقض.",
-                guarantees);
-            if (guarantee == null)
-            {
-                return;
-            }
-
-            if (!GuidedTextPromptDialog.TryShow(
-                    "طلب نقض",
-                    $"أدخل سبب طلب النقض للضمان {guarantee.GuaranteeNo}.",
-                    "سبب الطلب",
-                    "إنشاء الطلب",
-                    "طلب نقض من واجهة الطلبات.",
-                    out string reason))
-            {
-                return;
-            }
-
-            string normalizedReason = string.IsNullOrWhiteSpace(reason) ? "طلب نقض من واجهة الطلبات." : reason.Trim();
-            ExecuteEligibleRequest(
-                "طلب نقض",
-                guarantee,
-                reloadRequests,
-                () => _workflow.CreateAnnulmentRequest(guarantee.Id, normalizedReason, Environment.UserName),
-                $"تم إنشاء طلب النقض للضمان {guarantee.GuaranteeNo}.");
-        }
-
         public void CopyGuaranteeNo(RequestListDisplayItem? selectedItem)
         {
             CopyText(selectedItem?.Item.GuaranteeNo, "رقم الضمان");
@@ -456,20 +345,6 @@ namespace GuaranteeManager
         public void CopySupplier(RequestListDisplayItem? selectedItem)
         {
             CopyText(selectedItem?.Item.Supplier, "اسم المورد");
-        }
-
-        public void CopyReference(RequestListDisplayItem? selectedItem)
-        {
-            if (selectedItem == null)
-            {
-                CopyText(null, "المرجع");
-                return;
-            }
-
-            string reference = string.IsNullOrWhiteSpace(selectedItem.Item.ReferenceNumber)
-                ? selectedItem.Item.ReferenceTypeLabel
-                : $"{selectedItem.Item.ReferenceTypeLabel}: {selectedItem.Item.ReferenceNumber}";
-            CopyText(reference, "المرجع");
         }
 
         private void AttachResponseDocument(RequestListDisplayItem selectedItem, Action<int?> reloadRequests)
@@ -543,33 +418,6 @@ namespace GuaranteeManager
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, title, MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-        }
-
-        private void ExportPendingByType(RequestType type, string label, IReadOnlyList<WorkflowRequestListItem> allRequests)
-        {
-            List<WorkflowRequestListItem> matching = allRequests
-                .Where(item => item.Request.Status == RequestStatus.Pending && item.Request.Type == type)
-                .ToList();
-
-            if (matching.Count == 0)
-            {
-                MessageBox.Show($"لا توجد {label} حاليًا.", "الطلبات", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            try
-            {
-                if (_excel.ExportPendingWorkflowRequestsByType(type, matching))
-                {
-                    _shellStatus.ShowSuccess(
-                        $"تم تصدير {label}.",
-                        $"الطلبات • {matching.Count.ToString("N0", CultureInfo.InvariantCulture)} عنصر");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "الطلبات", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 

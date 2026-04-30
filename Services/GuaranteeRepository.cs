@@ -21,8 +21,14 @@ namespace GuaranteeManager.Services
 
         public void SaveGuarantee(Guarantee g, List<string> tempFilePaths)
         {
+            SaveGuaranteeWithAttachments(g, tempFilePaths.Select(AttachmentInput.SupportingDocument).ToList());
+        }
+
+        public void SaveGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> attachments)
+        {
             using var scope = SimpleLogger.BeginScope("GuaranteeRepository.SaveGuarantee");
-            List<StagedAttachmentFile> stagedAttachments = _attachmentStorage.StageCopies(tempFilePaths);
+            List<AttachmentInput> attachmentInputs = attachments ?? new List<AttachmentInput>();
+            List<StagedAttachmentFile> stagedAttachments = _attachmentStorage.StageCopies(attachmentInputs.Select(attachment => attachment.FilePath));
             bool committed = false;
             using var connection = SqliteConnectionFactory.Open(_connectionString);
             using (var transaction = connection.BeginTransaction())
@@ -65,24 +71,29 @@ namespace GuaranteeManager.Services
                         rootUpdate.ExecuteNonQuery();
                     }
 
-                    foreach (var stagedAttachment in stagedAttachments)
+                    for (int i = 0; i < stagedAttachments.Count; i++)
                     {
+                        StagedAttachmentFile stagedAttachment = stagedAttachments[i];
+                        AttachmentDocumentType documentType = i < attachmentInputs.Count
+                            ? attachmentInputs[i].DocumentType
+                            : AttachmentDocumentType.SupportingDocument;
                         var attCmd = connection.CreateCommand();
                         attCmd.Transaction = transaction;
                         attCmd.CommandText = @"
-                            INSERT INTO Attachments (GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt)
-                            VALUES ($gid, $orig, $saved, $ext, $now)";
+                            INSERT INTO Attachments (GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt, DocumentType)
+                            VALUES ($gid, $orig, $saved, $ext, $now, $documentType)";
                         attCmd.Parameters.AddWithValue("$gid", guaranteeId);
                         attCmd.Parameters.AddWithValue("$orig", stagedAttachment.OriginalFileName);
                         attCmd.Parameters.AddWithValue("$saved", stagedAttachment.SavedFileName);
                         attCmd.Parameters.AddWithValue("$ext", stagedAttachment.FileExtension);
                         attCmd.Parameters.AddWithValue("$now", PersistedDateTime.FormatDateTime(DateTime.Now));
+                        attCmd.Parameters.AddWithValue("$documentType", documentType.ToString());
                         attCmd.ExecuteNonQuery();
                     }
 
                     transaction.Commit();
                     committed = true;
-                    SimpleLogger.Log($"Saved new guarantee with {tempFilePaths.Count} attachments.");
+                    SimpleLogger.Log($"Saved new guarantee with {attachmentInputs.Count} attachments.");
                     SimpleLogger.LogAudit("SaveGuarantee", g.GuaranteeNo, $"Amount={g.Amount}, Expiry={g.ExpiryDate:yyyy-MM-dd}, Bank={g.Bank}");
                 }
                 catch (Exception ex)
@@ -104,6 +115,14 @@ namespace GuaranteeManager.Services
 
         public int UpdateGuarantee(Guarantee g, List<string> newTempFiles, List<AttachmentRecord> removedAttachments)
         {
+            return UpdateGuaranteeWithAttachments(
+                g,
+                newTempFiles.Select(AttachmentInput.SupportingDocument).ToList(),
+                removedAttachments);
+        }
+
+        public int UpdateGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> newAttachments, List<AttachmentRecord> removedAttachments)
+        {
             using var scope = SimpleLogger.BeginScope("GuaranteeRepository.UpdateGuarantee");
             // بدلاً من تعديل الصف الحالي مباشرة، ننشئ نسخة جديدة لحفظ سلسلة التدقيق (Audit Trail).
             // المرفقات المحذوفة لا تُحذف من النسخة القديمة — تبقى في السجل التاريخي.
@@ -111,7 +130,7 @@ namespace GuaranteeManager.Services
                 .Where(a => !removedAttachments.Any(r => r.Id == a.Id))
                 .ToList();
 
-            int newId = CreateNewVersion(g, g.Id, newTempFiles, inheritedAttachments);
+            int newId = CreateNewVersionWithAttachments(g, g.Id, newAttachments, inheritedAttachments);
             SimpleLogger.Log($"UpdateGuarantee: created version for {g.GuaranteeNo} (oldId={g.Id}, newId={newId}, removedCount={removedAttachments.Count}).");
             SimpleLogger.LogAudit("UpdateGuarantee", g.GuaranteeNo, $"NewId={newId}, Amount={g.Amount}, Expiry={g.ExpiryDate:yyyy-MM-dd}");
             return newId;
@@ -352,8 +371,18 @@ namespace GuaranteeManager.Services
 
         public int CreateNewVersion(Guarantee newG, int sourceId, List<string> newTempFiles, List<AttachmentRecord> inheritedAttachments)
         {
+            return CreateNewVersionWithAttachments(
+                newG,
+                sourceId,
+                newTempFiles.Select(AttachmentInput.SupportingDocument).ToList(),
+                inheritedAttachments);
+        }
+
+        public int CreateNewVersionWithAttachments(Guarantee newG, int sourceId, List<AttachmentInput> newAttachments, List<AttachmentRecord> inheritedAttachments)
+        {
             using var scope = SimpleLogger.BeginScope("GuaranteeRepository.CreateNewVersion");
-            List<StagedAttachmentFile> stagedAttachments = _attachmentStorage.StageCopies(newTempFiles);
+            List<AttachmentInput> attachmentInputs = newAttachments ?? new List<AttachmentInput>();
+            List<StagedAttachmentFile> stagedAttachments = _attachmentStorage.StageCopies(attachmentInputs.Select(attachment => attachment.FilePath));
             int newGuaranteeId = 0;
             bool committed = false;
             using var connection = SqliteConnectionFactory.Open(_connectionString);
@@ -413,28 +442,34 @@ namespace GuaranteeManager.Services
                         var linkCmd = connection.CreateCommand();
                         linkCmd.Transaction = transaction;
                         linkCmd.CommandText = @"
-                            INSERT INTO Attachments (GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt)
-                            VALUES ($gid, $orig, $saved, $ext, $now)";
+                            INSERT INTO Attachments (GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt, DocumentType)
+                            VALUES ($gid, $orig, $saved, $ext, $now, $documentType)";
                         linkCmd.Parameters.AddWithValue("$gid", newGuaranteeId);
                         linkCmd.Parameters.AddWithValue("$orig", att.OriginalFileName);
                         linkCmd.Parameters.AddWithValue("$saved", att.SavedFileName);
                         linkCmd.Parameters.AddWithValue("$ext", att.FileExtension);
                         linkCmd.Parameters.AddWithValue("$now", PersistedDateTime.FormatDateTime(DateTime.Now));
+                        linkCmd.Parameters.AddWithValue("$documentType", att.DocumentType.ToString());
                         linkCmd.ExecuteNonQuery();
                     }
 
-                    foreach (var stagedAttachment in stagedAttachments)
+                    for (int i = 0; i < stagedAttachments.Count; i++)
                     {
+                        StagedAttachmentFile stagedAttachment = stagedAttachments[i];
+                        AttachmentDocumentType documentType = i < attachmentInputs.Count
+                            ? attachmentInputs[i].DocumentType
+                            : AttachmentDocumentType.SupportingDocument;
                         var attCmd = connection.CreateCommand();
                         attCmd.Transaction = transaction;
                         attCmd.CommandText = @"
-                            INSERT INTO Attachments (GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt)
-                            VALUES ($gid, $orig, $saved, $ext, $now)";
+                            INSERT INTO Attachments (GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt, DocumentType)
+                            VALUES ($gid, $orig, $saved, $ext, $now, $documentType)";
                         attCmd.Parameters.AddWithValue("$gid", newGuaranteeId);
                         attCmd.Parameters.AddWithValue("$orig", stagedAttachment.OriginalFileName);
                         attCmd.Parameters.AddWithValue("$saved", stagedAttachment.SavedFileName);
                         attCmd.Parameters.AddWithValue("$ext", stagedAttachment.FileExtension);
                         attCmd.Parameters.AddWithValue("$now", PersistedDateTime.FormatDateTime(DateTime.Now));
+                        attCmd.Parameters.AddWithValue("$documentType", documentType.ToString());
                         attCmd.ExecuteNonQuery();
                     }
 
@@ -574,6 +609,17 @@ namespace GuaranteeManager.Services
                     sql.Append(" LIMIT $limit");
                     command.Parameters.AddWithValue("$limit", options.Limit.Value);
                 }
+
+                if (options.Offset.HasValue && options.Offset.Value > 0)
+                {
+                    if (!options.Limit.HasValue || options.Limit.Value <= 0)
+                    {
+                        sql.Append(" LIMIT -1");
+                    }
+
+                    sql.Append(" OFFSET $offset");
+                    command.Parameters.AddWithValue("$offset", options.Offset.Value);
+                }
             }
 
             command.CommandText = sql.ToString();
@@ -698,7 +744,7 @@ namespace GuaranteeManager.Services
             }
 
             command.CommandText = $@"
-                SELECT Id, GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt
+                SELECT Id, GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt, DocumentType
                 FROM Attachments
                 WHERE GuaranteeId IN ({string.Join(", ", parameterNames)})
                 ORDER BY UploadedAt ASC, Id ASC";

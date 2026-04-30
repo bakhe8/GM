@@ -342,8 +342,8 @@ namespace GuaranteeManager.Services
             });
             if (resultGuarantee != null)
             {
-                result.Facts.Add(new OperationalInquiryFact { Label = "الإصدار الناتج", Value = $"v{resultGuarantee.VersionNumber}" });
-                result.Facts.Add(new OperationalInquiryFact { Label = "الحالة التشغيلية الناتجة", Value = resultGuarantee.LifecycleStatusLabel });
+                result.Facts.Add(new OperationalInquiryFact { Label = "سجل الإنهاء المحفوظ", Value = resultGuarantee.VersionLabel });
+                result.Facts.Add(new OperationalInquiryFact { Label = "حالة الإنهاء", Value = resultGuarantee.LifecycleStatusLabel });
             }
 
             AddTimeline(result, context.History, context.Requests);
@@ -410,8 +410,8 @@ namespace GuaranteeManager.Services
             });
             if (resultGuarantee != null)
             {
-                result.Facts.Add(new OperationalInquiryFact { Label = "الإصدار الناتج", Value = $"v{resultGuarantee.VersionNumber}" });
-                result.Facts.Add(new OperationalInquiryFact { Label = "الحالة التشغيلية الناتجة", Value = resultGuarantee.LifecycleStatusLabel });
+                result.Facts.Add(new OperationalInquiryFact { Label = "سجل الإنهاء المحفوظ", Value = resultGuarantee.VersionLabel });
+                result.Facts.Add(new OperationalInquiryFact { Label = "حالة الإنهاء", Value = resultGuarantee.LifecycleStatusLabel });
             }
 
             AddTimeline(result, context.History, context.Requests);
@@ -670,7 +670,7 @@ namespace GuaranteeManager.Services
                     RequestType.Liquidation =>
                         $"آخر ما حدث هو تنفيذ طلب تسييل بتاريخ {dateText}، وأصبحت الحالة التشغيلية الحالية للضمان {currentGuarantee.LifecycleStatusLabel}.",
                     RequestType.Verification when request.ResultVersionId.HasValue =>
-                        $"آخر ما حدث هو تنفيذ طلب تحقق بتاريخ {dateText} مع إنشاء إصدار رسمي جديد مرتبط بالرد البنكي.",
+                        $"آخر ما حدث هو تنفيذ طلب تحقق بتاريخ {dateText} مع اعتماد مستند رسمي مرتبط بالرد البنكي.",
                     RequestType.Verification =>
                         $"آخر ما حدث هو تنفيذ طلب تحقق بتاريخ {dateText}، وأُغلق الطلب بدون إنشاء إصدار جديد.",
                     RequestType.Replacement when resultGuarantee != null =>
@@ -715,10 +715,52 @@ namespace GuaranteeManager.Services
                 return;
             }
 
+            if (IsTerminalLifecycle(latestVersion.LifecycleStatus))
+            {
+                result.Answer =
+                    $"آخر ما حدث هو {GetTerminalLifecycleEventName(latestVersion.LifecycleStatus)} بتاريخ {latestVersion.CreatedAt:yyyy-MM-dd HH:mm}.";
+                result.Explanation =
+                    $"الحالة التشغيلية الحالية هي {currentGuarantee.LifecycleStatusLabel}، وهذا حدث دورة حياة وليس إصدار ضمان جديدًا.";
+                return;
+            }
+
             result.Answer =
                 $"آخر ما حدث هو تحديث السجل الرسمي إلى الإصدار v{latestVersion.VersionNumber} بتاريخ {latestVersion.CreatedAt:yyyy-MM-dd HH:mm}.";
             result.Explanation =
                 $"الحالة الزمنية الحالية هي {currentGuarantee.StatusLabel}، والحالة التشغيلية الحالية هي {currentGuarantee.LifecycleStatusLabel}.";
+        }
+
+        private static bool IsTerminalLifecycle(GuaranteeLifecycleStatus status)
+            => status is GuaranteeLifecycleStatus.Released
+                or GuaranteeLifecycleStatus.Liquidated
+                or GuaranteeLifecycleStatus.Replaced;
+
+        private static string GetTerminalLifecycleEventName(GuaranteeLifecycleStatus status) => status switch
+        {
+            GuaranteeLifecycleStatus.Released => "إنهاء دورة حياة الضمان بالإفراج",
+            GuaranteeLifecycleStatus.Liquidated => "إنهاء دورة حياة الضمان بالتسييل",
+            GuaranteeLifecycleStatus.Replaced => "استبدال الضمان بضمان بديل",
+            _ => "تغيير حالة الضمان"
+        };
+
+        private static string BuildVersionTimelineTitle(Guarantee version)
+        {
+            if (version.VersionNumber <= 1)
+            {
+                return "تسجيل السجل الرسمي";
+            }
+
+            return IsTerminalLifecycle(version.LifecycleStatus)
+                ? GetTerminalLifecycleEventName(version.LifecycleStatus)
+                : $"إنشاء الإصدار v{version.VersionNumber}";
+        }
+
+        private static string BuildVersionTimelineDetails(Guarantee version)
+        {
+            string financialSummary = $"الانتهاء: {version.ExpiryDate:yyyy-MM-dd} | المبلغ: {version.Amount:N2}";
+            return IsTerminalLifecycle(version.LifecycleStatus)
+                ? $"الحالة التشغيلية: {version.LifecycleStatusLabel} | حدث دورة حياة | {financialSummary}"
+                : $"الحالة التشغيلية: {version.LifecycleStatusLabel} | {financialSummary}";
         }
 
         private static void AddFacts(
@@ -771,8 +813,8 @@ namespace GuaranteeManager.Services
             IEnumerable<OperationalInquiryTimelineEntry> versionEntries = history.Select(version => new OperationalInquiryTimelineEntry
             {
                 Timestamp = version.CreatedAt,
-                Title = version.VersionNumber <= 1 ? "تسجيل السجل الرسمي" : $"إنشاء الإصدار v{version.VersionNumber}",
-                Details = $"الحالة التشغيلية: {version.LifecycleStatusLabel} | الانتهاء: {version.ExpiryDate:yyyy-MM-dd} | المبلغ: {version.Amount:N2}"
+                Title = BuildVersionTimelineTitle(version),
+                Details = BuildVersionTimelineDetails(version)
             });
 
             IEnumerable<OperationalInquiryTimelineEntry> requestCreatedEntries = requests.Select(request => new OperationalInquiryTimelineEntry

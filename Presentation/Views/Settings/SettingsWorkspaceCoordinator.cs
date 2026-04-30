@@ -67,15 +67,30 @@ namespace GuaranteeManager
                 return;
             }
 
+            CopyPathValue(item, item.Path, "copy-path", "تم نسخ المسار.");
+        }
+
+        public void CopyOpenPath(SettingPathItem? item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            CopyPathValue(item, item.OpenPath, "copy-open-path", "تم نسخ مسار الفتح.");
+        }
+
+        private void CopyPathValue(SettingPathItem item, string path, string operation, string message)
+        {
             try
             {
-                Clipboard.SetText(item.Path);
-                _diagnostics.RecordEvent("settings.operation", "copy-path", new { item.Label, item.Path });
-                _shellStatus.ShowSuccess("تم نسخ المسار.", $"الإعدادات • {item.Label}");
+                Clipboard.SetText(path);
+                _diagnostics.RecordEvent("settings.operation", operation, new { item.Label, Path = path });
+                _shellStatus.ShowSuccess(message, $"الإعدادات • {item.Label}");
             }
             catch (Exception ex)
             {
-                _diagnostics.RecordEvent("settings.operation", "copy-path-failed", new { item.Label, item.Path, ex.Message });
+                _diagnostics.RecordEvent("settings.operation", $"{operation}-failed", new { item.Label, Path = path, ex.Message });
                 MessageBox.Show(ex.Message, "الإعدادات", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
@@ -323,24 +338,24 @@ namespace GuaranteeManager
             }
 
             if (MessageBox.Show(
-                    "هذا الإجراء سيحذف البيانات الحالية ويولّد بيانات تجريبية جديدة. هل تريد المتابعة؟",
-                    "تأكيد توليد البيانات",
+                    "سيضيف هذا الإجراء بيانات تجريبية جديدة فوق البيانات الحالية دون حذفها. هل تريد المتابعة؟",
+                    "تأكيد إضافة بيانات تجريبية",
                     MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                    MessageBoxImage.Question) != MessageBoxResult.Yes)
             {
                 return;
             }
 
             try
             {
-                _seedingService.Seed();
+                _seedingService.Seed(clearExistingData: false);
                 refresh();
-                _diagnostics.RecordEvent("settings.operation", "seed-development-data", new { Status = "Succeeded" });
-                _shellStatus.ShowSuccess("تم توليد البيانات التجريبية.", "الإعدادات • بيئة التطوير");
+                _diagnostics.RecordEvent("settings.operation", "append-development-data", new { Status = "Succeeded" });
+                _shellStatus.ShowSuccess("تمت إضافة البيانات التجريبية دون حذف السابق.", "الإعدادات • بيئة التطوير");
             }
             catch (Exception ex)
             {
-                _diagnostics.RecordEvent("settings.operation", "seed-development-data-failed", new { ex.Message });
+                _diagnostics.RecordEvent("settings.operation", "append-development-data-failed", new { ex.Message });
                 MessageBox.Show(ex.Message, "بيئة التطوير", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 #endif

@@ -101,7 +101,8 @@ namespace GuaranteeManager.Services
                             stagedResponseAttachment.FileExtension,
                             executedAt,
                             connection,
-                            transaction);
+                            transaction,
+                            AttachmentDocumentType.BankResponse);
                     }
 
                     WorkflowExecutionDataAccess.UpdateWorkflowRequestAsExecuted(

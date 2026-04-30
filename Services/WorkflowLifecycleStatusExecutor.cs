@@ -6,12 +6,12 @@ using GuaranteeManager.Utils;
 
 namespace GuaranteeManager.Services
 {
-    internal sealed class WorkflowAnnulmentExecutor
+    internal sealed class WorkflowLifecycleStatusExecutor
     {
         private readonly string _connectionString;
         private readonly AttachmentStorageService _attachmentStorage;
 
-        public WorkflowAnnulmentExecutor(string connectionString, AttachmentStorageService attachmentStorage)
+        public WorkflowLifecycleStatusExecutor(string connectionString, AttachmentStorageService attachmentStorage)
         {
             _connectionString = connectionString;
             _attachmentStorage = attachmentStorage;
@@ -19,21 +19,20 @@ namespace GuaranteeManager.Services
 
         public int Execute(
             int requestId,
+            RequestType expectedType,
+            GuaranteeLifecycleStatus targetStatus,
             string responseNotes,
             string responseOriginalFileName,
             string responseSavedFileName,
-            string? responseAttachmentSourcePath = null)
+            string? responseAttachmentSourcePath,
+            bool cancelOtherPendingRequests,
+            string? cancelOtherPendingRequestsNote = null)
         {
-            if (string.IsNullOrWhiteSpace(responseAttachmentSourcePath))
-                throw new ApplicationOperationException(
-                    "WorkflowAnnulmentExecutor.Execute",
-                    "تنفيذ النقض يستلزم مستند رسمي معتمد من البنك. يرجى إرفاق المستند قبل المتابعة.");
-
             List<StagedAttachmentFile> stagedResponseAttachments = _attachmentStorage.StageCopies(
                 string.IsNullOrWhiteSpace(responseAttachmentSourcePath)
                     ? Array.Empty<string>()
                     : new[] { responseAttachmentSourcePath });
-            int newGuaranteeId = 0;
+            int affectedGuaranteeId = 0;
 
             using var connection = SqliteConnectionFactory.Open(_connectionString);
 
@@ -44,40 +43,18 @@ namespace GuaranteeManager.Services
                     DateTime executedAt = DateTime.Now;
                     WorkflowExecutionContext context = WorkflowExecutionDataAccess.LoadContext(
                         requestId,
-                        RequestType.Annulment,
-                        "نوع الطلب لا يطابق طريقة تنفيذ النقض.",
-                        "لا يمكن تنفيذ طلب نقض غير معلق.",
+                        expectedType,
+                        "نوع الطلب لا يطابق طريقة التنفيذ المطلوبة.",
+                        "لا يمكن تنفيذ طلب غير معلق.",
                         connection,
                         transaction);
 
-                    int nextVersionNumber = WorkflowExecutionDataAccess.GetNextVersionNumber(
-                        context.Request.RootGuaranteeId,
-                        connection,
-                        transaction);
-                    WorkflowExecutionDataAccess.ClearCurrentGuaranteeFlag(
-                        context.Request.RootGuaranteeId,
-                        connection,
-                        transaction);
-
-                    string annulmentNote = $"نقض {context.CurrentGuarantee.LifecycleStatusLabel} رقم {context.Request.SequenceNumber} بتاريخ {executedAt:yyyy-MM-dd}.";
-                    newGuaranteeId = WorkflowExecutionDataAccess.InsertGuaranteeVersion(
-                        context.CurrentGuarantee,
-                        context.Request.RootGuaranteeId,
-                        nextVersionNumber,
-                        context.CurrentGuarantee.Amount,
-                        context.CurrentGuarantee.ExpiryDate,
-                        WorkflowExecutionDataAccess.AppendNote(context.CurrentGuarantee.Notes, annulmentNote),
-                        GuaranteeLifecycleStatus.Active,
-                        context.CurrentGuarantee.ReplacesRootId,
+                    string executionNote = $"تم تنفيذ {context.Request.TypeLabel} رقم {context.Request.SequenceNumber} بتاريخ {executedAt:yyyy-MM-dd} وإنهاء دورة حياة الضمان بحالة {GuaranteeLifecycleStatusDisplay.GetLabel(targetStatus)}.";
+                    WorkflowExecutionDataAccess.UpdateGuaranteeLifecycleStatus(
+                        context.CurrentGuarantee.Id,
+                        targetStatus,
+                        WorkflowExecutionDataAccess.AppendNote(context.CurrentGuarantee.Notes, executionNote),
                         context.CurrentGuarantee.ReplacedByRootId,
-                        executedAt,
-                        connection,
-                        transaction);
-
-                    WorkflowExecutionDataAccess.CopyAttachments(
-                        context.CurrentGuarantee.Attachments,
-                        newGuaranteeId,
-                        executedAt,
                         connection,
                         transaction);
 
@@ -85,13 +62,14 @@ namespace GuaranteeManager.Services
                     {
                         StagedAttachmentFile stagedResponseAttachment = stagedResponseAttachments[0];
                         WorkflowExecutionDataAccess.InsertAttachmentRecord(
-                            newGuaranteeId,
+                            context.CurrentGuarantee.Id,
                             stagedResponseAttachment.OriginalFileName,
                             stagedResponseAttachment.SavedFileName,
                             stagedResponseAttachment.FileExtension,
                             executedAt,
                             connection,
-                            transaction);
+                            transaction,
+                            AttachmentDocumentType.BankResponse);
                     }
 
                     WorkflowExecutionDataAccess.UpdateWorkflowRequestAsExecuted(
@@ -99,11 +77,23 @@ namespace GuaranteeManager.Services
                         responseNotes ?? string.Empty,
                         responseOriginalFileName,
                         responseSavedFileName,
-                        newGuaranteeId,
+                        null,
                         executedAt,
                         connection,
                         transaction);
 
+                    if (cancelOtherPendingRequests)
+                    {
+                        WorkflowExecutionDataAccess.SupersedePendingRequests(
+                            context.Request.RootGuaranteeId,
+                            requestId,
+                            cancelOtherPendingRequestsNote ?? "أُسقط الطلب تلقائيًا بسبب تنفيذ طلب أنهى دورة حياة الضمان.",
+                            executedAt,
+                            connection,
+                            transaction);
+                    }
+
+                    affectedGuaranteeId = context.CurrentGuarantee.Id;
                     transaction.Commit();
                 }
                 catch
@@ -114,12 +104,12 @@ namespace GuaranteeManager.Services
                 }
             }
 
-            _attachmentStorage.FinalizeStagedCopies(stagedResponseAttachments, "ExecuteAnnulmentWorkflowRequest");
+            _attachmentStorage.FinalizeStagedCopies(stagedResponseAttachments, $"Execute{expectedType}WorkflowRequest");
             SimpleLogger.LogAudit(
-                "Workflow.Annulment",
+                $"Workflow.{expectedType}",
                 $"RequestId={requestId}",
-                $"NewVersionId={newGuaranteeId}");
-            return newGuaranteeId;
+                $"AffectedGuaranteeId={affectedGuaranteeId}");
+            return affectedGuaranteeId;
         }
     }
 }

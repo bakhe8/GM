@@ -22,7 +22,7 @@ namespace GuaranteeManager.Models
         Reduction,
         Verification,
         Replacement,
-        Annulment
+        Annulment // Legacy only: no new annulment requests are created or executed.
     }
 
     public class WorkflowRequest
@@ -32,7 +32,7 @@ namespace GuaranteeManager.Models
         
         public int SequenceNumber { get; set; } // Order within the same RootId
         public int BaseVersionId { get; set; } // The version ID when request was created
-        public int? ResultVersionId { get; set; } // The resulting version ID after bank execution
+        public int? ResultVersionId { get; set; } // Resulting guarantee/version only when execution creates one.
         
         public RequestType Type { get; set; }
         public RequestStatus Status { get; set; } = RequestStatus.Pending;
@@ -101,7 +101,7 @@ namespace GuaranteeManager.Models
             RequestType.Liquidation => "تسييل",
             RequestType.Verification => "تحقق",
             RequestType.Replacement => string.IsNullOrWhiteSpace(ReplacementGuaranteeNo) ? "استبدال" : ReplacementGuaranteeNo,
-            RequestType.Annulment => "نقض",
+            RequestType.Annulment => "مسار ملغى",
             _ => "---"
         };
 
@@ -114,7 +114,7 @@ namespace GuaranteeManager.Models
             RequestType.Reduction => "طلب تخفيض",
             RequestType.Verification => "طلب تحقق",
             RequestType.Replacement => "طلب استبدال",
-            RequestType.Annulment => "طلب نقض",
+            RequestType.Annulment => "طلب قديم ملغى",
             _ => "طلب غير معروف"
         };
 

@@ -21,7 +21,6 @@ namespace GuaranteeManager.Models
 
         public string EventDateLabel => EventDate?.ToString("yyyy-MM-dd HH:mm") ?? "---";
         public bool HasTimeline => Timeline.Count > 0;
-        public bool CanOpenHistory => CurrentGuarantee != null || SelectedGuarantee != null;
         public bool CanOpenRequestLetter => RelatedRequest?.HasLetter == true;
         public bool CanOpenResponseDocument => RelatedRequest?.HasResponseDocument == true;
     }

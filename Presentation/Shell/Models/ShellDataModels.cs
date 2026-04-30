@@ -22,9 +22,11 @@ using Microsoft.Win32;
 
 namespace GuaranteeManager
 {
-    public sealed class GuaranteeRow
+    public sealed class GuaranteeRow : INotifyPropertyChanged
     {
         private static readonly Dictionary<string, ImageSource> BankLogoCache = new(StringComparer.OrdinalIgnoreCase);
+        private IReadOnlyList<GuaranteeRow> _versionRows = Array.Empty<GuaranteeRow>();
+        private bool _isVersionsExpanded;
 
         private GuaranteeRow(
             Guarantee guarantee,
@@ -42,12 +44,14 @@ namespace GuaranteeManager
         {
             Id = guarantee.Id;
             RootId = guarantee.RootId ?? guarantee.Id;
+            IsCurrentVersion = guarantee.IsCurrent;
             Beneficiary = beneficiary;
             Bank = guarantee.Bank;
             GuaranteeNo = guarantee.GuaranteeNo;
             Amount = amount;
             AmountValue = guarantee.Amount;
             AmountDescription = amountDescription;
+            VersionLabel = guarantee.VersionLabel;
             IssueDate = issueDate;
             ExpiryDate = expiryDate;
             ExpiryDateValue = guarantee.ExpiryDate;
@@ -69,21 +73,23 @@ namespace GuaranteeManager
 
         public int Id { get; }
         public int RootId { get; }
+        public bool IsCurrentVersion { get; }
         public string GuaranteeNo { get; }
         public string AutomationKey => BuildAutomationKey(GuaranteeNo, Id);
         public string RowAutomationName => $"{GuaranteeNo} | {Beneficiary}";
         public string RowMoreAutomationId => BuildRowActionAutomationId("More");
         public string RowMoreAutomationName => $"المزيد | {GuaranteeNo}";
-        public string RowHistoryAutomationId => BuildRowActionAutomationId("History");
-        public string RowHistoryAutomationName => $"تاريخ | {GuaranteeNo}";
         public string RowRequestsAutomationId => BuildRowActionAutomationId("Requests");
         public string RowRequestsAutomationName => $"الطلبات | {GuaranteeNo}";
+        public string RowVersionsAutomationId => BuildRowActionAutomationId("Versions");
+        public string RowVersionsAutomationName => $"الإصدارات | {GuaranteeNo}";
         public string Beneficiary { get; }
         public string Bank { get; }
         public ImageSource BankLogo => GetBankLogo(Bank);
         public string Amount { get; }
         public decimal AmountValue { get; }
         public string AmountDescription { get; }
+        public string VersionLabel { get; }
         public string IssueDate { get; }
         public string ExpiryDate { get; }
         public DateTime ExpiryDateValue { get; }
@@ -91,7 +97,7 @@ namespace GuaranteeManager
         public string GuaranteeType { get; }
         public string ReferenceFieldLabel { get; }
         public string ReferenceNumber { get; }
-        public IReadOnlyList<AttachmentRecord> Attachments { get; }
+        public IReadOnlyList<AttachmentRecord> Attachments { get; private set; }
         public string TimeStatus { get; }
         public string WorkStatus { get; }
         public Brush TimeBrush { get; }
@@ -108,7 +114,9 @@ namespace GuaranteeManager
         public bool HasOfficialAttachments => Attachments.Count > 0;
         public ActionEligibility OpenFileAction => ActionProfile.OpenFileAction;
         public ActionEligibility RegisterResponseAction => ActionProfile.RegisterResponseAction;
-        public ActionEligibility OpenAttachmentsAction => ActionProfile.OpenAttachmentsAction;
+        public ActionEligibility OpenAttachmentsAction => Attachments.Count > 0
+            ? ActionEligibility.Enabled($"يوجد {Attachments.Count.ToString("N0", CultureInfo.InvariantCulture)} مرفق رسمي متاح للفتح من هذه اللوحة.")
+            : ActionProfile.OpenAttachmentsAction;
         public ActionEligibility OpenRequestsAction => ActionProfile.OpenRequestsAction;
         public ActionEligibility EditAction => ActionProfile.EditAction;
         public ActionEligibility ReleaseAction => ActionProfile.ReleaseAction;
@@ -117,17 +125,55 @@ namespace GuaranteeManager
         public ActionEligibility LiquidationAction => ActionProfile.LiquidationAction;
         public ActionEligibility VerificationAction => ActionProfile.VerificationAction;
         public ActionEligibility ReplacementAction => ActionProfile.ReplacementAction;
-        public ActionEligibility AnnulmentAction => ActionProfile.AnnulmentAction;
         public string ActionSummaryTitle => ActionProfile.SummaryTitle;
         public string ActionSummaryDetail => ActionProfile.SummaryDetail;
         public string SuggestedFocusLabel => ActionProfile.SuggestedFocusLabel;
         public GuaranteeFileFocusArea SuggestedFocusArea => ActionProfile.SuggestedFocusArea;
         public bool HasSuggestedFocus => ActionProfile.SuggestedFocusArea != GuaranteeFileFocusArea.None;
+        public IReadOnlyList<GuaranteeRow> VersionRows => _versionRows;
+        public bool HasVersionRows => _versionRows.Count > 0;
+
+        public bool IsVersionsExpanded
+        {
+            get => _isVersionsExpanded;
+            set
+            {
+                if (_isVersionsExpanded == value)
+                {
+                    return;
+                }
+
+                _isVersionsExpanded = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         public static ImageSource ResolveBankLogo(string bankName) => GetBankLogo(bankName);
 
+        public void SetVersionRows(IReadOnlyList<GuaranteeRow> versionRows)
+        {
+            _versionRows = versionRows;
+            OnPropertyChanged(nameof(VersionRows));
+            OnPropertyChanged(nameof(HasVersionRows));
+        }
+
+        public void SetAttachments(IReadOnlyList<AttachmentRecord> attachments)
+        {
+            Attachments = attachments;
+            OnPropertyChanged(nameof(Attachments));
+            OnPropertyChanged(nameof(HasOfficialAttachments));
+            OnPropertyChanged(nameof(OpenAttachmentsAction));
+        }
+
         private string BuildRowActionAutomationId(string action)
             => $"Guarantees.RowAction.{action}.{AutomationKey}";
+
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
         private static string BuildAutomationKey(string value, int fallbackId)
         {
@@ -354,7 +400,6 @@ namespace GuaranteeManager
             ActionEligibility liquidationAction,
             ActionEligibility verificationAction,
             ActionEligibility replacementAction,
-            ActionEligibility annulmentAction,
             string summaryTitle,
             string summaryDetail,
             GuaranteeFileFocusArea suggestedFocusArea,
@@ -376,7 +421,6 @@ namespace GuaranteeManager
             LiquidationAction = liquidationAction;
             VerificationAction = verificationAction;
             ReplacementAction = replacementAction;
-            AnnulmentAction = annulmentAction;
             SummaryTitle = summaryTitle;
             SummaryDetail = summaryDetail;
             SuggestedFocusArea = suggestedFocusArea;
@@ -399,7 +443,6 @@ namespace GuaranteeManager
         public ActionEligibility LiquidationAction { get; }
         public ActionEligibility VerificationAction { get; }
         public ActionEligibility ReplacementAction { get; }
-        public ActionEligibility AnnulmentAction { get; }
         public string SummaryTitle { get; }
         public string SummaryDetail { get; }
         public GuaranteeFileFocusArea SuggestedFocusArea { get; }
@@ -411,12 +454,16 @@ namespace GuaranteeManager
             int outputCount = requests.Count(request => request.HasLetter || request.HasResponseDocument);
             int letterCount = requests.Count(request => request.HasLetter);
             int responseCount = requests.Count(request => request.HasResponseDocument);
+            bool archivedVersion = !guarantee.IsCurrent;
+            string archivedVersionHint = $"هذا إصدار محفوظ ({guarantee.VersionLabel}) للعرض والمراجعة فقط. الإجراءات التشغيلية تبدأ من الإصدار الحالي.";
 
             bool hasPendingType(RequestType type) => requests.Any(request => request.Status == RequestStatus.Pending && request.Type == type);
             bool lifecycleClosed = guarantee.LifecycleStatus is GuaranteeLifecycleStatus.Released or GuaranteeLifecycleStatus.Liquidated or GuaranteeLifecycleStatus.Replaced or GuaranteeLifecycleStatus.Closed;
-            bool lifecycleActionBlocked = guarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active;
+            bool lifecycleActionBlocked = archivedVersion || guarantee.LifecycleStatus != GuaranteeLifecycleStatus.Active;
 
-            string blockedLifecycleHint = guarantee.LifecycleStatus switch
+            string blockedLifecycleHint = archivedVersion
+                ? archivedVersionHint
+                : guarantee.LifecycleStatus switch
             {
                 GuaranteeLifecycleStatus.Expired => "حالة الضمان التشغيلية منتهية الصلاحية، لذلك لا يمكن إنشاء طلبات تشغيلية جديدة عليه قبل معالجة حالته.",
                 GuaranteeLifecycleStatus.Released => "تم الإفراج عن هذا الضمان، لذلك لا تظهر عليه إجراءات متابعة إنشائية جديدة عادةً.",
@@ -429,10 +476,12 @@ namespace GuaranteeManager
             ActionEligibility enableWhen(bool condition, string enabledHint, string disabledHint)
                 => condition ? ActionEligibility.Enabled(enabledHint) : ActionEligibility.Disabled(disabledHint);
 
-            ActionEligibility registerResponse = enableWhen(
-                pendingCount > 0,
-                $"يوجد {pendingCount.ToString("N0", CultureInfo.InvariantCulture)} طلب معلق يمكن تسجيل رد البنك عليه من هذا الملف.",
-                "لا يوجد طلب معلق لهذا الضمان حاليًا، لذلك لا يتوفر تسجيل رد مباشر.");
+            ActionEligibility registerResponse = archivedVersion
+                ? ActionEligibility.Disabled(archivedVersionHint)
+                : enableWhen(
+                    pendingCount > 0,
+                    $"يوجد {pendingCount.ToString("N0", CultureInfo.InvariantCulture)} طلب معلق يمكن تسجيل رد البنك عليه من هذا الملف.",
+                    "لا يوجد طلب معلق لهذا الضمان حاليًا، لذلك لا يتوفر تسجيل رد مباشر.");
 
             ActionEligibility openRequests = enableWhen(
                 requests.Count > 0,
@@ -444,7 +493,9 @@ namespace GuaranteeManager
                 $"يوجد {guarantee.Attachments.Count.ToString("N0", CultureInfo.InvariantCulture)} مرفق رسمي على هذا الضمان.",
                 "لا توجد مرفقات رسمية على هذا الضمان حاليًا.");
 
-            ActionEligibility edit = lifecycleClosed
+            ActionEligibility edit = archivedVersion
+                ? ActionEligibility.Disabled(archivedVersionHint)
+                : lifecycleClosed
                 ? ActionEligibility.Enabled($"السجل في حالة {guarantee.LifecycleStatusLabel}. ما زال التعديل متاحًا، لكنه سينشئ إصدارًا جديدًا ينبغي مراجعته بعناية.")
                 : ActionEligibility.Enabled("التعديل متاح وسيُحفظ كسجل إصدار جديد مع الإبقاء على التاريخ الكامل.");
 
@@ -496,13 +547,6 @@ namespace GuaranteeManager
                 "يوجد طلب استبدال معلق بالفعل لهذا الضمان.",
                 "طلب الاستبدال متاح عند الحاجة لإصدار ضمان بديل.");
 
-            bool annulmentEligible = guarantee.LifecycleStatus is GuaranteeLifecycleStatus.Released or GuaranteeLifecycleStatus.Liquidated;
-            ActionEligibility annulment = hasPendingType(RequestType.Annulment)
-                ? ActionEligibility.Disabled("يوجد طلب نقض معلق بالفعل لهذا الضمان.")
-                : annulmentEligible
-                    ? ActionEligibility.Enabled("طلب النقض متاح للضمانات المفرج عنها أو المسيّلة فقط، وهذا الضمان يطابق الشرط الآن.")
-                    : ActionEligibility.Disabled("طلب النقض متاح للضمانات المفرج عنها أو المسيّلة فقط.");
-
             string summaryTitle;
             string summaryDetail;
             GuaranteeFileFocusArea suggestedArea;
@@ -514,7 +558,18 @@ namespace GuaranteeManager
                 .ThenByDescending(request => request.SequenceNumber)
                 .FirstOrDefault();
 
-            if (pendingCount > 0)
+            if (archivedVersion)
+            {
+                summaryTitle = $"الإصدار {guarantee.VersionLabel} محفوظ للمراجعة";
+                summaryDetail = requests.Count == 0
+                    ? "لا توجد طلبات مرتبطة مباشرة بهذا الإصدار. راجع بياناته ومرفقاته الرسمية من اللوحة الجانبية."
+                    : $"يوجد {requests.Count.ToString("N0", CultureInfo.InvariantCulture)} طلب مرتبط بهذا الإصدار في السلسلة.";
+                suggestedArea = guarantee.Attachments.Count > 0
+                    ? GuaranteeFileFocusArea.Attachments
+                    : GuaranteeFileFocusArea.Series;
+                suggestedLabel = guarantee.Attachments.Count > 0 ? "راجع المرفقات" : "راجع السجل";
+            }
+            else if (pendingCount > 0)
             {
                 summaryTitle = $"يوجد {pendingCount.ToString("N0", CultureInfo.InvariantCulture)} طلب قيد التنفيذ على هذا الملف";
                 summaryDetail = latestPending == null
@@ -576,7 +631,6 @@ namespace GuaranteeManager
                 liquidation,
                 verification,
                 replacement,
-                annulment,
                 summaryTitle,
                 summaryDetail,
                 suggestedArea,
@@ -620,9 +674,26 @@ namespace GuaranteeManager
 
     public sealed class TimelineItem
     {
+        public TimelineItem(DateTime timestamp, string title, string detail, string status, Tone tone)
+            : this(
+                timestamp.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
+                timestamp.ToString("HH:mm:ss", CultureInfo.InvariantCulture),
+                title,
+                detail,
+                status,
+                tone)
+        {
+        }
+
         public TimelineItem(string date, string title, string detail, string status, Tone tone)
+            : this(date, string.Empty, title, detail, status, tone)
+        {
+        }
+
+        private TimelineItem(string date, string time, string title, string detail, string status, Tone tone)
         {
             Date = date;
+            Time = time;
             Title = title;
             Detail = detail;
             Status = status;
@@ -632,6 +703,7 @@ namespace GuaranteeManager
         }
 
         public string Date { get; }
+        public string Time { get; }
         public string Title { get; }
         public string Detail { get; }
         public string Status { get; }
@@ -649,21 +721,214 @@ namespace GuaranteeManager
                 _ => Tone.Info
             };
 
-            string actor = string.IsNullOrWhiteSpace(request.CreatedBy) ? "النظام" : request.CreatedBy;
-            string detail = request.Status == RequestStatus.Pending
-                ? $"تم رفع الطلب من قبل {actor}"
-                : (string.IsNullOrWhiteSpace(request.ResponseNotes) ? "تم تحديث حالة الطلب" : request.ResponseNotes);
-
             return new TimelineItem(
-                request.RequestDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
+                request.RequestDate,
                 request.TypeLabel,
-                detail,
+                WorkflowRequestDisplayText.BuildDetail(request),
                 request.StatusLabel,
                 tone);
         }
 
+        public static TimelineItem RequestCreated(WorkflowRequest request)
+        {
+            string detail = $"القيمة المطلوبة: {request.RequestedValueLabel}";
+            if (!string.IsNullOrWhiteSpace(request.Notes))
+            {
+                detail += $" | {request.Notes.Trim()}";
+            }
+
+            return new TimelineItem(
+                request.RequestDate,
+                request.TypeLabel,
+                detail,
+                request.Status == RequestStatus.Pending ? request.StatusLabel : "مسجل",
+                request.Status == RequestStatus.Pending ? Tone.Warning : Tone.Info);
+        }
+
+        public static TimelineItem BankResponse(WorkflowRequest request, string resultVersionLabel)
+        {
+            string detail = WorkflowRequestDisplayText.BuildDetail(request);
+            string effectDetail = BuildBankResponseEffectDetail(request, resultVersionLabel);
+            if (!string.IsNullOrWhiteSpace(effectDetail))
+            {
+                detail += $" | {effectDetail}";
+            }
+
+            if (request.HasResponseDocument)
+            {
+                detail += " | رد البنك مرفق";
+            }
+
+            return new TimelineItem(
+                request.ResponseRecordedAt!.Value,
+                $"تسجيل رد {request.TypeLabel}",
+                detail,
+                request.StatusLabel,
+                GetRequestTone(request.Status));
+        }
+
+        public static TimelineItem FromVersion(Guarantee version)
+        {
+            if (version.VersionNumber <= 1)
+            {
+                return new TimelineItem(
+                    version.CreatedAt,
+                    "إنشاء الضمان",
+                    $"تم إنشاء الضمان بقيمة {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال وانتهاء {version.ExpiryDate:yyyy/MM/dd}.",
+                    "مكتمل",
+                    Tone.Success);
+            }
+
+            if (IsTerminalLifecycle(version.LifecycleStatus))
+            {
+                return new TimelineItem(
+                    version.CreatedAt,
+                    GetTerminalLifecycleTitle(version.LifecycleStatus),
+                    GetTerminalLifecycleDetail(version),
+                    version.LifecycleStatusLabel,
+                    GetLifecycleTone(version.LifecycleStatus));
+            }
+
+            return new TimelineItem(
+                version.CreatedAt,
+                $"إصدار جديد {version.VersionLabel}",
+                $"الحالة التشغيلية: {version.LifecycleStatusLabel} | المبلغ: {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال | الانتهاء: {version.ExpiryDate:yyyy/MM/dd}.",
+                "موثق",
+                Tone.Info);
+        }
+
+        public static TimelineItem AttachmentAdded(AttachmentRecord attachment)
+        {
+            string documentType = attachment.DocumentTypeLabel;
+            string name = string.IsNullOrWhiteSpace(attachment.OriginalFileName)
+                ? "مرفق رسمي"
+                : attachment.OriginalFileName.Trim();
+
+            return new TimelineItem(
+                attachment.UploadedAt,
+                $"إضافة مرفق {documentType}",
+                name,
+                "مضاف",
+                Tone.Info);
+        }
+
+        public static TimelineItem StatusChanged(Guarantee version)
+        {
+            return new TimelineItem(
+                version.CreatedAt,
+                IsTerminalLifecycle(version.LifecycleStatus)
+                    ? GetTerminalLifecycleTitle(version.LifecycleStatus)
+                    : $"تغيير الحالة {version.LifecycleStatusLabel}",
+                IsTerminalLifecycle(version.LifecycleStatus)
+                    ? GetTerminalLifecycleDetail(version)
+                    : $"أصبحت حالة الضمان: {version.LifecycleStatusLabel} ضمن الإصدار {version.VersionLabel}.",
+                version.LifecycleStatusLabel,
+                GetLifecycleTone(version.LifecycleStatus));
+        }
+
         public static TimelineItem Created(string date)
             => new(date, "إنشاء الضمان", "تم إنشاء الضمان في النظام", "مكتمل", Tone.Success);
+
+        public static TimelineItem VersionCreated(string date, string versionLabel, string status)
+            => new(date, $"إنشاء الإصدار {versionLabel}", "تم حفظ هذا الإصدار ضمن سجل الضمان الرسمي", status, Tone.Info);
+
+        private static Tone GetRequestTone(RequestStatus status) => status switch
+        {
+            RequestStatus.Executed => Tone.Success,
+            RequestStatus.Pending => Tone.Warning,
+            RequestStatus.Rejected or RequestStatus.Cancelled => Tone.Danger,
+            _ => Tone.Info
+        };
+
+        private static Tone GetLifecycleTone(GuaranteeLifecycleStatus status) => status switch
+        {
+            GuaranteeLifecycleStatus.Active => Tone.Success,
+            GuaranteeLifecycleStatus.Expired or GuaranteeLifecycleStatus.Liquidated => Tone.Danger,
+            GuaranteeLifecycleStatus.Released or GuaranteeLifecycleStatus.Replaced => Tone.Info,
+            _ => Tone.Info
+        };
+
+        private static string BuildBankResponseEffectDetail(WorkflowRequest request, string resultVersionLabel)
+        {
+            if (request.Status != RequestStatus.Executed)
+            {
+                return string.Empty;
+            }
+
+            return request.Type switch
+            {
+                RequestType.Extension when !string.IsNullOrWhiteSpace(resultVersionLabel) =>
+                    $"الإصدار الناتج: {resultVersionLabel}",
+                RequestType.Reduction when !string.IsNullOrWhiteSpace(resultVersionLabel) =>
+                    $"الإصدار الناتج: {resultVersionLabel}",
+                RequestType.Verification when !string.IsNullOrWhiteSpace(resultVersionLabel) =>
+                    $"اعتماد مستند رسمي على {resultVersionLabel}",
+                RequestType.Release =>
+                    "تم إنهاء دورة حياة الضمان بالإفراج",
+                RequestType.Liquidation =>
+                    "تم إنهاء دورة حياة الضمان بالتسييل",
+                RequestType.Replacement =>
+                    string.IsNullOrWhiteSpace(request.ReplacementGuaranteeNo)
+                        ? "تم إنشاء ضمان بديل"
+                        : $"الضمان البديل: {request.ReplacementGuaranteeNo}",
+                RequestType.Annulment =>
+                    "مسار قديم ملغى",
+                _ => string.Empty
+            };
+        }
+
+        private static bool IsTerminalLifecycle(GuaranteeLifecycleStatus status)
+            => status is GuaranteeLifecycleStatus.Released
+                or GuaranteeLifecycleStatus.Liquidated
+                or GuaranteeLifecycleStatus.Replaced;
+
+        private static string GetTerminalLifecycleTitle(GuaranteeLifecycleStatus status) => status switch
+        {
+            GuaranteeLifecycleStatus.Released => "إنهاء دورة الحياة بالإفراج",
+            GuaranteeLifecycleStatus.Liquidated => "إنهاء دورة الحياة بالتسييل",
+            GuaranteeLifecycleStatus.Replaced => "استبدال الضمان",
+            _ => "تغيير الحالة"
+        };
+
+        private static string GetTerminalLifecycleDetail(Guarantee version) => version.LifecycleStatus switch
+        {
+            GuaranteeLifecycleStatus.Released =>
+                $"تم تسجيل الإفراج عن الضمان بقيمة {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال.",
+            GuaranteeLifecycleStatus.Liquidated =>
+                $"تم تسجيل تسييل الضمان بقيمة {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال.",
+            GuaranteeLifecycleStatus.Replaced =>
+                "تم إنهاء السلسلة القديمة لصالح ضمان بديل.",
+            _ =>
+                $"أصبحت حالة الضمان: {version.LifecycleStatusLabel} ضمن الإصدار {version.VersionLabel}."
+        };
+
+    }
+
+    internal static class WorkflowRequestDisplayText
+    {
+        public static string BuildDetail(WorkflowRequest request)
+        {
+            string actor = string.IsNullOrWhiteSpace(request.CreatedBy) ? "النظام" : request.CreatedBy;
+            if (request.Status == RequestStatus.Pending)
+            {
+                return request.Type == RequestType.Annulment
+                    ? $"طلب قديم ملغى من قبل {actor}"
+                    : $"تم رفع الطلب من قبل {actor}";
+            }
+
+            string responseNotes = request.ResponseNotes?.Trim() ?? string.Empty;
+            if (request.Type == RequestType.Annulment)
+            {
+                return string.IsNullOrWhiteSpace(responseNotes)
+                    ? "مسار قديم ملغى ولا يُستخدم في العمل الحالي."
+                    : responseNotes;
+            }
+
+            return string.IsNullOrWhiteSpace(responseNotes)
+                ? "تم تحديث حالة الطلب"
+                : responseNotes;
+        }
+
     }
 
     public sealed class GuaranteeRequestPreviewItem
@@ -720,9 +985,9 @@ namespace GuaranteeManager
                 _ => Tone.Info
             };
 
-            string detail = string.IsNullOrWhiteSpace(request.ResponseNotes)
-                ? $"آخر تحديث بواسطة {(string.IsNullOrWhiteSpace(request.CreatedBy) ? "النظام" : request.CreatedBy)}"
-                : request.ResponseNotes;
+            string detail = request.Status == RequestStatus.Pending || !string.IsNullOrWhiteSpace(request.ResponseNotes)
+                ? WorkflowRequestDisplayText.BuildDetail(request)
+                : $"آخر تحديث بواسطة {(string.IsNullOrWhiteSpace(request.CreatedBy) ? "النظام" : request.CreatedBy)}";
 
             return new GuaranteeRequestPreviewItem(
                 request,

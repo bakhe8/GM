@@ -41,6 +41,8 @@ namespace GuaranteeManager.Services
 
         public int? Limit { get; set; }
 
+        public int? Offset { get; set; }
+
         public GuaranteeQuerySortMode SortMode { get; set; } = GuaranteeQuerySortMode.CreatedAtDescending;
     }
 }

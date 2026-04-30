@@ -17,35 +17,6 @@ namespace GuaranteeManager.Services
             _letterService = letterService;
         }
 
-        public WorkflowRequest CreateAnnulmentRequest(int guaranteeId, string reason, string createdBy = "")
-        {
-            using var scope = SimpleLogger.BeginScope("Workflow.CreateAnnulmentRequest");
-            Guarantee guarantee = ResolveCurrentGuarantee(guaranteeId);
-            int rootId = guarantee.RootId ?? guarantee.Id;
-            string normalizedCreatedBy = WorkflowCreatedByPolicy.NormalizeForNewRequest(createdBy);
-
-            if (guarantee.LifecycleStatus != GuaranteeLifecycleStatus.Released &&
-                guarantee.LifecycleStatus != GuaranteeLifecycleStatus.Liquidated)
-            {
-                throw new InvalidOperationException($"لا يمكن إنشاء طلب نقض لضمان في حالة {guarantee.LifecycleStatusLabel}. النقض متاح للضمانات المفرج عنها أو المسيّلة فقط.");
-            }
-
-            if (_databaseService.HasPendingWorkflowRequest(rootId, RequestType.Annulment))
-            {
-                throw new InvalidOperationException("يوجد بالفعل طلب نقض معلق لهذا الضمان.");
-            }
-
-            GeneratedWorkflowFile generatedLetter = _letterService.CreateAnnulmentLetter(guarantee, reason, normalizedCreatedBy);
-            return SaveLetterBackedRequest(
-                rootId,
-                guarantee.Id,
-                RequestType.Annulment,
-                new WorkflowRequestedData(),
-                generatedLetter,
-                reason,
-                normalizedCreatedBy);
-        }
-
         public WorkflowRequest CreateExtensionRequest(int guaranteeId, DateTime requestedExpiryDate, string notes, string createdBy = "")
         {
             Guarantee guarantee = ResolveCurrentGuarantee(guaranteeId);

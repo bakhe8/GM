@@ -12,8 +12,6 @@ namespace GuaranteeManager.Services
         List<Guarantee> GetGuaranteesEligibleForLiquidation();
         List<Guarantee> GetGuaranteesEligibleForVerification();
         List<Guarantee> GetGuaranteesEligibleForReplacement();
-        List<Guarantee> GetGuaranteesEligibleForAnnulment();
-        WorkflowRequest CreateAnnulmentRequest(int guaranteeId, string reason, string createdBy = "");
         WorkflowRequest CreateExtensionRequest(int guaranteeId, DateTime requestedExpiryDate, string notes, string createdBy = "");
         WorkflowRequest CreateReductionRequest(int guaranteeId, decimal requestedAmount, string notes, string createdBy = "");
         WorkflowRequest CreateReleaseRequest(int guaranteeId, string notes, string createdBy = "");

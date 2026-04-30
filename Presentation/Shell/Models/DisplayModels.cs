@@ -44,7 +44,7 @@ namespace GuaranteeManager
             Item = item;
             Title = $"{item.GuaranteeNo} | {item.Request.TypeLabel} | {item.Request.StatusLabel}";
             Meta = $"{item.Supplier} | {item.Bank}";
-            Value = $"{item.RequestedValueFieldLabel}: {item.RequestedValueDisplay} | {item.CurrentVersionLabel} | رد: {item.ResponseDateLabel}";
+            Value = $"{item.RequestedValueFieldLabel}: {item.RequestedValueDisplay} | {item.RelatedVersionLabel} | رد: {item.ResponseDateLabel}";
             Display = $"{Title}\n{Meta}\n{Value}";
             GuaranteeNo = item.GuaranteeNo;
             Supplier = item.Supplier;
@@ -64,7 +64,7 @@ namespace GuaranteeManager
             CurrentValue = item.CurrentValueDisplay;
             RequestDate = item.Request.RequestDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
             ResponseDate = item.ResponseDateLabel;
-            VersionLabel = item.CurrentVersionLabel;
+            VersionLabel = item.RelatedVersionLabel;
         }
 
         public WorkflowRequestListItem Item { get; }
@@ -102,18 +102,24 @@ namespace GuaranteeManager
 
     public sealed class AttachmentItem
     {
-        public AttachmentItem(string name, string date, string size, string filePath)
+        public AttachmentItem(string name, string date, string size, string filePath, string fileKind, string documentType)
         {
             Name = name;
             Date = date;
             Size = size;
             FilePath = filePath;
+            FileKind = fileKind;
+            DocumentType = documentType;
+            Display = $"{documentType} | {name}";
         }
 
         public string Name { get; }
         public string Date { get; }
         public string Size { get; }
         public string FilePath { get; }
+        public string FileKind { get; }
+        public string DocumentType { get; }
+        public string Display { get; }
 
         public static AttachmentItem FromAttachment(AttachmentRecord attachment)
         {
@@ -128,7 +134,28 @@ namespace GuaranteeManager
                 string.IsNullOrWhiteSpace(attachment.OriginalFileName) ? "مرفق" : attachment.OriginalFileName,
                 attachment.UploadedAt.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
                 size,
-                attachment.FilePath);
+                attachment.FilePath,
+                FormatFileKind(attachment),
+                attachment.DocumentTypeLabel);
+        }
+
+        private static string FormatFileKind(AttachmentRecord attachment)
+        {
+            string extension = attachment.FileExtension;
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                extension = Path.GetExtension(attachment.OriginalFileName);
+            }
+
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                extension = Path.GetExtension(attachment.FilePath);
+            }
+
+            extension = extension.Trim().TrimStart('.');
+            return string.IsNullOrWhiteSpace(extension)
+                ? "FILE"
+                : extension.ToUpperInvariant();
         }
 
         private static string FormatFileSize(long bytes)

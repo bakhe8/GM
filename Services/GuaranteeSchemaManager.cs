@@ -16,6 +16,8 @@ namespace GuaranteeManager.Services
             {
                 MigrateToMultiAttachment(connection);
             }
+
+            EnsureAttachmentDocumentTypeColumn(connection);
         }
 
         public static void EnsureBaseSchema(SqliteConnection connection)
@@ -49,7 +51,13 @@ namespace GuaranteeManager.Services
                     SavedFileName TEXT NOT NULL,
                     FileExtension TEXT NOT NULL,
                     UploadedAt TEXT NOT NULL,
+                    DocumentType TEXT NOT NULL DEFAULT 'SupportingDocument',
                     FOREIGN KEY(GuaranteeId) REFERENCES Guarantees(Id) ON DELETE CASCADE
+                );
+                CREATE TABLE IF NOT EXISTS BankReferences (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Name TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                    CreatedAt TEXT NOT NULL
                 );
                 CREATE INDEX IF NOT EXISTS idx_guarantee_no ON Guarantees(GuaranteeNo);
                 CREATE UNIQUE INDEX IF NOT EXISTS ux_guarantee_no_single_current ON Guarantees({GuaranteeDataAccess.NormalizedGuaranteeNoSqlExpression}) WHERE IsCurrent = 1;
@@ -60,6 +68,7 @@ namespace GuaranteeManager.Services
                 CREATE INDEX IF NOT EXISTS idx_guarantee_lifecycle ON Guarantees(LifecycleStatus);
                 CREATE INDEX IF NOT EXISTS idx_guarantee_reference ON Guarantees(ReferenceType, ReferenceNumber);
                 CREATE INDEX IF NOT EXISTS idx_attachment_guarantee ON Attachments(GuaranteeId);
+                CREATE INDEX IF NOT EXISTS idx_bank_references_name ON BankReferences(Name);
             ";
             command.ExecuteNonQuery();
         }
@@ -247,6 +256,7 @@ namespace GuaranteeManager.Services
                     SavedFileName TEXT NOT NULL,
                     FileExtension TEXT NOT NULL,
                     UploadedAt TEXT NOT NULL,
+                    DocumentType TEXT NOT NULL DEFAULT 'SupportingDocument',
                     FOREIGN KEY(GuaranteeId) REFERENCES Guarantees(Id) ON DELETE CASCADE
                 );
                 CREATE INDEX IF NOT EXISTS idx_attachment_guarantee ON Attachments(GuaranteeId);
@@ -277,8 +287,8 @@ namespace GuaranteeManager.Services
                 string ext = Path.GetExtension(att.FileName);
                 var insertCmd = connection.CreateCommand();
                 insertCmd.CommandText = @"
-                    INSERT INTO Attachments (GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt)
-                    VALUES ($gid, $orig, $saved, $ext, $now)";
+                    INSERT INTO Attachments (GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt, DocumentType)
+                    VALUES ($gid, $orig, $saved, $ext, $now, 'SupportingDocument')";
                 insertCmd.Parameters.AddWithValue("$gid", att.GuaranteeId);
                 insertCmd.Parameters.AddWithValue("$orig", att.FileName);
                 insertCmd.Parameters.AddWithValue("$saved", att.FileName);
@@ -288,6 +298,20 @@ namespace GuaranteeManager.Services
             }
 
             SimpleLogger.Log($"Migrated {attachmentsToMigrate.Count} old attachments to the new multi-attachment table.");
+        }
+
+        private static void EnsureAttachmentDocumentTypeColumn(SqliteConnection connection)
+        {
+            HashSet<string> columns = SqliteSchemaInspector.GetTableColumns(connection, "Attachments");
+            if (columns.Contains("DocumentType"))
+            {
+                return;
+            }
+
+            var alter = connection.CreateCommand();
+            alter.CommandText = "ALTER TABLE Attachments ADD COLUMN DocumentType TEXT NOT NULL DEFAULT 'SupportingDocument'";
+            alter.ExecuteNonQuery();
+            SimpleLogger.Log("Added DocumentType column to Attachments table.");
         }
 
         private static void EnsureBeneficiaryColumn(SqliteConnection connection, HashSet<string> columns)

@@ -124,9 +124,9 @@ namespace GuaranteeManager.Services
 
                 var attachmentsSheet = workbook.Worksheets.Add("المرفقات");
                 attachmentsSheet.SetRightToLeft(true);
-                ExcelReportSupport.WriteTitle(attachmentsSheet, 1, 5, "مرفقات الضمان", $"رقم الضمان: {guarantee.GuaranteeNo}");
+                ExcelReportSupport.WriteTitle(attachmentsSheet, 1, 6, "مرفقات الضمان", $"رقم الضمان: {guarantee.GuaranteeNo}");
 
-                string[] headers = { "اسم الملف", "الامتداد", "تاريخ الإضافة", "الحالة", "الاسم المحفوظ" };
+                string[] headers = { "اسم الملف", "نوع المستند", "الامتداد", "تاريخ الإضافة", "الحالة", "الاسم المحفوظ" };
                 ExcelReportSupport.WriteHeaderRow(attachmentsSheet, 4, headers);
 
                 if (guarantee.Attachments.Any())
@@ -137,13 +137,14 @@ namespace GuaranteeManager.Services
                         int attachmentRow = i + 5;
 
                         attachmentsSheet.Cell(attachmentRow, 1).Value = attachment.OriginalFileName;
-                        attachmentsSheet.Cell(attachmentRow, 2).Value = attachment.FileExtension;
-                        attachmentsSheet.Cell(attachmentRow, 3).Value = attachment.UploadedAt;
-                        attachmentsSheet.Cell(attachmentRow, 3).Style.DateFormat.Format = "yyyy-MM-dd HH:mm";
-                        attachmentsSheet.Cell(attachmentRow, 4).Value = attachment.Exists ? "موجود" : "غير موجود";
-                        attachmentsSheet.Cell(attachmentRow, 5).Value = attachment.SavedFileName;
+                        attachmentsSheet.Cell(attachmentRow, 2).Value = attachment.DocumentTypeLabel;
+                        attachmentsSheet.Cell(attachmentRow, 3).Value = attachment.FileExtension;
+                        attachmentsSheet.Cell(attachmentRow, 4).Value = attachment.UploadedAt;
+                        attachmentsSheet.Cell(attachmentRow, 4).Style.DateFormat.Format = "yyyy-MM-dd HH:mm";
+                        attachmentsSheet.Cell(attachmentRow, 5).Value = attachment.Exists ? "موجود" : "غير موجود";
+                        attachmentsSheet.Cell(attachmentRow, 6).Value = attachment.SavedFileName;
 
-                        attachmentsSheet.Cell(attachmentRow, 4).Style.Font.FontColor =
+                        attachmentsSheet.Cell(attachmentRow, 5).Style.Font.FontColor =
                             attachment.Exists ? XLColor.FromHtml("#006847") : XLColor.FromHtml("#111111");
                     }
 
@@ -151,7 +152,7 @@ namespace GuaranteeManager.Services
                 }
                 else
                 {
-                    attachmentsSheet.Range(5, 1, 5, 5).Merge();
+                    attachmentsSheet.Range(5, 1, 5, 6).Merge();
                     attachmentsSheet.Cell(5, 1).Value = "لا توجد مرفقات محفوظة لهذا الضمان.";
                     attachmentsSheet.Cell(5, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                     attachmentsSheet.Cell(5, 1).Style.Font.FontColor = XLColor.FromHtml("#666666");

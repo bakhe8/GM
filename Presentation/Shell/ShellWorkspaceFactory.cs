@@ -37,12 +37,8 @@ namespace GuaranteeManager
             bool hasLastFile,
             string lastFileGuaranteeNo,
             string lastFileSummary,
-            Action resumeLastFile,
             Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
             Action showGuarantees,
-            Action<string?, string?> showToday,
-            Action<string?, int?> showRequests,
-            Action<string?> showReports,
             string? initialSearchText = null,
             string? initialScopeFilter = null)
         {
@@ -59,18 +55,12 @@ namespace GuaranteeManager
                 () => _database.QueryWorkflowRequests(new WorkflowRequestQueryOptions
                 {
                     RequestStatus = RequestStatus.Pending,
-                    SortMode = WorkflowRequestQuerySortMode.ActivityDateDescending,
-                    Limit = 200
+                    SortMode = WorkflowRequestQuerySortMode.ActivityDateDescending
                 }),
                 hasLastFile,
                 lastFileGuaranteeNo,
                 lastFileSummary,
-                resumeLastFile,
                 openGuaranteeContext,
-                showGuarantees,
-                showToday,
-                showRequests,
-                showReports,
                 showGuarantees,
                 initialSearchText,
                 initialScopeFilter);
@@ -78,47 +68,47 @@ namespace GuaranteeManager
 
         public FrameworkElement CreateRequestsWorkspace(
             Action<int> refreshAfterWorkflowChange,
-            Action closeRequested,
             Action? selectionChanged = null,
             string? initialSearchText = null,
             int? initialRequestId = null)
         {
             WorkflowRequestQueryOptions options = new()
             {
-                SortMode = WorkflowRequestQuerySortMode.ActivityDateDescending,
-                Limit = 160
+                SortMode = WorkflowRequestQuerySortMode.ActivityDateDescending
             };
 
             return new RequestsWorkspaceSurface(
                 () => _database.QueryWorkflowRequests(options),
                 _database,
                 _workflow,
-                App.CurrentApp.GetRequiredService<IExcelService>(),
                 refreshAfterWorkflowChange,
-                closeRequested,
                 selectionChanged,
                 initialSearchText,
                 initialRequestId);
         }
 
-        public FrameworkElement CreateBanksWorkspace(Action<string?> showGuaranteesForBank, Action closeRequested, string? initialSearchText = null)
+        public FrameworkElement CreateBanksWorkspace(Action<string?> showGuaranteesForBank, string? initialSearchText = null)
         {
             List<Guarantee> guarantees = _database.QueryGuarantees(new GuaranteeQueryOptions());
-            return new BanksWorkspaceSurface(guarantees, showGuaranteesForBank, closeRequested, initialSearchText);
+            return new BanksWorkspaceSurface(
+                guarantees,
+                _database.GetBankReferences(),
+                showGuaranteesForBank,
+                _database.AddBankReference,
+                initialSearchText);
         }
 
-        public FrameworkElement CreateReportsWorkspace(Action closeRequested, string? initialSearchText = null)
+        public FrameworkElement CreateReportsWorkspace(string? initialSearchText = null)
         {
             return new ReportsWorkspaceSurface(
                 WorkspaceReportCatalog.PortfolioActions.Concat(WorkspaceReportCatalog.OperationalActions).ToList(),
                 _reportsWorkspace,
-                closeRequested,
                 initialSearchText);
         }
 
-        public FrameworkElement CreateSettingsWorkspace(Action closeRequested, Action refreshAfterDataReset, string? initialSearchText = null)
+        public FrameworkElement CreateSettingsWorkspace(Action refreshAfterDataReset, string? initialSearchText = null)
         {
-            return new SettingsWorkspaceSurface(closeRequested, refreshAfterDataReset, initialSearchText);
+            return new SettingsWorkspaceSurface(refreshAfterDataReset, initialSearchText);
         }
     }
 }

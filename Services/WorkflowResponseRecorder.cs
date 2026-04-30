@@ -250,17 +250,8 @@ namespace GuaranteeManager.Services
                         responseDocumentPath);
                     return;
 
-                case RequestType.Annulment:
-                    _databaseService.ExecuteAnnulmentWorkflowRequest(
-                        request.Id,
-                        responseNotes,
-                        responseOriginalFileName,
-                        responseSavedFileName,
-                        responseDocumentPath);
-                    return;
-
                 default:
-                    throw new NotSupportedException("هذه الشريحة تدعم تنفيذ التمديد والتخفيض والإفراج والتسييل والتحقق والاستبدال والنقض فقط في الوقت الحالي.");
+                    throw new NotSupportedException("هذه الشريحة تدعم تنفيذ التمديد والتخفيض والإفراج والتسييل والتحقق والاستبدال فقط في الوقت الحالي.");
             }
         }
     }

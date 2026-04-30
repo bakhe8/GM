@@ -19,14 +19,14 @@ namespace GuaranteeManager
         public ReportsWorkspaceFilterResult BuildFilteredItems(
             IReadOnlyList<ReportWorkspaceItem> allReports,
             string searchText,
-            string categoryFilter,
-            IReadOnlyDictionary<string, ReportRunResult> results)
+            string categoryFilter)
         {
             IEnumerable<ReportWorkspaceItem> query = allReports;
             query = categoryFilter switch
             {
-                "تقارير المحفظة" => query.Where(item => item.IsPortfolio),
-                "تقارير تشغيلية" => query.Where(item => !item.IsPortfolio),
+                ReportWorkspaceItem.PortfolioFilterLabel => query.Where(item => item.CategoryFilter == ReportWorkspaceItem.PortfolioFilterLabel),
+                ReportWorkspaceItem.RequestsFilterLabel => query.Where(item => item.CategoryFilter == ReportWorkspaceItem.RequestsFilterLabel),
+                ReportWorkspaceItem.OperationalFilterLabel => query.Where(item => item.CategoryFilter == ReportWorkspaceItem.OperationalFilterLabel),
                 _ => query
             };
 
@@ -40,19 +40,21 @@ namespace GuaranteeManager
             }
 
             List<ReportWorkspaceItem> filtered = query.ToList();
-            string status = results.Values.Any(result => !result.Succeeded) ? "متابعة" : "جاهز";
-            string summary = filtered.Count == 0
-                ? "لا توجد تقارير مطابقة."
-                : $"عرض 1 - {filtered.Count.ToString("N0", CultureInfo.InvariantCulture)} من أصل {allReports.Count.ToString("N0", CultureInfo.InvariantCulture)} تقرير";
 
             return new ReportsWorkspaceFilterResult(
                 filtered,
                 new ReportsWorkspaceMetrics(
-                    allReports.Count(item => item.IsPortfolio).ToString("N0", CultureInfo.InvariantCulture),
-                    allReports.Count(item => !item.IsPortfolio).ToString("N0", CultureInfo.InvariantCulture),
-                    allReports.Count.ToString("N0", CultureInfo.InvariantCulture),
-                    status),
-                summary);
+                    CountCategory(allReports, ReportWorkspaceItem.PortfolioFilterLabel),
+                    CountCategory(allReports, ReportWorkspaceItem.RequestsFilterLabel),
+                    CountCategory(allReports, ReportWorkspaceItem.OperationalFilterLabel),
+                    allReports.Count.ToString("N0", CultureInfo.InvariantCulture)));
+        }
+
+        private static string CountCategory(IReadOnlyList<ReportWorkspaceItem> reports, string categoryFilter)
+        {
+            return reports
+                .Count(item => item.CategoryFilter == categoryFilter)
+                .ToString("N0", CultureInfo.InvariantCulture);
         }
 
         public ReportWorkspaceRowState BuildRowState(
@@ -97,8 +99,12 @@ namespace GuaranteeManager
             }
 
             ReportRunState runState = GetRunState(selectedItem, results);
-            string output = TryGetResult(selectedItem, results, out ReportRunResult result) && !string.IsNullOrWhiteSpace(result.OutputPath)
-                ? result.OutputPath
+            string output = TryGetResult(selectedItem, results, out ReportRunResult result)
+                ? !string.IsNullOrWhiteSpace(result.OutputPath)
+                    ? result.OutputPath
+                    : result.Succeeded
+                        ? result.Message
+                        : "لم يتم إنشاء ملف ناتج بعد."
                 : "لم يتم إنشاء ملف ناتج بعد.";
 
             return new ReportsWorkspaceDetailState(
@@ -136,10 +142,11 @@ namespace GuaranteeManager
 
             if (result.Succeeded)
             {
+                bool hasOutput = !string.IsNullOrWhiteSpace(result.OutputPath);
                 return new ReportRunState(
                     "آخر تشغيل ناجح",
                     string.IsNullOrWhiteSpace(result.Message) ? "تم إنشاء ملف ناتج حديث لهذا التقرير." : result.Message,
-                    "يمكن فتح الملف الناتج أو إعادة إنشاء نسخة أحدث.",
+                    hasOutput ? "يمكن فتح الملف الناتج أو إعادة إنشاء نسخة أحدث." : "يمكن إعادة تنفيذ الإجراء عند الحاجة.",
                     WorkspaceSurfaceChrome.BrushFrom("#16A34A"),
                     WorkspaceSurfaceChrome.BrushFrom("#F2FBF4"),
                     WorkspaceSurfaceChrome.BrushFrom("#C9EFCF"));
@@ -172,14 +179,13 @@ namespace GuaranteeManager
 
     public sealed record ReportsWorkspaceMetrics(
         string Portfolio,
+        string Requests,
         string Operational,
-        string Total,
-        string Status);
+        string Total);
 
     public sealed record ReportsWorkspaceFilterResult(
         IReadOnlyList<ReportWorkspaceItem> Items,
-        ReportsWorkspaceMetrics Metrics,
-        string Summary);
+        ReportsWorkspaceMetrics Metrics);
 
     public sealed record ReportsWorkspaceDetailState(
         string Title,
@@ -208,19 +214,44 @@ namespace GuaranteeManager
         string Title,
         string Description,
         string Category,
-        bool IsPortfolio,
+        string CategoryFilter,
         Brush CategoryBrush)
     {
+        public const string PortfolioFilterLabel = "تقارير المحفظة";
+        public const string RequestsFilterLabel = "تقارير الطلبات";
+        public const string OperationalFilterLabel = "تقارير تشغيلية";
+
         public static ReportWorkspaceItem FromAction(WorkspaceReportCatalog.WorkspaceReportAction action)
         {
-            bool isPortfolio = action.Key.StartsWith("portfolio.", StringComparison.OrdinalIgnoreCase);
+            if (action.Key.StartsWith("portfolio.", StringComparison.OrdinalIgnoreCase))
+            {
+                return new ReportWorkspaceItem(
+                    action.Key,
+                    action.Title,
+                    action.Description,
+                    "تقرير محفظة",
+                    PortfolioFilterLabel,
+                    WorkspaceSurfaceChrome.BrushFrom("#2563EB"));
+            }
+
+            if (action.Key.StartsWith("requests.", StringComparison.OrdinalIgnoreCase))
+            {
+                return new ReportWorkspaceItem(
+                    action.Key,
+                    action.Title,
+                    action.Description,
+                    "تقرير طلبات",
+                    RequestsFilterLabel,
+                    WorkspaceSurfaceChrome.BrushFrom("#E09408"));
+            }
+
             return new ReportWorkspaceItem(
                 action.Key,
                 action.Title,
                 action.Description,
-                isPortfolio ? "تقرير محفظة" : "تقرير تشغيلي",
-                isPortfolio,
-                WorkspaceSurfaceChrome.BrushFrom(isPortfolio ? "#2563EB" : "#E09408"));
+                "تقرير تشغيلي",
+                OperationalFilterLabel,
+                WorkspaceSurfaceChrome.BrushFrom("#16A34A"));
         }
     }
 

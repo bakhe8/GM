@@ -26,75 +26,32 @@
                         <ColumnDefinition Width="10" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="10" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="10" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="10" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
                     <Button Grid.Column="0"
                             Style="{StaticResource NavButton.Active}"
-                            Width="138"
+                            Width="132"
                             Height="36"
                             Command="{Binding CreateNewGuaranteeCommand}"
                             automation:AutomationProperties.AutomationId="Guarantees.Toolbar.CreateNew"
-                            automation:AutomationProperties.Name="إجراء جديد">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="1" />
-                                <ColumnDefinition Width="28" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" FlowDirection="RightToLeft"
-                                        HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4,0">
-                                <TextBlock Text="إجراء جديد" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
-                                <Viewbox Width="14" Height="14" Margin="7,0,0,0" VerticalAlignment="Center">
-                                    <Path Data="{StaticResource Icon.NewTransaction}" Stroke="White" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                </Viewbox>
-                            </StackPanel>
-                            <Border Grid.Column="1" Background="White" Opacity="0.25" Margin="0,7" />
-                            <Viewbox Grid.Column="2" Width="9" Height="9" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                <Path Data="{StaticResource Icon.ChevronDown}" Stroke="White" StrokeThickness="2.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                            </Viewbox>
-                        </Grid>
-                    </Button>
-                    <Button Grid.Column="2"
-                            Style="{StaticResource BaseButton}"
-                            Background="#FFF9ED"
-                            BorderBrush="#F0D58E"
-                            Height="36"
-                            Command="{Binding ApplySmartFilterCommand}"
-                            automation:AutomationProperties.AutomationId="Guarantees.Toolbar.SmartFilter"
-                            automation:AutomationProperties.Name="تصفية ذكية">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="تصفية ذكية" VerticalAlignment="Center" />
-                            <Viewbox Width="16" Height="16" Margin="7,0,0,0" VerticalAlignment="Center">
-                                <Path Data="{StaticResource Icon.SmartFilter}" Stroke="#E09408" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                            </Viewbox>
-                        </StackPanel>
-                    </Button>
-                    <Button Grid.Column="4"
-                            Style="{StaticResource BaseButton}"
-                            Height="36"
-                            Command="{Binding ExportVisibleGuaranteesCommand}"
-                            automation:AutomationProperties.AutomationId="Guarantees.Toolbar.ExportVisible"
-                            automation:AutomationProperties.Name="تصدير النتائج">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="تصدير النتائج" VerticalAlignment="Center" />
+                            automation:AutomationProperties.Name="إضافة ضمان">
+                        <StackPanel Orientation="Horizontal" FlowDirection="RightToLeft"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="إضافة ضمان" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
                             <Viewbox Width="14" Height="14" Margin="7,0,0,0" VerticalAlignment="Center">
-                                <Path Data="{StaticResource Icon.Document}" Stroke="#2563EB" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                <Path Data="{StaticResource Icon.NewTransaction}" Stroke="White" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                             </Viewbox>
                         </StackPanel>
                     </Button>
-                    <ComboBox Grid.Column="6"
+                    <ComboBox Grid.Column="2"
                               Style="{StaticResource FilterComboBox}"
                               ItemsSource="{Binding TimeStatusOptions}"
                               SelectedItem="{Binding SelectedTimeStatus, Mode=TwoWay}"
                               DisplayMemberPath="Label"
                               automation:AutomationProperties.AutomationId="Guarantees.Filter.TimeStatus"
                               automation:AutomationProperties.Name="فلتر الحالة الزمنية" />
-                    <ComboBox Grid.Column="8"
+                    <ComboBox Grid.Column="4"
                               Style="{StaticResource FilterComboBox}"
                               ItemsSource="{Binding BankOptions}"
                               SelectedItem="{Binding SelectedBank, Mode=TwoWay}"
@@ -102,7 +59,7 @@
                               Tag="{StaticResource Icon.Banks}"
                               automation:AutomationProperties.AutomationId="Guarantees.Filter.Bank"
                               automation:AutomationProperties.Name="فلتر البنك" />
-                    <ComboBox Grid.Column="10"
+                    <ComboBox Grid.Column="6"
                               Style="{StaticResource FilterComboBox}"
                               ItemsSource="{Binding GuaranteeTypeOptions}"
                               SelectedItem="{Binding SelectedGuaranteeType, Mode=TwoWay}"
@@ -110,7 +67,7 @@
                               Tag="{StaticResource Icon.Guarantees}"
                               automation:AutomationProperties.AutomationId="Guarantees.Filter.Type"
                               automation:AutomationProperties.Name="فلتر نوع الضمان" />
-                    <Border Grid.Column="12"
+                    <Border Grid.Column="8"
                             Background="White"
                             BorderBrush="#D8E1EE"
                             BorderThickness="1"
@@ -273,8 +230,9 @@
                                     <ColumnDefinition Width="1.00*" />
                                     <ColumnDefinition Width="1.15*" />
                                     <ColumnDefinition Width="1.34*" />
-                                    <ColumnDefinition Width="1.66*" />
-                                    <ColumnDefinition Width="1.38*" />
+                                    <ColumnDefinition Width="1.48*" />
+                                    <ColumnDefinition Width="0.74*" />
+                                    <ColumnDefinition Width="1.30*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="الإجراءات" Style="{StaticResource TableHeaderText}" />
                                 <TextBlock Grid.Column="1" Text="الحالة التشغيلية" Style="{StaticResource TableHeaderText}" />
@@ -284,14 +242,15 @@
                                 <TextBlock Grid.Column="5" Text="المبلغ" Style="{StaticResource TableHeaderText}" />
                                 <TextBlock Grid.Column="6" Text="البنك" Style="{StaticResource TableHeaderRight}" />
                                 <TextBlock Grid.Column="7" Text="اسم المستفيد" Style="{StaticResource TableHeaderRight}" />
-                                <TextBlock Grid.Column="8" Text="رقم الضمان" Style="{StaticResource TableHeaderRight}" />
+                                <TextBlock Grid.Column="8" Text="الإصدار" Style="{StaticResource TableHeaderText}" />
+                                <TextBlock Grid.Column="9" Text="رقم الضمان" Style="{StaticResource TableHeaderRight}" />
                             </Grid>
                         </Grid>
 
                         <ListBox Grid.Row="1"
                                  Style="{StaticResource ReferenceTableRowsListBox}"
                                  ItemsSource="{Binding Guarantees}"
-                                 SelectedItem="{Binding SelectedGuarantee, Mode=TwoWay}"
+                                 SelectedItem="{Binding SelectedTableGuarantee, Mode=TwoWay}"
                                  automation:AutomationProperties.AutomationId="Guarantees.Table.List"
                                  automation:AutomationProperties.Name="قائمة الضمانات">
                             <ListBox.ItemContainerStyle>
@@ -302,7 +261,17 @@
                             </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Height="40" Margin="6,0" FlowDirection="LeftToRight">
+                                    <StackPanel FlowDirection="LeftToRight">
+                                    <Grid Height="40"
+                                          Margin="6,0"
+                                          FlowDirection="LeftToRight"
+                                          Cursor="Hand"
+                                          ToolTip="عرض بيانات الضمان الحالي في اللوحة الجانبية">
+                                        <Grid.InputBindings>
+                                            <MouseBinding MouseAction="LeftClick"
+                                                          Command="{Binding DataContext.SelectGuaranteeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                          CommandParameter="{Binding}" />
+                                        </Grid.InputBindings>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="2.75*" />
                                             <ColumnDefinition Width="1.18*" />
@@ -311,112 +280,26 @@
                                             <ColumnDefinition Width="1.00*" />
                                             <ColumnDefinition Width="1.15*" />
                                             <ColumnDefinition Width="1.34*" />
-                                            <ColumnDefinition Width="1.66*" />
-                                            <ColumnDefinition Width="1.38*" />
+                                            <ColumnDefinition Width="1.48*" />
+                                            <ColumnDefinition Width="0.74*" />
+                                            <ColumnDefinition Width="1.30*" />
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
                                             <Button Style="{StaticResource RowButton}"
-                                                    MinWidth="26"
-                                                    ToolTip="إجراءات إضافية"
-                                                    Click="RowMoreButton_Click"
-                                                    Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    automation:AutomationProperties.AutomationId="{Binding RowMoreAutomationId}"
-                                                    automation:AutomationProperties.Name="{Binding RowMoreAutomationName}"
-                                                    automation:AutomationProperties.HelpText="يفتح قائمة الإجراءات الإضافية لهذا الضمان."
-                                                    automation:AutomationProperties.ItemStatus="{Binding GuaranteeNo}">
-                                                <Button.ContextMenu>
-                                                    <ContextMenu MinWidth="168"
-                                                                 FlowDirection="RightToLeft"
-                                                                 Background="White"
-                                                                 BorderBrush="#D8E1EE"
-                                                                 BorderThickness="1"
-                                                                 Opened="RowContextMenu_Opened">
-                                                        <ContextMenu.Resources>
-                                                            <Style TargetType="MenuItem">
-                                                                <Setter Property="FontSize" Value="11" />
-                                                                <Setter Property="FontWeight" Value="SemiBold" />
-                                                                <Setter Property="Foreground" Value="#1F2937" />
-                                                                <Setter Property="Padding" Value="10,5" />
-                                                            </Style>
-                                                        </ContextMenu.Resources>
-
-                                                        <MenuItem Header="عرض المرفقات"
-                                                                  IsEnabled="{Binding PlacementTarget.DataContext.OpenAttachmentsAction.IsEnabled, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  ToolTip="{Binding PlacementTarget.DataContext.OpenAttachmentsAction.Hint, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  ToolTipService.ShowOnDisabled="True"
-                                                                  Command="{Binding PlacementTarget.Tag.ShowRowAttachmentsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                  automation:AutomationProperties.AutomationId="Guarantees.RowMenu.OpenAttachments">
-                                                            <MenuItem.Icon>
-                                                                <Viewbox Width="13" Height="13">
-                                                                    <Path Data="{StaticResource Icon.Document}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                                </Viewbox>
-                                                            </MenuItem.Icon>
-                                                        </MenuItem>
-
-                                                        <MenuItem Header="استعلامات تشغيلية"
-                                                                  Tag="InquiryActionsHost"
-                                                                  ToolTip="جوابات مباشرة من نفس السجل مع إظهار سبب الإتاحة أو المنع لكل استعلام"
-                                                                  automation:AutomationProperties.AutomationId="Guarantees.RowMenu.Inquiries">
-                                                            <MenuItem.Icon>
-                                                                <Viewbox Width="13" Height="13">
-                                                                    <Path Data="{StaticResource Icon.Search}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                                </Viewbox>
-                                                            </MenuItem.Icon>
-                                                        </MenuItem>
-
-                                                        <MenuItem Header="نسخ"
-                                                                  ToolTip="نسخ قيم تعريفية من الصف الحالي إلى الحافظة"
-                                                                  automation:AutomationProperties.HelpText="نسخ قيم تعريفية من الصف الحالي إلى الحافظة"
-                                                                  automation:AutomationProperties.AutomationId="Guarantees.RowMenu.Copy">
-                                                            <MenuItem.Icon>
-                                                                <Viewbox Width="13" Height="13">
-                                                                    <Path Data="{StaticResource Icon.Document}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                                </Viewbox>
-                                                            </MenuItem.Icon>
-
-                                                            <MenuItem Header="رقم الضمان"
-                                                                      ToolTip="نسخ رقم الضمان إلى الحافظة"
-                                                                      Command="{Binding PlacementTarget.Tag.CopyGuaranteeNoCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CopyGuaranteeNo" />
-                                                            <MenuItem Header="اسم المستفيد"
-                                                                      ToolTip="نسخ اسم المستفيد إلى الحافظة"
-                                                                      Command="{Binding PlacementTarget.Tag.CopyGuaranteeSupplierCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CopyBeneficiary" />
-                                                            <MenuItem Header="نوع المرجع"
-                                                                      ToolTip="نسخ نوع المرجع إلى الحافظة"
-                                                                      Command="{Binding PlacementTarget.Tag.CopyGuaranteeReferenceTypeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CopyReferenceType" />
-                                                            <MenuItem Header="رقم المرجع"
-                                                                      ToolTip="نسخ رقم المرجع إلى الحافظة"
-                                                                      Command="{Binding PlacementTarget.Tag.CopyGuaranteeReferenceNumberCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      automation:AutomationProperties.AutomationId="Guarantees.RowMenu.CopyReferenceNumber" />
-                                                        </MenuItem>
-                                                    </ContextMenu>
-                                                </Button.ContextMenu>
-                                                <Viewbox Width="10" Height="10">
-                                                    <Path Data="{StaticResource Icon.ChevronDown}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                </Viewbox>
-                                            </Button>
-                                            <Button Style="{StaticResource RowButton}"
-                                                    Command="{Binding DataContext.OpenHistoryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    Width="28"
+                                                    MinWidth="28"
+                                                    Padding="0"
+                                                    Command="{Binding DataContext.ToggleGuaranteeVersionsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"
-                                                    ToolTip="فتح سجل الإصدارات والطلبات لهذا الضمان"
-                                                    automation:AutomationProperties.AutomationId="{Binding RowHistoryAutomationId}"
-                                                    automation:AutomationProperties.Name="{Binding RowHistoryAutomationName}"
-                                                    automation:AutomationProperties.HelpText="يفتح سجل الإصدارات والطلبات لهذا الضمان."
+                                                    ToolTip="عرض إصدارات هذا الضمان تحت الصف"
+                                                    automation:AutomationProperties.AutomationId="{Binding RowVersionsAutomationId}"
+                                                    automation:AutomationProperties.Name="{Binding RowVersionsAutomationName}"
+                                                    automation:AutomationProperties.HelpText="يعرض إصدارات هذا الضمان تحت نفس الصف."
                                                     automation:AutomationProperties.ItemStatus="{Binding GuaranteeNo}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Viewbox Width="10" Height="10" Margin="0,0,3,0" VerticalAlignment="Center">
-                                                        <Path Data="{StaticResource Icon.History}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                <Viewbox Width="10" Height="10" VerticalAlignment="Center">
+                                                    <Path Data="{StaticResource Icon.ChevronDown}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                                     </Viewbox>
-                                                    <TextBlock Text="تاريخ" />
-                                                </StackPanel>
-                                            </Button>
+                                                </Button>
                                             <Button Style="{StaticResource PrimaryButton}"
                                                     Height="26"
                                                     MinWidth="70"
@@ -458,21 +341,128 @@
                                             <TextBlock Text="{Binding Bank}" Style="{StaticResource TableCellText}" TextAlignment="Right" VerticalAlignment="Center" />
                                         </StackPanel>
                                         <TextBlock Grid.Column="7" Text="{Binding Beneficiary}" Style="{StaticResource TableCellRight}" />
-                                        <TextBlock Grid.Column="8" Text="{Binding GuaranteeNo}" Style="{StaticResource TableCellRight}" />
+                                        <TextBlock Grid.Column="8" Text="{Binding VersionLabel}" Style="{StaticResource TableCellCenter}" />
+                                        <TextBlock Grid.Column="9" Text="{Binding GuaranteeNo}" Style="{StaticResource TableCellRight}" />
                                     </Grid>
+                                    <ItemsControl ItemsSource="{Binding VersionRows}">
+                                        <ItemsControl.Style>
+                                            <Style TargetType="ItemsControl">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsVersionsExpanded}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ItemsControl.Style>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Height="34"
+                                                        Margin="6,0"
+                                                        Background="#F8FAFC"
+                                                        BorderBrush="#E7EDF5"
+                                                        BorderThickness="0,1,0,0"
+                                                        Cursor="Hand"
+                                                        ToolTip="عرض بيانات هذا الإصدار في اللوحة الجانبية">
+                                                    <Button Style="{StaticResource PlainLinkButton}"
+                                                            HorizontalContentAlignment="Stretch"
+                                                            VerticalContentAlignment="Stretch"
+                                                            Command="{Binding DataContext.SelectGuaranteeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}"
+                                                            automation:AutomationProperties.AutomationId="{Binding RowAutomationName}"
+                                                            automation:AutomationProperties.Name="{Binding RowAutomationName}">
+                                                    <Grid FlowDirection="LeftToRight">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="2.75*" />
+                                                            <ColumnDefinition Width="1.18*" />
+                                                            <ColumnDefinition Width="1.15*" />
+                                                            <ColumnDefinition Width="1.00*" />
+                                                            <ColumnDefinition Width="1.00*" />
+                                                            <ColumnDefinition Width="1.15*" />
+                                                            <ColumnDefinition Width="1.34*" />
+                                                            <ColumnDefinition Width="1.48*" />
+                                                            <ColumnDefinition Width="0.74*" />
+                                                            <ColumnDefinition Width="1.30*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="1"
+                                                                   Text="{Binding WorkStatus}"
+                                                                   Style="{StaticResource TableCellCenter}"
+                                                                   FontSize="9.5"
+                                                                   Foreground="{Binding WorkBrush}" />
+                                                        <TextBlock Grid.Column="2"
+                                                                   Text="{Binding TimeStatus}"
+                                                                   Style="{StaticResource TableCellCenter}"
+                                                                   FontSize="9.5"
+                                                                   Foreground="{Binding TimeBrush}" />
+                                                        <TextBlock Grid.Column="3" Text="{Binding ExpiryDate}" Style="{StaticResource TableCellCenter}" />
+                                                        <TextBlock Grid.Column="4" Text="{Binding IssueDate}" Style="{StaticResource TableCellCenter}" />
+                                                        <TextBlock Grid.Column="5" Text="{Binding Amount}" Style="{StaticResource TableCellCenter}" />
+                                                        <StackPanel Grid.Column="6" Orientation="Horizontal" FlowDirection="RightToLeft" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                            <Image Source="{Binding BankLogo}" Width="14" Height="14" RenderOptions.BitmapScalingMode="HighQuality" />
+                                                            <Border Width="8" />
+                                                            <TextBlock Text="{Binding Bank}" Style="{StaticResource TableCellText}" TextAlignment="Right" VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Column="7" Text="{Binding Beneficiary}" Style="{StaticResource TableCellRight}" />
+                                                        <TextBlock Grid.Column="8" Text="{Binding VersionLabel}" Style="{StaticResource TableCellCenter}" />
+                                                        <TextBlock Grid.Column="9" Text="{Binding GuaranteeNo}" Style="{StaticResource TableCellRight}" />
+                                                    </Grid>
+                                                    </Button>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    </StackPanel>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
 
                         <Grid Grid.Row="2" Style="{StaticResource ReferenceTablePager}">
                              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                  <Button Style="{StaticResource ReferenceTablePagerButton}" Content="←" />
-                                  <Button Style="{StaticResource ReferenceTablePagerButton}" Content="5" Margin="6,0,0,0" />
-                                  <Button Style="{StaticResource ReferenceTablePagerButton}" Content="4" Margin="6,0,0,0" />
-                                  <Button Style="{StaticResource ReferenceTablePagerButton}" Content="3" Margin="6,0,0,0" />
-                                  <Button Style="{StaticResource ReferenceTablePagerButton}" Content="2" Margin="6,0,0,0" />
-                                  <Button Style="{StaticResource ReferenceTablePagerActiveButton}" Content="1" Margin="6,0,0,0" />
-                                  <Button Style="{StaticResource ReferenceTablePagerButton}" Content="10" MinWidth="46" Margin="12,0,0,0" />
+                                  <Button Style="{StaticResource ReferenceTablePagerButton}"
+                                          Content="←"
+                                          Command="{Binding PreviousGuaranteePageCommand}"
+                                          automation:AutomationProperties.AutomationId="Guarantees.Pager.Previous"
+                                          automation:AutomationProperties.Name="الصفحة السابقة" />
+                                  <ItemsControl ItemsSource="{Binding GuaranteePagerButtons}">
+                                      <ItemsControl.ItemsPanel>
+                                          <ItemsPanelTemplate>
+                                              <StackPanel Orientation="Horizontal" />
+                                          </ItemsPanelTemplate>
+                                      </ItemsControl.ItemsPanel>
+                                      <ItemsControl.ItemTemplate>
+                                          <DataTemplate>
+                                              <Button Content="{Binding Label}"
+                                                      Command="{Binding DataContext.GoToGuaranteePageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                      CommandParameter="{Binding PageNumber}"
+                                                      Margin="6,0,0,0"
+                                                      automation:AutomationProperties.AutomationId="{Binding AutomationId}"
+                                                      automation:AutomationProperties.Name="{Binding AutomationName}">
+                                                  <Button.Style>
+                                                      <Style TargetType="Button" BasedOn="{StaticResource ReferenceTablePagerButton}">
+                                                          <Style.Triggers>
+                                                              <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                                                  <Setter Property="Background" Value="#2563EB" />
+                                                                  <Setter Property="Foreground" Value="White" />
+                                                                  <Setter Property="BorderThickness" Value="0" />
+                                                              </DataTrigger>
+                                                          </Style.Triggers>
+                                                      </Style>
+                                                  </Button.Style>
+                                              </Button>
+                                          </DataTemplate>
+                                      </ItemsControl.ItemTemplate>
+                                  </ItemsControl>
+                                  <Button Style="{StaticResource ReferenceTablePagerButton}"
+                                          Content="→"
+                                          Margin="6,0,0,0"
+                                          Command="{Binding NextGuaranteePageCommand}"
+                                          automation:AutomationProperties.AutomationId="Guarantees.Pager.Next"
+                                          automation:AutomationProperties.Name="الصفحة التالية" />
+                                  <Button Style="{StaticResource ReferenceTablePagerButton}"
+                                          Content="{Binding GuaranteePageSizeText}"
+                                          IsEnabled="False"
+                                          MinWidth="46"
+                                          Margin="12,0,0,0" />
                                  <TextBlock Text="لكل صفحة" FontSize="11" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" Margin="8,0,0,0" />
                              </StackPanel>
                             <TextBlock Text="{Binding FooterSummary}"

@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+#if DEBUG
+using GuaranteeManager.Development;
+#endif
 using GuaranteeManager.Models;
 using GuaranteeManager.Services;
 using GuaranteeManager.Utils;
@@ -35,6 +38,18 @@ namespace GuaranteeManager.Tests
             Assert.Equal(1, persisted.VersionNumber);
             Assert.Equal(input.Supplier, persisted.Supplier);
             Assert.Equal(input.ReferenceNumber, persisted.ReferenceNumber);
+        }
+
+        [Fact]
+        public void AddBankReference_PersistsStandaloneBankAndExposesItAsUniqueBank()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            string bankName = $"Reference Bank {_fixture.NextToken("BANK")}";
+
+            database.AddBankReference(bankName);
+
+            Assert.Contains(bankName, database.GetBankReferences());
+            Assert.Contains(bankName, database.GetUniqueValues("Bank"));
         }
 
         [Fact]
@@ -82,9 +97,31 @@ namespace GuaranteeManager.Tests
             AttachmentRecord attachment = Assert.Single(persisted.Attachments);
 
             Assert.Equal(".txt", attachment.FileExtension);
+            Assert.Equal(AttachmentDocumentType.SupportingDocument, attachment.DocumentType);
             Assert.True(File.Exists(attachment.FilePath));
             Assert.NotEqual(sourceAttachmentPath, attachment.FilePath);
             Assert.Equal("attachment-body", File.ReadAllText(attachment.FilePath));
+        }
+
+        [Fact]
+        public void SaveGuaranteeWithAttachments_PersistsDocumentType()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            string sourceAttachmentPath = _fixture.CreateSourceFile(contents: "guarantee-image");
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuaranteeWithAttachments(
+                seed,
+                new List<AttachmentInput>
+                {
+                    new(sourceAttachmentPath, AttachmentDocumentType.GuaranteeImage)
+                });
+
+            Guarantee persisted = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+            AttachmentRecord attachment = Assert.Single(persisted.Attachments);
+
+            Assert.Equal(AttachmentDocumentType.GuaranteeImage, attachment.DocumentType);
+            Assert.Equal("صورة ضمان", attachment.DocumentTypeLabel);
         }
 
         [Fact]
@@ -116,6 +153,64 @@ namespace GuaranteeManager.Tests
             Assert.Equal(2, requests.Count);
             Assert.Contains(requests, item => item.Id == extensionRequest.Id && item.SequenceNumber == 1);
             Assert.Contains(requests, item => item.Id == verificationRequest.Id && item.SequenceNumber == 2);
+        }
+
+        [Fact]
+        public void RecordBankResponse_StaleExtensionAfterExpiryChange_KeepsRequestPending()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+            WorkflowRequest extensionRequest = workflow.CreateExtensionRequest(
+                current.Id,
+                current.ExpiryDate.AddDays(60),
+                "extend from original date",
+                "tester");
+
+            current.ExpiryDate = current.ExpiryDate.AddDays(10);
+            int updatedVersionId = database.UpdateGuarantee(current, new List<string>(), new List<AttachmentRecord>());
+
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                () => workflow.RecordBankResponse(extensionRequest.Id, RequestStatus.Executed, "approved"));
+            WorkflowRequest stillPending = database.GetWorkflowRequestById(extensionRequest.Id)!;
+            Guarantee latest = database.GetCurrentGuaranteeByRootId(current.RootId ?? current.Id)!;
+
+            Assert.Contains("تاريخ الانتهاء الحالي تغيّر", exception.Message);
+            Assert.Equal(RequestStatus.Pending, stillPending.Status);
+            Assert.Equal(updatedVersionId, latest.Id);
+            Assert.Equal(2, latest.VersionNumber);
+        }
+
+        [Fact]
+        public void RecordBankResponse_StaleReductionAfterAmountChange_KeepsRequestPending()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+            WorkflowRequest reductionRequest = workflow.CreateReductionRequest(
+                current.Id,
+                current.Amount - 100m,
+                "reduce from original amount",
+                "tester");
+
+            current.Amount += 250m;
+            int updatedVersionId = database.UpdateGuarantee(current, new List<string>(), new List<AttachmentRecord>());
+
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                () => workflow.RecordBankResponse(reductionRequest.Id, RequestStatus.Executed, "approved"));
+            WorkflowRequest stillPending = database.GetWorkflowRequestById(reductionRequest.Id)!;
+            Guarantee latest = database.GetCurrentGuaranteeByRootId(current.RootId ?? current.Id)!;
+
+            Assert.Contains("مبلغ الضمان الحالي تغيّر", exception.Message);
+            Assert.Equal(RequestStatus.Pending, stillPending.Status);
+            Assert.Equal(updatedVersionId, latest.Id);
+            Assert.Equal(2, latest.VersionNumber);
         }
 
         [Fact]
@@ -197,6 +292,7 @@ namespace GuaranteeManager.Tests
 
             List<WorkflowRequestListItem> executedWithoutResponse = database.QueryWorkflowRequests(new WorkflowRequestQueryOptions
             {
+                RootGuaranteeId = currentExecuted.RootId ?? currentExecuted.Id,
                 RequestStatus = RequestStatus.Executed,
                 PendingOrMissingResponseOnly = true,
                 SortMode = WorkflowRequestQuerySortMode.ActivityDateDescending
@@ -283,7 +379,7 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
-        public void RecordBankResponse_ExecutedRelease_CreatesReleasedCurrentVersion()
+        public void RecordBankResponse_ExecutedRelease_EndsLifecycleWithoutCreatingVersion()
         {
             DatabaseService database = _fixture.CreateDatabaseService();
             WorkflowService workflow = _fixture.CreateWorkflowService(database);
@@ -297,15 +393,23 @@ namespace GuaranteeManager.Tests
 
             Guarantee releasedGuarantee = database.GetCurrentGuaranteeByRootId(current.RootId ?? current.Id)!;
             WorkflowRequest executedRequest = database.GetWorkflowRequestById(releaseRequest.Id)!;
+            WorkflowRequestListItem requestListItem = Assert.Single(database.QueryWorkflowRequests(new WorkflowRequestQueryOptions
+            {
+                RootGuaranteeId = current.RootId ?? current.Id
+            }));
 
             Assert.Equal(GuaranteeLifecycleStatus.Released, releasedGuarantee.LifecycleStatus);
-            Assert.Equal(2, releasedGuarantee.VersionNumber);
+            Assert.Equal(1, releasedGuarantee.VersionNumber);
             Assert.Equal(RequestStatus.Executed, executedRequest.Status);
             Assert.NotNull(executedRequest.ResponseRecordedAt);
+            Assert.Null(executedRequest.ResultVersionId);
+            Assert.Equal(1, requestListItem.BaseVersionNumber);
+            Assert.Null(requestListItem.ResultVersionNumber);
+            Assert.Equal("v1", requestListItem.RelatedVersionLabel);
         }
 
         [Fact]
-        public void CreateAnnulmentRequest_ForReleasedGuarantee_CreatesLetterBackedRequest()
+        public void RecordBankResponse_ExecutedLiquidation_EndsLifecycleWithoutCreatingVersion()
         {
             DatabaseService database = _fixture.CreateDatabaseService();
             WorkflowService workflow = _fixture.CreateWorkflowService(database);
@@ -314,15 +418,222 @@ namespace GuaranteeManager.Tests
             database.SaveGuarantee(seed, new List<string>());
             Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
 
-            WorkflowRequest releaseRequest = workflow.CreateReleaseRequest(current.Id, "release", "tester");
+            WorkflowRequest liquidationRequest = workflow.CreateLiquidationRequest(current.Id, "liquidation", "tester");
+            workflow.RecordBankResponse(liquidationRequest.Id, RequestStatus.Executed, "liquidated");
+
+            int rootId = current.RootId ?? current.Id;
+            Guarantee liquidatedGuarantee = database.GetCurrentGuaranteeByRootId(rootId)!;
+            WorkflowRequest executedRequest = database.GetWorkflowRequestById(liquidationRequest.Id)!;
+            List<Guarantee> history = database.GetGuaranteeHistory(current.Id);
+
+            Assert.Equal(current.Id, liquidatedGuarantee.Id);
+            Assert.Equal(GuaranteeLifecycleStatus.Liquidated, liquidatedGuarantee.LifecycleStatus);
+            Assert.Equal(1, liquidatedGuarantee.VersionNumber);
+            Assert.Null(executedRequest.ResultVersionId);
+            Assert.Single(history);
+        }
+
+        [Fact]
+        public void CreateReleaseRequest_AfterExecutedExtension_IsAllowedAndEndsExtendedGuarantee()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+
+            WorkflowRequest extensionRequest = workflow.CreateExtensionRequest(
+                current.Id,
+                current.ExpiryDate.AddDays(60),
+                "extend before release",
+                "tester");
+            workflow.RecordBankResponse(extensionRequest.Id, RequestStatus.Executed, "extended");
+
+            Guarantee extendedGuarantee = database.GetCurrentGuaranteeByRootId(current.RootId ?? current.Id)!;
+            WorkflowRequest releaseRequest = workflow.CreateReleaseRequest(extendedGuarantee.Id, "release extended guarantee", "tester");
             workflow.RecordBankResponse(releaseRequest.Id, RequestStatus.Executed, "released");
 
             Guarantee releasedGuarantee = database.GetCurrentGuaranteeByRootId(current.RootId ?? current.Id)!;
-            WorkflowRequest annulmentRequest = workflow.CreateAnnulmentRequest(releasedGuarantee.Id, "reverse", "tester");
+            WorkflowRequest executedRelease = database.GetWorkflowRequestById(releaseRequest.Id)!;
+            List<Guarantee> history = database.GetGuaranteeHistory(releasedGuarantee.Id);
 
-            Assert.Equal(RequestType.Annulment, annulmentRequest.Type);
-            Assert.True(annulmentRequest.HasLetter);
-            Assert.True(File.Exists(annulmentRequest.LetterFilePath));
+            Assert.Equal(2, extendedGuarantee.VersionNumber);
+            Assert.Equal(GuaranteeLifecycleStatus.Released, releasedGuarantee.LifecycleStatus);
+            Assert.Equal(2, releasedGuarantee.VersionNumber);
+            Assert.Null(executedRelease.ResultVersionId);
+            Assert.Equal(2, history.Count);
+        }
+
+        [Fact]
+        public void CreateLiquidationRequest_AfterExecutedReduction_IsAllowedAndEndsReducedGuarantee()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+
+            WorkflowRequest reductionRequest = workflow.CreateReductionRequest(
+                current.Id,
+                current.Amount - 100m,
+                "reduce before liquidation",
+                "tester");
+            workflow.RecordBankResponse(reductionRequest.Id, RequestStatus.Executed, "reduced");
+
+            Guarantee reducedGuarantee = database.GetCurrentGuaranteeByRootId(current.RootId ?? current.Id)!;
+            WorkflowRequest liquidationRequest = workflow.CreateLiquidationRequest(reducedGuarantee.Id, "liquidate reduced guarantee", "tester");
+            workflow.RecordBankResponse(liquidationRequest.Id, RequestStatus.Executed, "liquidated");
+
+            Guarantee liquidatedGuarantee = database.GetCurrentGuaranteeByRootId(current.RootId ?? current.Id)!;
+            WorkflowRequest executedLiquidation = database.GetWorkflowRequestById(liquidationRequest.Id)!;
+            List<Guarantee> history = database.GetGuaranteeHistory(liquidatedGuarantee.Id);
+
+            Assert.Equal(2, reducedGuarantee.VersionNumber);
+            Assert.Equal(GuaranteeLifecycleStatus.Liquidated, liquidatedGuarantee.LifecycleStatus);
+            Assert.Equal(2, liquidatedGuarantee.VersionNumber);
+            Assert.Null(executedLiquidation.ResultVersionId);
+            Assert.Equal(2, history.Count);
+        }
+
+        [Fact]
+        public void CreateExtensionRequest_AfterExecutedExtension_IsAllowedOnCurrentVersion()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee original = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+
+            WorkflowRequest firstExtension = workflow.CreateExtensionRequest(
+                original.Id,
+                original.ExpiryDate.AddDays(30),
+                "first extension",
+                "tester");
+            workflow.RecordBankResponse(firstExtension.Id, RequestStatus.Executed, "first approved");
+
+            Guarantee extended = database.GetCurrentGuaranteeByRootId(original.RootId ?? original.Id)!;
+            WorkflowRequest secondExtension = workflow.CreateExtensionRequest(
+                extended.Id,
+                extended.ExpiryDate.AddDays(30),
+                "second extension",
+                "tester");
+            workflow.RecordBankResponse(secondExtension.Id, RequestStatus.Executed, "second approved");
+
+            Guarantee twiceExtended = database.GetCurrentGuaranteeByRootId(original.RootId ?? original.Id)!;
+            List<Guarantee> history = database.GetGuaranteeHistory(twiceExtended.Id);
+
+            Assert.Equal(3, twiceExtended.VersionNumber);
+            Assert.Equal(GuaranteeLifecycleStatus.Active, twiceExtended.LifecycleStatus);
+            Assert.Equal(3, history.Count);
+        }
+
+        [Fact]
+        public void CreateReductionRequest_AfterExecutedReduction_IsAllowedOnCurrentVersion()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee original = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+
+            WorkflowRequest firstReduction = workflow.CreateReductionRequest(
+                original.Id,
+                original.Amount - 100m,
+                "first reduction",
+                "tester");
+            workflow.RecordBankResponse(firstReduction.Id, RequestStatus.Executed, "first approved");
+
+            Guarantee reduced = database.GetCurrentGuaranteeByRootId(original.RootId ?? original.Id)!;
+            WorkflowRequest secondReduction = workflow.CreateReductionRequest(
+                reduced.Id,
+                reduced.Amount - 100m,
+                "second reduction",
+                "tester");
+            workflow.RecordBankResponse(secondReduction.Id, RequestStatus.Executed, "second approved");
+
+            Guarantee twiceReduced = database.GetCurrentGuaranteeByRootId(original.RootId ?? original.Id)!;
+            List<Guarantee> history = database.GetGuaranteeHistory(twiceReduced.Id);
+
+            Assert.Equal(3, twiceReduced.VersionNumber);
+            Assert.Equal(GuaranteeLifecycleStatus.Active, twiceReduced.LifecycleStatus);
+            Assert.Equal(3, history.Count);
+        }
+
+        [Fact]
+        public void CreateTerminalRequests_AfterTerminalExecution_AreBlocked()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee releaseSeed = _fixture.CreateGuarantee();
+            Guarantee liquidationSeed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(releaseSeed, new List<string>());
+            database.SaveGuarantee(liquidationSeed, new List<string>());
+            Guarantee releaseCurrent = database.GetCurrentGuaranteeByNo(releaseSeed.GuaranteeNo)!;
+            Guarantee liquidationCurrent = database.GetCurrentGuaranteeByNo(liquidationSeed.GuaranteeNo)!;
+
+            WorkflowRequest releaseRequest = workflow.CreateReleaseRequest(releaseCurrent.Id, "release", "tester");
+            WorkflowRequest liquidationRequest = workflow.CreateLiquidationRequest(liquidationCurrent.Id, "liquidate", "tester");
+            workflow.RecordBankResponse(releaseRequest.Id, RequestStatus.Executed, "released");
+            workflow.RecordBankResponse(liquidationRequest.Id, RequestStatus.Executed, "liquidated");
+
+            Guarantee releasedGuarantee = database.GetCurrentGuaranteeByRootId(releaseCurrent.RootId ?? releaseCurrent.Id)!;
+            Guarantee liquidatedGuarantee = database.GetCurrentGuaranteeByRootId(liquidationCurrent.RootId ?? liquidationCurrent.Id)!;
+
+            InvalidOperationException repeatedRelease = Assert.Throws<InvalidOperationException>(
+                () => workflow.CreateReleaseRequest(releasedGuarantee.Id, "repeat release", "tester"));
+            InvalidOperationException repeatedLiquidation = Assert.Throws<InvalidOperationException>(
+                () => workflow.CreateLiquidationRequest(liquidatedGuarantee.Id, "repeat liquidation", "tester"));
+
+            Assert.Contains("ضمان غير نشط", repeatedRelease.Message);
+            Assert.Contains("ضمان غير نشط", repeatedLiquidation.Message);
+        }
+
+        [Fact]
+        public void RecordBankResponse_ExecutedReplacement_CreatesReplacementGuaranteeAndMarksOriginalWithoutNewVersion()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+            int originalRootId = current.RootId ?? current.Id;
+            string replacementNo = $"BG-R-{_fixture.NextToken("NO")}";
+
+            WorkflowRequest replacementRequest = workflow.CreateReplacementRequest(
+                current.Id,
+                replacementNo,
+                current.Supplier,
+                "Replacement Bank",
+                current.Amount,
+                current.ExpiryDate.AddDays(90),
+                current.GuaranteeType,
+                current.Beneficiary,
+                current.ReferenceType,
+                current.ReferenceNumber,
+                "replacement",
+                "tester");
+            workflow.RecordBankResponse(replacementRequest.Id, RequestStatus.Executed, "replaced");
+
+            Guarantee originalAfterReplacement = database.GetCurrentGuaranteeByRootId(originalRootId)!;
+            Guarantee replacementGuarantee = database.GetCurrentGuaranteeByNo(replacementNo)!;
+            WorkflowRequest executedRequest = database.GetWorkflowRequestById(replacementRequest.Id)!;
+            List<Guarantee> originalHistory = database.GetGuaranteeHistory(current.Id);
+
+            Assert.Equal(current.Id, originalAfterReplacement.Id);
+            Assert.Equal(GuaranteeLifecycleStatus.Replaced, originalAfterReplacement.LifecycleStatus);
+            Assert.Equal(1, originalAfterReplacement.VersionNumber);
+            Assert.Equal(replacementGuarantee.RootId, originalAfterReplacement.ReplacedByRootId);
+            Assert.Equal(originalRootId, replacementGuarantee.ReplacesRootId);
+            Assert.Equal(1, replacementGuarantee.VersionNumber);
+            Assert.Equal(GuaranteeLifecycleStatus.Active, replacementGuarantee.LifecycleStatus);
+            Assert.Equal(replacementGuarantee.Id, executedRequest.ResultVersionId);
+            Assert.Single(originalHistory);
         }
 
         [Fact]
@@ -351,6 +662,43 @@ namespace GuaranteeManager.Tests
             Assert.Contains("approved-without-file", executedAfterAttach.ResponseNotes);
             Assert.Contains("late doc", executedAfterAttach.ResponseNotes);
         }
+
+#if DEBUG
+        [Fact]
+        public void DataSeedingService_AppendMode_PreservesExistingRows()
+        {
+            string originalStorageRoot = AppPaths.StorageRootDirectory;
+            string appendStorageRoot = _fixture.CreateStorageRoot($"seed-append-{_fixture.NextToken("ROOT")}");
+
+            try
+            {
+                _fixture.SwitchStorageRoot(appendStorageRoot);
+                DatabaseService.InitializeRuntime();
+
+                DatabaseService database = _fixture.CreateDatabaseService();
+                WorkflowService workflow = _fixture.CreateWorkflowService(database);
+                var seeding = new DataSeedingService(database, workflow);
+
+                seeding.Seed(clearExistingData: true);
+                long initialGuarantees = CountRows("Guarantees");
+                long initialRequests = CountRows("WorkflowRequests");
+                long initialAttachments = CountRows("Attachments");
+                string preservedGuaranteeNo = QueryFirstGuaranteeNo();
+
+                seeding.Seed(clearExistingData: false);
+
+                Assert.True(CountRows("Guarantees") > initialGuarantees);
+                Assert.True(CountRows("WorkflowRequests") > initialRequests);
+                Assert.True(CountRows("Attachments") > initialAttachments);
+                Assert.NotNull(database.GetCurrentGuaranteeByNo(preservedGuaranteeNo));
+            }
+            finally
+            {
+                _fixture.SwitchStorageRoot(originalStorageRoot);
+                DatabaseService.InitializeRuntime();
+            }
+        }
+#endif
 
         [Fact]
         public void PortableBackupPackage_RestoresDatabaseAttachmentsAndWorkflowIntoNewStorageRoot()
@@ -408,6 +756,31 @@ namespace GuaranteeManager.Tests
                 _fixture.SwitchStorageRoot(originalStorageRoot);
                 DatabaseService.InitializeRuntime();
             }
+        }
+
+        private static long CountRows(string tableName)
+        {
+            string safeTableName = tableName switch
+            {
+                "Guarantees" => "Guarantees",
+                "WorkflowRequests" => "WorkflowRequests",
+                "Attachments" => "Attachments",
+                _ => throw new ArgumentOutOfRangeException(nameof(tableName), tableName, "Unsupported table.")
+            };
+
+            using SqliteConnection connection = SqliteConnectionFactory.OpenForPath(AppPaths.DatabasePath);
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = $"SELECT COUNT(*) FROM {safeTableName}";
+            return Convert.ToInt64(command.ExecuteScalar());
+        }
+
+        private static string QueryFirstGuaranteeNo()
+        {
+            using SqliteConnection connection = SqliteConnectionFactory.OpenForPath(AppPaths.DatabasePath);
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT GuaranteeNo FROM Guarantees ORDER BY Id LIMIT 1";
+            return Convert.ToString(command.ExecuteScalar())
+                ?? throw new InvalidOperationException("No seeded guarantee was found.");
         }
 
         private static long GetSchemaObjectCount(SqliteConnection connection)

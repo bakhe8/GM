@@ -50,38 +50,6 @@ namespace GuaranteeManager
             };
         }
 
-        public static Grid Header(string title, string subtitle, Action? closeRequested)
-        {
-            var header = new Grid { Margin = new Thickness(0, 0, 0, 14) };
-            header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            var titleStack = new StackPanel();
-            titleStack.Children.Add(new TextBlock
-            {
-                Text = title,
-                FontSize = 20,
-                FontWeight = FontWeights.Bold,
-                Foreground = BrushFrom("#0F172A")
-            });
-            titleStack.Children.Add(new TextBlock
-            {
-                Text = subtitle,
-                FontSize = 12,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = BrushFrom("#64748B"),
-                Margin = new Thickness(0, 5, 0, 0),
-                TextWrapping = TextWrapping.Wrap
-            });
-
-            var closeButton = ActionButton("إغلاق", "White", "#D8E1EE", "#1F2937");
-            closeButton.Click += (_, _) => closeRequested?.Invoke();
-            Grid.SetColumn(closeButton, 1);
-            header.Children.Add(titleStack);
-            header.Children.Add(closeButton);
-            return header;
-        }
-
         public static Border Card(Thickness padding)
         {
             return new Border
@@ -216,60 +184,6 @@ namespace GuaranteeManager
             return header;
         }
 
-        public static Grid BuildReferencePager(string summaryText)
-        {
-            var grid = new Grid
-            {
-                Style = Style("ReferenceTablePager")
-            };
-
-            var buttons = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            var pageButton = new Button
-            {
-                Content = "1",
-                Margin = new Thickness(6, 0, 0, 0),
-                Style = Style("ReferenceTablePagerActiveButton")
-            };
-
-            var pageSizeButton = new Button
-            {
-                Content = "10",
-                MinWidth = 46,
-                Margin = new Thickness(12, 0, 0, 0),
-                Style = Style("ReferenceTablePagerButton")
-            };
-
-            buttons.Children.Add(new Button
-            {
-                Content = "←",
-                Style = Style("ReferenceTablePagerButton")
-            });
-            buttons.Children.Add(pageButton);
-            buttons.Children.Add(pageSizeButton);
-            buttons.Children.Add(new TextBlock
-            {
-                Text = "لكل صفحة",
-                FontSize = 11,
-                Foreground = BrushResource("Brush.Muted"),
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(8, 0, 0, 0)
-            });
-            grid.Children.Add(buttons);
-
-            var summary = new TextBlock
-            {
-                Text = summaryText,
-                Style = Style("ReferenceTableFooterSummary")
-            };
-            grid.Children.Add(summary);
-            return grid;
-        }
-
         public static Button ToolbarButton(string text, bool primary = false, string? automationId = null)
         {
             Button button = new Button
@@ -357,7 +271,7 @@ namespace GuaranteeManager
         public static Border MetricCard(string label, string value, string accent)
         {
             var border = Card(new Thickness(14, 10, 14, 10));
-            border.Margin = new Thickness(0, 0, 10, 0);
+            border.Margin = new Thickness(0);
             var stack = new StackPanel();
             stack.Children.Add(new TextBlock
             {
@@ -381,22 +295,240 @@ namespace GuaranteeManager
             return border;
         }
 
+        public static void ApplyMetricCardSpacing(Panel metrics)
+        {
+            for (int index = 0; index < metrics.Children.Count; index++)
+            {
+                if (metrics.Children[index] is FrameworkElement element)
+                {
+                    element.Margin = index == metrics.Children.Count - 1
+                        ? new Thickness(0)
+                        : new Thickness(0, 0, 10, 0);
+                }
+            }
+        }
+
         public static Grid InfoLine(string label, TextBlock value)
         {
-            var grid = new Grid { Margin = new Thickness(0, 0, 0, 12) };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
+            return DetailFactLine(label, value, "Icon.Document");
+        }
+
+        public static Grid DetailFactLine(
+            string label,
+            TextBlock value,
+            string iconKey,
+            RoutedEventHandler? copyClicked = null,
+            string? automationId = null,
+            string? copyName = null)
+        {
+            return DetailFactRow(
+                BuildDetailFactLabel(label),
+                value,
+                iconKey,
+                allowWrapping: false,
+                copyClicked,
+                automationId,
+                copyName);
+        }
+
+        public static Grid DetailFactLine(
+            TextBlock label,
+            TextBlock value,
+            string iconKey,
+            RoutedEventHandler? copyClicked = null,
+            string? automationId = null,
+            string? copyName = null)
+        {
+            return DetailFactRow(label, value, iconKey, false, copyClicked, automationId, copyName);
+        }
+
+        public static Grid DetailFactBlock(
+            string label,
+            TextBlock value,
+            string iconKey,
+            RoutedEventHandler? copyClicked = null,
+            string? automationId = null,
+            string? copyName = null)
+        {
+            return DetailFactRow(
+                BuildDetailFactLabel(label),
+                value,
+                iconKey,
+                allowWrapping: true,
+                copyClicked,
+                automationId,
+                copyName);
+        }
+
+        public static Grid DetailFactBlock(
+            TextBlock label,
+            TextBlock value,
+            string iconKey,
+            RoutedEventHandler? copyClicked = null,
+            string? automationId = null,
+            string? copyName = null)
+        {
+            return DetailFactRow(label, value, iconKey, true, copyClicked, automationId, copyName);
+        }
+
+        private static Grid DetailFactRow(
+            TextBlock label,
+            TextBlock value,
+            string iconKey,
+            bool allowWrapping,
+            RoutedEventHandler? copyClicked,
+            string? automationId,
+            string? copyName)
+        {
+            var grid = new Grid
+            {
+                MinHeight = 28,
+                Margin = new Thickness(0, 0, 0, allowWrapping ? 8 : 0),
+                FlowDirection = FlowDirection.RightToLeft
+            };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(118) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.Children.Add(new TextBlock
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(28) });
+
+            label.VerticalAlignment = allowWrapping ? VerticalAlignment.Top : VerticalAlignment.Center;
+            if (label.FontSize <= 0)
+            {
+                label.FontSize = 10;
+            }
+
+            var labelPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                VerticalAlignment = allowWrapping ? VerticalAlignment.Top : VerticalAlignment.Center,
+                Margin = new Thickness(0, allowWrapping ? 3 : 0, 0, 0)
+            };
+            labelPanel.Children.Add(CreateDetailFactIcon(iconKey, "#94A3B8", 12));
+            labelPanel.Children.Add(new Border { Width = 7 });
+            labelPanel.Children.Add(label);
+            grid.Children.Add(labelPanel);
+
+            value.VerticalAlignment = allowWrapping ? VerticalAlignment.Top : VerticalAlignment.Center;
+            value.TextAlignment = TextAlignment.Right;
+            if (allowWrapping)
+            {
+                value.TextWrapping = TextWrapping.Wrap;
+                value.Margin = new Thickness(0, 3, 0, 0);
+            }
+            else
+            {
+                value.TextWrapping = TextWrapping.NoWrap;
+                value.TextTrimming = TextTrimming.CharacterEllipsis;
+            }
+
+            Grid.SetColumn(value, 2);
+            grid.Children.Add(value);
+
+            UIElement copyElement = BuildDetailFactCopyButton(
+                copyClicked ?? ((_, _) => CopyDetailFactValue(label.Text, value.Text)),
+                automationId,
+                copyName ?? $"نسخ {label.Text}");
+            Grid.SetColumn(copyElement, 3);
+            grid.Children.Add(copyElement);
+
+            return grid;
+        }
+
+        private static TextBlock BuildDetailFactLabel(string label)
+        {
+            return new TextBlock
             {
                 Text = label,
-                FontSize = 11,
+                FontSize = 10,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = BrushFrom("#94A3C8"),
                 VerticalAlignment = VerticalAlignment.Center
-            });
-            Grid.SetColumn(value, 1);
-            grid.Children.Add(value);
-            return grid;
+            };
+        }
+
+        private static Button BuildDetailFactCopyButton(
+            RoutedEventHandler copyClicked,
+            string? automationId,
+            string? copyName)
+        {
+            string name = string.IsNullOrWhiteSpace(copyName) ? "نسخ القيمة" : copyName;
+            var button = new Button
+            {
+                Style = Style("IconOnlyButton"),
+                ToolTip = name,
+                Content = CreateDetailFactIcon("Icon.Copy", "#64748B", 12),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            button.Click += copyClicked;
+            AutomationProperties.SetName(button, name);
+            if (!string.IsNullOrWhiteSpace(automationId))
+            {
+                AutomationProperties.SetAutomationId(button, automationId);
+            }
+
+            return button;
+        }
+
+        public static Button DetailHeaderCopyButton(string name, string automationId, RoutedEventHandler handler)
+        {
+            var button = new Button
+            {
+                Style = Style("IconOnlyButton"),
+                Content = CreateDetailFactIcon("Icon.Copy", "#64748B", 12),
+                ToolTip = name,
+                Margin = new Thickness(8, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            button.Click += handler;
+            AutomationProperties.SetAutomationId(button, automationId);
+            AutomationProperties.SetName(button, name);
+            return button;
+        }
+
+        public static void CopyDetailFactValue(string label, string? value, string secondaryText = "لوحة التفاصيل")
+        {
+            if (string.IsNullOrWhiteSpace(value) || value.Trim() == "---")
+            {
+                AppMessageBox.Show($"لا توجد قيمة متاحة لنسخ {label}.", $"نسخ {label}", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                Clipboard.SetText(value);
+                App.CurrentApp.GetRequiredService<IShellStatusService>().ShowInfo(
+                    $"تم نسخ {label}.",
+                    secondaryText);
+            }
+            catch (Exception ex)
+            {
+                AppMessageBox.Show(ex.Message, $"نسخ {label}", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private static UIElement CreateDetailFactIcon(string iconKey, string strokeColor, double size)
+        {
+            if (Application.Current.TryFindResource(iconKey) is not Geometry geometry)
+            {
+                return new Border { Width = size, Height = size };
+            }
+
+            return new Viewbox
+            {
+                Width = size,
+                Height = size,
+                VerticalAlignment = VerticalAlignment.Center,
+                Child = new System.Windows.Shapes.Path
+                {
+                    Data = geometry,
+                    Stroke = BrushFrom(strokeColor),
+                    StrokeThickness = 2,
+                    StrokeLineJoin = PenLineJoin.Round,
+                    StrokeStartLineCap = PenLineCap.Round,
+                    StrokeEndLineCap = PenLineCap.Round
+                }
+            };
         }
 
         public static Border Divider()
@@ -444,211 +576,6 @@ namespace GuaranteeManager
             brush.Freeze();
             return brush;
         }
-    }
-
-    public sealed class SimpleWorkspaceSurface : UserControl
-    {
-        private SimpleWorkspaceSurface(
-            string title,
-            string subtitle,
-            IReadOnlyList<SimpleWorkspaceSection> sections,
-            Action? closeRequested)
-        {
-            FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = new FontFamily("Segoe UI, Tahoma");
-            Background = BrushFrom("#F7F9FC");
-            Content = BuildLayout(title, subtitle, sections, closeRequested);
-        }
-
-        public static SimpleWorkspaceSurface CreateBanksWorkspace(IReadOnlyList<Guarantee> guarantees, Action? closeRequested)
-        {
-            var bankGroups = guarantees
-                .GroupBy(item => item.Bank)
-                .Select(group => new
-                {
-                    Bank = group.Key,
-                    Count = group.Count(),
-                    Amount = group.Sum(item => item.Amount),
-                    Active = group.Count(item => item.LifecycleStatus == GuaranteeLifecycleStatus.Active)
-                })
-                .OrderByDescending(item => item.Amount)
-                .ToList();
-
-            List<string> overview =
-            [
-                $"عدد البنوك: {bankGroups.Count.ToString("N0", CultureInfo.InvariantCulture)}",
-                $"إجمالي الضمانات: {guarantees.Count.ToString("N0", CultureInfo.InvariantCulture)}",
-                $"إجمالي القيمة: {guarantees.Sum(item => item.Amount).ToString("N0", CultureInfo.InvariantCulture)} ريال"
-            ];
-
-            List<string> distribution = bankGroups
-                .Select(item => $"{item.Bank} | {item.Count.ToString("N0", CultureInfo.InvariantCulture)} ضمان | نشط {item.Active.ToString("N0", CultureInfo.InvariantCulture)} | {item.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال")
-                .DefaultIfEmpty("لا توجد بيانات بنكية.")
-                .ToList();
-
-            return new SimpleWorkspaceSurface(
-                "البنوك",
-                "تجميع سريع لمحفظة الضمانات حسب البنك والقيمة والحالة.",
-                [
-                    new SimpleWorkspaceSection("ملخص البنوك", overview),
-                    new SimpleWorkspaceSection("توزيع الضمانات", distribution)
-                ],
-                closeRequested);
-        }
-
-        public static SimpleWorkspaceSurface CreateSettingsWorkspace(Action? closeRequested)
-        {
-            return new SimpleWorkspaceSurface(
-                "الإعدادات",
-                "مسارات التشغيل الحالية وقنوات حفظ الملفات التي يستخدمها البرنامج.",
-                [
-                    new SimpleWorkspaceSection(
-                        "المسارات",
-                        [
-                            $"قاعدة البيانات: {AppPaths.DatabasePath}",
-                            $"المرفقات: {AppPaths.AttachmentsFolder}",
-                            $"خطابات الطلبات: {AppPaths.WorkflowLettersFolder}",
-                            $"ردود البنوك: {AppPaths.WorkflowResponsesFolder}"
-                        ])
-                ],
-                closeRequested);
-        }
-
-        private static Grid BuildLayout(
-            string title,
-            string subtitle,
-            IReadOnlyList<SimpleWorkspaceSection> sections,
-            Action? closeRequested)
-        {
-            var root = new Grid
-            {
-                Margin = new Thickness(20),
-                FlowDirection = FlowDirection.RightToLeft,
-                Background = BrushFrom("#F7F9FC")
-            };
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            root.Children.Add(BuildHeader(title, subtitle, closeRequested));
-
-            var scroll = new ScrollViewer
-            {
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
-            };
-            Grid.SetRow(scroll, 1);
-
-            var stack = new StackPanel();
-            foreach (SimpleWorkspaceSection section in sections)
-            {
-                stack.Children.Add(BuildSectionCard(section));
-            }
-
-            scroll.Content = stack;
-            root.Children.Add(scroll);
-            return root;
-        }
-
-        private static Grid BuildHeader(string title, string subtitle, Action? closeRequested)
-        {
-            var header = new Grid { Margin = new Thickness(0, 0, 0, 14) };
-            header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            var titleStack = new StackPanel();
-            titleStack.Children.Add(new TextBlock
-            {
-                Text = title,
-                FontSize = 20,
-                FontWeight = FontWeights.Bold,
-                Foreground = BrushFrom("#0F172A")
-            });
-            titleStack.Children.Add(new TextBlock
-            {
-                Text = subtitle,
-                FontSize = 12,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = BrushFrom("#64748B"),
-                Margin = new Thickness(0, 5, 0, 0),
-                TextWrapping = TextWrapping.Wrap
-            });
-
-            var closeButton = BuildActionButton("إغلاق", "White", "#D8E1EE", "#1F2937");
-            closeButton.Click += (_, _) => closeRequested?.Invoke();
-            Grid.SetColumn(closeButton, 1);
-            header.Children.Add(titleStack);
-            header.Children.Add(closeButton);
-            return header;
-        }
-
-        private static Border BuildSectionCard(SimpleWorkspaceSection section)
-        {
-            var card = new Border
-            {
-                Background = Brushes.White,
-                BorderBrush = BrushFrom("#E1E8F2"),
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(16),
-                Margin = new Thickness(0, 0, 0, 12)
-            };
-
-            var stack = new StackPanel();
-            stack.Children.Add(new TextBlock
-            {
-                Text = section.Title,
-                FontSize = 14,
-                FontWeight = FontWeights.Bold,
-                Foreground = BrushFrom("#111827"),
-                Margin = new Thickness(0, 0, 0, 10)
-            });
-
-            foreach (string item in section.Items)
-            {
-                stack.Children.Add(new TextBlock
-                {
-                    Text = item,
-                    FontSize = 12,
-                    FontWeight = FontWeights.SemiBold,
-                    Foreground = BrushFrom("#374151"),
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(0, 0, 0, 8)
-                });
-            }
-
-            card.Child = stack;
-            return card;
-        }
-
-        private static string FormatGuaranteeAlert(Guarantee guarantee)
-        {
-            return $"{guarantee.GuaranteeNo} | {guarantee.Supplier} | {guarantee.Bank} | الانتهاء {guarantee.ExpiryDate:yyyy/MM/dd}";
-        }
-
-        private static Button BuildActionButton(string text, string background, string border, string foreground)
-        {
-            return new Button
-            {
-                Content = text,
-                Height = 34,
-                MinWidth = 102,
-                Padding = new Thickness(12, 0, 12, 0),
-                FontSize = 12,
-                FontWeight = FontWeights.SemiBold,
-                Background = BrushFrom(background),
-                BorderBrush = BrushFrom(border),
-                Foreground = BrushFrom(foreground),
-                BorderThickness = new Thickness(1)
-            };
-        }
-
-        private static SolidColorBrush BrushFrom(string color)
-        {
-            var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));
-            brush.Freeze();
-            return brush;
-        }
-
-        private sealed record SimpleWorkspaceSection(string Title, IReadOnlyList<string> Items);
     }
 
 }

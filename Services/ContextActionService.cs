@@ -17,41 +17,6 @@ namespace GuaranteeManager.Services
             return new[]
             {
                 new ContextActionSection(
-                    "افهم",
-                    "أسئلة وجوابات تساعد على فهم وضع هذا الضمان أو ما يرتبط به من بنك ومورد وملخصات تشغيلية.",
-                    ContextActionDefinition.Group(
-                        "هذا الضمان",
-                        "جوابات مباشرة عن حالة الضمان نفسه.",
-                        ContextActionDefinition.Action("guarantee.last-event", "ما آخر ما حدث لهذا الضمان؟", ContextActionResultKind.InsightWindow, "يفتح جوابًا مباشرًا مدعومًا بالأدلة عن آخر حدث على هذا الضمان."),
-                        ContextActionDefinition.Action("guarantee.extension-timing", "هل طلبنا تمديده قبل الانتهاء؟", ContextActionResultKind.InsightWindow, "يفتح جوابًا يقارن توقيت طلب التمديد بتاريخ الانتهاء."),
-                        ContextActionDefinition.Action("guarantee.outstanding-extension", "لماذا لم يتم تمديده حتى الآن؟", ContextActionResultKind.InsightWindow, "يفتح سبب عدم تنفيذ التمديد حتى الآن مع الأدلة."),
-                        ContextActionDefinition.Action("guarantee.outstanding-release", "لماذا لم يتم الإفراج عنه حتى الآن؟", ContextActionResultKind.InsightWindow, "يفتح سبب عدم تنفيذ الإفراج حتى الآن مع الأدلة."),
-                        ContextActionDefinition.Action("guarantee.outstanding-liquidation", "لماذا لم يتم تسييله حتى الآن؟", ContextActionResultKind.InsightWindow, "يفتح سبب عدم تنفيذ التسييل حتى الآن مع الأدلة."),
-                        ContextActionDefinition.Action("guarantee.expired-without-extension", "لماذا انتهى هذا الضمان ولم يُمدد؟", ContextActionResultKind.InsightWindow, "يفتح تفسيرًا لحالة الضمان المنتهي دون تمديد منفذ."),
-                        ContextActionDefinition.Action("guarantee.release-evidence", "لماذا تم الإفراج عن هذا الضمان وعلى أي مستند؟", ContextActionResultKind.InsightWindow, "يفتح أساس الإفراج والمستندات التي دعمت القرار."),
-                        ContextActionDefinition.Action("guarantee.liquidation-evidence", "لماذا تم تسييل هذا الضمان وعلى أي مستند؟", ContextActionResultKind.InsightWindow, "يفتح أساس التسييل والمستندات التي دعمت القرار."),
-                        ContextActionDefinition.Action("guarantee.reduction-source", "أين طلب التخفيض الذي نتج عنه هذا الأثر؟", ContextActionResultKind.InsightWindow, "يفتح الطلب المرتبط بالأثر الحالي على مبلغ الضمان."),
-                        ContextActionDefinition.Action("guarantee.response-link-status", "هل يوجد مستند رد محفوظ بدون ربط رسمي؟", ContextActionResultKind.InsightWindow, "يفتح حالة ربط مستندات رد البنك بالسجل الرسمي للضمان.")),
-                    ContextActionDefinition.Group(
-                        "البنك والمورد",
-                        "جوابات ترتبط بالبنك أو المورد الموجودين في الصف الحالي.",
-                        ContextActionDefinition.Action("bank.pending-requests", "ما الطلبات المعلقة لدى هذا البنك؟", ContextActionResultKind.InsightWindow, "يفتح ملخص الطلبات المعلقة لدى البنك الحالي مع إمكانية التصدير."),
-                        ContextActionDefinition.Action("bank.confirmation", "هل أكد هذا البنك كل طلباتنا؟", ContextActionResultKind.InsightWindow, "يفتح ملخصًا لوضع استجابة هذا البنك لكل الطلبات المرتبطة به."),
-                        ContextActionDefinition.Action("supplier.latest-activity", "ما آخر ما حدث لضمانات هذا المورد؟", ContextActionResultKind.InsightWindow, "يفتح آخر نشاط تشغيلي على ضمانات المورد الحالي.")),
-                    ContextActionDefinition.Group(
-                        "ملخصات سريعة",
-                        "جوابات مجمعة سريعة مرتبطة بالسياق الحالي.",
-                        ContextActionDefinition.Action("summary.executed-extensions-this-month", "كم ضمان قمنا بتمديده هذا الشهر؟", ContextActionResultKind.InsightWindow, "يفتح ملخص تمديدات هذا الشهر مع إمكانية التصدير."),
-                        ContextActionDefinition.Action("summary.active-po-only", "كم لدينا من ضمانات سارية تخص أوامر الشراء فقط؟", ContextActionResultKind.InsightWindow, "يفتح ملخص الضمانات السارية المرتبطة بأوامر الشراء فقط."),
-                        ContextActionDefinition.Action("summary.contract-released-last-week", "كم عدد الضمانات الخاصة بالعقود التي أفرجنا عنها خلال الأسبوع الفائت؟", ContextActionResultKind.InsightWindow, "يفتح ملخص الإفراجات المرتبطة بالعقود خلال آخر أسبوع."),
-                        ContextActionDefinition.Action("summary.oldest-pending", "ما أكثر 10 طلبات تأخر ردها؟", ContextActionResultKind.InsightWindow, "يفتح قائمة أقدم الطلبات المعلقة التي ما زالت تنتظر الرد."),
-                        ContextActionDefinition.Action("summary.expired-po-without-extension", "كم مبلغ ضمانات أوامر الشراء المنتهية بلا تمديد؟", ContextActionResultKind.InsightWindow, "يفتح ملخص الضمانات المنتهية المرتبطة بأوامر الشراء دون تمديد منفذ.")),
-                    ContextActionDefinition.Group(
-                        "استعلامات أداء الموظفين",
-                        "ملخصات تعتمد على اسم الموظف والفترة الزمنية.",
-                        ContextActionDefinition.Action("employee.contract-requests-last-month", "كم طلب تمديد أو إفراج أنشأه موظف محدد الشهر الماضي للعقود؟", ContextActionResultKind.InsightWindow, "يفتح ملخص طلبات موظف محدد خلال الشهر الماضي مع إمكانية التصدير."))),
-
-                new ContextActionSection(
                     "نفّذ",
                     "إجراءات مباشرة على هذا الضمان.",
                     ContextActionDefinition.Group(
@@ -62,8 +27,7 @@ namespace GuaranteeManager.Services
                         ContextActionDefinition.Action("execute.create-release", "طلب إفراج", ContextActionResultKind.DecisionDialog, "يفتح نافذة إنشاء طلب إفراج للضمان الحالي."),
                         ContextActionDefinition.Action("execute.create-liquidation", "طلب تسييل", ContextActionResultKind.DecisionDialog, "يفتح نافذة إنشاء طلب تسييل للضمان الحالي."),
                         ContextActionDefinition.Action("execute.create-verification", "طلب تحقق", ContextActionResultKind.DecisionDialog, "يفتح نافذة إنشاء طلب تحقق للضمان الحالي."),
-                        ContextActionDefinition.Action("execute.create-replacement", "طلب استبدال", ContextActionResultKind.DecisionDialog, "يفتح نافذة إنشاء طلب استبدال للضمان الحالي."),
-                        ContextActionDefinition.Action("execute.create-annulment", "طلب نقض", ContextActionResultKind.DecisionDialog, "يفتح نافذة إنشاء طلب نقض للضمان الحالي أو من قائمة الضمانات المؤهلة.")),
+                        ContextActionDefinition.Action("execute.create-replacement", "طلب استبدال", ContextActionResultKind.DecisionDialog, "يفتح نافذة إنشاء طلب استبدال للضمان الحالي.")),
                     ContextActionDefinition.Action("execute.edit-guarantee", "تعديل الضمان", ContextActionResultKind.Navigation, "ينتقل إلى شاشة تعديل هذا الضمان.")),
 
                 new ContextActionSection(
@@ -72,16 +36,10 @@ namespace GuaranteeManager.Services
                     ContextActionDefinition.Action("evidence.attachments", "عرض المرفقات", ContextActionResultKind.ManagedReferenceWindow, "يفتح نافذة مرجعية لعرض مرفقات هذا الضمان.")),
 
                 new ContextActionSection(
-                    "انتقل",
-                    "افتح السجلات والشاشات المرتبطة بهذا الضمان.",
-                    ContextActionDefinition.Action("navigate.history", "فتح سجل الضمان", ContextActionResultKind.ManagedReferenceWindow, "يفتح سجل الإصدارات الكامل لهذا الضمان.")),
-
-                new ContextActionSection(
                     "صدّر",
                     "استخرج Excel من نفس السياق الحالي.",
                     ContextActionDefinition.Action("export.visible-list", "تصدير السجلات المعروضة حاليًا", ContextActionResultKind.Export, "يصدر السجلات المعروضة حاليًا كما تظهر في الجدول."),
                     ContextActionDefinition.Action("export.guarantee-report", "تصدير تقرير هذا الضمان", ContextActionResultKind.Export, "يصدر تقرير Excel لهذا الضمان فقط."),
-                    ContextActionDefinition.Action("export.guarantee-history", "تصدير تاريخ هذا الضمان", ContextActionResultKind.Export, "يصدر تاريخ الضمان الكامل إلى Excel."),
                     ContextActionDefinition.Action("export.same-bank", "تصدير جميع ضمانات نفس البنك", ContextActionResultKind.Export, "يصدر جميع الضمانات الحالية لنفس البنك."),
                     ContextActionDefinition.Action("export.same-supplier", "تصدير جميع ضمانات نفس المورد", ContextActionResultKind.Export, "يصدر جميع الضمانات الحالية لنفس المورد."),
                     ContextActionDefinition.Action("export.same-temporal-status", "تصدير جميع الضمانات بنفس الحالة الزمنية", ContextActionResultKind.Export, "يصدر جميع الضمانات الحالية التي تشترك في نفس الحالة الزمنية.")),
@@ -113,9 +71,8 @@ namespace GuaranteeManager.Services
 
                 new ContextActionSection(
                     "انتقل",
-                    "انتقل إلى الضمان أو سجله المرتبط بهذا الطلب.",
-                    ContextActionDefinition.Action("request.open-current-guarantee", "فتح الضمان الحالي", ContextActionResultKind.Navigation, "ينتقل إلى الضمان الحالي المرتبط بهذا الطلب."),
-                    ContextActionDefinition.Action("request.open-history", "عرض تاريخ الضمان", ContextActionResultKind.ManagedReferenceWindow, "يفتح تاريخ الضمان المرتبط بهذا الطلب.")),
+                    "انتقل إلى الضمان المرتبط بهذا الطلب.",
+                    ContextActionDefinition.Action("request.open-current-guarantee", "فتح الضمان الحالي", ContextActionResultKind.Navigation, "ينتقل إلى الضمان الحالي المرتبط بهذا الطلب.")),
 
                 new ContextActionSection(
                     "صدّر",

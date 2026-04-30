@@ -65,9 +65,19 @@ namespace GuaranteeManager.Services
             _guaranteeRepository.SaveGuarantee(g, tempFilePaths);
         }
 
+        public void SaveGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> attachments)
+        {
+            _guaranteeRepository.SaveGuaranteeWithAttachments(g, attachments);
+        }
+
         public int UpdateGuarantee(Guarantee g, List<string> newTempFiles, List<AttachmentRecord> removedAttachments)
         {
             return _guaranteeRepository.UpdateGuarantee(g, newTempFiles, removedAttachments);
+        }
+
+        public int UpdateGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> newAttachments, List<AttachmentRecord> removedAttachments)
+        {
+            return _guaranteeRepository.UpdateGuaranteeWithAttachments(g, newAttachments, removedAttachments);
         }
 
         public List<Guarantee> QueryGuarantees(GuaranteeQueryOptions options)
@@ -246,21 +256,6 @@ namespace GuaranteeManager.Services
                 promoteResponseDocumentToOfficialAttachment);
         }
 
-        public int ExecuteAnnulmentWorkflowRequest(
-            int requestId,
-            string responseNotes,
-            string responseOriginalFileName,
-            string responseSavedFileName,
-            string? responseAttachmentSourcePath = null)
-        {
-            return _workflowExecutionProcessor.ExecuteAnnulmentWorkflowRequest(
-                requestId,
-                responseNotes,
-                responseOriginalFileName,
-                responseSavedFileName,
-                responseAttachmentSourcePath);
-        }
-
         public int ExecuteReplacementWorkflowRequest(
             int requestId,
             string replacementGuaranteeNo,
@@ -299,6 +294,47 @@ namespace GuaranteeManager.Services
             _guaranteeRepository.DeleteAttachment(att);
         }
 
+        public void AddBankReference(string bankName)
+        {
+            string normalizedBankName = (bankName ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(normalizedBankName))
+            {
+                throw new ArgumentException("اسم البنك مطلوب.", nameof(bankName));
+            }
+
+            using var connection = SqliteConnectionFactory.Open(_connectionString);
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+                INSERT OR IGNORE INTO BankReferences (Name, CreatedAt)
+                VALUES ($name, $createdAt)";
+            command.Parameters.AddWithValue("$name", normalizedBankName);
+            command.Parameters.AddWithValue("$createdAt", PersistedDateTime.FormatDateTime(DateTime.Now));
+            command.ExecuteNonQuery();
+        }
+
+        public List<string> GetBankReferences()
+        {
+            var values = new List<string>();
+
+            try
+            {
+                using var connection = SqliteConnectionFactory.Open(_connectionString);
+                var command = connection.CreateCommand();
+                command.CommandText = "SELECT Name FROM BankReferences WHERE Name IS NOT NULL AND Name != '' ORDER BY Name COLLATE NOCASE";
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    values.Add(reader.GetString(0));
+                }
+            }
+            catch (Exception ex)
+            {
+                SimpleLogger.LogError(ex, "GetBankReferences");
+            }
+
+            return values;
+        }
+
         public List<string> GetUniqueValues(string columnName)
         {
             var values = new List<string>();
@@ -314,7 +350,15 @@ namespace GuaranteeManager.Services
             {
                 using var connection = SqliteConnectionFactory.Open(_connectionString);
                 var cmd = connection.CreateCommand();
-                cmd.CommandText = $"SELECT DISTINCT {safeColumnName} FROM Guarantees WHERE {safeColumnName} IS NOT NULL AND {safeColumnName} != '' ORDER BY {safeColumnName}";
+                cmd.CommandText = safeColumnName.Equals("Bank", StringComparison.OrdinalIgnoreCase)
+                    ? @"
+                        SELECT Name FROM (
+                            SELECT DISTINCT Bank AS Name FROM Guarantees WHERE Bank IS NOT NULL AND Bank != ''
+                            UNION
+                            SELECT Name FROM BankReferences WHERE Name IS NOT NULL AND Name != ''
+                        )
+                        ORDER BY Name COLLATE NOCASE"
+                    : $"SELECT DISTINCT {safeColumnName} FROM Guarantees WHERE {safeColumnName} IS NOT NULL AND {safeColumnName} != '' ORDER BY {safeColumnName}";
                 using var reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
@@ -352,6 +396,11 @@ namespace GuaranteeManager.Services
         public int CreateNewVersion(Guarantee newG, int sourceId, List<string> newTempFiles, List<AttachmentRecord> inheritedAttachments)
         {
             return _guaranteeRepository.CreateNewVersion(newG, sourceId, newTempFiles, inheritedAttachments);
+        }
+
+        public int CreateNewVersionWithAttachments(Guarantee newG, int sourceId, List<AttachmentInput> newAttachments, List<AttachmentRecord> inheritedAttachments)
+        {
+            return _guaranteeRepository.CreateNewVersionWithAttachments(newG, sourceId, newAttachments, inheritedAttachments);
         }
     }
 }

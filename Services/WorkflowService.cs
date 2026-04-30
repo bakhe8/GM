@@ -78,18 +78,6 @@ namespace GuaranteeManager.Services
             return GetActiveGuarantees();
         }
 
-        public List<Guarantee> GetGuaranteesEligibleForAnnulment()
-        {
-            return GetGuaranteesByLifecycleStatuses(
-                GuaranteeLifecycleStatus.Released,
-                GuaranteeLifecycleStatus.Liquidated);
-        }
-
-        public WorkflowRequest CreateAnnulmentRequest(int guaranteeId, string reason, string createdBy = "")
-        {
-            return _requestCreator.CreateAnnulmentRequest(guaranteeId, reason, createdBy);
-        }
-
         public WorkflowRequest CreateExtensionRequest(int guaranteeId, DateTime requestedExpiryDate, string notes, string createdBy = "")
         {
             return _requestCreator.CreateExtensionRequest(guaranteeId, requestedExpiryDate, notes, createdBy);
@@ -178,18 +166,6 @@ namespace GuaranteeManager.Services
         public void OpenResponseDocument(WorkflowRequest request)
         {
             _letterService.OpenResponseDocument(request);
-        }
-
-        private List<Guarantee> GetGuaranteesByLifecycleStatuses(params GuaranteeLifecycleStatus[] statuses)
-        {
-            return statuses
-                .SelectMany(status => _databaseService.QueryGuarantees(new GuaranteeQueryOptions
-                {
-                    LifecycleStatus = status,
-                    SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
-                }))
-                .OrderBy(item => item.GuaranteeNo)
-                .ToList();
         }
 
         private List<Guarantee> GetActiveGuarantees()

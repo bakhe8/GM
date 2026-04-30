@@ -44,11 +44,7 @@ namespace GuaranteeManager
                 .Select(item => new RequestListDisplayItem(item))
                 .ToList();
 
-            string summary = items.Count == 0
-                ? "لا توجد طلبات مطابقة."
-                : $"عرض 1 - {items.Count.ToString("N0", CultureInfo.InvariantCulture)} من أصل {allRequests.Count.ToString("N0", CultureInfo.InvariantCulture)} طلب";
-
-            return new RequestsWorkspaceFilterResult(items, summary);
+            return new RequestsWorkspaceFilterResult(items);
         }
 
         public RequestsWorkspaceDetailState BuildDetailState(RequestListDisplayItem? selected)
@@ -65,14 +61,16 @@ namespace GuaranteeManager
                     WorkspaceSurfaceChrome.BrushFrom("#F8FAFC"),
                     WorkspaceSurfaceChrome.BrushFrom("#E2E8F0"),
                     "---",
+                    "اختر طلبًا لعرض خطاب الطلب.",
                     "---",
-                    "---",
-                    "---",
-                    "---",
-                    "---",
-                    "---",
+                    "اختر طلبًا لعرض رد البنك.",
+                    "اختر طلبًا من الجدول لرفع أو إلحاق رد البنك عند الحاجة.",
                     false,
                     false,
+                    false,
+                    false,
+                    "إرفاق رد البنك",
+                    "اختر طلبًا أولًا.",
                     false,
                     "الإجراء التالي",
                     "اختر طلبًا لعرض الإجراء المتوقع الآن.");
@@ -90,18 +88,81 @@ namespace GuaranteeManager
                 selected.RequestStatusBrush,
                 StatusBackgroundBrush(request.Status),
                 StatusBorderBrush(request.Status),
-                $"{item.ReferenceTypeLabel}: {item.ReferenceNumber}",
-                item.CurrentVersionLabel,
-                $"{item.CurrentValueFieldLabel}: {item.CurrentValueDisplay}",
-                $"{item.RequestedValueFieldLabel}: {item.RequestedValueDisplay}",
-                $"تاريخ الطلب: {request.RequestDate:yyyy/MM/dd} | تاريخ الرد: {item.ResponseDateLabel}",
-                string.IsNullOrWhiteSpace(request.Notes) ? "لا توجد ملاحظات." : request.Notes,
-                string.IsNullOrWhiteSpace(request.ResponseNotes) ? "لا يوجد رد مسجل." : request.ResponseNotes,
+                BuildLetterAttachmentTitle(request),
+                request.HasLetter
+                    ? $"خطاب الطلب محفوظ بتاريخ {item.RequestDateLabel}."
+                    : "لا يوجد خطاب طلب محفوظ لهذا الطلب.",
+                BuildResponseAttachmentTitle(request),
+                BuildResponseAttachmentMeta(request),
+                BuildResponseAttachHint(selected),
                 true,
                 request.HasLetter,
+                request.HasResponseDocument,
+                !request.HasResponseDocument && selected.CanRunQueueAction,
+                request.HasResponseDocument
+                    ? "رد البنك مرفق"
+                    : request.Status == RequestStatus.Pending
+                        ? "تسجيل رد البنك"
+                        : "إلحاق رد البنك",
+                request.Status == RequestStatus.Pending
+                    ? "سجل قرار البنك وأرفق المستند عند توفره."
+                    : request.HasResponseDocument
+                        ? "رد البنك مرفق ويمكن فتحه من بطاقة المرفقات."
+                        : "ألحق مستند رد البنك لهذا الطلب المغلق.",
                 selected.CanRunQueueAction,
                 selected.QueueActionLabel,
                 selected.QueueActionHint);
+        }
+
+        private static string BuildLetterAttachmentTitle(WorkflowRequest request)
+        {
+            if (!request.HasLetter)
+            {
+                return "غير متاح";
+            }
+
+            return string.IsNullOrWhiteSpace(request.LetterOriginalFileName)
+                ? "خطاب الطلب محفوظ"
+                : request.LetterOriginalFileName;
+        }
+
+        private static string BuildResponseAttachmentTitle(WorkflowRequest request)
+        {
+            if (!request.HasResponseDocument)
+            {
+                return "غير مرفق";
+            }
+
+            return string.IsNullOrWhiteSpace(request.ResponseOriginalFileName)
+                ? "رد البنك محفوظ"
+                : request.ResponseOriginalFileName;
+        }
+
+        private static string BuildResponseAttachmentMeta(WorkflowRequest request)
+        {
+            if (!request.HasResponseDocument)
+            {
+                return request.Status == RequestStatus.Pending
+                    ? "لم يصل رد البنك بعد."
+                    : "يمكن إلحاق مستند الرد من البطاقة التالية.";
+            }
+
+            return request.ResponseRecordedAt.HasValue
+                ? $"رد البنك محفوظ بتاريخ {request.ResponseRecordedAt.Value:yyyy-MM-dd}."
+                : "رد البنك محفوظ لهذا الطلب.";
+        }
+
+        private static string BuildResponseAttachHint(RequestListDisplayItem selected)
+        {
+            WorkflowRequest request = selected.Item.Request;
+            if (request.HasResponseDocument)
+            {
+                return "يوجد رد بنك محفوظ لهذا الطلب. استخدم بطاقة المرفقات لفتحه.";
+            }
+
+            return request.Status == RequestStatus.Pending
+                ? "عند وصول رد البنك، سجل القرار وأرفق المستند من هنا."
+                : "ألحق مستند رد البنك الخاص بهذا الطلب من هنا.";
         }
 
         private static Brush StatusBackgroundBrush(RequestStatus status) => status switch
@@ -132,8 +193,7 @@ namespace GuaranteeManager
         string Closed);
 
     public sealed record RequestsWorkspaceFilterResult(
-        IReadOnlyList<RequestListDisplayItem> Items,
-        string Summary);
+        IReadOnlyList<RequestListDisplayItem> Items);
 
     public sealed record RequestsWorkspaceDetailState(
         string Title,
@@ -144,15 +204,17 @@ namespace GuaranteeManager
         Brush BadgeForeground,
         Brush BadgeBackground,
         Brush BadgeBorder,
-        string Reference,
-        string Status,
-        string Current,
-        string Requested,
-        string Dates,
-        string Notes,
-        string Response,
+        string LetterAttachmentTitle,
+        string LetterAttachmentMeta,
+        string ResponseAttachmentTitle,
+        string ResponseAttachmentMeta,
+        string ResponseAttachHint,
         bool CanOpenGuarantee,
         bool CanOpenLetter,
+        bool CanOpenResponse,
+        bool CanUseResponseAttachAction,
+        string ResponseAttachActionLabel,
+        string ResponseAttachActionHint,
         bool CanRunPrimaryAction,
         string PrimaryActionLabel,
         string PrimaryActionHint);

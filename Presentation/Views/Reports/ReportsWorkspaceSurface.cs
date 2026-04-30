@@ -19,9 +19,9 @@ namespace GuaranteeManager
         private readonly ComboBox _categoryFilter = new();
         private readonly TextBlock _summary = BuildMutedText(12, FontWeights.SemiBold);
         private readonly TextBlock _portfolioValue = BuildMetricValue();
+        private readonly TextBlock _requestsValue = BuildMetricValue();
         private readonly TextBlock _operationalValue = BuildMetricValue();
         private readonly TextBlock _totalValue = BuildMetricValue();
-        private readonly TextBlock _statusValue = BuildMetricValue();
         private readonly TextBlock _detailTitle = BuildDetailValue(16, FontWeights.Bold);
         private readonly TextBlock _detailSubtitle = BuildMutedText(11, FontWeights.SemiBold);
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
@@ -33,18 +33,17 @@ namespace GuaranteeManager
         private readonly TextBlock _detailOutput = BuildMutedText(11, FontWeights.Normal);
         private readonly Button _runButton = new();
         private readonly Button _openButton = new();
-        private readonly Action? _closeRequested;
+        private readonly ReferenceTablePagerController _pager;
 
         public ReportsWorkspaceSurface(
             IReadOnlyList<WorkspaceReportCatalog.WorkspaceReportAction> actions,
             ReportsWorkspaceCoordinator coordinator,
-            Action? closeRequested,
             string? initialSearchText = null)
         {
             _dataService = new ReportsWorkspaceDataService();
             _coordinator = coordinator;
             _allReports = _dataService.BuildItems(actions);
-            _closeRequested = closeRequested;
+            _pager = new ReferenceTablePagerController("Reports", "تقرير", 10, ApplyFilters);
             UiInstrumentation.Identify(this, "Reports.Workspace", "التقارير");
             UiInstrumentation.Identify(_searchInput, "Reports.SearchBox", "بحث التقارير");
             UiInstrumentation.Identify(_categoryFilter, "Reports.Filter.Category", "نوع التقرير");
@@ -95,84 +94,37 @@ namespace GuaranteeManager
 
         private UIElement BuildToolbarBlock()
         {
-            var stack = new StackPanel();
-            stack.Children.Add(BuildHomeHeader());
-            stack.Children.Add(BuildToolbar());
-            return stack;
-        }
-
-        private Border BuildHomeHeader()
-        {
-            var card = WorkspaceSurfaceChrome.Card(new Thickness(16, 14, 16, 14));
-            card.Margin = new Thickness(0, 0, 0, 10);
-
-            var grid = new Grid();
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            var content = new StackPanel();
-            content.Children.Add(new TextBlock
-            {
-                Text = "التقارير",
-                FontSize = 18,
-                FontWeight = FontWeights.Bold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
-                TextAlignment = TextAlignment.Right
-            });
-            content.Children.Add(new TextBlock
-            {
-                Text = "تقارير المحفظة والعمليات والتصدير",
-                FontSize = 11.5,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
-                Margin = new Thickness(0, 6, 0, 0),
-                TextWrapping = TextWrapping.Wrap,
-                TextAlignment = TextAlignment.Right
-            });
-            grid.Children.Add(content);
-
-            card.Child = grid;
-            return card;
+            return BuildToolbar();
         }
 
         private Grid BuildToolbar()
         {
             var toolbar = new Grid { FlowDirection = FlowDirection.LeftToRight };
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            var runButton = WorkspaceSurfaceChrome.ToolbarButton("إنشاء التقرير", primary: true, automationId: "Reports.Toolbar.Run");
-            runButton.Click += (_, _) => RunSelectedReport();
-            Grid.SetColumn(runButton, 0);
-            toolbar.Children.Add(runButton);
-
-            var resetButton = WorkspaceSurfaceChrome.ToolbarButton("إعادة ضبط العرض", automationId: "Reports.Toolbar.Reset");
-            resetButton.Click += (_, _) =>
-            {
-                _searchInput.Text = string.Empty;
-                _categoryFilter.SelectedIndex = 0;
-                ApplyFilters();
-            };
-            Grid.SetColumn(resetButton, 2);
-            toolbar.Children.Add(resetButton);
-
             _categoryFilter.Style = WorkspaceSurfaceChrome.Style("FilterComboBox");
             _categoryFilter.Items.Add("كل التقارير");
             _categoryFilter.Items.Add("تقارير المحفظة");
+            _categoryFilter.Items.Add("تقارير الطلبات");
             _categoryFilter.Items.Add("تقارير تشغيلية");
             _categoryFilter.SelectedIndex = 0;
-            _categoryFilter.SelectionChanged += (_, _) => ApplyFilters();
-            Grid.SetColumn(_categoryFilter, 4);
+            _categoryFilter.SelectionChanged += (_, _) =>
+            {
+                _pager.ResetToFirstPage();
+                ApplyFilters();
+            };
+            Grid.SetColumn(_categoryFilter, 0);
             toolbar.Children.Add(_categoryFilter);
 
-            _searchInput.TextChanged += (_, _) => ApplyFilters();
+            _searchInput.TextChanged += (_, _) =>
+            {
+                _pager.ResetToFirstPage();
+                ApplyFilters();
+            };
             var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث بعنوان التقرير أو وصفه أو مفتاحه...");
-            Grid.SetColumn(searchBox, 6);
+            Grid.SetColumn(searchBox, 2);
             toolbar.Children.Add(searchBox);
 
             return toolbar;
@@ -185,16 +137,17 @@ namespace GuaranteeManager
                 Columns = 4
             };
             metrics.Children.Add(BuildMetricCard("تقارير المحفظة", _portfolioValue, "#2563EB"));
-            metrics.Children.Add(BuildMetricCard("تقارير تشغيلية", _operationalValue, "#E09408"));
+            metrics.Children.Add(BuildMetricCard("تقارير الطلبات", _requestsValue, "#E09408"));
+            metrics.Children.Add(BuildMetricCard("تقارير تشغيلية", _operationalValue, "#16A34A"));
             metrics.Children.Add(BuildMetricCard("إجمالي التقارير", _totalValue, "#0F172A"));
-            metrics.Children.Add(BuildMetricCard("جاهزية التقارير", _statusValue, "#16A34A"));
+            WorkspaceSurfaceChrome.ApplyMetricCardSpacing(metrics);
             return metrics;
         }
 
         private Border BuildMetricCard(string label, TextBlock value, string accent)
         {
             var card = WorkspaceSurfaceChrome.Card(new Thickness(14, 10, 14, 10));
-            card.Margin = new Thickness(0, 0, 10, 0);
+            card.Margin = new Thickness(0);
             var stack = new StackPanel();
             stack.Children.Add(new TextBlock
             {
@@ -241,47 +194,7 @@ namespace GuaranteeManager
 
         private Grid BuildTableFooter()
         {
-            var footer = new Grid
-            {
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePager")
-            };
-
-            var buttons = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            buttons.Children.Add(new Button
-            {
-                Content = "←",
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePagerButton")
-            });
-            buttons.Children.Add(new Button
-            {
-                Content = "1",
-                Margin = new Thickness(6, 0, 0, 0),
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePagerActiveButton")
-            });
-            buttons.Children.Add(new Button
-            {
-                Content = "10",
-                MinWidth = 46,
-                Margin = new Thickness(12, 0, 0, 0),
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePagerButton")
-            });
-            buttons.Children.Add(new TextBlock
-            {
-                Text = "لكل صفحة",
-                FontSize = 11,
-                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Muted"),
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(8, 0, 0, 0)
-            });
-            footer.Children.Add(buttons);
-
-            _summary.Style = WorkspaceSurfaceChrome.Style("ReferenceTableFooterSummary");
-            footer.Children.Add(_summary);
-            return footer;
+            return _pager.BuildFooter(_summary);
         }
 
         private Border BuildDetailPanel()
@@ -303,60 +216,49 @@ namespace GuaranteeManager
                 Margin = new Thickness(16, 14, 16, 14),
                 Children =
                 {
-                    BuildDetailHeader(),
                     BuildReportTitleRow(),
                     _detailSubtitle,
-                    _detailStatusBadgeBorder,
                     new Border { Height = 1, Background = WorkspaceSurfaceChrome.BrushFrom("#EDF2F7"), Margin = new Thickness(0, 13, 0, 12) },
-                    WorkspaceSurfaceChrome.InfoLine("المفتاح التشغيلي", _detailKey),
-                    WorkspaceSurfaceChrome.InfoLine("نوع التقرير", _detailCategory),
-                    WorkspaceSurfaceChrome.InfoLine("جاهزية التقرير", _detailStatus),
-                    WorkspaceSurfaceChrome.InfoLine("الخطوة التالية", _detailAction),
-                    BuildInfoBlock("آخر ملف ناتج", _detailOutput)
+                    WorkspaceSurfaceChrome.DetailFactLine("المفتاح التشغيلي", _detailKey, "Icon.Badge"),
+                    WorkspaceSurfaceChrome.DetailFactLine("نوع التقرير", _detailCategory, "Icon.Reports"),
+                    WorkspaceSurfaceChrome.DetailFactLine("جاهزية التقرير", _detailStatus, "Icon.Check"),
+                    WorkspaceSurfaceChrome.DetailFactLine("الخطوة التالية", _detailAction, "Icon.Extend"),
+                    WorkspaceSurfaceChrome.DetailFactBlock("آخر ملف ناتج", _detailOutput, "Icon.Document")
                 }
             };
         }
 
-        private UIElement BuildDetailHeader()
+        private UIElement BuildReportTitleRow()
         {
-            var grid = new Grid { Margin = new Thickness(0, 0, 0, 12) };
+            var grid = new Grid
+            {
+                Margin = new Thickness(0, 0, 0, 8),
+                FlowDirection = FlowDirection.LeftToRight
+            };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-            grid.Children.Add(new TextBlock
-            {
-                Text = "تفاصيل التقرير",
-                FontSize = 16,
-                FontWeight = FontWeights.Bold,
-                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
-            });
+            _detailStatusBadgeBorder.Margin = new Thickness(0);
+            _detailStatusBadgeBorder.VerticalAlignment = VerticalAlignment.Center;
+            grid.Children.Add(_detailStatusBadgeBorder);
 
-            var closeButton = new Button
-            {
-                Width = 28,
-                Height = 28,
-                Content = "×",
-                Background = Brushes.Transparent,
-                BorderThickness = new Thickness(0),
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B")
-            };
-            closeButton.Click += (_, _) => _closeRequested?.Invoke();
-            Grid.SetColumn(closeButton, 1);
-            grid.Children.Add(closeButton);
-            return grid;
-        }
-
-        private UIElement BuildReportTitleRow()
-        {
             var row = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                FlowDirection = FlowDirection.RightToLeft
+                FlowDirection = FlowDirection.RightToLeft,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center
             };
             row.Children.Add(CreateIcon("Icon.Reports", "#64748B", 14));
             _detailTitle.Margin = new Thickness(8, 0, 0, 0);
             row.Children.Add(_detailTitle);
-            return row;
+            row.Children.Add(WorkspaceSurfaceChrome.DetailHeaderCopyButton(
+                "نسخ اسم التقرير",
+                "Reports.Detail.Header.CopyTitle",
+                (_, _) => WorkspaceSurfaceChrome.CopyDetailFactValue("اسم التقرير", _detailTitle.Text, "التقارير")));
+            Grid.SetColumn(row, 1);
+            grid.Children.Add(row);
+            return grid;
         }
 
         private Border BuildDetailActions()
@@ -401,7 +303,7 @@ namespace GuaranteeManager
                 Margin = new Thickness(9, 0, 9, 0),
                 FlowDirection = FlowDirection.LeftToRight
             };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.5, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.9, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.15, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.55, GridUnitType.Star) });
@@ -430,10 +332,10 @@ namespace GuaranteeManager
             ReportsWorkspaceFilterResult filtered = _dataService.BuildFilteredItems(
                 _allReports,
                 _searchInput.Text,
-                category,
-                _coordinator.Results);
+                category);
 
-            foreach (ReportWorkspaceItem item in filtered.Items)
+            IReadOnlyList<ReportWorkspaceItem> pageItems = _pager.Page(filtered.Items);
+            foreach (ReportWorkspaceItem item in pageItems)
             {
                 _list.Items.Add(BuildRow(item));
             }
@@ -444,7 +346,7 @@ namespace GuaranteeManager
             }
 
             ApplyMetrics(filtered.Metrics);
-            _summary.Text = filtered.Summary;
+            _summary.Text = _pager.BuildSummary();
             UpdateSelection();
         }
 
@@ -454,16 +356,14 @@ namespace GuaranteeManager
             row.Tag = item;
             row.Height = 40;
 
+            ReportWorkspaceRowState rowState = _dataService.BuildRowState(item, _coordinator.Results, _coordinator.HasOutput(item));
             var actions = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(10, 0, 0, 0)
             };
-            ReportWorkspaceRowState rowState = _dataService.BuildRowState(item, _coordinator.Results, _coordinator.HasOutput(item));
-            actions.Children.Add(CreateRowButton("فتح", "Icon.Document", item, OpenRow_Click, rowState.CanOpen));
-            actions.Children.Add(CreateRowButton("تشغيل", "Icon.NewTransaction", item, RunRow_Click, true));
-            actions.Children.Add(CreateRowButton("عرض", "Icon.View", item, SelectRow_Click, true));
+            actions.Children.Add(CreateRowButton("عرض", "Icon.View", item, ShowReport_Click, true));
             Grid.SetColumn(actions, 0);
             row.Children.Add(actions);
 
@@ -491,15 +391,20 @@ namespace GuaranteeManager
             return cell;
         }
 
-        private static Button CreateRowButton(string text, string iconKey, ReportWorkspaceItem item, RoutedEventHandler handler, bool isEnabled)
+        private Button CreateRowButton(string text, string iconKey, ReportWorkspaceItem item, RoutedEventHandler handler, bool isEnabled)
         {
             var button = new Button
             {
                 Content = BuildRowButtonContent(text, iconKey),
                 Tag = item,
                 Style = WorkspaceSurfaceChrome.Style("RowButton"),
-                IsEnabled = isEnabled
+                IsEnabled = isEnabled,
+                ToolTip = "يعرض تفاصيل التقرير في اللوحة الجانبية"
             };
+            UiInstrumentation.Identify(
+                button,
+                $"Reports.Row.Show.{item.Key}",
+                $"عرض التقرير {item.Title}");
             button.Click += handler;
             return button;
         }
@@ -539,24 +444,7 @@ namespace GuaranteeManager
             return stack;
         }
 
-        private void SelectRow_Click(object sender, RoutedEventArgs e)
-        {
-            SelectRowFromSender(sender);
-        }
-
-        private void RunRow_Click(object sender, RoutedEventArgs e)
-        {
-            SelectRowFromSender(sender);
-            RunSelectedReport();
-        }
-
-        private void OpenRow_Click(object sender, RoutedEventArgs e)
-        {
-            SelectRowFromSender(sender);
-            OpenLastReport();
-        }
-
-        private void SelectRowFromSender(object sender)
+        private void ShowReport_Click(object sender, RoutedEventArgs e)
         {
             if (sender is not FrameworkElement element || element.Tag is not ReportWorkspaceItem item)
             {
@@ -569,6 +457,7 @@ namespace GuaranteeManager
                 {
                     _list.SelectedItem = frameworkElement;
                     frameworkElement.Focus();
+                    UpdateSelection();
                     return;
                 }
             }
@@ -639,30 +528,9 @@ namespace GuaranteeManager
         private void ApplyMetrics(ReportsWorkspaceMetrics metrics)
         {
             _portfolioValue.Text = metrics.Portfolio;
+            _requestsValue.Text = metrics.Requests;
             _operationalValue.Text = metrics.Operational;
             _totalValue.Text = metrics.Total;
-            _statusValue.Text = metrics.Status;
-        }
-
-        private static StackPanel BuildInfoBlock(string label, TextBlock value)
-        {
-            value.TextWrapping = TextWrapping.Wrap;
-            value.Margin = new Thickness(0, 4, 0, 0);
-            return new StackPanel
-            {
-                Margin = new Thickness(0, 4, 0, 8),
-                Children =
-                {
-                    new TextBlock
-                    {
-                        Text = label,
-                        FontSize = 11,
-                        FontWeight = FontWeights.SemiBold,
-                        Foreground = WorkspaceSurfaceChrome.BrushFrom("#94A3C8")
-                    },
-                    value
-                }
-            };
         }
 
         private static TextBlock BuildMetricValue()

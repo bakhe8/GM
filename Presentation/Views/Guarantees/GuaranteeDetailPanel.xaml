@@ -21,84 +21,191 @@
                           automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.ScrollViewer"
                           automation:AutomationProperties.Name="تمرير تفاصيل الضمان">
                 <StackPanel Margin="16,14">
-                    <Grid Margin="0,0,0,10">
-                        <StackPanel Orientation="Horizontal" FlowDirection="RightToLeft">
-                            <TextBlock Text="{Binding SelectedGuarantee.GuaranteeNo}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" />
-                            <Viewbox Width="14" Height="14" Margin="0,0,8,0" VerticalAlignment="Center">
-                                <Path Data="{StaticResource Icon.Badge}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                            </Viewbox>
+                    <Grid Margin="0,0,0,12" FlowDirection="LeftToRight">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0"
+                                Style="{StaticResource StatusPill}"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Background="{Binding SelectedGuarantee.WorkBackground}"
+                                BorderBrush="{Binding SelectedGuarantee.WorkBorder}">
+                            <TextBlock Text="{Binding SelectedGuarantee.WorkStatus}" Foreground="{Binding SelectedGuarantee.WorkBrush}" FontSize="10" FontWeight="SemiBold" />
+                        </Border>
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    FlowDirection="RightToLeft"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="{Binding SelectedGuarantee.GuaranteeNo}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" />
+                            <Border Width="3" />
+                            <Button Style="{StaticResource IconOnlyButton}"
+                                    Margin="0"
+                                    ToolTip="نسخ رقم الضمان"
+                                    Command="{Binding CopyGuaranteeNoCommand}"
+                                    CommandParameter="{Binding SelectedGuarantee}"
+                                    automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Header.CopyGuaranteeNo"
+                                    automation:AutomationProperties.Name="نسخ رقم الضمان">
+                                <Viewbox Width="12" Height="12">
+                                    <Path Data="{StaticResource Icon.Copy}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                </Viewbox>
+                            </Button>
                         </StackPanel>
                     </Grid>
 
-                    <Border Style="{StaticResource StatusPill}"
-                            HorizontalAlignment="Left"
-                            Margin="0,0,0,12"
-                            Background="{Binding SelectedGuarantee.WorkBackground}"
-                            BorderBrush="{Binding SelectedGuarantee.WorkBorder}">
-                        <TextBlock Text="{Binding SelectedGuarantee.WorkStatus}" Foreground="{Binding SelectedGuarantee.WorkBrush}" FontSize="10" FontWeight="SemiBold" />
-                    </Border>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding SelectedGuarantee.Beneficiary}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" />
-                        <Viewbox Width="14" Height="14" Margin="8,0,0,0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" FlowDirection="RightToLeft">
+                        <Viewbox Width="14" Height="14" VerticalAlignment="Center">
                             <Path Data="{StaticResource Icon.User}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                         </Viewbox>
+                        <TextBlock Text="{Binding SelectedGuarantee.Beneficiary}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" Margin="8,0,0,0" />
+                        <Border Width="3" />
+                        <Button Style="{StaticResource IconOnlyButton}"
+                                Margin="0"
+                                ToolTip="نسخ اسم المستفيد"
+                                Command="{Binding CopyGuaranteeSupplierCommand}"
+                                CommandParameter="{Binding SelectedGuarantee}"
+                                automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Header.CopyBeneficiary"
+                                automation:AutomationProperties.Name="نسخ اسم المستفيد">
+                            <Viewbox Width="12" Height="12">
+                                <Path Data="{StaticResource Icon.Copy}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                            </Viewbox>
+                        </Button>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0" HorizontalAlignment="Right">
-                        <TextBlock Text="{Binding SelectedGuarantee.Bank}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
-                        <Image Source="{Binding SelectedGuarantee.BankLogo}" Width="17" Height="17" Margin="7,0,0,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
+                    <StackPanel Orientation="Horizontal" FlowDirection="RightToLeft" Margin="0,5,0,0" HorizontalAlignment="Right">
+                        <Image Source="{Binding SelectedGuarantee.BankLogo}" Width="17" Height="17" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
+                        <TextBlock Text="{Binding SelectedGuarantee.Bank}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" Margin="7,0,0,0" />
                     </StackPanel>
-                    <TextBlock Text="{Binding SelectedGuarantee.Amount}" FontSize="34" FontWeight="Bold" Foreground="#0F172A" Margin="0,12,0,0" />
-                    <TextBlock Text="{Binding SelectedGuarantee.AmountDescription}" FontSize="11.5" Foreground="{StaticResource Brush.Muted}" />
+                    <TextBlock Text="{Binding SelectedGuarantee.Amount}" FontSize="34" FontWeight="Bold" Foreground="#0F172A" Margin="0,12,0,0" HorizontalAlignment="Left" TextAlignment="Right" />
+                    <TextBlock Text="{Binding SelectedGuarantee.AmountDescription}" FontSize="11.5" Foreground="{StaticResource Brush.Muted}" HorizontalAlignment="Left" TextAlignment="Right" />
                     <Border Height="1" Background="#EDF2F7" Margin="0,13,0,12" />
 
                     <Grid FlowDirection="RightToLeft"
                           automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.ReferenceFacts"
                           automation:AutomationProperties.Name="بيانات الضمان المرجعية">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="110" />
+                            <ColumnDefinition Width="118" />
+                            <ColumnDefinition Width="10" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="28" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="26" />
-                            <RowDefinition Height="26" />
-                            <RowDefinition Height="26" />
-                            <RowDefinition Height="26" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="28" />
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Viewbox Width="12" Height="12" Margin="5,0,0,0" VerticalAlignment="Center">
+                            <Viewbox Width="12" Height="12" VerticalAlignment="Center">
                                 <Path Data="{StaticResource Icon.Guarantees}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                             </Viewbox>
+                            <Border Width="7" />
                             <TextBlock Text="نوع الضمان" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedGuarantee.GuaranteeType}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding SelectedGuarantee.GuaranteeType}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
+                        <Button Grid.Row="0"
+                                Grid.Column="3"
+                                Padding="0"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource IconOnlyButton}"
+                                ToolTip="نسخ نوع الضمان"
+                                Command="{Binding CopyGuaranteeTypeCommand}"
+                                CommandParameter="{Binding SelectedGuarantee}"
+                                automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.ReferenceFacts.CopyGuaranteeType"
+                                automation:AutomationProperties.Name="نسخ نوع الضمان">
+                            <Viewbox Width="12" Height="12">
+                                <Path Data="{StaticResource Icon.Copy}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                            </Viewbox>
+                        </Button>
 
                         <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Viewbox Width="12" Height="12" Margin="5,0,0,0" VerticalAlignment="Center">
+                            <Viewbox Width="12" Height="12" VerticalAlignment="Center">
                                 <Path Data="{StaticResource Icon.Document}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                             </Viewbox>
+                            <Border Width="7" />
                             <TextBlock Text="{Binding SelectedGuarantee.ReferenceFieldLabel}" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedGuarantee.ReferenceNumber}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" HorizontalAlignment="Right" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding SelectedGuarantee.ReferenceNumber}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
+                        <Button Grid.Row="1"
+                                Grid.Column="3"
+                                Padding="0"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource IconOnlyButton}"
+                                ToolTip="نسخ رقم المرجع"
+                                Command="{Binding CopyGuaranteeReferenceNumberCommand}"
+                                CommandParameter="{Binding SelectedGuarantee}"
+                                automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.ReferenceFacts.CopyReferenceNumber"
+                                automation:AutomationProperties.Name="نسخ رقم المرجع">
+                            <Viewbox Width="12" Height="12">
+                                <Path Data="{StaticResource Icon.Copy}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                            </Viewbox>
+                        </Button>
 
                         <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Viewbox Width="12" Height="12" Margin="5,0,0,0" VerticalAlignment="Center">
-                                <Path Data="{StaticResource Icon.Calendar}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                            </Viewbox>
-                            <TextBlock Text="تاريخ الإصدار" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
-                        </StackPanel>
-                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedGuarantee.IssueDate}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" HorizontalAlignment="Right" />
-
-                        <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Viewbox Width="12" Height="12" Margin="5,0,0,0" VerticalAlignment="Center">
+                            <Viewbox Width="12" Height="12" VerticalAlignment="Center">
                                 <Path Data="{StaticResource Icon.History}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                             </Viewbox>
+                            <Border Width="7" />
+                            <TextBlock Text="الإصدار" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding SelectedGuarantee.VersionLabel}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
+
+                        <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Viewbox Width="12" Height="12" VerticalAlignment="Center">
+                                <Path Data="{StaticResource Icon.Calendar}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                            </Viewbox>
+                            <Border Width="7" />
+                            <TextBlock Text="تاريخ الإصدار" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding SelectedGuarantee.IssueDate}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
+                        <Button Grid.Row="3"
+                                Grid.Column="3"
+                                Padding="0"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource IconOnlyButton}"
+                                ToolTip="نسخ تاريخ الإصدار"
+                                Command="{Binding CopyGuaranteeIssueDateCommand}"
+                                CommandParameter="{Binding SelectedGuarantee}"
+                                automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.ReferenceFacts.CopyIssueDate"
+                                automation:AutomationProperties.Name="نسخ تاريخ الإصدار">
+                            <Viewbox Width="12" Height="12">
+                                <Path Data="{StaticResource Icon.Copy}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                            </Viewbox>
+                        </Button>
+
+                        <StackPanel Grid.Row="4" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Viewbox Width="12" Height="12" VerticalAlignment="Center">
+                                <Path Data="{StaticResource Icon.History}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                            </Viewbox>
+                            <Border Width="7" />
                             <TextBlock Text="تاريخ الانتهاء" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
                         </StackPanel>
-                        <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <StackPanel Grid.Row="4" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
                             <TextBlock Text="{Binding SelectedGuarantee.ExpiryDate}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" />
-                            <TextBlock Text="{Binding SelectedGuarantee.ExpiryRemainingLabel}" FontSize="10" FontWeight="SemiBold" Foreground="{Binding SelectedGuarantee.TimeBrush}" />
+                            <Border Width="7" />
+                            <TextBlock Text="{Binding SelectedGuarantee.ExpiryRemainingLabel}" FontSize="10" FontWeight="SemiBold" Foreground="{Binding SelectedGuarantee.TimeBrush}" VerticalAlignment="Center" />
                         </StackPanel>
+                        <Button Grid.Row="4"
+                                Grid.Column="3"
+                                Padding="0"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource IconOnlyButton}"
+                                ToolTip="نسخ تاريخ الانتهاء"
+                                Command="{Binding CopyGuaranteeExpiryDateCommand}"
+                                CommandParameter="{Binding SelectedGuarantee}"
+                                automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.ReferenceFacts.CopyExpiryDate"
+                                automation:AutomationProperties.Name="نسخ تاريخ الانتهاء">
+                            <Viewbox Width="12" Height="12">
+                                <Path Data="{StaticResource Icon.Copy}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                            </Viewbox>
+                        </Button>
                     </Grid>
 
                     <Border x:Name="TimelineAnchor"
@@ -143,7 +250,18 @@
                                                 <ColumnDefinition Width="18" />
                                                 <ColumnDefinition Width="*" />
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Text="{Binding Date}" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Top" Margin="0,3,0,0" FlowDirection="LeftToRight" />
+                                            <StackPanel VerticalAlignment="Top"
+                                                        Margin="0,3,0,0"
+                                                        FlowDirection="LeftToRight">
+                                                <TextBlock Text="{Binding Date}"
+                                                           FontSize="10"
+                                                           Foreground="{StaticResource Brush.Muted}" />
+                                                <TextBlock Text="{Binding Time}"
+                                                           FontSize="9"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#94A3B8"
+                                                           Margin="0,2,0,0" />
+                                            </StackPanel>
                                             <Grid Grid.Column="1" HorizontalAlignment="Center">
                                                 <Rectangle Width="1.5" Fill="#E2E8F0" HorizontalAlignment="Center" Margin="0,10,0,-12" />
                                                 <Grid VerticalAlignment="Top" Margin="0,2,0,0">
@@ -162,7 +280,7 @@
                                                         <TextBlock Text="{Binding Status}" FontSize="9" FontWeight="SemiBold" Foreground="{Binding Brush}" />
                                                     </Border>
                                                 </StackPanel>
-                                                <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{StaticResource Brush.Muted}" Margin="0,4,0,0" />
+                                                <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{StaticResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap" />
                                             </StackPanel>
                                         </Grid>
                                         <DataTemplate.Triggers>
@@ -276,7 +394,8 @@
                                     <DataTemplate>
                                         <Button Style="{StaticResource PlainLinkButton}"
                                                 Command="{Binding DataContext.OpenAttachmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                CommandParameter="{Binding}">
+                                                CommandParameter="{Binding}"
+                                                ToolTip="{Binding DocumentType}">
                                             <Grid Height="32" Margin="0,0,0,4" FlowDirection="LeftToRight">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="70" />
@@ -288,7 +407,7 @@
                                                 <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource Brush.Text}" VerticalAlignment="Center" Margin="8,0" FlowDirection="RightToLeft" />
                                                 <TextBlock Grid.Column="2" Text="{Binding Size}" FontSize="10" Foreground="#4B5563" VerticalAlignment="Center" HorizontalAlignment="Right" />
                                                 <Border Grid.Column="3" Width="16" Height="18" CornerRadius="2" Background="#FEE2E2" VerticalAlignment="Center">
-                                                    <TextBlock Text="PDF" FontSize="5.5" FontWeight="Bold" Foreground="#DC2626"
+                                                    <TextBlock Text="{Binding FileKind}" FontSize="5.5" FontWeight="Bold" Foreground="#DC2626"
                                                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                 </Border>
                                             </Grid>

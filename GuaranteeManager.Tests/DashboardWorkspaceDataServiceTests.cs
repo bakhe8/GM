@@ -75,7 +75,6 @@ namespace GuaranteeManager.Tests
 
             DashboardWorkItem item = Assert.Single(result.Items);
             Assert.Equal(DashboardScope.ExpiredFollowUp, item.Scope);
-            Assert.Contains("المتابعات المنتهية", result.Summary);
             Assert.Equal("0", result.Metrics.First.Value);
             Assert.Equal("1", result.Metrics.Second.Value);
         }
@@ -94,7 +93,6 @@ namespace GuaranteeManager.Tests
         {
             return new DashboardWorkItem(
                 scope,
-                DashboardTarget.Today,
                 42,
                 null,
                 GuaranteeFileFocusArea.Actions,
@@ -113,8 +111,6 @@ namespace GuaranteeManager.Tests
                 dueDetail,
                 "ابتدائي",
                 "راجع التمديد",
-                "متابعات الانتهاء",
-                "ركّز المتابعة",
                 "افتح الضمان في المحفظة وراجع قرار التمديد",
                 "ظهر اليوم لأنه داخل نافذة الانتهاء القريبة.",
                 Brushes.DarkOrange,

@@ -164,19 +164,44 @@ namespace GuaranteeManager.Services
             string fileExtension,
             DateTime uploadedAt,
             SqliteConnection connection,
-            SqliteTransaction transaction)
+            SqliteTransaction transaction,
+            AttachmentDocumentType documentType = AttachmentDocumentType.SupportingDocument)
         {
             var insertAttachmentCommand = connection.CreateCommand();
             insertAttachmentCommand.Transaction = transaction;
             insertAttachmentCommand.CommandText = @"
-                INSERT INTO Attachments (GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt)
-                VALUES ($guaranteeId, $originalFileName, $savedFileName, $fileExtension, $uploadedAt)";
+                INSERT INTO Attachments (GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt, DocumentType)
+                VALUES ($guaranteeId, $originalFileName, $savedFileName, $fileExtension, $uploadedAt, $documentType)";
             insertAttachmentCommand.Parameters.AddWithValue("$guaranteeId", guaranteeId);
             insertAttachmentCommand.Parameters.AddWithValue("$originalFileName", originalFileName);
             insertAttachmentCommand.Parameters.AddWithValue("$savedFileName", savedFileName);
             insertAttachmentCommand.Parameters.AddWithValue("$fileExtension", fileExtension);
             insertAttachmentCommand.Parameters.AddWithValue("$uploadedAt", PersistedDateTime.FormatDateTime(uploadedAt));
+            insertAttachmentCommand.Parameters.AddWithValue("$documentType", documentType.ToString());
             insertAttachmentCommand.ExecuteNonQuery();
+        }
+
+        public static void UpdateGuaranteeLifecycleStatus(
+            int guaranteeId,
+            GuaranteeLifecycleStatus lifecycleStatus,
+            string notes,
+            int? replacedByRootId,
+            SqliteConnection connection,
+            SqliteTransaction transaction)
+        {
+            var updateGuaranteeCommand = connection.CreateCommand();
+            updateGuaranteeCommand.Transaction = transaction;
+            updateGuaranteeCommand.CommandText = @"
+                UPDATE Guarantees SET
+                    LifecycleStatus = $lifecycleStatus,
+                    Notes = $notes,
+                    ReplacedByRootId = $replacedByRootId
+                WHERE Id = $guaranteeId";
+            updateGuaranteeCommand.Parameters.AddWithValue("$lifecycleStatus", lifecycleStatus.ToString());
+            updateGuaranteeCommand.Parameters.AddWithValue("$notes", notes ?? string.Empty);
+            updateGuaranteeCommand.Parameters.AddWithValue("$replacedByRootId", (object?)replacedByRootId ?? DBNull.Value);
+            updateGuaranteeCommand.Parameters.AddWithValue("$guaranteeId", guaranteeId);
+            updateGuaranteeCommand.ExecuteNonQuery();
         }
 
         public static void CopyAttachments(
@@ -195,7 +220,8 @@ namespace GuaranteeManager.Services
                     attachment.FileExtension,
                     uploadedAt,
                     connection,
-                    transaction);
+                    transaction,
+                    attachment.DocumentType);
             }
         }
 
@@ -387,16 +413,6 @@ namespace GuaranteeManager.Services
                 {
                     throw new InvalidOperationException($"لا يمكن تنفيذ {request.TypeLabel} لأن حالة الضمان الحالية هي {currentGuarantee.LifecycleStatusLabel}.");
                 }
-            }
-
-            if (request.Type == RequestType.Annulment)
-            {
-                if (currentGuarantee.LifecycleStatus != GuaranteeLifecycleStatus.Released &&
-                    currentGuarantee.LifecycleStatus != GuaranteeLifecycleStatus.Liquidated)
-                {
-                    throw new InvalidOperationException($"لا يمكن نقض ضمان في حالة {currentGuarantee.LifecycleStatusLabel}.");
-                }
-                return;
             }
 
             if (currentGuarantee.Id == request.BaseVersionId)

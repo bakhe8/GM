@@ -27,16 +27,16 @@ namespace GuaranteeManager
         private readonly TextBlock _detailAction = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailPath = BuildPathText();
         private readonly TextBlock _detailOpenPath = BuildPathText();
-        private readonly Action? _closeRequested;
         private readonly Action? _dataResetCompleted;
+        private readonly ReferenceTablePagerController _pager;
 
-        public SettingsWorkspaceSurface(Action? closeRequested, Action? dataResetCompleted, string? initialSearchText = null)
+        public SettingsWorkspaceSurface(Action? dataResetCompleted, string? initialSearchText = null)
         {
             _dataService = new SettingsWorkspaceDataService();
             _coordinator = new SettingsWorkspaceCoordinator();
-            _closeRequested = closeRequested;
             _dataResetCompleted = dataResetCompleted;
             _allItems = _dataService.BuildItems();
+            _pager = new ReferenceTablePagerController("Settings", "عنصر", 10, ApplyFilters);
             UiInstrumentation.Identify(this, "Settings.Workspace", "الإعدادات");
             UiInstrumentation.Identify(_searchInput, "Settings.SearchBox", "بحث الإعدادات");
             UiInstrumentation.Identify(_categoryFilter, "Settings.Filter.Category", "فئة الإعدادات");
@@ -107,7 +107,7 @@ namespace GuaranteeManager
                 new("نسخ ملخص المسارات", (_, _) => _coordinator.CopyOperationalPathsSummary())
             };
 #if DEBUG
-            toolItems.Add(new MenuItemSpec("توليد بيانات تجريبية", (_, _) => _coordinator.SeedDevelopmentData(RefreshAfterDataReset)));
+            toolItems.Add(new MenuItemSpec("إضافة بيانات تجريبية", (_, _) => _coordinator.SeedDevelopmentData(RefreshAfterDataReset)));
 #endif
             toolsMenuButton.ContextMenu = BuildToolbarMenu(toolItems.ToArray());
             Grid.SetColumn(toolsMenuButton, 4);
@@ -118,11 +118,19 @@ namespace GuaranteeManager
             _categoryFilter.Items.Add("بيانات");
             _categoryFilter.Items.Add("سير العمل");
             _categoryFilter.SelectedIndex = 0;
-            _categoryFilter.SelectionChanged += (_, _) => ApplyFilters();
+            _categoryFilter.SelectionChanged += (_, _) =>
+            {
+                _pager.ResetToFirstPage();
+                ApplyFilters();
+            };
             Grid.SetColumn(_categoryFilter, 6);
             toolbar.Children.Add(_categoryFilter);
 
-            _searchInput.TextChanged += (_, _) => ApplyFilters();
+            _searchInput.TextChanged += (_, _) =>
+            {
+                _pager.ResetToFirstPage();
+                ApplyFilters();
+            };
             var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث باسم العنصر أو المسار...");
             Grid.SetColumn(searchBox, 8);
             toolbar.Children.Add(searchBox);
@@ -139,13 +147,14 @@ namespace GuaranteeManager
             metrics.Children.Add(BuildMetricCard("المرفقات", _attachmentsValue, "#2563EB"));
             metrics.Children.Add(BuildMetricCard("الخطابات", _lettersValue, "#E09408"));
             metrics.Children.Add(BuildMetricCard("ردود البنوك", _responsesValue, "#0F172A"));
+            WorkspaceSurfaceChrome.ApplyMetricCardSpacing(metrics);
             return metrics;
         }
 
         private Border BuildMetricCard(string label, TextBlock value, string accent)
         {
             var card = WorkspaceSurfaceChrome.Card(new Thickness(14, 10, 14, 10));
-            card.Margin = new Thickness(0, 0, 10, 0);
+            card.Margin = new Thickness(0);
             var stack = new StackPanel();
             stack.Children.Add(new TextBlock
             {
@@ -192,47 +201,7 @@ namespace GuaranteeManager
 
         private Grid BuildTableFooter()
         {
-            var footer = new Grid
-            {
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePager")
-            };
-
-            var buttons = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            buttons.Children.Add(new Button
-            {
-                Content = "←",
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePagerButton")
-            });
-            buttons.Children.Add(new Button
-            {
-                Content = "1",
-                Margin = new Thickness(6, 0, 0, 0),
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePagerActiveButton")
-            });
-            buttons.Children.Add(new Button
-            {
-                Content = "10",
-                MinWidth = 46,
-                Margin = new Thickness(12, 0, 0, 0),
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePagerButton")
-            });
-            buttons.Children.Add(new TextBlock
-            {
-                Text = "لكل صفحة",
-                FontSize = 11,
-                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Muted"),
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(8, 0, 0, 0)
-            });
-            footer.Children.Add(buttons);
-
-            _summary.Style = WorkspaceSurfaceChrome.Style("ReferenceTableFooterSummary");
-            footer.Children.Add(_summary);
-            return footer;
+            return _pager.BuildFooter(_summary);
         }
 
         private Border BuildDetailPanel()
@@ -254,59 +223,48 @@ namespace GuaranteeManager
                 Margin = new Thickness(16, 14, 16, 14),
                 Children =
                 {
-                    BuildDetailHeader(),
                     BuildSettingsTitleRow(),
                     _detailSubtitle,
-                    _detailStatusBadgeBorder,
                     new Border { Height = 1, Background = WorkspaceSurfaceChrome.BrushFrom("#EDF2F7"), Margin = new Thickness(0, 13, 0, 12) },
-                    WorkspaceSurfaceChrome.InfoLine("الحالة التشغيلية", _detailState),
-                    WorkspaceSurfaceChrome.InfoLine("الإجراء التالي", _detailAction),
-                    BuildInfoBlock("المسار", _detailPath),
-                    BuildInfoBlock("مسار الفتح", _detailOpenPath)
+                    WorkspaceSurfaceChrome.DetailFactLine("الحالة التشغيلية", _detailState, "Icon.Check"),
+                    WorkspaceSurfaceChrome.DetailFactLine("الإجراء التالي", _detailAction, "Icon.Extend"),
+                    WorkspaceSurfaceChrome.DetailFactBlock("المسار", _detailPath, "Icon.Document", (_, _) => _coordinator.CopyPath(SelectedItem), "Settings.Detail.CopyPath", "نسخ المسار"),
+                    WorkspaceSurfaceChrome.DetailFactBlock("مسار الفتح", _detailOpenPath, "Icon.Logout", (_, _) => _coordinator.CopyOpenPath(SelectedItem), "Settings.Detail.CopyOpenPath", "نسخ مسار الفتح")
                 }
             };
         }
 
-        private UIElement BuildDetailHeader()
+        private UIElement BuildSettingsTitleRow()
         {
-            var grid = new Grid { Margin = new Thickness(0, 0, 0, 12) };
+            var grid = new Grid
+            {
+                Margin = new Thickness(0, 0, 0, 8),
+                FlowDirection = FlowDirection.LeftToRight
+            };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-            grid.Children.Add(new TextBlock
-            {
-                Text = "تفاصيل المسار",
-                FontSize = 16,
-                FontWeight = FontWeights.Bold,
-                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
-            });
+            _detailStatusBadgeBorder.Margin = new Thickness(0);
+            _detailStatusBadgeBorder.VerticalAlignment = VerticalAlignment.Center;
+            grid.Children.Add(_detailStatusBadgeBorder);
 
-            var closeButton = new Button
-            {
-                Width = 28,
-                Height = 28,
-                Content = "×",
-                Background = Brushes.Transparent,
-                BorderThickness = new Thickness(0),
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B")
-            };
-            closeButton.Click += (_, _) => _closeRequested?.Invoke();
-            Grid.SetColumn(closeButton, 1);
-            grid.Children.Add(closeButton);
-            return grid;
-        }
-
-        private UIElement BuildSettingsTitleRow()
-        {
             var row = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                FlowDirection = FlowDirection.RightToLeft
+                FlowDirection = FlowDirection.RightToLeft,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center
             };
             row.Children.Add(CreateIcon("Icon.Settings", "#64748B", 14));
             _detailTitle.Margin = new Thickness(8, 0, 0, 0);
             row.Children.Add(_detailTitle);
-            return row;
+            row.Children.Add(WorkspaceSurfaceChrome.DetailHeaderCopyButton(
+                "نسخ اسم المسار",
+                "Settings.Detail.Header.CopyTitle",
+                (_, _) => WorkspaceSurfaceChrome.CopyDetailFactValue("اسم المسار", _detailTitle.Text, "الإعدادات")));
+            Grid.SetColumn(row, 1);
+            grid.Children.Add(row);
+            return grid;
         }
 
         private Border BuildDetailActions()
@@ -318,14 +276,6 @@ namespace GuaranteeManager
                 FontSize = 9.5
             };
             openButton.Click += (_, _) => _coordinator.OpenPath(SelectedItem);
-
-            var copyPathButton = new Button
-            {
-                Content = "نسخ المسار",
-                Style = WorkspaceSurfaceChrome.Style("PrimaryButton"),
-                FontSize = 9.5
-            };
-            copyPathButton.Click += (_, _) => _coordinator.CopyPath(SelectedItem);
 
             var border = new Border
             {
@@ -348,11 +298,7 @@ namespace GuaranteeManager
 
             var actions = new Grid { FlowDirection = FlowDirection.LeftToRight, Margin = new Thickness(0, 9, 0, 0) };
             actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             actions.Children.Add(openButton);
-            Grid.SetColumn(copyPathButton, 2);
-            actions.Children.Add(copyPathButton);
             Grid.SetRow(actions, 1);
             grid.Children.Add(actions);
             border.Child = grid;
@@ -396,7 +342,8 @@ namespace GuaranteeManager
                 _allItems,
                 _searchInput.Text,
                 category);
-            foreach (SettingPathItem item in filtered.Items)
+            IReadOnlyList<SettingPathItem> pageItems = _pager.Page(filtered.Items);
+            foreach (SettingPathItem item in pageItems)
             {
                 _list.Items.Add(BuildRow(item));
             }
@@ -407,7 +354,7 @@ namespace GuaranteeManager
             }
 
             ApplyMetrics(filtered.Metrics);
-            _summary.Text = filtered.Summary;
+            _summary.Text = _pager.BuildSummary();
             UpdateDetails();
         }
 
@@ -423,7 +370,6 @@ namespace GuaranteeManager
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(10, 0, 0, 0)
             };
-            actions.Children.Add(CreateRowButton("نسخ", "Icon.Document", item, CopyPath_Click));
             actions.Children.Add(CreateRowButton("فتح", "Icon.View", item, OpenPath_Click));
             actions.Children.Add(CreateRowButton("عرض", "Icon.Settings", item, SelectRow_Click));
             Grid.SetColumn(actions, 0);
@@ -594,12 +540,6 @@ namespace GuaranteeManager
             _coordinator.OpenPath(SelectedItem);
         }
 
-        private void CopyPath_Click(object sender, RoutedEventArgs e)
-        {
-            SelectRowFromSender(sender);
-            _coordinator.CopyPath(SelectedItem);
-        }
-
         private void SelectRowFromSender(object sender)
         {
             if (sender is not FrameworkElement element || element.Tag is not SettingPathItem item)
@@ -644,27 +584,6 @@ namespace GuaranteeManager
             _detailAction.Text = state.Action;
             _detailPath.Text = state.Path;
             _detailOpenPath.Text = state.OpenPath;
-        }
-
-        private static StackPanel BuildInfoBlock(string label, TextBlock value)
-        {
-            value.TextWrapping = TextWrapping.Wrap;
-            value.Margin = new Thickness(0, 4, 0, 0);
-            return new StackPanel
-            {
-                Margin = new Thickness(0, 4, 0, 8),
-                Children =
-                {
-                    new TextBlock
-                    {
-                        Text = label,
-                        FontSize = 11,
-                        FontWeight = FontWeights.SemiBold,
-                        Foreground = WorkspaceSurfaceChrome.BrushFrom("#94A3C8")
-                    },
-                    value
-                }
-            };
         }
 
         private static TextBlock BuildMetricValue()

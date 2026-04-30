@@ -16,7 +16,6 @@ namespace GuaranteeManager
         private readonly IDatabaseService _database;
         private readonly IWorkflowService _workflow;
         private readonly IExcelService _excel;
-        private readonly IGuaranteeHistoryDocumentService _historyDocuments;
         private readonly IOperationalInquiryService _inquiry;
         private readonly IShellStatusService _shellStatus;
         private readonly IUiDiagnosticsService _diagnostics;
@@ -27,7 +26,6 @@ namespace GuaranteeManager
             IDatabaseService database,
             IWorkflowService workflow,
             IExcelService excel,
-            IGuaranteeHistoryDocumentService historyDocuments,
             IOperationalInquiryService inquiry,
             IShellStatusService shellStatus,
             Action loadFilterOptions,
@@ -36,7 +34,6 @@ namespace GuaranteeManager
             _database = database;
             _workflow = workflow;
             _excel = excel;
-            _historyDocuments = historyDocuments;
             _inquiry = inquiry;
             _shellStatus = shellStatus;
             _diagnostics = App.CurrentApp.GetRequiredService<IUiDiagnosticsService>();
@@ -55,7 +52,7 @@ namespace GuaranteeManager
                 return;
             }
 
-            ExecuteAction("إجراء جديد", () =>
+            ExecuteAction("إضافة ضمان", () =>
             {
                 var guarantee = new Guarantee
                 {
@@ -73,7 +70,7 @@ namespace GuaranteeManager
                     LifecycleStatus = GuaranteeLifecycleStatus.Active
                 };
 
-                _database.SaveGuarantee(guarantee, input.AttachmentPaths);
+                _database.SaveGuaranteeWithAttachments(guarantee, input.Attachments);
                 _loadFilterOptions();
 
                 int rootId = _database.GetCurrentGuaranteeByNo(input.GuaranteeNo)?.RootId
@@ -114,24 +111,10 @@ namespace GuaranteeManager
                 current.ReferenceNumber = input.ReferenceNumber;
                 current.Notes = input.Notes;
 
-                _database.UpdateGuarantee(current, input.NewAttachmentPaths, input.RemovedAttachments);
+                _database.UpdateGuaranteeWithAttachments(current, input.NewAttachments, input.RemovedAttachments);
                 _loadFilterOptions();
                 return GuaranteeActionResult.Success($"تم تحديث الضمان {input.GuaranteeNo} وإنشاء إصدار جديد.", target.RootId);
             });
-        }
-
-        public void OpenHistory(GuaranteeRow target)
-        {
-            Guarantee? current = GetGuarantee(target, "سجل الضمان");
-            if (current == null)
-            {
-                return;
-            }
-
-            List<Guarantee> history = _database.GetGuaranteeHistory(current.Id);
-            List<WorkflowRequest> requests = _database.GetWorkflowRequestsByRootId(target.RootId);
-            _diagnostics.RecordEvent("guarantee.history", "open", new { target.GuaranteeNo, target.RootId, HistoryCount = history.Count, RequestCount = requests.Count });
-            HistoryDialog.ShowFor(target, history, requests);
         }
 
         public OperationalInquiryResult? RunInquiry(GuaranteeRow target, OperationalInquiryOption option)
@@ -169,7 +152,6 @@ namespace GuaranteeManager
             {
                 target.GuaranteeNo,
                 option.Id,
-                result.CanOpenHistory,
                 result.CanOpenRequestLetter,
                 result.CanOpenResponseDocument
             });
@@ -352,34 +334,6 @@ namespace GuaranteeManager
             });
         }
 
-        public void CreateAnnulmentRequest(GuaranteeRow target)
-        {
-            Guarantee? current = GetGuarantee(target, "طلب نقض");
-            if (current == null)
-            {
-                return;
-            }
-
-            if (!PromptDialog.TryShow(
-                    "طلب نقض",
-                    "سبب الطلب",
-                    "طلب نقض من واجهة الضمانات.",
-                    out string requestReason))
-            {
-                return;
-            }
-
-            string normalizedReason = string.IsNullOrWhiteSpace(requestReason)
-                ? "طلب نقض من واجهة الضمانات."
-                : requestReason.Trim();
-
-            ExecuteAction("طلب نقض", () =>
-            {
-                WorkflowRequest request = _workflow.CreateAnnulmentRequest(current.Id, normalizedReason, Environment.UserName);
-                return GuaranteeActionResult.Success($"تم إنشاء طلب نقض للضمان {target.GuaranteeNo}.", request.RootGuaranteeId, request.Id);
-            });
-        }
-
         public void RegisterBankResponse(GuaranteeRow target)
         {
             List<WorkflowRequest> pendingRequests = _database
@@ -459,33 +413,10 @@ namespace GuaranteeManager
 
             AttachmentPickerDialog.ShowFor(
                 target.Attachments,
-                $"attachments:{target.RootId}",
-                $"مرفقات الضمان - {target.GuaranteeNo}");
-        }
-
-        public void ShowRequests(GuaranteeRow target, bool requireExistingRequests, int? initialRequestId = null)
-        {
-            int rootId = target.RootId;
-            List<WorkflowRequest> requests = _database.GetWorkflowRequestsByRootId(rootId);
-            if (requireExistingRequests && requests.Count == 0)
-            {
-                MessageBox.Show("لا توجد طلبات مرتبطة بهذا الضمان.", "طلبات الضمان", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            RequestsWorkspaceDialog.ShowFor(
-                () => _database.QueryWorkflowRequests(new WorkflowRequestQueryOptions
-                {
-                    RootGuaranteeId = rootId,
-                    SortMode = WorkflowRequestQuerySortMode.ActivityDateDescending
-                }),
-                _workflow,
-                _database,
-                _excel,
-                rootId => _refreshAfterWorkflowChange(rootId, null),
-                initialRequestId,
-                $"requests:{rootId}",
-                $"طلبات الضمان - {target.GuaranteeNo}");
+                target.IsCurrentVersion ? $"attachments:{target.RootId}:all" : $"attachments:{target.Id}",
+                target.IsCurrentVersion
+                    ? $"مرفقات {target.GuaranteeNo} - كل الإصدارات"
+                    : $"مرفقات {target.GuaranteeNo} - {target.VersionLabel}");
         }
 
         public void CopyGuaranteeNo(GuaranteeRow target)
@@ -508,159 +439,24 @@ namespace GuaranteeManager
             CopyValue(target.ReferenceNumber, "رقم المرجع", target.GuaranteeNo);
         }
 
-        public void ExportVisibleGuarantees(IReadOnlyList<GuaranteeRow> rows)
+        public void CopyGuaranteeType(GuaranteeRow target)
         {
-            if (rows.Count == 0)
-            {
-                MessageBox.Show("لا توجد نتائج معروضة حاليًا لتصديرها.", "تصدير النتائج الحالية", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            List<Guarantee> guarantees = rows
-                .Select(row => _database.GetGuaranteeById(row.Id))
-                .Where(guarantee => guarantee != null)
-                .Cast<Guarantee>()
-                .ToList();
-
-            if (guarantees.Count == 0)
-            {
-                MessageBox.Show("تعذر تحميل الضمانات المعروضة حاليًا للتصدير.", "تصدير النتائج الحالية", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            ExecuteExport(
-                "تصدير النتائج الحالية",
-                $"تم تصدير {guarantees.Count.ToString("N0", CultureInfo.InvariantCulture)} ضمان من النتائج المعروضة.",
-                () => _excel.ExportGuarantees(guarantees),
-                () => _diagnostics.RecordEvent("guarantee.export", "visible-results", new { Count = guarantees.Count }));
+            CopyValue(target.GuaranteeType, "نوع الضمان", target.GuaranteeNo);
         }
 
-        public void ExportGuaranteeReport(GuaranteeRow target)
+        public void CopyIssueDate(GuaranteeRow target)
         {
-            Guarantee? current = GetGuarantee(target, "تصدير تقرير الضمان");
-            if (current == null)
-            {
-                return;
-            }
-
-            ExecuteExport(
-                "تصدير تقرير الضمان",
-                $"تم تصدير تقرير الضمان {target.GuaranteeNo}.",
-                () => _excel.ExportSingleGuaranteeReport(current),
-                () => _diagnostics.RecordEvent("guarantee.export", "report", new { target.GuaranteeNo, target.RootId }));
+            CopyValue(target.IssueDate, "تاريخ الإصدار", target.GuaranteeNo);
         }
 
-        public void ExportGuaranteeHistory(GuaranteeRow target)
+        public void CopyExpiryDate(GuaranteeRow target)
         {
-            Guarantee? current = GetGuarantee(target, "تصدير سجل الضمان");
-            if (current == null)
-            {
-                return;
-            }
-
-            List<Guarantee> history = _database.GetGuaranteeHistory(current.Id);
-            List<WorkflowRequest> requests = _database.GetWorkflowRequestsByRootId(target.RootId);
-            ExecuteExport(
-                "تصدير سجل الضمان",
-                $"تم تصدير سجل الضمان {target.GuaranteeNo}.",
-                () => _historyDocuments.ExportHistoryToExcel(current, history, requests),
-                () => _diagnostics.RecordEvent("guarantee.export", "history", new { target.GuaranteeNo, target.RootId, HistoryCount = history.Count, RequestCount = requests.Count }));
-        }
-
-        public void ExportGuaranteesByBank(GuaranteeRow target)
-        {
-            Guarantee? current = GetGuarantee(target, "تصدير ضمانات البنك");
-            if (current == null || string.IsNullOrWhiteSpace(current.Bank))
-            {
-                MessageBox.Show("لا يوجد بنك مرتبط بهذا الضمان.", "تصدير ضمانات البنك", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            List<Guarantee> guarantees = _database.QueryGuarantees(new GuaranteeQueryOptions
-            {
-                Bank = current.Bank,
-                IncludeAttachments = false,
-                SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
-            });
-
-            ExecuteExport(
-                "تصدير ضمانات البنك",
-                $"تم تصدير ضمانات البنك {current.Bank}.",
-                () => _excel.ExportGuaranteesByBank(current.Bank, guarantees),
-                () => _diagnostics.RecordEvent("guarantee.export", "by-bank", new { current.Bank, Count = guarantees.Count }));
-        }
-
-        public void ExportGuaranteesBySupplier(GuaranteeRow target)
-        {
-            Guarantee? current = GetGuarantee(target, "تصدير ضمانات المورد");
-            if (current == null || string.IsNullOrWhiteSpace(current.Supplier))
-            {
-                MessageBox.Show("لا يوجد مورد مرتبط بهذا الضمان.", "تصدير ضمانات المورد", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            List<Guarantee> guarantees = _database.QueryGuarantees(new GuaranteeQueryOptions
-            {
-                Supplier = current.Supplier,
-                IncludeAttachments = false,
-                SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
-            });
-
-            ExecuteExport(
-                "تصدير ضمانات المورد",
-                $"تم تصدير ضمانات المورد {current.Supplier}.",
-                () => _excel.ExportGuaranteesBySupplier(current.Supplier, guarantees),
-                () => _diagnostics.RecordEvent("guarantee.export", "by-supplier", new { current.Supplier, Count = guarantees.Count }));
-        }
-
-        public void ExportGuaranteesByTemporalStatus(GuaranteeRow target)
-        {
-            Guarantee? current = GetGuarantee(target, "تصدير حسب الحالة الزمنية");
-            if (current == null)
-            {
-                return;
-            }
-
-            GuaranteeTimeStatus timeStatus = ResolveTimeStatus(current);
-            List<Guarantee> guarantees = _database.QueryGuarantees(new GuaranteeQueryOptions
-            {
-                TimeStatus = timeStatus,
-                IncludeAttachments = false,
-                SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
-            });
-
-            ExecuteExport(
-                "تصدير حسب الحالة الزمنية",
-                $"تم تصدير ضمانات الحالة {current.StatusLabel}.",
-                () => _excel.ExportGuaranteesByTemporalStatus(current.StatusLabel, guarantees),
-                () => _diagnostics.RecordEvent("guarantee.export", "by-time-status", new { current.StatusLabel, Count = guarantees.Count }));
+            CopyValue(target.ExpiryDate, "تاريخ الانتهاء", target.GuaranteeNo);
         }
 
         public void ShowInquiryResult(OperationalInquiryResult result)
         {
             OperationalInquiryDialog.ShowFor(result, _database, _workflow, _excel);
-        }
-
-        public void OpenInquiryHistory(OperationalInquiryResult result)
-        {
-            Guarantee? guarantee = ResolveInquiryGuarantee(result);
-            if (guarantee == null)
-            {
-                MessageBox.Show("تعذر تحديد الضمان المرجعي لهذا الجواب.", "نتيجة الاستعلام", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            int rootId = guarantee.RootId ?? guarantee.Id;
-            Guarantee currentGuarantee = _database.GetCurrentGuaranteeByRootId(rootId) ?? guarantee;
-            List<WorkflowRequest> requests = _database.GetWorkflowRequestsByRootId(rootId);
-            List<Guarantee> history = _database.GetGuaranteeHistory(currentGuarantee.Id);
-            GuaranteeRow row = GuaranteeRow.FromGuarantee(currentGuarantee, requests);
-            HistoryDialog.ShowFor(
-                row,
-                history,
-                requests,
-                result.RelatedRequest?.Id,
-                preferRequestsTab: result.RelatedRequest != null);
         }
 
         public void OpenRequestLetter(WorkflowRequest request)
@@ -730,18 +526,6 @@ namespace GuaranteeManager
             }
         }
 
-        private static GuaranteeTimeStatus ResolveTimeStatus(Guarantee guarantee)
-        {
-            if (guarantee.IsExpired)
-            {
-                return GuaranteeTimeStatus.Expired;
-            }
-
-            return guarantee.IsExpiringSoon
-                ? GuaranteeTimeStatus.ExpiringSoon
-                : GuaranteeTimeStatus.Active;
-        }
-
         private static void CopyValue(string? value, string label, string guaranteeNo)
         {
             if (string.IsNullOrWhiteSpace(value) || value == "---")
@@ -760,24 +544,6 @@ namespace GuaranteeManager
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, $"نسخ {label}", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-        }
-
-        private static void ExecuteExport(string title, string successMessage, Func<bool> action, Action? onSuccess = null)
-        {
-            try
-            {
-                if (!action())
-                {
-                    return;
-                }
-
-                onSuccess?.Invoke();
-                App.CurrentApp.GetRequiredService<IShellStatusService>().ShowSuccess(successMessage, $"الضمانات • {title}");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, title, MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 

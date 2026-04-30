@@ -10,8 +10,9 @@ namespace GuaranteeManager
     public static class DashboardScopeFilters
     {
         public const string AllWork = "أعمال اليوم";
-        public const string PendingRequests = "طلبات معلقة";
+        public const string PendingRequests = "طلبات بانتظار الرد";
         public const string ExpiryFollowUps = "متابعات الانتهاء";
+        public const string LegacyPendingRequests = "طلبات معلقة";
         public const string LegacyExpiredFollowUp = "منتهية تحتاج متابعة";
         public const string LegacyExpiringSoon = "قريبة الانتهاء";
 
@@ -22,6 +23,7 @@ namespace GuaranteeManager
             {
                 LegacyExpiredFollowUp => ExpiryFollowUps,
                 LegacyExpiringSoon => ExpiryFollowUps,
+                LegacyPendingRequests => PendingRequests,
                 PendingRequests => PendingRequests,
                 ExpiryFollowUps => ExpiryFollowUps,
                 _ => AllWork
@@ -123,13 +125,6 @@ namespace GuaranteeManager
                 .ThenByDescending(item => item.Amount)
                 .ToList();
 
-            string summary = BuildSummary(
-                filtered.Count,
-                allItems.Count,
-                normalizedSearch,
-                normalizedScope,
-                normalizedExpiryFilter);
-
             return new DashboardWorkspaceFilterResult(
                 filtered,
                 BuildMetrics(
@@ -139,8 +134,7 @@ namespace GuaranteeManager
                     lastFileGuaranteeNo,
                     allItems,
                     guarantees,
-                    pendingRequests),
-                summary);
+                    pendingRequests));
         }
 
         private static IEnumerable<DashboardWorkItem> ApplyExpiryFollowUpFilter(
@@ -169,27 +163,23 @@ namespace GuaranteeManager
             if (selected == null)
             {
                 string title = "لا توجد أولوية محددة";
-                string subtitle = "ابدأ باختيار عنصر من قائمة الأولويات اليومية.";
                 string note = hasLastFile
                     ? $"آخر ضمان تم العمل عليه: {lastFileGuaranteeNo} | {lastFileSummary}"
-                    : "لا يوجد ضمان حديث بعد. ابدأ بفتح الضمانات أو اختيار عنصر من أعمال اليوم.";
+                    : "لا يوجد آخر ضمان محفوظ بعد. اختر عنصرًا من أعمال اليوم أو افتح الضمانات من الشريط الجانبي.";
 
                 if (string.Equals(normalizedScope, DashboardScopeFilters.ExpiryFollowUps, StringComparison.Ordinal))
                 {
                     title = "اختر متابعة انتهاء";
-                    subtitle = "ستظهر هنا تفاصيل الضمانات القريبة من الانتهاء أو المنتهية التي تحتاج متابعة.";
-                    note = "هذه العدسة تجمع المتابعة الوقائية والمتابعة المتأخرة في بيت يومي واحد.";
+                    note = "هذا النطاق يجمع المتابعة الوقائية والمتابعة المتأخرة في بيت يومي واحد.";
                 }
                 else if (string.Equals(normalizedScope, DashboardScopeFilters.PendingRequests, StringComparison.Ordinal))
                 {
-                    title = "اختر طلبًا معلقًا";
-                    subtitle = "ستظهر هنا تفاصيل الطلب المحدد والخطوة التالية المناسبة له.";
-                    note = "ابدأ بطلب معلق لترى المرجع والقيمة المطلوبة وما الإجراء الأنسب الآن.";
+                    title = "اختر طلبًا بانتظار الرد";
+                    note = "ابدأ بطلب ينتظر رد البنك لترى رقم الضمان والقيمة المطلوبة وما الإجراء الأنسب الآن.";
                 }
 
                 return new DashboardWorkspaceDetailState(
                     title,
-                    subtitle,
                     "جاهز",
                     WorkspaceSurfaceChrome.BrushFrom("#16A34A"),
                     WorkspaceSurfaceChrome.BrushFrom("#F2FBF4"),
@@ -202,14 +192,9 @@ namespace GuaranteeManager
                     "---",
                     "---",
                     "---",
-                    "---",
-                    "---",
-                    "---",
                     note,
                     "اختر عنصرًا لفتح وجهته",
-                    "فتح المساحة",
                     ResolveEmptyDetailProfile(normalizedScope),
-                    false,
                     false);
             }
 
@@ -222,7 +207,6 @@ namespace GuaranteeManager
 
             return new DashboardWorkspaceDetailState(
                 selected.Title,
-                selected.Subtitle,
                 selected.PriorityLabel,
                 selected.PriorityBrush,
                 selected.PriorityBackground,
@@ -231,18 +215,13 @@ namespace GuaranteeManager
                 selected.Bank,
                 selected.AmountDisplay,
                 selected.AmountCaption,
-                selected.CategoryLabel,
-                selected.PriorityLabel,
                 selected.Reference,
                 selected.DueDetail,
                 detailProfile == DashboardDetailProfile.FollowUp ? selected.DueLabel : "---",
-                selected.WorkspaceLabel,
                 selected.NextAction,
                 selected.Note,
                 selected.PrimaryActionLabel,
-                selected.WorkspaceButtonLabel,
                 detailProfile,
-                selected.RootGuaranteeId > 0,
                 true);
         }
 
@@ -268,11 +247,10 @@ namespace GuaranteeManager
 
             return new DashboardWorkItem(
                 DashboardScope.PendingRequests,
-                DashboardTarget.Requests,
                 item.RootGuaranteeId,
                 item.Request.Id,
                 GuaranteeFileFocusArea.Requests,
-                "طلبات معلقة",
+                DashboardScopeFilters.PendingRequests,
                 label,
                 rank,
                 $"{item.Request.TypeLabel} - {item.Supplier}",
@@ -287,8 +265,6 @@ namespace GuaranteeManager
                 $"ينتظر منذ {ageDays.ToString("N0", CultureInfo.InvariantCulture)} يوم",
                 $"{item.Request.TypeLabel} | {item.Supplier}",
                 "راجع الطلب",
-                "الطلبات",
-                "فتح الطلبات",
                 $"مراجعة {item.Request.TypeLabel} ثم تسجيل رد البنك عند وصوله",
                 $"ظهر اليوم لأنه ما زال بانتظار رد البنك. الحالي: {item.CurrentValueFieldLabel} = {item.CurrentValueDisplay}. المطلوب: {item.RequestedValueFieldLabel} = {item.RequestedValueDisplay}.",
                 TonePalette.Foreground(tone),
@@ -328,7 +304,6 @@ namespace GuaranteeManager
 
             return new DashboardWorkItem(
                 DashboardScope.ExpiredFollowUp,
-                DashboardTarget.Today,
                 item.RootId ?? item.Id,
                 requestId,
                 focusArea,
@@ -347,8 +322,6 @@ namespace GuaranteeManager
                 $"متأخر {daysLate.ToString("N0", CultureInfo.InvariantCulture)} يوماً",
                 item.GuaranteeType,
                 primaryAction,
-                "متابعات الانتهاء",
-                "ركّز المتابعة",
                 nextAction,
                 note,
                 TonePalette.Foreground(tone),
@@ -381,7 +354,6 @@ namespace GuaranteeManager
 
             return new DashboardWorkItem(
                 DashboardScope.ExpiringSoon,
-                DashboardTarget.Today,
                 item.RootId ?? item.Id,
                 requestId,
                 focusArea,
@@ -400,49 +372,12 @@ namespace GuaranteeManager
                 $"خلال {daysLeft.ToString("N0", CultureInfo.InvariantCulture)} يوم",
                 item.GuaranteeType,
                 primaryAction,
-                "متابعات الانتهاء",
-                "ركّز المتابعة",
                 nextAction,
                 note,
                 TonePalette.Foreground(tone),
                 TonePalette.Background(tone),
                 TonePalette.Border(tone),
                 WorkspaceSurfaceChrome.BrushFrom("#E09408"));
-        }
-
-        private static string BuildSummary(
-            int filteredCount,
-            int totalCount,
-            string normalizedSearch,
-            string normalizedScope,
-            string normalizedExpiryFilter)
-        {
-            if (filteredCount == 0)
-            {
-                return "لا توجد أعمال يومية مطابقة.";
-            }
-
-            bool hasSearch = !string.IsNullOrWhiteSpace(normalizedSearch);
-            bool hasScopedLens = !string.Equals(normalizedScope, DashboardScopeFilters.AllWork, StringComparison.Ordinal);
-
-            if (!hasSearch && !hasScopedLens)
-            {
-                return $"عرض {filteredCount.ToString("N0", CultureInfo.InvariantCulture)} عنصر عمل يومي مرتب حسب الأولوية.";
-            }
-
-            string scopeLabel = normalizedScope switch
-            {
-                DashboardScopeFilters.PendingRequests => "الطلبات المعلقة",
-                DashboardScopeFilters.ExpiryFollowUps => normalizedExpiryFilter switch
-                {
-                    DashboardExpiryFollowUpFilters.Expired => "المتابعات المنتهية",
-                    DashboardExpiryFollowUpFilters.ExpiringSoon => "المتابعات القريبة من الانتهاء",
-                    _ => "متابعات الانتهاء"
-                },
-                _ => "أعمال اليوم"
-            };
-
-            return $"عرض {filteredCount.ToString("N0", CultureInfo.InvariantCulture)} نتيجة ضمن {scopeLabel} من أصل {totalCount.ToString("N0", CultureInfo.InvariantCulture)}.";
         }
 
         private static DashboardWorkspaceMetrics BuildMetrics(
@@ -474,8 +409,8 @@ namespace GuaranteeManager
             return new DashboardWorkspaceMetrics(
                 new DashboardMetricCard("آخر ضمان", hasLastFile ? lastFileGuaranteeNo : "لا يوجد", "#2563EB"),
                 new DashboardMetricCard("أعمال حرجة", allItems.Count(item => item.PriorityRank <= 1).ToString("N0", CultureInfo.InvariantCulture), "#EF4444"),
-                new DashboardMetricCard("طلبات معلقة", pendingRequests.Count.ToString("N0", CultureInfo.InvariantCulture), "#E09408"),
-                new DashboardMetricCard("متابعات الانتهاء", guarantees.Count(item => item.NeedsExpiryFollowUp || item.IsExpiringSoon).ToString("N0", CultureInfo.InvariantCulture), "#0F172A"));
+                new DashboardMetricCard(DashboardScopeFilters.PendingRequests, pendingRequests.Count.ToString("N0", CultureInfo.InvariantCulture), "#E09408"),
+                new DashboardMetricCard("ضمانات تحتاج متابعة", guarantees.Count(item => item.NeedsExpiryFollowUp || item.IsExpiringSoon).ToString("N0", CultureInfo.InvariantCulture), "#0F172A"));
         }
     }
 
@@ -492,12 +427,10 @@ namespace GuaranteeManager
 
     public sealed record DashboardWorkspaceFilterResult(
         IReadOnlyList<DashboardWorkItem> Items,
-        DashboardWorkspaceMetrics Metrics,
-        string Summary);
+        DashboardWorkspaceMetrics Metrics);
 
     public sealed record DashboardWorkspaceDetailState(
         string Title,
-        string Subtitle,
         string BadgeText,
         Brush BadgeForeground,
         Brush BadgeBackground,
@@ -506,19 +439,14 @@ namespace GuaranteeManager
         string BankText,
         string AmountHeadline,
         string AmountCaption,
-        string Category,
-        string Priority,
         string Reference,
         string Due,
         string Expiry,
-        string Workspace,
         string Action,
         string Note,
         string PrimaryActionButtonLabel,
-        string WorkspaceButtonLabel,
         DashboardDetailProfile DetailProfile,
-        bool CanRunPrimaryAction,
-        bool CanOpenWorkspace);
+        bool CanRunPrimaryAction);
 
     public enum DashboardDetailProfile
     {
@@ -534,17 +462,8 @@ namespace GuaranteeManager
         ExpiringSoon
     }
 
-    public enum DashboardTarget
-    {
-        Today,
-        Guarantees,
-        Requests,
-        Reports
-    }
-
     public sealed record DashboardWorkItem(
         DashboardScope Scope,
-        DashboardTarget Target,
         int RootGuaranteeId,
         int? RequestId,
         GuaranteeFileFocusArea PrimaryFocusArea,
@@ -563,29 +482,10 @@ namespace GuaranteeManager
         string DueDetail,
         string Subtitle,
         string PrimaryActionLabel,
-        string WorkspaceLabel,
-        string WorkspaceButtonLabel,
         string NextAction,
         string Note,
         Brush PriorityBrush,
         Brush PriorityBackground,
         Brush PriorityBorder,
-        Brush CategoryBrush)
-    {
-        public string WorkspaceIconKey => Target switch
-        {
-            DashboardTarget.Today => "Icon.Dashboard",
-            DashboardTarget.Requests => "Icon.Requests",
-            DashboardTarget.Reports => "Icon.Reports",
-            _ => "Icon.Guarantees"
-        };
-
-        public string WorkspaceRowActionLabel => Target switch
-        {
-            DashboardTarget.Today => "ركّز",
-            DashboardTarget.Requests => "الطلبات",
-            DashboardTarget.Reports => "التقارير",
-            _ => "الضمانات"
-        };
-    }
+        Brush CategoryBrush);
 }

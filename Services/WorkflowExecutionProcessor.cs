@@ -5,15 +5,15 @@ namespace GuaranteeManager.Services
     internal class WorkflowExecutionProcessor
     {
         private readonly WorkflowNewVersionExecutor _newVersionExecutor;
+        private readonly WorkflowLifecycleStatusExecutor _lifecycleStatusExecutor;
         private readonly WorkflowVerificationExecutor _verificationExecutor;
-        private readonly WorkflowAnnulmentExecutor _annulmentExecutor;
         private readonly WorkflowReplacementExecutor _replacementExecutor;
 
         public WorkflowExecutionProcessor(string connectionString, AttachmentStorageService attachmentStorage)
         {
             _newVersionExecutor = new WorkflowNewVersionExecutor(connectionString, attachmentStorage);
+            _lifecycleStatusExecutor = new WorkflowLifecycleStatusExecutor(connectionString, attachmentStorage);
             _verificationExecutor = new WorkflowVerificationExecutor(connectionString, _newVersionExecutor);
-            _annulmentExecutor = new WorkflowAnnulmentExecutor(connectionString, attachmentStorage);
             _replacementExecutor = new WorkflowReplacementExecutor(connectionString, attachmentStorage);
         }
 
@@ -66,11 +66,9 @@ namespace GuaranteeManager.Services
             string responseSavedFileName,
             string? responseAttachmentSourcePath = null)
         {
-            return _newVersionExecutor.Execute(
+            return _lifecycleStatusExecutor.Execute(
                 requestId,
                 RequestType.Release,
-                null,
-                null,
                 GuaranteeLifecycleStatus.Released,
                 responseNotes,
                 responseOriginalFileName,
@@ -87,11 +85,9 @@ namespace GuaranteeManager.Services
             string responseSavedFileName,
             string? responseAttachmentSourcePath = null)
         {
-            return _newVersionExecutor.Execute(
+            return _lifecycleStatusExecutor.Execute(
                 requestId,
                 RequestType.Liquidation,
-                null,
-                null,
                 GuaranteeLifecycleStatus.Liquidated,
                 responseNotes,
                 responseOriginalFileName,
@@ -116,21 +112,6 @@ namespace GuaranteeManager.Services
                 responseSavedFileName,
                 responseAttachmentSourcePath,
                 promoteResponseDocumentToOfficialAttachment);
-        }
-
-        public int ExecuteAnnulmentWorkflowRequest(
-            int requestId,
-            string responseNotes,
-            string responseOriginalFileName,
-            string responseSavedFileName,
-            string? responseAttachmentSourcePath = null)
-        {
-            return _annulmentExecutor.Execute(
-                requestId,
-                responseNotes,
-                responseOriginalFileName,
-                responseSavedFileName,
-                responseAttachmentSourcePath);
         }
 
         public int ExecuteReplacementWorkflowRequest(

@@ -189,35 +189,6 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
-        public void GetGuaranteesEligibleForAnnulment_ReturnsReleasedAndLiquidatedGuarantees()
-        {
-            DatabaseService database = _fixture.CreateDatabaseService();
-            WorkflowService workflow = _fixture.CreateWorkflowService(database);
-
-            Guarantee activeSeed = _fixture.CreateGuarantee();
-            Guarantee releasedSeed = _fixture.CreateGuarantee();
-            Guarantee liquidatedSeed = _fixture.CreateGuarantee();
-
-            database.SaveGuarantee(activeSeed, new List<string>());
-            database.SaveGuarantee(releasedSeed, new List<string>());
-            database.SaveGuarantee(liquidatedSeed, new List<string>());
-
-            Guarantee releasedCurrent = database.GetCurrentGuaranteeByNo(releasedSeed.GuaranteeNo)!;
-            WorkflowRequest releaseRequest = workflow.CreateReleaseRequest(releasedCurrent.Id, "annulment-release", "tester");
-            workflow.RecordBankResponse(releaseRequest.Id, RequestStatus.Executed, "released");
-
-            Guarantee liquidatedCurrent = database.GetCurrentGuaranteeByNo(liquidatedSeed.GuaranteeNo)!;
-            WorkflowRequest liquidationRequest = workflow.CreateLiquidationRequest(liquidatedCurrent.Id, "annulment-liquidation", "tester");
-            workflow.RecordBankResponse(liquidationRequest.Id, RequestStatus.Executed, "liquidated");
-
-            List<Guarantee> eligible = workflow.GetGuaranteesEligibleForAnnulment();
-
-            Assert.Contains(eligible, item => item.GuaranteeNo == releasedSeed.GuaranteeNo);
-            Assert.Contains(eligible, item => item.GuaranteeNo == liquidatedSeed.GuaranteeNo);
-            Assert.DoesNotContain(eligible, item => item.GuaranteeNo == activeSeed.GuaranteeNo);
-        }
-
-        [Fact]
         public void ExecuteExtensionRequest_UpdatesExpiryAndCreatesNewVersion()
         {
             DatabaseService database = _fixture.CreateDatabaseService();

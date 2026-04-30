@@ -15,11 +15,15 @@ namespace GuaranteeManager.Models
         public decimal CurrentAmount { get; set; }
         public DateTime CurrentExpiryDate { get; set; }
         public int CurrentVersionNumber { get; set; }
+        public int BaseVersionNumber { get; set; }
+        public int? ResultVersionNumber { get; set; }
         public GuaranteeLifecycleStatus LifecycleStatus { get; set; } = GuaranteeLifecycleStatus.Active;
 
         public string LifecycleStatusLabel => GuaranteeLifecycleStatusDisplay.GetLabel(LifecycleStatus);
 
         public string CurrentVersionLabel => $"v{CurrentVersionNumber}";
+        public int RelatedVersionNumber => ResultVersionNumber ?? (BaseVersionNumber > 0 ? BaseVersionNumber : CurrentVersionNumber);
+        public string RelatedVersionLabel => $"v{RelatedVersionNumber}";
         public string RequestDateLabel => Request.RequestDate.ToString("yyyy-MM-dd");
         public string ResponseDateLabel => Request.ResponseRecordedAt?.ToString("yyyy-MM-dd") ?? "---";
         public bool IsPending => Request.Status == RequestStatus.Pending;
@@ -39,7 +43,7 @@ namespace GuaranteeManager.Models
             RequestType.Liquidation => "الحالة التشغيلية الحالية",
             RequestType.Verification => "الحالة التشغيلية الحالية",
             RequestType.Replacement => "رقم الضمان الحالي",
-            RequestType.Annulment => "الحالة التشغيلية الحالية",
+            RequestType.Annulment => "الحالة التشغيلية",
             _ => "الحقل الحالي"
         };
         public string RequestedValueFieldLabel => Request.Type switch
@@ -50,7 +54,7 @@ namespace GuaranteeManager.Models
             RequestType.Liquidation => "الإجراء المطلوب",
             RequestType.Verification => "الإجراء المطلوب",
             RequestType.Replacement => "رقم الضمان البديل",
-            RequestType.Annulment => "الإجراء المطلوب",
+            RequestType.Annulment => "المسار",
             _ => "الحقل المطلوب"
         };
         public string CurrentValueLabel => Request.Type switch
@@ -61,7 +65,7 @@ namespace GuaranteeManager.Models
             RequestType.Liquidation => LifecycleStatusLabel,
             RequestType.Verification => LifecycleStatusLabel,
             RequestType.Replacement => GuaranteeNo,
-            RequestType.Annulment => LifecycleStatusLabel,
+            RequestType.Annulment => "ملغى",
             _ => "---"
         };
         public string RequestedValueLabel => Request.RequestedValueLabel;

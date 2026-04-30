@@ -134,31 +134,6 @@ namespace GuaranteeManager.Services
             };
         }
 
-        public GeneratedWorkflowFile CreateAnnulmentLetter(Guarantee guarantee, string notes, string createdBy)
-        {
-            AppPaths.EnsureDirectoriesExist();
-
-            string originalFileName = FileHelper.SanitizeFileName($"طلب_نقض_{guarantee.GuaranteeNo}_{DateTime.Now:yyyyMMdd}.html");
-            string savedFileName = FileHelper.GenerateUniqueFileName(".html");
-            string fullPath = Path.Combine(AppPaths.WorkflowLettersFolder, savedFileName);
-
-            File.WriteAllText(fullPath, BuildRequestLetterHtml(
-                "خطاب طلب نقض إجراء سابق على ضمان بنكي",
-                guarantee,
-                ("الحالة التشغيلية الحالية", guarantee.LifecycleStatusLabel),
-                ("الإجراء المطلوب", "نقض الإجراء السابق وإعادة تفعيل الضمان"),
-                notes,
-                createdBy,
-                "نأمل التكرم بالنظر في نقض الإجراء السابق المسجل على الضمان المشار إليه أعلاه، وإعادة تفعيله وفق ما يثبت في مستند رد البنك الرسمي."), Encoding.UTF8);
-
-            return new GeneratedWorkflowFile
-            {
-                OriginalFileName = originalFileName,
-                SavedFileName = savedFileName,
-                FullPath = fullPath
-            };
-        }
-
         public GeneratedWorkflowFile CreateReplacementLetter(
             Guarantee guarantee,
             string replacementGuaranteeNo,

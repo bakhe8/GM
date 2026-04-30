@@ -73,7 +73,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
                     <Border x:Name="Root"
-                            Height="40"
+                            MinHeight="40"
                             Margin="2,0"
                             Background="White"
                             BorderBrush="#E7EDF5"
@@ -85,7 +85,7 @@
                                        HorizontalAlignment="Right"
                                        Fill="#2563EB"
                                        Visibility="Collapsed" />
-                            <ContentPresenter VerticalAlignment="Center" />
+                            <ContentPresenter VerticalAlignment="Stretch" />
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>

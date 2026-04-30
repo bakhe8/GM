@@ -19,13 +19,9 @@ namespace GuaranteeManager
         private readonly bool _hasLastFile;
         private readonly string _lastFileGuaranteeNo;
         private readonly string _lastFileSummary;
-        private readonly Action _resumeLastFile;
         private readonly Action<int, GuaranteeFileFocusArea, int?> _openGuaranteeContext;
         private readonly Action _showGuarantees;
-        private readonly Action<string?, string?> _showToday;
-        private readonly Action<string?, int?> _showRequests;
-        private readonly Action<string?> _showReports;
-        private readonly Action? _closeRequested;
+        private readonly ReferenceTablePagerController _pager;
 
         private readonly ListBox _list = new();
         private readonly TextBox _searchInput = new();
@@ -44,36 +40,23 @@ namespace GuaranteeManager
         private readonly TextBlock _detailPanelHeading = BuildSectionHeading();
         private readonly TextBlock _detailActionsHeading = BuildSectionHeading(12);
         private readonly TextBlock _detailTitle = BuildDetailValue(16, FontWeights.Bold);
-        private readonly TextBlock _detailSubtitle = BuildMutedText(11, FontWeights.SemiBold);
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
         private readonly Border _detailStatusBadgeBorder = new();
         private readonly Image _detailBankLogo = new() { Width = 18, Height = 18 };
         private readonly TextBlock _detailBankText = BuildMutedText(12, FontWeights.SemiBold);
         private readonly TextBlock _detailAmountHeadline = BuildAmountHeadline();
         private readonly TextBlock _detailAmountCaption = BuildMutedText(11, FontWeights.Normal);
-        private readonly TextBlock _detailCategory = BuildDetailValue(12, FontWeights.Bold);
-        private readonly TextBlock _detailPriority = BuildDetailValue(12, FontWeights.Bold);
         private readonly TextBlock _detailReference = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailDue = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailExpiry = BuildDetailValue(12, FontWeights.SemiBold);
-        private readonly TextBlock _detailWorkspace = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailAction = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailNote = BuildMutedText(11, FontWeights.Normal);
-        private readonly TextBlock _detailCategoryLabel = BuildInfoLabel("الفئة");
-        private readonly TextBlock _detailPriorityLabel = BuildInfoLabel("الأولوية");
-        private readonly TextBlock _detailReferenceLabel = BuildInfoLabel("المرجع");
+        private readonly TextBlock _detailReferenceLabel = BuildInfoLabel("رقم الضمان");
         private readonly TextBlock _detailDueLabel = BuildInfoLabel("الموعد");
         private readonly TextBlock _detailExpiryLabel = BuildInfoLabel("تاريخ الانتهاء");
-        private readonly TextBlock _detailWorkspaceLabel = BuildInfoLabel("المساحة");
         private readonly TextBlock _detailActionLabel = BuildInfoLabel("الإجراء التالي");
         private readonly TextBlock _detailNoteLabel = BuildInfoLabel("ملاحظة تشغيلية");
         private readonly Button _primaryActionButton = new();
-        private readonly Button _openWorkspaceButton = new();
-        private readonly Button _copyReferenceButton = new();
-        private readonly Button _copyBankButton = new();
-        private readonly Button _copyAmountButton = new();
-        private readonly Button _resumeLastFileButton = new();
-        private readonly Button _expiryFollowUpsLensButton = new();
 
         private List<Guarantee> _guarantees = new();
         private List<WorkflowRequestListItem> _pendingRequests = new();
@@ -86,13 +69,8 @@ namespace GuaranteeManager
             bool hasLastFile,
             string lastFileGuaranteeNo,
             string lastFileSummary,
-            Action resumeLastFile,
             Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
             Action showGuarantees,
-            Action<string?, string?> showToday,
-            Action<string?, int?> showRequests,
-            Action<string?> showReports,
-            Action? closeRequested,
             string? initialSearchText = null,
             string? initialScopeFilter = null)
         {
@@ -103,13 +81,9 @@ namespace GuaranteeManager
             _hasLastFile = hasLastFile;
             _lastFileGuaranteeNo = lastFileGuaranteeNo;
             _lastFileSummary = lastFileSummary;
-            _resumeLastFile = resumeLastFile;
             _openGuaranteeContext = openGuaranteeContext;
             _showGuarantees = showGuarantees;
-            _showToday = showToday;
-            _showRequests = showRequests;
-            _showReports = showReports;
-            _closeRequested = closeRequested;
+            _pager = new ReferenceTablePagerController("Dashboard", "عنصر عمل", 10, ApplyFilters);
 
             UiInstrumentation.Identify(this, "Dashboard.Workspace", "اليوم");
             UiInstrumentation.Identify(_searchInput, "Dashboard.SearchBox", "بحث اليوم");
@@ -164,42 +138,6 @@ namespace GuaranteeManager
             _primaryActionButton.Click += (_, _) => OpenSelectedPrimaryAction();
             UiInstrumentation.Identify(_primaryActionButton, "Dashboard.Detail.PrimaryActionButton", "الخطوة التالية");
 
-            _openWorkspaceButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _openWorkspaceButton.FontSize = 9.5;
-            _openWorkspaceButton.Click += (_, _) => OpenSelectedWorkspace();
-            UiInstrumentation.Identify(_openWorkspaceButton, "Dashboard.Detail.OpenWorkspaceButton", "فتح المساحة");
-
-            _resumeLastFileButton.Style = WorkspaceSurfaceChrome.Style(_hasLastFile ? "PrimaryButton" : "BaseButton");
-            _resumeLastFileButton.FontSize = 9.5;
-            _resumeLastFileButton.Content = _hasLastFile ? $"استئناف {_lastFileGuaranteeNo}" : "لا يوجد ضمان حديث";
-            _resumeLastFileButton.IsEnabled = _hasLastFile;
-            _resumeLastFileButton.Click += (_, _) => _resumeLastFile();
-            UiInstrumentation.Identify(_resumeLastFileButton, "Dashboard.Toolbar.ResumeLastFile", "استئناف آخر ضمان");
-
-            _expiryFollowUpsLensButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _expiryFollowUpsLensButton.FontSize = 9.5;
-            _expiryFollowUpsLensButton.Content = "متابعات الانتهاء";
-            _expiryFollowUpsLensButton.ToolTip = "يعرض متابعات الانتهاء داخل اليوم مع الحفاظ على البحث الحالي.";
-            _expiryFollowUpsLensButton.Click += (_, _) => ShowExpiryFollowUpsLens();
-            UiInstrumentation.Identify(_expiryFollowUpsLensButton, "Dashboard.Toolbar.ExpiryFollowUpsLens", "متابعات الانتهاء");
-
-            _copyReferenceButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _copyReferenceButton.Content = "نسخ المرجع";
-            _copyReferenceButton.FontSize = 9.5;
-            _copyReferenceButton.Click += (_, _) => _coordinator.CopyReference(SelectedItem);
-            UiInstrumentation.Identify(_copyReferenceButton, "Dashboard.Detail.CopyReferenceButton", "نسخ المرجع");
-
-            _copyBankButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _copyBankButton.Content = "نسخ البنك";
-            _copyBankButton.FontSize = 9.5;
-            _copyBankButton.Click += (_, _) => _coordinator.CopyBank(SelectedItem);
-            UiInstrumentation.Identify(_copyBankButton, "Dashboard.Detail.CopyBankButton", "نسخ البنك");
-
-            _copyAmountButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _copyAmountButton.Content = "نسخ القيمة";
-            _copyAmountButton.FontSize = 9.5;
-            _copyAmountButton.Click += (_, _) => _coordinator.CopyAmount(SelectedItem);
-            UiInstrumentation.Identify(_copyAmountButton, "Dashboard.Detail.CopyAmountButton", "نسخ القيمة");
         }
 
         private Grid BuildLayout()
@@ -214,43 +152,24 @@ namespace GuaranteeManager
         private Grid BuildToolbar()
         {
             var toolbar = new Grid { FlowDirection = FlowDirection.LeftToRight };
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(180) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            Grid.SetColumn(_resumeLastFileButton, 0);
-            toolbar.Children.Add(_resumeLastFileButton);
-
-            var openGuaranteesButton = WorkspaceSurfaceChrome.ToolbarButton("فتح الضمانات", primary: true, automationId: "Dashboard.Toolbar.OpenGuarantees");
-            openGuaranteesButton.Click += (_, _) => _showGuarantees();
-            Grid.SetColumn(openGuaranteesButton, 2);
-            toolbar.Children.Add(openGuaranteesButton);
-
-            var refreshButton = WorkspaceSurfaceChrome.ToolbarButton("تحديث", automationId: "Dashboard.Toolbar.Refresh");
-            refreshButton.Click += (_, _) => ReloadData();
-            Grid.SetColumn(refreshButton, 4);
-            toolbar.Children.Add(refreshButton);
-
-            Grid.SetColumn(_expiryFollowUpsLensButton, 6);
-            toolbar.Children.Add(_expiryFollowUpsLensButton);
-
             _scopeFilter.Style = WorkspaceSurfaceChrome.Style("FilterComboBox");
+            _scopeFilter.Width = 180;
             _scopeFilter.Items.Add(DashboardScopeFilters.AllWork);
             _scopeFilter.Items.Add(DashboardScopeFilters.PendingRequests);
             _scopeFilter.Items.Add(DashboardScopeFilters.ExpiryFollowUps);
             _scopeFilter.SelectedIndex = 0;
-            _scopeFilter.SelectionChanged += (_, _) => ApplyFilters();
-            Grid.SetColumn(_scopeFilter, 8);
+            _scopeFilter.SelectionChanged += (_, _) =>
+            {
+                _pager.ResetToFirstPage();
+                ApplyFilters();
+            };
+            Grid.SetColumn(_scopeFilter, 0);
             toolbar.Children.Add(_scopeFilter);
 
             _expiryFollowUpFilter.Style = WorkspaceSurfaceChrome.Style("FilterComboBox");
@@ -260,13 +179,21 @@ namespace GuaranteeManager
             _expiryFollowUpFilter.Items.Add(DashboardExpiryFollowUpFilters.ExpiringSoon);
             _expiryFollowUpFilter.SelectedIndex = 0;
             _expiryFollowUpFilter.Visibility = Visibility.Collapsed;
-            _expiryFollowUpFilter.SelectionChanged += (_, _) => ApplyFilters();
-            Grid.SetColumn(_expiryFollowUpFilter, 10);
+            _expiryFollowUpFilter.SelectionChanged += (_, _) =>
+            {
+                _pager.ResetToFirstPage();
+                ApplyFilters();
+            };
+            Grid.SetColumn(_expiryFollowUpFilter, 2);
             toolbar.Children.Add(_expiryFollowUpFilter);
 
-            _searchInput.TextChanged += (_, _) => ApplyFilters();
-            var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث باسم المستفيد أو البنك أو المرجع...");
-            Grid.SetColumn(searchBox, 12);
+            _searchInput.TextChanged += (_, _) =>
+            {
+                _pager.ResetToFirstPage();
+                ApplyFilters();
+            };
+            var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث باسم المستفيد أو البنك أو رقم الضمان...");
+            Grid.SetColumn(searchBox, 4);
             toolbar.Children.Add(searchBox);
             return toolbar;
         }
@@ -281,13 +208,14 @@ namespace GuaranteeManager
             metrics.Children.Add(BuildMetricCard(_criticalWorkLabel, _portfolioAmountValue));
             metrics.Children.Add(BuildMetricCard(_pendingRequestsLabel, _pendingValue));
             metrics.Children.Add(BuildMetricCard(_followUpsLabel, _followUpValue));
+            WorkspaceSurfaceChrome.ApplyMetricCardSpacing(metrics);
             return metrics;
         }
 
         private Border BuildMetricCard(TextBlock label, TextBlock value)
         {
             var card = WorkspaceSurfaceChrome.Card(new Thickness(14, 10, 14, 10));
-            card.Margin = new Thickness(0, 0, 10, 0);
+            card.Margin = new Thickness(0);
 
             var stack = new StackPanel();
             stack.Children.Add(label);
@@ -323,47 +251,7 @@ namespace GuaranteeManager
 
         private Grid BuildTableFooter()
         {
-            var footer = new Grid
-            {
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePager")
-            };
-
-            var buttons = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            buttons.Children.Add(new Button
-            {
-                Content = "←",
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePagerButton")
-            });
-            buttons.Children.Add(new Button
-            {
-                Content = "1",
-                Margin = new Thickness(6, 0, 0, 0),
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePagerActiveButton")
-            });
-            buttons.Children.Add(new Button
-            {
-                Content = "10",
-                MinWidth = 46,
-                Margin = new Thickness(12, 0, 0, 0),
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTablePagerButton")
-            });
-            buttons.Children.Add(new TextBlock
-            {
-                Text = "لكل صفحة",
-                FontSize = 11,
-                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Muted"),
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(8, 0, 0, 0)
-            });
-            footer.Children.Add(buttons);
-
-            _summary.Style = WorkspaceSurfaceChrome.Style("ReferenceTableFooterSummary");
-            footer.Children.Add(_summary);
-            return footer;
+            return _pager.BuildFooter(_summary);
         }
 
         private Border BuildDetailPanel()
@@ -380,7 +268,7 @@ namespace GuaranteeManager
             _detailStatusBadgeBorder.Margin = new Thickness(0, 0, 0, 12);
             _detailStatusBadgeBorder.Child = _detailStatusBadge;
 
-            _detailExpiryLine = BuildInfoLine(_detailExpiryLabel, _detailExpiry);
+            _detailExpiryLine = WorkspaceSurfaceChrome.DetailFactLine(_detailExpiryLabel, _detailExpiry, "Icon.History");
 
             return new StackPanel
             {
@@ -389,46 +277,49 @@ namespace GuaranteeManager
                 {
                     BuildDetailHeader(),
                     BuildDashboardTitleRow(),
-                    _detailSubtitle,
-                    _detailStatusBadgeBorder,
                     BuildBankRow(),
                     _detailAmountHeadline,
                     _detailAmountCaption,
-                    BuildDetailCopyStrip(),
                     new Border { Height = 1, Background = WorkspaceSurfaceChrome.BrushFrom("#EDF2F7"), Margin = new Thickness(0, 13, 0, 12) },
-                    BuildInfoLine(_detailCategoryLabel, _detailCategory),
-                    BuildInfoLine(_detailPriorityLabel, _detailPriority),
-                    BuildInfoLine(_detailReferenceLabel, _detailReference),
-                    BuildInfoLine(_detailDueLabel, _detailDue),
+                    WorkspaceSurfaceChrome.DetailFactLine(_detailReferenceLabel, _detailReference, "Icon.Badge", (_, _) => _coordinator.CopyGuaranteeNo(SelectedItem), "Dashboard.Detail.CopyGuaranteeNo", "نسخ رقم الضمان"),
+                    WorkspaceSurfaceChrome.DetailFactLine(_detailDueLabel, _detailDue, "Icon.Calendar"),
                     _detailExpiryLine,
-                    BuildInfoLine(_detailWorkspaceLabel, _detailWorkspace),
-                    BuildInfoLine(_detailActionLabel, _detailAction),
-                    BuildInfoBlock(_detailNoteLabel, _detailNote)
+                    WorkspaceSurfaceChrome.DetailFactLine(_detailActionLabel, _detailAction, "Icon.Extend"),
+                    WorkspaceSurfaceChrome.DetailFactBlock(_detailNoteLabel, _detailNote, "Icon.Document")
                 }
             };
         }
 
         private UIElement BuildDetailHeader()
         {
-            var grid = new Grid { Margin = new Thickness(0, 0, 0, 12) };
+            var grid = new Grid
+            {
+                Margin = new Thickness(0, 0, 0, 12),
+                FlowDirection = FlowDirection.LeftToRight
+            };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-            grid.Children.Add(_detailPanelHeading);
+            _detailStatusBadgeBorder.Margin = new Thickness(0);
+            _detailStatusBadgeBorder.VerticalAlignment = VerticalAlignment.Center;
+            grid.Children.Add(_detailStatusBadgeBorder);
 
-            var closeButton = new Button
+            var row = new StackPanel
             {
-                Width = 28,
-                Height = 28,
-                Content = "×",
-                Background = Brushes.Transparent,
-                BorderThickness = new Thickness(0),
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B")
+                Orientation = Orientation.Horizontal,
+                FlowDirection = FlowDirection.RightToLeft,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center
             };
-            closeButton.Click += (_, _) => _closeRequested?.Invoke();
-            UiInstrumentation.Identify(closeButton, "Dashboard.Detail.CloseButton", "إغلاق اليوم");
-            Grid.SetColumn(closeButton, 1);
-            grid.Children.Add(closeButton);
+
+            row.Children.Add(_detailPanelHeading);
+            row.Children.Add(new Border { Width = 3 });
+            row.Children.Add(WorkspaceSurfaceChrome.DetailHeaderCopyButton(
+                "نسخ رقم الضمان",
+                "Dashboard.Detail.Header.CopyGuaranteeNo",
+                (_, _) => _coordinator.CopyGuaranteeNo(SelectedItem)));
+            Grid.SetColumn(row, 1);
+            grid.Children.Add(row);
             return grid;
         }
 
@@ -437,11 +328,18 @@ namespace GuaranteeManager
             var row = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                FlowDirection = FlowDirection.RightToLeft
+                FlowDirection = FlowDirection.RightToLeft,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 0)
             };
-            row.Children.Add(CreateIcon("Icon.Dashboard", "#64748B", 14));
+            row.Children.Add(CreateIcon("Icon.User", "#94A3B8", 14));
             _detailTitle.Margin = new Thickness(8, 0, 0, 0);
             row.Children.Add(_detailTitle);
+            row.Children.Add(WorkspaceSurfaceChrome.DetailHeaderCopyButton(
+                "نسخ عنوان عنصر اليوم",
+                "Dashboard.Detail.Header.CopyTitle",
+                (_, _) => WorkspaceSurfaceChrome.CopyDetailFactValue("عنوان عنصر اليوم", _detailTitle.Text, "اليوم")));
             return row;
         }
 
@@ -454,32 +352,10 @@ namespace GuaranteeManager
                 Margin = new Thickness(0, 5, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Right
             };
-            row.Children.Add(_detailBankText);
-            _detailBankLogo.Margin = new Thickness(7, 0, 0, 0);
             row.Children.Add(_detailBankLogo);
+            _detailBankText.Margin = new Thickness(8, 0, 0, 0);
+            row.Children.Add(_detailBankText);
             return row;
-        }
-
-        private UIElement BuildDetailCopyStrip()
-        {
-            var strip = new Grid
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-                Margin = new Thickness(0, 9, 0, 0)
-            };
-            strip.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            strip.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
-            strip.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            strip.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
-            strip.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-            strip.Children.Add(_copyReferenceButton);
-            Grid.SetColumn(_copyBankButton, 2);
-            strip.Children.Add(_copyBankButton);
-            Grid.SetColumn(_copyAmountButton, 4);
-            strip.Children.Add(_copyAmountButton);
-
-            return strip;
         }
 
         private Border BuildDetailActions()
@@ -497,15 +373,10 @@ namespace GuaranteeManager
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             grid.Children.Add(_detailActionsHeading);
 
-            var actions = new Grid { FlowDirection = FlowDirection.LeftToRight, Margin = new Thickness(0, 9, 0, 0) };
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            actions.Children.Add(_primaryActionButton);
-            Grid.SetColumn(_openWorkspaceButton, 2);
-            actions.Children.Add(_openWorkspaceButton);
-            Grid.SetRow(actions, 1);
-            grid.Children.Add(actions);
+            _primaryActionButton.Margin = new Thickness(0, 9, 0, 0);
+            _primaryActionButton.HorizontalAlignment = HorizontalAlignment.Stretch;
+            Grid.SetRow(_primaryActionButton, 1);
+            grid.Children.Add(_primaryActionButton);
 
             border.Child = grid;
             return border;
@@ -568,7 +439,8 @@ namespace GuaranteeManager
                 _pendingRequests,
                 expiryFollowUpFilter);
 
-            foreach (DashboardWorkItem item in filtered.Items)
+            IReadOnlyList<DashboardWorkItem> pageItems = _pager.Page(filtered.Items);
+            foreach (DashboardWorkItem item in pageItems)
             {
                 _list.Items.Add(BuildRow(item, selectedScope));
             }
@@ -579,7 +451,7 @@ namespace GuaranteeManager
             }
 
             ApplyMetrics(filtered.Metrics);
-            _summary.Text = filtered.Summary;
+            _summary.Text = _pager.BuildSummary();
             UpdateDetails();
         }
 
@@ -617,9 +489,7 @@ namespace GuaranteeManager
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(10, 0, 0, 0)
             };
-            actions.Children.Add(CreateRowButton("نسخ", "Icon.Document", item, CopyReference_Click));
-            actions.Children.Add(CreateRowButton("عرض", "Icon.View", item, SelectRow_Click));
-            actions.Children.Add(CreateRowButton(item.WorkspaceRowActionLabel, item.WorkspaceIconKey, item, OpenWorkspace_Click));
+            actions.Children.Add(CreateRowButton("عرض", "Icon.View", item, OpenRow_Click));
             Grid.SetColumn(actions, 0);
             row.Children.Add(actions);
 
@@ -671,7 +541,7 @@ namespace GuaranteeManager
             AddHeader(_tableHeaderInner, "القيمة", 4, false);
             AddHeader(_tableHeaderInner, "البنك", 5, true);
             AddHeader(_tableHeaderInner, "العنصر", 6, true);
-            AddHeader(_tableHeaderInner, "المرجع", 7, true);
+            AddHeader(_tableHeaderInner, "رقم الضمان", 7, true);
         }
 
         private static bool IsExpiryFollowUpScope(string selectedScope)
@@ -786,21 +656,10 @@ namespace GuaranteeManager
             return stack;
         }
 
-        private void SelectRow_Click(object sender, RoutedEventArgs e)
+        private void OpenRow_Click(object sender, RoutedEventArgs e)
         {
             SelectRowFromSender(sender);
-        }
-
-        private void CopyReference_Click(object sender, RoutedEventArgs e)
-        {
-            SelectRowFromSender(sender);
-            _coordinator.CopyReference(SelectedItem);
-        }
-
-        private void OpenWorkspace_Click(object sender, RoutedEventArgs e)
-        {
-            SelectRowFromSender(sender);
-            OpenSelectedWorkspace();
+            OpenSelectedPrimaryAction();
         }
 
         private void SelectRowFromSender(object sender)
@@ -819,28 +678,6 @@ namespace GuaranteeManager
                     return;
                 }
             }
-        }
-
-        private void OpenSelectedWorkspace()
-        {
-            _coordinator.OpenSelectedWorkspace(
-                SelectedItem,
-                _showToday,
-                _showGuarantees,
-                _showRequests,
-                _showReports);
-        }
-
-        private void ShowExpiryFollowUpsLens()
-        {
-            SelectExpiryFollowUpFilter(DashboardExpiryFollowUpFilters.All);
-            if (IsExpiryFollowUpScope(_scopeFilter.SelectedItem as string ?? DashboardScopeFilters.AllWork))
-            {
-                ApplyFilters();
-                return;
-            }
-
-            _scopeFilter.SelectedItem = DashboardScopeFilters.ExpiryFollowUps;
         }
 
         private void OpenSelectedPrimaryAction()
@@ -872,7 +709,6 @@ namespace GuaranteeManager
         private void ApplyDetailState(DashboardWorkspaceDetailState state)
         {
             _detailTitle.Text = state.Title;
-            _detailSubtitle.Text = state.Subtitle;
             _detailStatusBadge.Text = state.BadgeText;
             _detailStatusBadge.Foreground = state.BadgeForeground;
             _detailStatusBadgeBorder.Background = state.BadgeBackground;
@@ -881,65 +717,18 @@ namespace GuaranteeManager
             _detailBankText.Text = state.BankText;
             _detailAmountHeadline.Text = state.AmountHeadline;
             _detailAmountCaption.Text = state.AmountCaption;
-            _detailCategory.Text = state.Category;
-            _detailPriority.Text = state.Priority;
             _detailReference.Text = state.Reference;
             _detailDue.Text = state.Due;
             _detailExpiry.Text = state.Expiry;
-            _detailWorkspace.Text = state.Workspace;
             _detailAction.Text = state.Action;
             _detailNote.Text = state.Note;
             ApplyDetailLabels(state.DetailProfile);
+            _detailPanelHeading.Text = state.Reference;
             _primaryActionButton.Content = state.PrimaryActionButtonLabel;
-            _openWorkspaceButton.Content = state.WorkspaceButtonLabel;
             AutomationProperties.SetName(_primaryActionButton, state.PrimaryActionButtonLabel);
             AutomationProperties.SetHelpText(_primaryActionButton, state.Action);
             AutomationProperties.SetItemStatus(_primaryActionButton, state.Reference);
-            AutomationProperties.SetName(_openWorkspaceButton, state.WorkspaceButtonLabel);
-            AutomationProperties.SetHelpText(_openWorkspaceButton, state.Workspace);
-            AutomationProperties.SetItemStatus(_openWorkspaceButton, state.Reference);
             _primaryActionButton.IsEnabled = state.CanRunPrimaryAction;
-            _openWorkspaceButton.IsEnabled = state.CanOpenWorkspace;
-            bool canCopyDetail = state.CanRunPrimaryAction;
-            _copyReferenceButton.IsEnabled = canCopyDetail;
-            _copyBankButton.IsEnabled = canCopyDetail;
-            _copyAmountButton.IsEnabled = canCopyDetail;
-            ApplyCopyButtonMetadata(state);
-        }
-
-        private void ApplyCopyButtonMetadata(DashboardWorkspaceDetailState state)
-        {
-            AutomationProperties.SetName(_copyReferenceButton, $"نسخ المرجع {state.Reference}");
-            AutomationProperties.SetHelpText(_copyReferenceButton, "ينسخ رقم الضمان أو مرجع عنصر العمل الحالي.");
-            AutomationProperties.SetItemStatus(_copyReferenceButton, state.Reference);
-
-            AutomationProperties.SetName(_copyBankButton, $"نسخ البنك {state.BankText}");
-            AutomationProperties.SetHelpText(_copyBankButton, "ينسخ اسم البنك المرتبط بعنصر العمل الحالي.");
-            AutomationProperties.SetItemStatus(_copyBankButton, state.BankText);
-
-            AutomationProperties.SetName(_copyAmountButton, $"نسخ القيمة {state.AmountHeadline}");
-            AutomationProperties.SetHelpText(_copyAmountButton, "ينسخ قيمة الضمان المعروضة في التفاصيل.");
-            AutomationProperties.SetItemStatus(_copyAmountButton, state.AmountHeadline);
-        }
-
-        private static FrameworkElement BuildInfoBlock(TextBlock title, TextBlock value)
-        {
-            var panel = new StackPanel { Margin = new Thickness(0, 0, 0, 12) };
-            panel.Children.Add(title);
-            value.Margin = new Thickness(0, 5, 0, 0);
-            panel.Children.Add(value);
-            return panel;
-        }
-
-        private static FrameworkElement BuildInfoLine(TextBlock label, TextBlock value)
-        {
-            var grid = new Grid { Margin = new Thickness(0, 0, 0, 12) };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.Children.Add(label);
-            Grid.SetColumn(value, 1);
-            grid.Children.Add(value);
-            return grid;
         }
 
         private static TextBlock BuildMetricValue(double fontSize = 27)
@@ -977,14 +766,10 @@ namespace GuaranteeManager
         {
             if (detailProfile == DashboardDetailProfile.FollowUp)
             {
-                _detailPanelHeading.Text = "متابعة انتهاء";
                 _detailActionsHeading.Text = "قرار المتابعة";
-                _detailCategoryLabel.Text = "نوع المتابعة";
-                _detailPriorityLabel.Text = "المستوى";
-                _detailReferenceLabel.Text = "المرجع";
+                _detailReferenceLabel.Text = "رقم الضمان";
                 _detailDueLabel.Text = "المدة";
                 _detailExpiryLabel.Text = "تاريخ الانتهاء";
-                _detailWorkspaceLabel.Text = "المسار";
                 _detailActionLabel.Text = "الإجراء المقترح";
                 _detailNoteLabel.Text = "لماذا ظهر اليوم؟";
                 if (_detailExpiryLine != null)
@@ -1002,25 +787,17 @@ namespace GuaranteeManager
 
             if (detailProfile == DashboardDetailProfile.PendingRequest)
             {
-                _detailPanelHeading.Text = "طلب معلق";
                 _detailActionsHeading.Text = "خطوة الطلب التالية";
-                _detailCategoryLabel.Text = "نوع الطلب";
-                _detailPriorityLabel.Text = "مستوى الانتظار";
                 _detailReferenceLabel.Text = "رقم الضمان";
                 _detailDueLabel.Text = "عمر الطلب";
-                _detailWorkspaceLabel.Text = "بيت التنفيذ";
                 _detailActionLabel.Text = "الإجراء المقترح";
                 _detailNoteLabel.Text = "لماذا ظهر اليوم؟";
                 return;
             }
 
-            _detailPanelHeading.Text = "اليوم";
             _detailActionsHeading.Text = "الخطوة التالية";
-            _detailCategoryLabel.Text = "الفئة";
-            _detailPriorityLabel.Text = "الأولوية";
-            _detailReferenceLabel.Text = "المرجع";
+            _detailReferenceLabel.Text = "رقم الضمان";
             _detailDueLabel.Text = "الموعد";
-            _detailWorkspaceLabel.Text = "المساحة";
             _detailActionLabel.Text = "الإجراء التالي";
             _detailNoteLabel.Text = "ملاحظة تشغيلية";
         }
@@ -1088,6 +865,8 @@ namespace GuaranteeManager
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                 Margin = new Thickness(0, 12, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                TextAlignment = TextAlignment.Right,
                 FlowDirection = FlowDirection.LeftToRight
             };
         }

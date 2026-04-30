@@ -13,16 +13,19 @@ namespace GuaranteeManager
     {
         private readonly IDatabaseService _database;
         private readonly IExcelService _excel;
+        private readonly IGuaranteeHistoryDocumentService _historyDocuments;
         private readonly IUiDiagnosticsService _diagnostics;
         private readonly IShellStatusService _shellStatus;
         private readonly Dictionary<string, ReportRunResult> _reportResults = new(StringComparer.OrdinalIgnoreCase);
 
         public ReportsWorkspaceCoordinator(
             IDatabaseService database,
-            IExcelService excel)
+            IExcelService excel,
+            IGuaranteeHistoryDocumentService? historyDocuments = null)
         {
             _database = database;
             _excel = excel;
+            _historyDocuments = historyDocuments ?? App.CurrentApp.GetRequiredService<IGuaranteeHistoryDocumentService>();
             _diagnostics = App.CurrentApp.GetRequiredService<IUiDiagnosticsService>();
             _shellStatus = App.CurrentApp.GetRequiredService<IShellStatusService>();
         }
@@ -36,7 +39,12 @@ namespace GuaranteeManager
                 return false;
             }
 
-            _reportResults[item.Key] = Run(item.Key);
+            if (!TryResolveInput(item, out string? input))
+            {
+                return false;
+            }
+
+            _reportResults[item.Key] = Run(item.Key, input);
             ReportRunResult result = _reportResults[item.Key];
             if (result.Succeeded)
             {
@@ -97,17 +105,22 @@ namespace GuaranteeManager
             return false;
         }
 
-        private ReportRunResult Run(string reportKey)
+        private ReportRunResult Run(string reportKey, string? input)
         {
             try
             {
-                bool exported = WorkspaceReportCatalog.Run(reportKey, _database, _excel);
+                bool exported = WorkspaceReportCatalog.Run(reportKey, _database, _excel, input, _historyDocuments);
                 if (!exported)
                 {
                     return new ReportRunResult(false, "لم يتم إنشاء التقرير.", string.Empty);
                 }
 
-                string outputPath = _excel.LastOutputPath ?? string.Empty;
+                if (WorkspaceReportCatalog.IsPrintAction(reportKey))
+                {
+                    return new ReportRunResult(true, "تم إرسال التقرير إلى الطباعة.", string.Empty);
+                }
+
+                string outputPath = _excel.LastOutputPath ?? _historyDocuments.LastOutputPath ?? string.Empty;
                 string fileName = string.IsNullOrWhiteSpace(outputPath) ? "ملف التقرير" : Path.GetFileName(outputPath);
                 return new ReportRunResult(true, $"تم إنشاء التقرير: {fileName}", outputPath);
             }
@@ -115,6 +128,25 @@ namespace GuaranteeManager
             {
                 return new ReportRunResult(false, ex.Message, string.Empty);
             }
+        }
+
+        private static bool TryResolveInput(ReportWorkspaceItem item, out string? input)
+        {
+            input = null;
+            if (!WorkspaceReportCatalog.RequiresInput(item.Key))
+            {
+                return true;
+            }
+
+            bool accepted = GuidedTextPromptDialog.TryShow(
+                item.Title,
+                WorkspaceReportCatalog.GetInputPrompt(item.Key),
+                WorkspaceReportCatalog.GetInputLabel(item.Key),
+                "إنشاء التقرير",
+                string.Empty,
+                out string value);
+            input = value;
+            return accepted;
         }
     }
 

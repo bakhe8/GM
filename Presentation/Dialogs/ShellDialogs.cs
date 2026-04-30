@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -59,10 +59,24 @@ namespace GuaranteeManager
                 return;
             }
 
+            string? input = null;
+            if (WorkspaceReportCatalog.RequiresInput(reportKey)
+                && !GuidedTextPromptDialog.TryShow(
+                    ownerTitle,
+                    WorkspaceReportCatalog.GetInputPrompt(reportKey),
+                    WorkspaceReportCatalog.GetInputLabel(reportKey),
+                    "إنشاء التقرير",
+                    string.Empty,
+                    out input))
+            {
+                return;
+            }
+
             IDatabaseService database = App.CurrentApp.GetRequiredService<IDatabaseService>();
             IExcelService excel = App.CurrentApp.GetRequiredService<IExcelService>();
+            IGuaranteeHistoryDocumentService historyDocuments = App.CurrentApp.GetRequiredService<IGuaranteeHistoryDocumentService>();
 
-            bool exported = WorkspaceReportCatalog.Run(reportKey, database, excel);
+            bool exported = WorkspaceReportCatalog.Run(reportKey, database, excel, input, historyDocuments);
             string reportTitle = WorkspaceReportCatalog.PortfolioActions
                 .Concat(WorkspaceReportCatalog.OperationalActions)
                 .FirstOrDefault(action => action.Key == reportKey)?.Title ?? "التقرير";
@@ -70,8 +84,11 @@ namespace GuaranteeManager
             IAppDialogService dialogs = App.CurrentApp.GetRequiredService<IAppDialogService>();
             if (exported)
             {
+                string successMessage = WorkspaceReportCatalog.IsPrintAction(reportKey)
+                    ? $"تم إرسال {reportTitle} إلى الطباعة."
+                    : $"تم إنشاء تقرير {reportTitle} من البيانات المحفوظة الحالية.";
                 dialogs.ShowInformation(
-                    $"تم إنشاء تقرير {reportTitle} من البيانات المحفوظة الحالية.",
+                    successMessage,
                     ownerTitle);
             }
             else
@@ -432,7 +449,7 @@ namespace GuaranteeManager
         GuaranteeReferenceType ReferenceType,
         string ReferenceNumber,
         string Notes,
-        List<string> AttachmentPaths);
+        List<AttachmentInput> Attachments);
 
     public sealed record EditGuaranteeInput(
         string GuaranteeNo,
@@ -445,8 +462,10 @@ namespace GuaranteeManager
         GuaranteeReferenceType ReferenceType,
         string ReferenceNumber,
         string Notes,
-        List<string> NewAttachmentPaths,
+        List<AttachmentInput> NewAttachments,
         List<AttachmentRecord> RemovedAttachments);
+
+    internal sealed record AttachmentDocumentTypeOption(AttachmentDocumentType Value, string Label);
 
     public sealed record ReplacementRequestInput(
         string ReplacementGuaranteeNo,
@@ -473,8 +492,10 @@ namespace GuaranteeManager
         private readonly ComboBox _referenceTypeInput = new();
         private readonly TextBox _referenceNumberInput = BuildTextBox();
         private readonly TextBox _notesInput = BuildTextBox();
+        private readonly ComboBox _attachmentTypeInput = new();
         private readonly TextBlock _attachmentsLabel = new();
-        private readonly List<string> _attachmentPaths = new();
+        private readonly StackPanel _attachmentsList = new() { Margin = new Thickness(0, 8, 0, 0) };
+        private readonly List<AttachmentInput> _attachments = new();
         private readonly Border _consequenceCard = new();
         private readonly TextBlock _consequenceSummary = new();
         private readonly TextBlock _consequencePrimary = new();
@@ -502,6 +523,7 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(_referenceTypeInput, "Dialog.NewGuarantee.ReferenceTypeInput", "نوع المرجع");
             UiInstrumentation.Identify(_referenceNumberInput, "Dialog.NewGuarantee.ReferenceNumberInput", "رقم المرجع");
             UiInstrumentation.Identify(_notesInput, "Dialog.NewGuarantee.NotesInput", "ملاحظات");
+            UiInstrumentation.Identify(_attachmentTypeInput, "Dialog.NewGuarantee.AttachmentTypeInput", "نوع المستند");
             UiInstrumentation.Identify(_attachmentsLabel, "Dialog.NewGuarantee.AttachmentsSummary", "ملخص المرفقات");
             UiInstrumentation.Identify(_consequenceSummary, "Dialog.NewGuarantee.ConsequenceSummary", "معاينة أثر الحفظ");
             UiInstrumentation.Identify(_consequencePrimary, "Dialog.NewGuarantee.ConsequencePrimary", "تفاصيل أثر الحفظ");
@@ -542,6 +564,13 @@ namespace GuaranteeManager
             _referenceTypeInput.Height = 34;
             _referenceTypeInput.Margin = new Thickness(0, 4, 0, 10);
 
+            _attachmentTypeInput.ItemsSource = BuildAttachmentTypeOptions();
+            _attachmentTypeInput.DisplayMemberPath = nameof(AttachmentDocumentTypeOption.Label);
+            _attachmentTypeInput.SelectedIndex = 0;
+            _attachmentTypeInput.Height = 30;
+            _attachmentTypeInput.Width = 132;
+            _attachmentTypeInput.Margin = new Thickness(0, 0, 8, 0);
+
             var root = new DockPanel { Margin = new Thickness(16) };
             var scroll = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
             var fields = new StackPanel();
@@ -571,9 +600,11 @@ namespace GuaranteeManager
             _attachmentsLabel.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B"));
             _attachmentsLabel.VerticalAlignment = VerticalAlignment.Center;
             _attachmentsLabel.Margin = new Thickness(10, 0, 0, 0);
+            attachmentRow.Children.Add(_attachmentTypeInput);
             attachmentRow.Children.Add(attachmentButton);
             attachmentRow.Children.Add(_attachmentsLabel);
             attachmentPanel.Children.Add(attachmentRow);
+            attachmentPanel.Children.Add(_attachmentsList);
             fields.Children.Add(attachmentPanel);
 
             scroll.Content = fields;
@@ -635,7 +666,7 @@ namespace GuaranteeManager
                 GuaranteeReferenceType.None,
                 string.Empty,
                 string.Empty,
-                new List<string>());
+                new List<AttachmentInput>());
             return accepted;
         }
 
@@ -690,7 +721,7 @@ namespace GuaranteeManager
                 referenceType,
                 referenceNumber,
                 notes,
-                [.. _attachmentPaths]);
+                [.. _attachments]);
             _allowCloseWithoutPrompt = true;
             DialogResult = true;
         }
@@ -709,12 +740,81 @@ namespace GuaranteeManager
                 return;
             }
 
-            _attachmentPaths.Clear();
-            _attachmentPaths.AddRange(dialog.FileNames);
-            _attachmentsLabel.Text = _attachmentPaths.Count == 0
-                ? "بدون مرفقات"
-                : $"{_attachmentPaths.Count.ToString("N0", CultureInfo.InvariantCulture)} مرفق";
+            AttachmentDocumentType selectedType = (_attachmentTypeInput.SelectedItem as AttachmentDocumentTypeOption)?.Value
+                ?? AttachmentDocumentType.SupportingDocument;
+
+            foreach (string file in dialog.FileNames.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if (!_attachments.Any(existing => string.Equals(existing.FilePath, file, StringComparison.OrdinalIgnoreCase)))
+                {
+                    _attachments.Add(new AttachmentInput(file, selectedType));
+                }
+            }
+
+            RefreshAttachmentsState();
             MarkDirty();
+        }
+
+        private void RefreshAttachmentsState()
+        {
+            _attachmentsList.Children.Clear();
+            _attachmentsLabel.Text = _attachments.Count == 0
+                ? "بدون مرفقات"
+                : $"{_attachments.Count.ToString("N0", CultureInfo.InvariantCulture)} مرفق";
+
+            foreach (AttachmentInput attachment in _attachments)
+            {
+                var row = new Grid { Margin = new Thickness(0, 0, 0, 6), FlowDirection = FlowDirection.LeftToRight };
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(6) });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var name = new TextBlock
+                {
+                    Text = Path.GetFileName(attachment.FilePath),
+                    FontSize = 10.8,
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1F2937")),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    FlowDirection = FlowDirection.LeftToRight
+                };
+                Grid.SetColumn(name, 0);
+                row.Children.Add(name);
+
+                var type = new TextBlock
+                {
+                    Text = attachment.DocumentTypeLabel,
+                    FontSize = 10,
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B")),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(8, 0, 0, 0)
+                };
+                Grid.SetColumn(type, 1);
+                row.Children.Add(type);
+
+                var removeButton = new Button
+                {
+                    Content = "إزالة",
+                    Width = 68,
+                    Height = 28,
+                    FontSize = 10,
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEF2F2")),
+                    BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FECACA")),
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DC2626"))
+                };
+                removeButton.Click += (_, _) =>
+                {
+                    _attachments.Remove(attachment);
+                    RefreshAttachmentsState();
+                    MarkDirty();
+                };
+                Grid.SetColumn(removeButton, 3);
+                row.Children.Add(removeButton);
+
+                _attachmentsList.Children.Add(row);
+            }
         }
 
         private void WireDirtyTracking()
@@ -730,6 +830,7 @@ namespace GuaranteeManager
                 _expiryInput,
                 _referenceTypeInput,
                 _referenceNumberInput,
+                _attachmentTypeInput,
                 _notesInput);
             _isDirty = false;
         }
@@ -788,7 +889,7 @@ namespace GuaranteeManager
                    || referenceType != GuaranteeReferenceType.Contract
                    || !string.IsNullOrWhiteSpace(referenceNumber)
                    || !string.IsNullOrWhiteSpace(notes)
-                   || _attachmentPaths.Count > 0;
+                   || _attachments.Count > 0;
         }
 
         private static string GetComboText(ComboBox comboBox)
@@ -931,9 +1032,9 @@ namespace GuaranteeManager
 
             string effectiveBeneficiary = string.IsNullOrWhiteSpace(beneficiary) ? supplier : beneficiary;
             string referenceSummary = BuildReferenceSummary(referenceType, referenceNumber);
-            string attachmentSummary = _attachmentPaths.Count == 0
+            string attachmentSummary = _attachments.Count == 0
                 ? "بدون مرفقات إضافية"
-                : $"{_attachmentPaths.Count.ToString("N0", CultureInfo.InvariantCulture)} مرفق سيُحفظ";
+                : $"{_attachments.Count.ToString("N0", CultureInfo.InvariantCulture)} مرفق سيُحفظ";
             string beneficiarySummary = string.IsNullOrWhiteSpace(beneficiary)
                 ? $"سيُستخدم المورد كمستفيد: {effectiveBeneficiary}"
                 : $"المستفيد: {effectiveBeneficiary}";
@@ -983,6 +1084,13 @@ namespace GuaranteeManager
             };
         }
 
+        private static List<AttachmentDocumentTypeOption> BuildAttachmentTypeOptions()
+        {
+            return AttachmentDocumentTypeText.OfficialAttachmentTypes
+                .Select(type => new AttachmentDocumentTypeOption(type, AttachmentDocumentTypeText.Label(type)))
+                .ToList();
+        }
+
         private sealed record ReferenceTypeOption(GuaranteeReferenceType Value, string Label);
     }
 
@@ -1002,9 +1110,10 @@ namespace GuaranteeManager
         private readonly TextBox _notesInput = BuildTextBox();
         private readonly TextBlock _existingAttachmentsLabel = new();
         private readonly StackPanel _existingAttachmentsList = new() { Margin = new Thickness(0, 8, 0, 0) };
+        private readonly ComboBox _newAttachmentTypeInput = new();
         private readonly TextBlock _newAttachmentsLabel = new();
         private readonly StackPanel _newAttachmentsList = new() { Margin = new Thickness(0, 8, 0, 0) };
-        private readonly List<string> _newAttachmentPaths = new();
+        private readonly List<AttachmentInput> _newAttachments = new();
         private readonly HashSet<int> _removedAttachmentIds = new();
         private readonly Border _consequenceCard = new();
         private readonly TextBlock _consequenceSummary = new();
@@ -1037,6 +1146,7 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(_referenceNumberInput, "Dialog.EditGuarantee.ReferenceNumberInput", "رقم المرجع");
             UiInstrumentation.Identify(_notesInput, "Dialog.EditGuarantee.NotesInput", "ملاحظات");
             UiInstrumentation.Identify(_existingAttachmentsLabel, "Dialog.EditGuarantee.ExistingAttachmentsSummary", "ملخص المرفقات الحالية");
+            UiInstrumentation.Identify(_newAttachmentTypeInput, "Dialog.EditGuarantee.AttachmentTypeInput", "نوع المستند");
             UiInstrumentation.Identify(_newAttachmentsLabel, "Dialog.EditGuarantee.NewAttachmentsSummary", "ملخص المرفقات الجديدة");
             UiInstrumentation.Identify(_consequenceSummary, "Dialog.EditGuarantee.ConsequenceSummary", "معاينة أثر الحفظ");
             UiInstrumentation.Identify(_consequencePrimary, "Dialog.EditGuarantee.ConsequencePrimary", "تفاصيل أثر الحفظ");
@@ -1089,6 +1199,13 @@ namespace GuaranteeManager
             }
             _referenceTypeInput.Height = 34;
             _referenceTypeInput.Margin = new Thickness(0, 4, 0, 10);
+
+            _newAttachmentTypeInput.ItemsSource = BuildAttachmentTypeOptions();
+            _newAttachmentTypeInput.DisplayMemberPath = nameof(AttachmentDocumentTypeOption.Label);
+            _newAttachmentTypeInput.SelectedIndex = 0;
+            _newAttachmentTypeInput.Height = 30;
+            _newAttachmentTypeInput.Width = 132;
+            _newAttachmentTypeInput.Margin = new Thickness(0, 0, 8, 0);
 
             var root = new DockPanel { Margin = new Thickness(16) };
             var scroll = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
@@ -1170,7 +1287,7 @@ namespace GuaranteeManager
                 GuaranteeReferenceType.None,
                 string.Empty,
                 string.Empty,
-                new List<string>(),
+                new List<AttachmentInput>(),
                 new List<AttachmentRecord>());
             return accepted;
         }
@@ -1204,6 +1321,7 @@ namespace GuaranteeManager
             _newAttachmentsLabel.VerticalAlignment = VerticalAlignment.Center;
             _newAttachmentsLabel.Margin = new Thickness(10, 0, 0, 0);
 
+            attachmentRow.Children.Add(_newAttachmentTypeInput);
             attachmentRow.Children.Add(attachmentButton);
             attachmentRow.Children.Add(_newAttachmentsLabel);
             panel.Children.Add(attachmentRow);
@@ -1266,7 +1384,7 @@ namespace GuaranteeManager
                 referenceType,
                 referenceNumber,
                 notes,
-                [.. _newAttachmentPaths],
+                [.. _newAttachments],
                 removedAttachments);
             _allowCloseWithoutPrompt = true;
             DialogResult = true;
@@ -1286,11 +1404,14 @@ namespace GuaranteeManager
                 return;
             }
 
+            AttachmentDocumentType selectedType = (_newAttachmentTypeInput.SelectedItem as AttachmentDocumentTypeOption)?.Value
+                ?? AttachmentDocumentType.SupportingDocument;
+
             foreach (string file in dialog.FileNames.Distinct(StringComparer.OrdinalIgnoreCase))
             {
-                if (!_newAttachmentPaths.Any(existing => string.Equals(existing, file, StringComparison.OrdinalIgnoreCase)))
+                if (!_newAttachments.Any(existing => string.Equals(existing.FilePath, file, StringComparison.OrdinalIgnoreCase)))
                 {
-                    _newAttachmentPaths.Add(file);
+                    _newAttachments.Add(new AttachmentInput(file, selectedType));
                 }
             }
 
@@ -1328,7 +1449,7 @@ namespace GuaranteeManager
 
                 var name = new TextBlock
                 {
-                    Text = attachment.OriginalFileName,
+                    Text = $"{attachment.OriginalFileName} • {attachment.DocumentTypeLabel}",
                     FontSize = 10.8,
                     FontWeight = FontWeights.SemiBold,
                     Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(removed ? "#94A3B8" : "#1F2937")),
@@ -1386,19 +1507,21 @@ namespace GuaranteeManager
         private void RefreshNewAttachmentsState()
         {
             _newAttachmentsList.Children.Clear();
-            _newAttachmentsLabel.Text = _newAttachmentPaths.Count == 0
+            _newAttachmentsLabel.Text = _newAttachments.Count == 0
                 ? "بدون مرفقات جديدة"
-                : $"{_newAttachmentPaths.Count.ToString("N0", CultureInfo.InvariantCulture)} مرفق جديد";
+                : $"{_newAttachments.Count.ToString("N0", CultureInfo.InvariantCulture)} مرفق جديد";
 
-            foreach (string path in _newAttachmentPaths)
+            foreach (AttachmentInput attachment in _newAttachments)
             {
                 var row = new Grid { Margin = new Thickness(0, 0, 0, 6), FlowDirection = FlowDirection.LeftToRight };
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(6) });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
                 var name = new TextBlock
                 {
-                    Text = Path.GetFileName(path),
+                    Text = Path.GetFileName(attachment.FilePath),
                     FontSize = 10.8,
                     FontWeight = FontWeights.SemiBold,
                     Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1F2937")),
@@ -1408,6 +1531,17 @@ namespace GuaranteeManager
                 };
                 Grid.SetColumn(name, 0);
                 row.Children.Add(name);
+
+                var type = new TextBlock
+                {
+                    Text = attachment.DocumentTypeLabel,
+                    FontSize = 10,
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B")),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(8, 0, 0, 0)
+                };
+                Grid.SetColumn(type, 1);
+                row.Children.Add(type);
 
                 var removeButton = new Button
                 {
@@ -1421,11 +1555,11 @@ namespace GuaranteeManager
                 };
                 removeButton.Click += (_, _) =>
                 {
-                    _newAttachmentPaths.Remove(path);
+                    _newAttachments.Remove(attachment);
                     RefreshNewAttachmentsState();
                     MarkDirty();
                 };
-                Grid.SetColumn(removeButton, 1);
+                Grid.SetColumn(removeButton, 3);
                 row.Children.Add(removeButton);
 
                 _newAttachmentsList.Children.Add(row);
@@ -1456,6 +1590,7 @@ namespace GuaranteeManager
                 _expiryInput,
                 _referenceTypeInput,
                 _referenceNumberInput,
+                _newAttachmentTypeInput,
                 _notesInput);
             _isDirty = false;
         }
@@ -1515,7 +1650,7 @@ namespace GuaranteeManager
                    || referenceType != _currentGuarantee.ReferenceType
                    || !string.Equals(referenceNumber, _currentGuarantee.ReferenceNumber, StringComparison.Ordinal)
                    || !string.Equals(notes, currentNotes, StringComparison.Ordinal)
-                   || _newAttachmentPaths.Count > 0
+                   || _newAttachments.Count > 0
                    || _removedAttachmentIds.Count > 0;
         }
 
@@ -1707,7 +1842,7 @@ namespace GuaranteeManager
                 changeLabels.Add("الملاحظات");
             }
 
-            int addedAttachments = _newAttachmentPaths.Count;
+            int addedAttachments = _newAttachments.Count;
             int removedAttachments = _removedAttachmentIds.Count;
             if (addedAttachments > 0 || removedAttachments > 0)
             {
@@ -1769,6 +1904,13 @@ namespace GuaranteeManager
             textBlock.Text = resolved;
             System.Windows.Automation.AutomationProperties.SetHelpText(textBlock, resolved);
             System.Windows.Automation.AutomationProperties.SetItemStatus(textBlock, resolved);
+        }
+
+        private static List<AttachmentDocumentTypeOption> BuildAttachmentTypeOptions()
+        {
+            return AttachmentDocumentTypeText.OfficialAttachmentTypes
+                .Select(type => new AttachmentDocumentTypeOption(type, AttachmentDocumentTypeText.Label(type)))
+                .ToList();
         }
 
         private sealed record ReferenceTypeOption(GuaranteeReferenceType Value, string Label);
@@ -2044,1257 +2186,6 @@ namespace GuaranteeManager
         private sealed record ReferenceTypeOption(GuaranteeReferenceType Value, string Label);
     }
 
-    public sealed class HistoryDialog : Window
-    {
-        private readonly GuaranteeRow _row;
-        private readonly IReadOnlyList<Guarantee> _history;
-        private readonly IReadOnlyList<WorkflowRequest> _requests;
-        private readonly IGuaranteeHistoryDocumentService _historyDocuments;
-        private readonly TabControl _tabs = new();
-        private readonly ListBox _versionsList = new();
-        private readonly ListBox _requestsList = new();
-        private readonly TextBlock _detailTitle = WorkspaceSurfaceChrome.Text(17, FontWeights.Bold, "#0F172A");
-        private readonly TextBlock _detailSubtitle = WorkspaceSurfaceChrome.Text(11, FontWeights.SemiBold, "#64748B");
-        private readonly Border _detailStatusBorder = new();
-        private readonly TextBlock _detailStatusText = new() { FontSize = 10, FontWeight = FontWeights.SemiBold };
-        private readonly Image _detailBankLogo = new() { Width = 17, Height = 17 };
-        private readonly TextBlock _detailBankText = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#64748B");
-        private readonly TextBlock _detailHeadline = WorkspaceSurfaceChrome.Text(27, FontWeights.Bold, "#0F172A");
-        private readonly TextBlock _detailCaption = WorkspaceSurfaceChrome.Text(11, FontWeights.Normal, "#94A3B8");
-        private readonly TextBlock _detailLabel1 = WorkspaceSurfaceChrome.Text(11, FontWeights.SemiBold, "#94A3B8");
-        private readonly TextBlock _detailLabel2 = WorkspaceSurfaceChrome.Text(11, FontWeights.SemiBold, "#94A3B8");
-        private readonly TextBlock _detailLabel3 = WorkspaceSurfaceChrome.Text(11, FontWeights.SemiBold, "#94A3B8");
-        private readonly TextBlock _detailLabel4 = WorkspaceSurfaceChrome.Text(11, FontWeights.SemiBold, "#94A3B8");
-        private readonly TextBlock _detailLabel5 = WorkspaceSurfaceChrome.Text(11, FontWeights.SemiBold, "#94A3B8");
-        private readonly TextBlock _detailLabel6 = WorkspaceSurfaceChrome.Text(11, FontWeights.SemiBold, "#94A3B8");
-        private readonly TextBlock _detailLine1 = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#0F172A");
-        private readonly TextBlock _detailLine2 = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#0F172A");
-        private readonly TextBlock _detailLine3 = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#0F172A");
-        private readonly TextBlock _detailLine4 = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#0F172A");
-        private readonly TextBlock _detailLine5 = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#0F172A");
-        private readonly TextBlock _detailLine6 = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#0F172A");
-        private readonly TextBlock _detailNote = WorkspaceSurfaceChrome.Text(11, FontWeights.Normal, "#64748B");
-        private readonly Border _nextStepCard = new();
-        private readonly TextBlock _nextStepSummary = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#0F172A");
-        private readonly TextBlock _nextStepHint = WorkspaceSurfaceChrome.Text(10.8, FontWeights.Normal, "#475569");
-        private readonly Button _nextStepActionButton = new();
-        private readonly Button _openAttachmentsButton = new();
-        private readonly Button _openLetterButton = new();
-        private readonly Button _openResponseButton = new();
-        private readonly Button _openGuaranteeFileButton = new();
-        private readonly Button _exportHistoryButton = new();
-        private readonly Button _printHistoryButton = new();
-        private Action? _nextStepAction;
-        private readonly int? _initialRequestId;
-        private readonly bool _preferRequestsTab;
-
-        private HistoryDialog(
-            GuaranteeRow row,
-            IReadOnlyList<Guarantee> history,
-            IReadOnlyList<WorkflowRequest> requests,
-            int? initialRequestId = null,
-            bool preferRequestsTab = false)
-        {
-            _row = row;
-            _historyDocuments = App.CurrentApp.GetRequiredService<IGuaranteeHistoryDocumentService>();
-            _history = history
-                .OrderByDescending(item => item.VersionNumber)
-                .ThenByDescending(item => item.CreatedAt)
-                .ToList();
-            _requests = requests
-                .OrderByDescending(item => item.RequestDate)
-                .ThenByDescending(item => item.SequenceNumber)
-                .ToList();
-            _initialRequestId = initialRequestId;
-            _preferRequestsTab = preferRequestsTab;
-
-            Title = "سجل الضمان";
-            UiInstrumentation.Identify(this, "Dialog.GuaranteeHistory", Title);
-            UiInstrumentation.Identify(_tabs, "Dialog.GuaranteeHistory.Tabs", "تبويبات سجل الضمان");
-            UiInstrumentation.Identify(_versionsList, "Dialog.GuaranteeHistory.VersionsList", "قائمة إصدارات الضمان");
-            UiInstrumentation.Identify(_requestsList, "Dialog.GuaranteeHistory.RequestsList", "قائمة طلبات الضمان");
-            UiInstrumentation.Identify(_nextStepSummary, "Dialog.GuaranteeHistory.NextStepSummary", "ملخص الخطوة التالية");
-            UiInstrumentation.Identify(_nextStepHint, "Dialog.GuaranteeHistory.NextStepHint", "شرح الخطوة التالية");
-            UiInstrumentation.Identify(_nextStepActionButton, "Dialog.GuaranteeHistory.NextStepButton", "زر الخطوة التالية");
-            Width = 920;
-            Height = 620;
-            MinWidth = 820;
-            MinHeight = 540;
-            WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = new FontFamily("Segoe UI, Tahoma");
-            Background = WorkspaceSurfaceChrome.BrushFrom("#F7F9FC");
-            DialogWindowSupport.Attach(this, nameof(HistoryDialog));
-
-            Content = BuildLayout();
-            ReloadData();
-        }
-
-        public static void ShowFor(
-            GuaranteeRow row,
-            IReadOnlyList<Guarantee> history,
-            IReadOnlyList<WorkflowRequest> requests,
-            int? initialRequestId = null,
-            bool preferRequestsTab = false)
-        {
-            App.CurrentApp.GetRequiredService<SecondaryWindowManager>().ShowDialog(
-                $"history:{row.RootId}",
-                () => new HistoryDialog(row, history, requests, initialRequestId, preferRequestsTab),
-                "سجل الضمان",
-                "سجل هذا الضمان مفتوح بالفعل.");
-        }
-
-        private UIElement BuildLayout()
-        {
-            var root = new Grid { Margin = new Thickness(18) };
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(10) });
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(10) });
-            root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(12) });
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-            root.Children.Add(BuildHeader());
-
-            UIElement summary = BuildSummaryStrip();
-            Grid.SetRow(summary, 2);
-            root.Children.Add(summary);
-
-            UIElement content = BuildMainContent();
-            Grid.SetRow(content, 4);
-            root.Children.Add(content);
-
-            UIElement actions = BuildActions();
-            Grid.SetRow(actions, 6);
-            root.Children.Add(actions);
-
-            return root;
-        }
-
-        private UIElement BuildHeader()
-        {
-            var header = new Grid();
-            header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            var titleStack = new StackPanel();
-            titleStack.Children.Add(new TextBlock
-            {
-                Text = $"سجل الضمان - {_row.GuaranteeNo}",
-                FontSize = 20,
-                FontWeight = FontWeights.Bold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A")
-            });
-            titleStack.Children.Add(new TextBlock
-            {
-                Text = $"{_row.Beneficiary} | {_row.Bank}",
-                FontSize = 12,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
-                Margin = new Thickness(0, 4, 0, 0)
-            });
-            header.Children.Add(titleStack);
-
-            var closeButton = WorkspaceSurfaceChrome.ActionButton("إغلاق", "White", "#D8E1EE", "#1F2937");
-            UiInstrumentation.Identify(closeButton, "Dialog.GuaranteeHistory.CloseButton", "إغلاق سجل الضمان");
-            closeButton.MinWidth = 92;
-            closeButton.Click += (_, _) => Close();
-            Grid.SetColumn(closeButton, 1);
-            header.Children.Add(closeButton);
-            return header;
-        }
-
-        private UIElement BuildSummaryStrip()
-        {
-            Guarantee? currentVersion = _history.FirstOrDefault(item => item.IsCurrent) ?? _history.FirstOrDefault();
-            string currentVersionLabel = currentVersion?.VersionLabel ?? "---";
-            string lastUpdate = _history.FirstOrDefault()?.CreatedAt.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) ?? "---";
-
-            var metrics = new System.Windows.Controls.Primitives.UniformGrid
-            {
-                Columns = 4
-            };
-            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("الإصدارات", _history.Count.ToString("N0", CultureInfo.InvariantCulture), "#2563EB"));
-            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("الطلبات", _requests.Count.ToString("N0", CultureInfo.InvariantCulture), "#E09408"));
-            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("الإصدار الحالي", currentVersionLabel, "#16A34A"));
-            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("آخر تحديث", lastUpdate, "#0F172A"));
-            return metrics;
-        }
-
-        private UIElement BuildMainContent()
-        {
-            var grid = new Grid { FlowDirection = FlowDirection.LeftToRight };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(300) });
-
-            _tabs.SelectionChanged += (_, _) => UpdateDetailPanel();
-            var versionsTab = UiInstrumentation.Identify(
-                new TabItem { Header = "الإصدارات", Content = BuildVersionsTab() },
-                "Dialog.GuaranteeHistory.Tab.Versions",
-                "تبويب الإصدارات");
-            var requestsTab = UiInstrumentation.Identify(
-                new TabItem { Header = "الطلبات", Content = BuildRequestsTab() },
-                "Dialog.GuaranteeHistory.Tab.Requests",
-                "تبويب الطلبات");
-            _tabs.Items.Add(versionsTab);
-            _tabs.Items.Add(requestsTab);
-            grid.Children.Add(_tabs);
-
-            UIElement detailPanel = UiInstrumentation.Identify(
-                BuildDetailPanel(),
-                "Dialog.GuaranteeHistory.DetailPanel",
-                "لوحة تفاصيل سجل الضمان");
-            Grid.SetColumn(detailPanel, 1);
-            grid.Children.Add(detailPanel);
-            return grid;
-        }
-
-        private UIElement BuildVersionsTab()
-        {
-            _versionsList.Style = WorkspaceSurfaceChrome.Style("ReferenceTableRowsListBox");
-            _versionsList.SelectionChanged += (_, _) => UpdateDetailPanel();
-            _versionsList.MouseDoubleClick += (_, _) => OpenSelectedAttachments();
-
-            return BuildTabShell(
-                BuildVersionsHeader(),
-                _versionsList,
-                _history.Count == 0 ? "لا توجد إصدارات محفوظة لهذا الضمان." : $"{_history.Count.ToString("N0", CultureInfo.InvariantCulture)} إصدار محفوظ");
-        }
-
-        private UIElement BuildRequestsTab()
-        {
-            _requestsList.Style = WorkspaceSurfaceChrome.Style("ReferenceTableRowsListBox");
-            _requestsList.SelectionChanged += (_, _) => UpdateDetailPanel();
-            _requestsList.MouseDoubleClick += (_, _) =>
-            {
-                if (SelectedRequest?.HasLetter == true)
-                {
-                    OpenSelectedLetter();
-                }
-            };
-
-            return BuildTabShell(
-                BuildRequestsHeader(),
-                _requestsList,
-                _requests.Count == 0 ? "لا توجد طلبات مرتبطة بهذه السلسلة." : $"{_requests.Count.ToString("N0", CultureInfo.InvariantCulture)} طلب مرتبط");
-        }
-
-        private static UIElement BuildTabShell(UIElement header, ListBox list, string summary)
-        {
-            var border = WorkspaceSurfaceChrome.Card(new Thickness(0));
-            var grid = new Grid();
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(35) });
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(34) });
-
-            Grid.SetRow(header, 0);
-            grid.Children.Add(header);
-            Grid.SetRow(list, 1);
-            grid.Children.Add(list);
-
-            var footer = new Border
-            {
-                BorderBrush = WorkspaceSurfaceChrome.BrushFrom("#E7EDF5"),
-                BorderThickness = new Thickness(0, 1, 0, 0),
-                Background = Brushes.White,
-                Padding = new Thickness(12, 0, 12, 0)
-            };
-            footer.Child = new TextBlock
-            {
-                Text = summary,
-                FontSize = 11,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Right
-            };
-            Grid.SetRow(footer, 2);
-            grid.Children.Add(footer);
-
-            border.Child = grid;
-            return border;
-        }
-
-        private UIElement BuildVersionsHeader()
-        {
-            var header = new Grid
-            {
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTableHeaderBand")
-            };
-            header.Children.Add(new Border
-            {
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTableHeaderDivider")
-            });
-
-            var inner = CreateVersionsGrid();
-            AddHeader(inner, "الإصدار", 0, true);
-            AddHeader(inner, "الحالة", 1, false);
-            AddHeader(inner, "الإنشاء", 2, false);
-            AddHeader(inner, "الانتهاء", 3, false);
-            AddHeader(inner, "القيمة", 4, false);
-            AddHeader(inner, "المرفقات", 5, false);
-            header.Children.Add(inner);
-            return header;
-        }
-
-        private UIElement BuildRequestsHeader()
-        {
-            var header = new Grid
-            {
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTableHeaderBand")
-            };
-            header.Children.Add(new Border
-            {
-                Style = WorkspaceSurfaceChrome.Style("ReferenceTableHeaderDivider")
-            });
-
-            var inner = CreateRequestsGrid();
-            AddHeader(inner, "الطلب", 0, true);
-            AddHeader(inner, "الحالة", 1, false);
-            AddHeader(inner, "تاريخ الطلب", 2, false);
-            AddHeader(inner, "القيمة المطلوبة", 3, false);
-            AddHeader(inner, "الرد", 4, false);
-            AddHeader(inner, "المستندات", 5, false);
-            header.Children.Add(inner);
-            return header;
-        }
-
-        private UIElement BuildDetailPanel()
-        {
-            _detailStatusBorder.Style = WorkspaceSurfaceChrome.Style("StatusPill");
-            _detailStatusBorder.HorizontalAlignment = HorizontalAlignment.Left;
-            _detailStatusBorder.Margin = new Thickness(0, 0, 0, 12);
-            _detailStatusBorder.Child = _detailStatusText;
-
-            var bankRow = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                FlowDirection = FlowDirection.RightToLeft,
-                HorizontalAlignment = HorizontalAlignment.Right
-            };
-            _detailBankLogo.Margin = new Thickness(7, 0, 0, 0);
-            bankRow.Children.Add(_detailBankText);
-            bankRow.Children.Add(_detailBankLogo);
-
-            var content = new StackPanel
-            {
-                Margin = new Thickness(16, 14, 16, 14),
-                Children =
-                {
-                    new TextBlock
-                    {
-                        Text = "تفاصيل السجل",
-                        FontSize = 16,
-                        FontWeight = FontWeights.Bold,
-                        Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A")
-                    },
-                    _detailTitle,
-                    _detailSubtitle,
-                    _detailStatusBorder,
-                    bankRow,
-                    _detailHeadline,
-                    _detailCaption,
-                    BuildNextStepCard(),
-                    WorkspaceSurfaceChrome.Divider(),
-                    BuildInfoLine(_detailLabel1, _detailLine1),
-                    BuildInfoLine(_detailLabel2, _detailLine2),
-                    BuildInfoLine(_detailLabel3, _detailLine3),
-                    BuildInfoLine(_detailLabel4, _detailLine4),
-                    BuildInfoLine(_detailLabel5, _detailLine5),
-                    BuildInfoLine(_detailLabel6, _detailLine6),
-                    BuildInfoBlock("ملاحظات", _detailNote)
-                }
-            };
-
-            return WorkspaceSurfaceChrome.BuildReferenceDetailPanel(content);
-        }
-
-        private UIElement BuildNextStepCard()
-        {
-            _nextStepCard.Background = WorkspaceSurfaceChrome.BrushFrom("#EFF6FF");
-            _nextStepCard.BorderBrush = WorkspaceSurfaceChrome.BrushFrom("#BFDBFE");
-            _nextStepCard.BorderThickness = new Thickness(1);
-            _nextStepCard.CornerRadius = new CornerRadius(8);
-            _nextStepCard.Padding = new Thickness(12, 10, 12, 10);
-            _nextStepCard.Margin = new Thickness(0, 10, 0, 0);
-
-            _nextStepActionButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _nextStepActionButton.MinWidth = 132;
-            _nextStepActionButton.Height = 32;
-            _nextStepActionButton.HorizontalAlignment = HorizontalAlignment.Right;
-            _nextStepActionButton.Margin = new Thickness(0, 10, 0, 0);
-            _nextStepActionButton.Click += (_, _) => _nextStepAction?.Invoke();
-
-            var stack = new StackPanel();
-            stack.Children.Add(new TextBlock
-            {
-                Text = "الخطوة التالية",
-                FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#2563EB"),
-                Margin = new Thickness(0, 0, 0, 6)
-            });
-            stack.Children.Add(_nextStepSummary);
-            _nextStepHint.Margin = new Thickness(0, 4, 0, 0);
-            stack.Children.Add(_nextStepHint);
-            stack.Children.Add(_nextStepActionButton);
-            _nextStepCard.Child = stack;
-            return _nextStepCard;
-        }
-
-        private UIElement BuildActions()
-        {
-            _openGuaranteeFileButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _openGuaranteeFileButton.Content = "الضمانات";
-            UiInstrumentation.Identify(_openGuaranteeFileButton, "Dialog.GuaranteeHistory.OpenGuaranteeFileButton", "فتح الضمان في المحفظة");
-            _openGuaranteeFileButton.Click += (_, _) => OpenGuaranteeContext();
-
-            _openAttachmentsButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _openAttachmentsButton.Content = "فتح مرفقات الإصدار";
-            UiInstrumentation.Identify(_openAttachmentsButton, "Dialog.GuaranteeHistory.OpenAttachmentsButton", "فتح مرفقات الإصدار");
-            _openAttachmentsButton.Click += (_, _) => OpenSelectedAttachments();
-
-            _openLetterButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _openLetterButton.Content = "فتح خطاب الطلب";
-            UiInstrumentation.Identify(_openLetterButton, "Dialog.GuaranteeHistory.OpenLetterButton", "فتح خطاب الطلب");
-            _openLetterButton.Click += (_, _) => OpenSelectedLetter();
-
-            _openResponseButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _openResponseButton.Content = "فتح رد البنك";
-            UiInstrumentation.Identify(_openResponseButton, "Dialog.GuaranteeHistory.OpenResponseButton", "فتح رد البنك");
-            _openResponseButton.Click += (_, _) => OpenSelectedResponse();
-
-            _exportHistoryButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _exportHistoryButton.Content = "تصدير السجل";
-            UiInstrumentation.Identify(_exportHistoryButton, "Dialog.GuaranteeHistory.ExportButton", "تصدير سجل الضمان");
-            _exportHistoryButton.Click += (_, _) => ExportHistory();
-
-            _printHistoryButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            _printHistoryButton.Content = "طباعة السجل";
-            UiInstrumentation.Identify(_printHistoryButton, "Dialog.GuaranteeHistory.PrintButton", "طباعة سجل الضمان");
-            _printHistoryButton.Click += (_, _) => PrintHistory();
-
-            var copyButton = WorkspaceSurfaceChrome.ActionButton("نسخ رقم الضمان", "White", "#D8E1EE", "#1F2937");
-            UiInstrumentation.Identify(copyButton, "Dialog.GuaranteeHistory.CopyGuaranteeNoButton", "نسخ رقم الضمان");
-            copyButton.MinWidth = 116;
-            copyButton.Click += (_, _) => CopyGuaranteeNo();
-
-            var closeButton = WorkspaceSurfaceChrome.ActionButton("إغلاق", "#2563EB", "#2563EB", "White");
-            UiInstrumentation.Identify(closeButton, "Dialog.GuaranteeHistory.CloseFooterButton", "إغلاق سجل الضمان");
-            closeButton.MinWidth = 94;
-            closeButton.Click += (_, _) => Close();
-
-            var actions = new System.Windows.Controls.Primitives.UniformGrid
-            {
-                Columns = 8,
-                FlowDirection = FlowDirection.LeftToRight
-            };
-
-            foreach (Button button in new[]
-                     {
-                         _openGuaranteeFileButton,
-                         _openAttachmentsButton,
-                         _openLetterButton,
-                         _openResponseButton,
-                         _exportHistoryButton,
-                         _printHistoryButton,
-                         copyButton,
-                         closeButton
-                     })
-            {
-                button.Margin = new Thickness(0, 0, 8, 0);
-                actions.Children.Add(button);
-            }
-
-            UpdateHistoryActionsAvailability();
-            return actions;
-        }
-
-        private static Grid CreateVersionsGrid()
-        {
-            var grid = new Grid
-            {
-                Margin = new Thickness(9, 0, 9, 0),
-                FlowDirection = FlowDirection.LeftToRight
-            };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.2, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.35, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.55, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.55, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.55, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.9, GridUnitType.Star) });
-            return grid;
-        }
-
-        private static Grid CreateRequestsGrid()
-        {
-            var grid = new Grid
-            {
-                Margin = new Thickness(9, 0, 9, 0),
-                FlowDirection = FlowDirection.LeftToRight
-            };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.55, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.15, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.35, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.6, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.15, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.05, GridUnitType.Star) });
-            return grid;
-        }
-
-        private static void AddHeader(Grid grid, string text, int column, bool rightAligned)
-        {
-            var header = new TextBlock
-            {
-                Text = text,
-                Style = WorkspaceSurfaceChrome.Style(rightAligned ? "TableHeaderRight" : "TableHeaderText")
-            };
-            Grid.SetColumn(header, column);
-            grid.Children.Add(header);
-        }
-
-        private void CopyGuaranteeNo()
-        {
-            if (string.IsNullOrWhiteSpace(_row.GuaranteeNo))
-            {
-                MessageBox.Show("لا توجد قيمة متاحة لنسخ رقم الضمان.", "نسخ رقم الضمان", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            try
-            {
-                Clipboard.SetText(_row.GuaranteeNo);
-                App.CurrentApp.GetRequiredService<IShellStatusService>().ShowSuccess(
-                    "تم نسخ رقم الضمان.",
-                    "سجل الضمان • الحافظة جاهزة للاستخدام");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "نسخ رقم الضمان", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-        }
-
-        private void ReloadData()
-        {
-            _versionsList.Items.Clear();
-            foreach (Guarantee item in _history)
-            {
-                _versionsList.Items.Add(BuildVersionRow(item));
-            }
-
-            _requestsList.Items.Clear();
-            foreach (WorkflowRequest request in _requests)
-            {
-                _requestsList.Items.Add(BuildRequestRow(request));
-            }
-
-            FrameworkElement? initialRequestRow = null;
-            if (_initialRequestId.HasValue)
-            {
-                initialRequestRow = _requestsList.Items
-                    .OfType<FrameworkElement>()
-                    .FirstOrDefault(item => item.Tag is WorkflowRequest request && request.Id == _initialRequestId.Value);
-            }
-
-            if (_versionsList.Items.Count > 0 && _versionsList.SelectedItem == null)
-            {
-                _versionsList.SelectedIndex = 0;
-            }
-
-            if (initialRequestRow != null)
-            {
-                _requestsList.SelectedItem = initialRequestRow;
-                _requestsList.ScrollIntoView(initialRequestRow);
-            }
-            else if (_requestsList.Items.Count > 0 && _requestsList.SelectedItem == null)
-            {
-                _requestsList.SelectedIndex = 0;
-            }
-
-            _tabs.SelectedIndex = _preferRequestsTab && initialRequestRow != null ? 1 : 0;
-
-            UpdateDetailPanel();
-            UpdateHistoryActionsAvailability();
-        }
-
-        private FrameworkElement BuildVersionRow(Guarantee item)
-        {
-            var row = CreateVersionsGrid();
-            row.Tag = item;
-            row.Height = 40;
-            row.Children.Add(BuildCell(item.VersionLabel, 0, "TableCellRight"));
-            row.Children.Add(BuildCell(item.IsCurrent ? "حالي" : "محفوظ", 1, "TableCellCenter", item.IsCurrent ? WorkspaceSurfaceChrome.BrushFrom("#16A34A") : WorkspaceSurfaceChrome.BrushFrom("#2563EB")));
-            row.Children.Add(BuildCell(item.CreatedAt.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture), 2, "TableCellCenter"));
-            row.Children.Add(BuildCell(item.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture), 3, "TableCellCenter"));
-            row.Children.Add(BuildCell($"{item.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال", 4, "TableCellCenter"));
-            row.Children.Add(BuildCell(item.AttachmentCount.ToString("N0", CultureInfo.InvariantCulture), 5, "TableCellCenter"));
-            return row;
-        }
-
-        private FrameworkElement BuildRequestRow(WorkflowRequest request)
-        {
-            var row = CreateRequestsGrid();
-            row.Tag = request;
-            row.Height = 40;
-            row.Children.Add(BuildCell(request.TypeLabel, 0, "TableCellRight"));
-            row.Children.Add(BuildCell(request.StatusLabel, 1, "TableCellCenter", GetRequestStatusBrush(request.Status)));
-            row.Children.Add(BuildCell(request.RequestDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture), 2, "TableCellCenter"));
-            row.Children.Add(BuildCell(BuildRequestedValueSummary(request), 3, "TableCellCenter"));
-            row.Children.Add(BuildCell(request.ResponseRecordedAt?.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) ?? "---", 4, "TableCellCenter"));
-            row.Children.Add(BuildCell(BuildDocumentState(request), 5, "TableCellCenter"));
-            return row;
-        }
-
-        private void UpdateDetailPanel()
-        {
-            if (_tabs.SelectedIndex == 1)
-            {
-                UpdateRequestDetails();
-            }
-            else
-            {
-                UpdateVersionDetails();
-            }
-
-            UpdateHistoryActionsAvailability();
-        }
-
-        private void UpdateVersionDetails()
-        {
-            Guarantee? selected = SelectedVersion;
-            if (selected == null)
-            {
-                ApplyDetailState(
-                    "لا توجد إصدارات محفوظة",
-                    "سيظهر هنا سجل السلسلة عند توفر إصدارات محفوظة.",
-                    "لا يوجد سجل",
-                    Tone.Info,
-                    _row.Bank,
-                    string.Empty,
-                    "---",
-                    "لا توجد قيمة",
-                    ("الإصدار", "---"),
-                    ("الحالة التشغيلية", "---"),
-                    ("المرجع", "---"),
-                    ("تاريخ الإنشاء", "---"),
-                    ("تاريخ الانتهاء", "---"),
-                    ("المرفقات", "---"),
-                    "هذا الضمان لا يحتوي على سجل محفوظ حتى الآن.");
-                _openAttachmentsButton.IsEnabled = false;
-                _openLetterButton.IsEnabled = false;
-                _openResponseButton.IsEnabled = false;
-                ApplyNextStepState(
-                    "لا توجد خطوة تالية متاحة من السجل الآن.",
-                    "سيظهر الفعل الأقرب هنا عند توفر إصدار أو طلب يمكن مواصلة العمل منه.",
-                    string.Empty,
-                    null,
-                    false,
-                    Tone.Info);
-                return;
-            }
-
-            string beneficiary = string.IsNullOrWhiteSpace(selected.Beneficiary) ? selected.Supplier : selected.Beneficiary;
-            Tone tone = selected.IsCurrent ? Tone.Success : Tone.Info;
-            string reference = selected.HasReference
-                ? $"{selected.ReferenceTypeLabel}: {selected.ReferenceNumber}"
-                : "بدون مرجع";
-
-            ApplyDetailState(
-                $"الإصدار {selected.VersionLabel}",
-                $"{selected.GuaranteeType} | {beneficiary}",
-                selected.IsCurrent ? "الحالي" : "محفوظ",
-                tone,
-                selected.Bank,
-                beneficiary,
-                $"{selected.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال",
-                "القيمة المسجلة لهذا الإصدار",
-                ("الإصدار", selected.VersionLabel),
-                ("الحالة التشغيلية", selected.LifecycleStatusLabel),
-                ("المرجع", reference),
-                ("تاريخ الإنشاء", selected.CreatedAt.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture)),
-                ("تاريخ الانتهاء", selected.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture)),
-                ("المرفقات", selected.AttachmentCount.ToString("N0", CultureInfo.InvariantCulture)),
-                string.IsNullOrWhiteSpace(selected.Notes) ? "لا توجد ملاحظات محفوظة لهذا الإصدار." : selected.Notes);
-
-            _openAttachmentsButton.IsEnabled = selected.AttachmentCount > 0;
-            _openLetterButton.IsEnabled = false;
-            _openResponseButton.IsEnabled = false;
-
-            if (selected.AttachmentCount > 0)
-            {
-                ApplyNextStepState(
-                    "الخطوة الأقرب الآن هي مراجعة مرفقات هذا الإصدار.",
-                    "سيفتح لك هذا مستندات النسخة المحددة مباشرة من نفس الحوار.",
-                    "فتح مرفقات الإصدار",
-                    OpenSelectedAttachments,
-                    true,
-                    Tone.Info);
-            }
-            else
-            {
-                ApplyNextStepState(
-                    "هذا الإصدار لا يحمل مرفقات مرتبطة به.",
-                    "إذا كنت تشارك المراجعة أو توثقها، فالتصدير هو الخطوة التالية الأقرب من هنا.",
-                    "تصدير السجل",
-                    ExportHistory,
-                    _exportHistoryButton.IsEnabled,
-                    Tone.Info);
-            }
-        }
-
-        private void UpdateRequestDetails()
-        {
-            WorkflowRequest? selected = SelectedRequest;
-            if (selected == null)
-            {
-                ApplyDetailState(
-                    "لا توجد طلبات مرتبطة",
-                    "سيظهر هنا تسلسل الطلبات المرتبطة بهذه السلسلة.",
-                    "بدون طلبات",
-                    Tone.Info,
-                    _row.Bank,
-                    _row.Beneficiary,
-                    "---",
-                    "لا توجد قيمة مطلوبة",
-                    ("نوع الطلب", "---"),
-                    ("الحالة", "---"),
-                    ("الطلب", "---"),
-                    ("الرد", "---"),
-                    ("الإصدار الأساس", "---"),
-                    ("الإصدار الناتج", "---"),
-                    "لا توجد طلبات مسجلة لهذه السلسلة.");
-                _openAttachmentsButton.IsEnabled = false;
-                _openLetterButton.IsEnabled = false;
-                _openResponseButton.IsEnabled = false;
-                ApplyNextStepState(
-                    "لا توجد خطوة تالية متاحة من تبويب الطلبات الآن.",
-                    "عند تحديد طلب ستظهر هنا أقرب متابعة عملية أو انتقال للسجل المرتبط به.",
-                    string.Empty,
-                    null,
-                    false,
-                    Tone.Info);
-                return;
-            }
-
-            Tone tone = selected.Status switch
-            {
-                RequestStatus.Executed => Tone.Success,
-                RequestStatus.Pending => Tone.Warning,
-                RequestStatus.Rejected => Tone.Danger,
-                RequestStatus.Cancelled => Tone.Info,
-                RequestStatus.Superseded => Tone.Info,
-                _ => Tone.Info
-            };
-
-            string headline = selected.Type switch
-            {
-                RequestType.Reduction => $"{(selected.RequestedAmount ?? 0m).ToString("N0", CultureInfo.InvariantCulture)} ريال",
-                RequestType.Extension => selected.RequestedExpiryDate?.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) ?? "---",
-                RequestType.Replacement => string.IsNullOrWhiteSpace(selected.ReplacementGuaranteeNo) ? "استبدال" : selected.ReplacementGuaranteeNo,
-                _ => selected.RequestedValueLabel
-            };
-
-            ApplyDetailState(
-                selected.TypeLabel,
-                $"تسلسل #{selected.SequenceNumber.ToString("N0", CultureInfo.InvariantCulture)} | {_row.Beneficiary}",
-                selected.StatusLabel,
-                tone,
-                _row.Bank,
-                _row.Beneficiary,
-                headline,
-                $"{GetRequestedFieldCaption(selected)}",
-                ("نوع الطلب", selected.TypeLabel),
-                ("الحالة", selected.StatusLabel),
-                ("تاريخ الطلب", selected.RequestDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture)),
-                ("تاريخ الرد", selected.ResponseRecordedAt?.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) ?? "---"),
-                ("الإصدار الأساس", ResolveVersionLabel(selected.BaseVersionId)),
-                ("الإصدار الناتج", selected.ResultVersionId.HasValue ? ResolveVersionLabel(selected.ResultVersionId.Value) : "---"),
-                !string.IsNullOrWhiteSpace(selected.ResponseNotes)
-                    ? selected.ResponseNotes
-                    : !string.IsNullOrWhiteSpace(selected.Notes)
-                        ? selected.Notes
-                        : "لا توجد ملاحظات إضافية لهذا الطلب.");
-
-            _openAttachmentsButton.IsEnabled = false;
-            _openLetterButton.IsEnabled = selected.HasLetter;
-            _openResponseButton.IsEnabled = selected.HasResponseDocument;
-
-            if (selected.HasResponseDocument)
-            {
-                ApplyNextStepState(
-                    "الخطوة الأقرب الآن هي فتح رد البنك لهذا الطلب.",
-                    "هذا يعرض النتيجة النهائية والمستند المرتبط بها قبل الانتقال لأي متابعة أخرى.",
-                    "فتح رد البنك",
-                    OpenSelectedResponse,
-                    true,
-                    Tone.Success);
-                return;
-            }
-
-            if (selected.HasLetter)
-            {
-                ApplyNextStepState(
-                    "الخطوة الأقرب الآن هي فتح خطاب الطلب.",
-                    "هذا يفتح الطلب الأصلي نفسه، وهو أفضل نقطة مراجعة قبل الرد أو التنفيذ.",
-                    "فتح خطاب الطلب",
-                    OpenSelectedLetter,
-                    true,
-                    Tone.Info);
-                return;
-            }
-
-            if (selected.ResultVersionId is int resultVersionId && TryFocusVersionAction(resultVersionId, "الإصدار الناتج", out Action? openResultVersionAction))
-            {
-                ApplyNextStepState(
-                    "لا يوجد مستند مباشر لهذا الطلب، لكن له إصدارًا ناتجًا يمكن مراجعته الآن.",
-                    "سينتقل بك الحوار إلى تبويب الإصدارات ويحدد النسخة الناتجة مباشرة.",
-                    "عرض الإصدار الناتج",
-                    openResultVersionAction,
-                    true,
-                    Tone.Success);
-                return;
-            }
-
-            if (TryFocusVersionAction(selected.BaseVersionId, "الإصدار الأساس", out Action? openBaseVersionAction))
-            {
-                ApplyNextStepState(
-                    "لا توجد مستندات مباشرة لهذا الطلب، وأقرب متابعة الآن هي مراجعة الإصدار الأساس.",
-                    "سينقلك هذا إلى النسخة التي بُني عليها الطلب لفهم السياق قبل أي متابعة.",
-                    "عرض الإصدار الأساس",
-                    openBaseVersionAction,
-                    true,
-                    Tone.Info);
-                return;
-            }
-
-            ApplySelectedRequestFileNextStep(selected, tone);
-        }
-
-        private void ApplySelectedRequestFileNextStep(WorkflowRequest selected, Tone tone)
-        {
-            ApplyNextStepState(
-                "لا توجد وثائق مباشرة لهذا الطلب من داخل السجل، وأقرب متابعة هي فتحه داخل شاشة الطلبات.",
-                "سيعود بك هذا إلى الطلب المحدد ضمن شاشة الطلبات حتى تكمل القرار من البيت الرسمي للعمل.",
-                "فتح الطلب في الطلبات",
-                OpenGuaranteeContext,
-                CanOpenGuaranteeContext(),
-                tone);
-        }
-
-        private void ApplyDetailState(
-            string title,
-            string subtitle,
-            string status,
-            Tone tone,
-            string bank,
-            string bankCaption,
-            string headline,
-            string caption,
-            (string Label, string Value) line1,
-            (string Label, string Value) line2,
-            (string Label, string Value) line3,
-            (string Label, string Value) line4,
-            (string Label, string Value) line5,
-            (string Label, string Value) line6,
-            string note)
-        {
-            _detailTitle.Text = title;
-            _detailSubtitle.Text = subtitle;
-            _detailStatusText.Text = status;
-            _detailStatusText.Foreground = TonePalette.Foreground(tone);
-            _detailStatusBorder.Background = TonePalette.Background(tone);
-            _detailStatusBorder.BorderBrush = TonePalette.Border(tone);
-            _detailBankLogo.Source = GuaranteeRow.ResolveBankLogo(bank);
-            _detailBankText.Text = string.IsNullOrWhiteSpace(bankCaption) ? bank : $"{bank} | {bankCaption}";
-            _detailHeadline.Text = headline;
-            _detailCaption.Text = caption;
-            SetInfoLineText(_detailLabel1, _detailLine1, line1);
-            SetInfoLineText(_detailLabel2, _detailLine2, line2);
-            SetInfoLineText(_detailLabel3, _detailLine3, line3);
-            SetInfoLineText(_detailLabel4, _detailLine4, line4);
-            SetInfoLineText(_detailLabel5, _detailLine5, line5);
-            SetInfoLineText(_detailLabel6, _detailLine6, line6);
-            _detailNote.Text = note;
-        }
-
-        private static Grid BuildInfoLine(TextBlock labelBlock, TextBlock valueBlock)
-        {
-            labelBlock.VerticalAlignment = VerticalAlignment.Center;
-            valueBlock.VerticalAlignment = VerticalAlignment.Center;
-
-            var grid = new Grid { Margin = new Thickness(0, 0, 0, 12) };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.Children.Add(labelBlock);
-            Grid.SetColumn(valueBlock, 1);
-            grid.Children.Add(valueBlock);
-            return grid;
-        }
-
-        private static void SetInfoLineText(TextBlock labelBlock, TextBlock valueBlock, (string Label, string Value) line)
-        {
-            labelBlock.Text = line.Label;
-            valueBlock.Text = line.Value;
-        }
-
-        private string ResolveVersionLabel(int versionId)
-        {
-            Guarantee? version = _history.FirstOrDefault(item => item.Id == versionId);
-            return version?.VersionLabel ?? $"#{versionId.ToString("N0", CultureInfo.InvariantCulture)}";
-        }
-
-        private bool TryFocusVersionAction(int versionId, string label, out Action? action)
-        {
-            Guarantee? version = _history.FirstOrDefault(item => item.Id == versionId);
-            if (version == null)
-            {
-                action = null;
-                return false;
-            }
-
-            action = () =>
-            {
-                _tabs.SelectedIndex = 0;
-                FrameworkElement? row = _versionsList.Items
-                    .OfType<FrameworkElement>()
-                    .FirstOrDefault(item => item.Tag is Guarantee guarantee && guarantee.Id == versionId);
-
-                if (row != null)
-                {
-                    _versionsList.SelectedItem = row;
-                    _versionsList.ScrollIntoView(row);
-                    UpdateDetailPanel();
-                }
-
-                App.CurrentApp.GetRequiredService<IShellStatusService>().ShowInfo(
-                    $"تم فتح {label} {version.VersionLabel}.",
-                    "سجل الضمان • الانتقال داخل السجل");
-            };
-            return true;
-        }
-
-        private Border BuildInfoBlock(string title, TextBlock body)
-        {
-            var border = new Border
-            {
-                Background = WorkspaceSurfaceChrome.BrushFrom("#F8FAFC"),
-                BorderBrush = WorkspaceSurfaceChrome.BrushFrom("#E3E9F2"),
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(10, 8, 10, 8),
-                Margin = new Thickness(0, 8, 0, 0)
-            };
-
-            var stack = new StackPanel();
-            stack.Children.Add(new TextBlock
-            {
-                Text = title,
-                FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#94A3B8"),
-                Margin = new Thickness(0, 0, 0, 6)
-            });
-            stack.Children.Add(body);
-            border.Child = stack;
-            return border;
-        }
-
-        private void ApplyNextStepState(
-            string summary,
-            string hint,
-            string actionText,
-            Action? action,
-            bool isEnabled,
-            Tone tone)
-        {
-            _nextStepSummary.Text = summary;
-            _nextStepHint.Text = hint;
-            _nextStepSummary.Foreground = TonePalette.Foreground(tone);
-            _nextStepHint.Foreground = WorkspaceSurfaceChrome.BrushFrom("#475569");
-            _nextStepCard.Background = TonePalette.Background(tone);
-            _nextStepCard.BorderBrush = TonePalette.Border(tone);
-
-            _nextStepAction = action;
-            _nextStepActionButton.Content = string.IsNullOrWhiteSpace(actionText) ? "لا يوجد إجراء مباشر" : actionText;
-            _nextStepActionButton.IsEnabled = isEnabled && action != null;
-            _nextStepActionButton.Visibility = string.IsNullOrWhiteSpace(actionText) && action == null
-                ? Visibility.Collapsed
-                : Visibility.Visible;
-            _nextStepActionButton.ToolTip = string.IsNullOrWhiteSpace(hint) ? null : hint;
-            ToolTipService.SetShowOnDisabled(_nextStepActionButton, true);
-            _nextStepActionButton.Background = _nextStepActionButton.IsEnabled
-                ? WorkspaceSurfaceChrome.BrushFrom("#2563EB")
-                : WorkspaceSurfaceChrome.BrushFrom("#E2E8F0");
-            _nextStepActionButton.BorderBrush = _nextStepActionButton.IsEnabled
-                ? WorkspaceSurfaceChrome.BrushFrom("#2563EB")
-                : WorkspaceSurfaceChrome.BrushFrom("#CBD5E1");
-            _nextStepActionButton.Foreground = _nextStepActionButton.IsEnabled
-                ? Brushes.White
-                : WorkspaceSurfaceChrome.BrushFrom("#64748B");
-        }
-
-        private Guarantee? SelectedVersion => (_versionsList.SelectedItem as FrameworkElement)?.Tag as Guarantee;
-
-        private WorkflowRequest? SelectedRequest => (_requestsList.SelectedItem as FrameworkElement)?.Tag as WorkflowRequest;
-
-        private Guarantee ResolveSummaryGuarantee()
-        {
-            Guarantee? current = _history.FirstOrDefault(item => item.IsCurrent) ?? _history.FirstOrDefault();
-            if (current != null)
-            {
-                return current;
-            }
-
-            return new Guarantee
-            {
-                Id = _row.Id,
-                RootId = _row.RootId,
-                GuaranteeNo = _row.GuaranteeNo,
-                Beneficiary = _row.Beneficiary,
-                Supplier = _row.Beneficiary,
-                Bank = _row.Bank,
-                Amount = _row.AmountValue,
-                ExpiryDate = _row.ExpiryDateValue,
-                CreatedAt = DateTime.Today
-            };
-        }
-
-        private void UpdateHistoryActionsAvailability()
-        {
-            bool hasHistoryRecords = _history.Count > 0 || _requests.Count > 0;
-            bool canOpenGuaranteeContext = CanOpenGuaranteeContext();
-            GuaranteeFileFocusArea handoffArea = ResolveGuaranteeHandoffArea(out int? requestIdToFocus);
-            _openGuaranteeFileButton.Content = BuildGuaranteeContextButtonText(handoffArea, requestIdToFocus);
-            _openGuaranteeFileButton.IsEnabled = canOpenGuaranteeContext;
-            _openGuaranteeFileButton.ToolTip = canOpenGuaranteeContext
-                ? $"يفتح {BuildGuaranteeHandoffSectionText(handoffArea, requestIdToFocus)} مع سياق السجل الحالي."
-                : "لا يمكن الوصول إلى الضمان من هذه النافذة حاليًا.";
-            ToolTipService.SetShowOnDisabled(_openGuaranteeFileButton, true);
-            _exportHistoryButton.IsEnabled = hasHistoryRecords;
-            _printHistoryButton.IsEnabled = hasHistoryRecords;
-        }
-
-        private bool CanOpenGuaranteeContext()
-        {
-            return Application.Current.MainWindow?.DataContext is ShellViewModel;
-        }
-
-        private GuaranteeFileFocusArea ResolveGuaranteeHandoffArea(out int? requestIdToFocus)
-        {
-            requestIdToFocus = null;
-
-            if (_tabs.SelectedIndex == 1 && SelectedRequest is WorkflowRequest selectedRequest)
-            {
-                requestIdToFocus = selectedRequest.Id;
-                return GuaranteeFileFocusArea.Requests;
-            }
-
-            if (_tabs.SelectedIndex == 0 && SelectedVersion is { AttachmentCount: > 0 })
-            {
-                return GuaranteeFileFocusArea.Attachments;
-            }
-
-            GuaranteeFileFocusArea suggestedArea = _row.SuggestedFocusArea == GuaranteeFileFocusArea.None
-                ? GuaranteeFileFocusArea.ExecutiveSummary
-                : _row.SuggestedFocusArea;
-            if (suggestedArea == GuaranteeFileFocusArea.Requests)
-            {
-                requestIdToFocus = ResolveContextRequestId();
-            }
-
-            return suggestedArea;
-        }
-
-        private int? ResolveContextRequestId()
-        {
-            return SelectedRequest?.Id
-                   ?? _requests
-                       .OrderBy(request => request.Status == RequestStatus.Pending ? 0 : 1)
-                       .ThenByDescending(request => request.RequestDate)
-                       .ThenByDescending(request => request.SequenceNumber)
-                       .FirstOrDefault()
-                       ?.Id;
-        }
-
-        private static string BuildGuaranteeContextButtonText(GuaranteeFileFocusArea focusArea, int? requestIdToFocus)
-        {
-            return focusArea switch
-            {
-                GuaranteeFileFocusArea.Requests => requestIdToFocus.HasValue ? "فتح الطلب" : "طلبات الضمان",
-                GuaranteeFileFocusArea.Outputs => "طلبات الضمان",
-                GuaranteeFileFocusArea.Attachments => "المرفقات",
-                _ => "الضمانات"
-            };
-        }
-
-        private static string BuildGuaranteeHandoffSectionText(GuaranteeFileFocusArea focusArea, int? requestIdToFocus)
-        {
-            return focusArea switch
-            {
-                GuaranteeFileFocusArea.Requests when requestIdToFocus.HasValue => "الطلب المحدد داخل شاشة الطلبات",
-                GuaranteeFileFocusArea.Requests => "طلبات الضمان",
-                GuaranteeFileFocusArea.Outputs => "طلبات الضمان ومخرجاته",
-                GuaranteeFileFocusArea.Attachments => "مرفقات الضمان في اللوحة الجانبية",
-                GuaranteeFileFocusArea.Actions => "إجراءات الضمان السريعة في المحفظة",
-                _ => "الضمان المحدد في المحفظة"
-            };
-        }
-
-        private void OpenGuaranteeContext()
-        {
-            if (Application.Current.MainWindow?.DataContext is not ShellViewModel shell)
-            {
-                MessageBox.Show("تعذر الوصول إلى الضمان من هذه النافذة حاليًا.", "سجل الضمان", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            GuaranteeFileFocusArea focusArea = ResolveGuaranteeHandoffArea(out int? requestIdToFocus);
-            Close();
-            shell.RouteGuaranteeContext(_row, focusArea, requestIdToFocus, "history");
-        }
-
-        private void OpenSelectedAttachments()
-        {
-            if (SelectedVersion is { AttachmentCount: > 0 } version)
-            {
-                AttachmentPickerDialog.ShowFor(
-                    version.Attachments,
-                    $"history-attachments:{version.RootId}:{version.VersionNumber}",
-                    $"مرفقات {version.GuaranteeNo} - {version.VersionLabel}");
-            }
-        }
-
-        private void ExportHistory()
-        {
-            bool exported = _historyDocuments.ExportHistoryToExcel(ResolveSummaryGuarantee(), _history, _requests);
-            if (!exported)
-            {
-                return;
-            }
-
-            App.CurrentApp.GetRequiredService<IUiDiagnosticsService>().RecordEvent(
-                "guarantee.history",
-                "export",
-                new { _row.GuaranteeNo, _row.RootId, OutputPath = _historyDocuments.LastOutputPath ?? string.Empty });
-
-            string savedFile = string.IsNullOrWhiteSpace(_historyDocuments.LastOutputPath)
-                ? "تم حفظ الملف بنجاح"
-                : Path.GetFileName(_historyDocuments.LastOutputPath);
-            App.CurrentApp.GetRequiredService<IShellStatusService>().ShowSuccess(
-                $"تم تصدير سجل الضمان رقم {_row.GuaranteeNo}.",
-                $"سجل الضمان • {savedFile}");
-        }
-
-        private void PrintHistory()
-        {
-            bool printed = _historyDocuments.PrintHistory(ResolveSummaryGuarantee(), _history, _requests);
-            if (!printed)
-            {
-                return;
-            }
-
-            App.CurrentApp.GetRequiredService<IUiDiagnosticsService>().RecordEvent(
-                "guarantee.history",
-                "print",
-                new { _row.GuaranteeNo, _row.RootId });
-
-            App.CurrentApp.GetRequiredService<IShellStatusService>().ShowSuccess(
-                $"تم إرسال سجل الضمان رقم {_row.GuaranteeNo} إلى الطباعة.",
-                "سجل الضمان • الطباعة");
-        }
-
-        private void OpenSelectedLetter()
-        {
-            if (SelectedRequest is { HasLetter: true } request)
-            {
-                OpenFile(request.LetterFilePath, "خطاب الطلب");
-            }
-        }
-
-        private void OpenSelectedResponse()
-        {
-            if (SelectedRequest is { HasResponseDocument: true } request)
-            {
-                OpenFile(request.ResponseFilePath, "رد البنك");
-            }
-        }
-
-        private static void OpenFile(string path, string label)
-        {
-            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
-            {
-                MessageBox.Show($"تعذر فتح {label}. الملف غير موجود.", label, MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
-        }
-
-        private static Brush GetRequestStatusBrush(RequestStatus status) => status switch
-        {
-            RequestStatus.Executed => WorkspaceSurfaceChrome.BrushFrom("#16A34A"),
-            RequestStatus.Pending => WorkspaceSurfaceChrome.BrushFrom("#E09408"),
-            RequestStatus.Rejected => WorkspaceSurfaceChrome.BrushFrom("#EF4444"),
-            RequestStatus.Cancelled => WorkspaceSurfaceChrome.BrushFrom("#2563EB"),
-            RequestStatus.Superseded => WorkspaceSurfaceChrome.BrushFrom("#64748B"),
-            _ => WorkspaceSurfaceChrome.BrushFrom("#64748B")
-        };
-
-        private static string BuildRequestedValueSummary(WorkflowRequest request) => request.Type switch
-        {
-            RequestType.Reduction => request.RequestedAmount.HasValue
-                ? $"{request.RequestedAmount.Value.ToString("N0", CultureInfo.InvariantCulture)} ريال"
-                : "---",
-            RequestType.Extension => request.RequestedExpiryDate?.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) ?? "---",
-            _ => request.RequestedValueLabel
-        };
-
-        private static string BuildDocumentState(WorkflowRequest request)
-        {
-            if (request.HasLetter && request.HasResponseDocument)
-            {
-                return "خطاب + رد";
-            }
-
-            if (request.HasLetter)
-            {
-                return "خطاب";
-            }
-
-            if (request.HasResponseDocument)
-            {
-                return "رد";
-            }
-
-            return "---";
-        }
-
-        private static string GetRequestedFieldCaption(WorkflowRequest request) => request.Type switch
-        {
-            RequestType.Reduction => "القيمة المطلوبة",
-            RequestType.Extension => "تاريخ الانتهاء المطلوب",
-            RequestType.Replacement => "رقم الضمان البديل",
-            _ => "القيمة المطلوبة للطلب"
-        };
-
-        private static TextBlock BuildCell(string text, int column, string styleKey, Brush? foreground = null)
-        {
-            var cell = new TextBlock
-            {
-                Text = text,
-                Style = WorkspaceSurfaceChrome.Style(styleKey)
-            };
-
-            if (foreground != null)
-            {
-                cell.Foreground = foreground;
-            }
-
-            Grid.SetColumn(cell, column);
-            return cell;
-        }
-    }
-
     public sealed class OperationalInquiryDialog : Window
     {
         private readonly OperationalInquiryResult _result;
@@ -3440,6 +2331,7 @@ namespace GuaranteeManager
             metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("خطاب الطلب", _result.CanOpenRequestLetter ? "موجود" : "غير متاح", "#E09408"));
             metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("رد البنك", _result.CanOpenResponseDocument ? "موجود" : "غير متاح", "#16A34A"));
             metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("الأدلة", evidenceCount.ToString("N0", CultureInfo.InvariantCulture), guarantee != null ? "#0F172A" : "#64748B"));
+            WorkspaceSurfaceChrome.ApplyMetricCardSpacing(metrics);
             return metrics;
         }
 
@@ -3605,9 +2497,8 @@ namespace GuaranteeManager
             string relatedRequest = _result.RelatedRequest == null
                 ? "---"
                 : $"{_result.RelatedRequest.TypeLabel} #{_result.RelatedRequest.SequenceNumber.ToString("N0", CultureInfo.InvariantCulture)}";
-            string resultVersion = _result.ResultGuarantee?.VersionLabel
-                ?? _result.CurrentGuarantee?.VersionLabel
-                ?? "---";
+            string resultContextLabel = BuildResultContextLabel(_result);
+            string resultContextValue = BuildResultContextValue(_result);
             TextBlock detailGuaranteeNo = WorkspaceSurfaceChrome.Text(17, FontWeights.Bold, "#0F172A");
             detailGuaranteeNo.Text = guarantee?.GuaranteeNo ?? _result.Title;
             detailGuaranteeNo.Margin = new Thickness(0, 8, 0, 0);
@@ -3688,13 +2579,60 @@ namespace GuaranteeManager
                     BuildInfoLine("الموضوع", _result.Subject),
                     BuildInfoLine("رقم الضمان", guarantee?.GuaranteeNo ?? "---"),
                     BuildInfoLine("الطلب المرتبط", relatedRequest),
-                    BuildInfoLine("الإصدار الناتج", resultVersion),
+                    BuildInfoLine(resultContextLabel, resultContextValue),
                     BuildInfoLine("آخر حدث", _result.EventDateLabel),
                     BuildInfoBlock("تفسير إضافي", _result.Explanation)
                 }
             };
 
             return WorkspaceSurfaceChrome.BuildReferenceDetailPanel(content);
+        }
+
+        private static string BuildResultContextLabel(OperationalInquiryResult result)
+        {
+            WorkflowRequest? request = result.RelatedRequest;
+            if (request == null || request.Status != RequestStatus.Executed)
+            {
+                return "الإصدار الحالي";
+            }
+
+            return request.Type switch
+            {
+                RequestType.Extension or RequestType.Reduction => "الإصدار الناتج",
+                RequestType.Replacement => "الضمان البديل",
+                RequestType.Release or RequestType.Liquidation => "أثر التنفيذ",
+                RequestType.Annulment => "أثر مسار قديم",
+                RequestType.Verification when request.ResultVersionId.HasValue => "المستند المعتمد",
+                _ => "أثر الطلب"
+            };
+        }
+
+        private static string BuildResultContextValue(OperationalInquiryResult result)
+        {
+            WorkflowRequest? request = result.RelatedRequest;
+            if (request == null || request.Status != RequestStatus.Executed)
+            {
+                return result.CurrentGuarantee?.VersionLabel ?? "---";
+            }
+
+            return request.Type switch
+            {
+                RequestType.Replacement =>
+                    result.ResultGuarantee?.GuaranteeNo
+                    ?? (string.IsNullOrWhiteSpace(request.ReplacementGuaranteeNo) ? "---" : request.ReplacementGuaranteeNo),
+                RequestType.Release =>
+                    result.CurrentGuarantee?.LifecycleStatusLabel ?? "مفرج",
+                RequestType.Liquidation =>
+                    result.CurrentGuarantee?.LifecycleStatusLabel ?? "مسيّل",
+                RequestType.Annulment =>
+                    result.CurrentGuarantee?.LifecycleStatusLabel ?? "مسار قديم ملغى",
+                RequestType.Verification when request.ResultVersionId.HasValue =>
+                    result.ResultGuarantee?.VersionLabel ?? "مرفق رسمي",
+                _ =>
+                    result.ResultGuarantee?.VersionLabel
+                    ?? result.CurrentGuarantee?.VersionLabel
+                    ?? "---"
+            };
         }
 
         private UIElement BuildNextStepCard()
@@ -3758,16 +2696,6 @@ namespace GuaranteeManager
             ToolTipService.SetShowOnDisabled(openGuaranteeFileButton, true);
             openGuaranteeFileButton.Click += (_, _) => OpenGuaranteeContext();
 
-            Button openHistoryButton = WorkspaceSurfaceChrome.ActionButton("فتح السجل", "White", "#D8E1EE", "#1F2937");
-            openHistoryButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
-            UiInstrumentation.Identify(openHistoryButton, "Dialog.OperationalInquiry.OpenHistoryButton", "فتح سجل الضمان");
-            openHistoryButton.IsEnabled = _result.CanOpenHistory;
-            openHistoryButton.ToolTip = _result.CanOpenHistory
-                ? "يفتح سجل الضمان المرتبط بهذا الجواب."
-                : "لا يوجد سجل ضمان مرتبط بهذا الجواب التشغيلي.";
-            ToolTipService.SetShowOnDisabled(openHistoryButton, true);
-            openHistoryButton.Click += (_, _) => OpenHistory();
-
             Button attachmentsButton = WorkspaceSurfaceChrome.ActionButton("مرفقات الإصدار", "White", "#D8E1EE", "#1F2937");
             attachmentsButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             UiInstrumentation.Identify(attachmentsButton, "Dialog.OperationalInquiry.OpenAttachmentsButton", "فتح مرفقات الإصدار");
@@ -3815,14 +2743,13 @@ namespace GuaranteeManager
 
             var actions = new System.Windows.Controls.Primitives.UniformGrid
             {
-                Columns = 7,
+                Columns = 6,
                 FlowDirection = FlowDirection.LeftToRight
             };
 
             foreach (Button button in new[]
                      {
                          openGuaranteeFileButton,
-                         openHistoryButton,
                          attachmentsButton,
                          openLetterButton,
                          openResponseButton,
@@ -4115,28 +3042,6 @@ namespace GuaranteeManager
             shell.RouteGuaranteeContext(row, focusArea, requestIdToFocus, "inquiry");
         }
 
-        private void OpenHistory()
-        {
-            Guarantee? guarantee = ResolveFocusGuarantee();
-            if (guarantee == null)
-            {
-                return;
-            }
-
-            int rootId = guarantee.RootId ?? guarantee.Id;
-            Guarantee currentGuarantee = _database.GetCurrentGuaranteeByRootId(rootId) ?? guarantee;
-            List<Guarantee> history = _database.GetGuaranteeHistory(currentGuarantee.Id);
-            List<WorkflowRequest> requests = _database.GetWorkflowRequestsByRootId(rootId);
-            GuaranteeRow row = GuaranteeRow.FromGuarantee(currentGuarantee, requests);
-
-            HistoryDialog.ShowFor(
-                row,
-                history,
-                requests,
-                _result.RelatedRequest?.Id,
-                preferRequestsTab: _result.RelatedRequest != null);
-        }
-
         private void OpenAttachments()
         {
             Guarantee? guarantee = ResolveFocusGuarantee();
@@ -4237,19 +3142,9 @@ namespace GuaranteeManager
             {
                 ApplyNextStepState(
                     "إذا احتجت تدقيقًا إضافيًا، فابدأ بمرفقات الإصدار الحالي لهذا الضمان.",
-                    "المرفقات تعطيك الدليل العملي الأقرب قبل الرجوع إلى السجل الكامل أو تصدير التقرير.",
+                    "المرفقات تعطيك الدليل العملي الأقرب قبل تصدير التقرير أو الانتقال إلى مساحة العمل المناسبة.",
                     "فتح مرفقات الإصدار",
                     OpenAttachments);
-                return;
-            }
-
-            if (_result.CanOpenHistory)
-            {
-                ApplyNextStepState(
-                    "إذا أردت فهم التسلسل الكامل قبل القرار، فافتح سجل الضمان المرتبط بهذا الجواب.",
-                    "سيفتح السجل كل الإصدارات والطلبات المرتبطة حتى تنتقل من الجواب المختصر إلى السياق الكامل بسرعة.",
-                    "فتح السجل",
-                    OpenHistory);
                 return;
             }
 
@@ -4302,7 +3197,7 @@ namespace GuaranteeManager
                 _list.Items.Add(AttachmentItem.FromAttachment(attachment));
             }
 
-            _list.DisplayMemberPath = nameof(AttachmentItem.Name);
+            _list.DisplayMemberPath = nameof(AttachmentItem.Display);
             _list.MouseDoubleClick += (_, _) => OpenSelected();
 
             var openButton = UiInstrumentation.Identify(

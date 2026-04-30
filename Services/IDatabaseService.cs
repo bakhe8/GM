@@ -7,7 +7,9 @@ namespace GuaranteeManager.Services
     public interface IDatabaseService
     {
         void SaveGuarantee(Guarantee g, List<string> tempFilePaths);
+        void SaveGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> attachments);
         int UpdateGuarantee(Guarantee g, List<string> newTempFiles, List<AttachmentRecord> removedAttachments);
+        int UpdateGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> newAttachments, List<AttachmentRecord> removedAttachments);
         List<Guarantee> QueryGuarantees(GuaranteeQueryOptions options);
         int CountGuarantees(GuaranteeQueryOptions? options = null);
         int CountAttachments();
@@ -66,12 +68,6 @@ namespace GuaranteeManager.Services
             string responseSavedFileName,
             string? responseAttachmentSourcePath = null,
             bool promoteResponseDocumentToOfficialAttachment = false);
-        int ExecuteAnnulmentWorkflowRequest(
-            int requestId,
-            string responseNotes,
-            string responseOriginalFileName,
-            string responseSavedFileName,
-            string? responseAttachmentSourcePath = null);
         int ExecuteReplacementWorkflowRequest(
             int requestId,
             string replacementGuaranteeNo,
@@ -88,11 +84,14 @@ namespace GuaranteeManager.Services
             string responseSavedFileName,
             string? responseAttachmentSourcePath = null);
         void DeleteAttachment(AttachmentRecord att);
+        void AddBankReference(string bankName);
+        List<string> GetBankReferences();
         List<string> GetUniqueValues(string columnName);
         bool IsGuaranteeNoUnique(string guaranteeNo);
         Guarantee? GetGuaranteeById(int guaranteeId);
         Guarantee? GetCurrentGuaranteeByRootId(int rootId);
         Guarantee? GetCurrentGuaranteeByNo(string guaranteeNo);
         int CreateNewVersion(Guarantee newG, int sourceId, List<string> newTempFiles, List<AttachmentRecord> inheritedAttachments);
+        int CreateNewVersionWithAttachments(Guarantee newG, int sourceId, List<AttachmentInput> newAttachments, List<AttachmentRecord> inheritedAttachments);
     }
 }

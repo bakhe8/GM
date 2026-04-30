@@ -109,40 +109,19 @@ namespace GuaranteeManager.Services
                             stagedResponseAttachment.FileExtension,
                             executedAt,
                             connection,
-                            transaction);
+                            transaction,
+                            AttachmentDocumentType.BankResponse);
                     }
-
-                    int nextVersionNumber = WorkflowExecutionDataAccess.GetNextVersionNumber(
-                        context.Request.RootGuaranteeId,
-                        connection,
-                        transaction);
-                    WorkflowExecutionDataAccess.ClearCurrentGuaranteeFlag(
-                        context.Request.RootGuaranteeId,
-                        connection,
-                        transaction);
 
                     string replacedGuaranteeNote =
                         WorkflowExecutionDataAccess.AppendNote(
                             context.CurrentGuarantee.Notes,
                             $"تم استبداله بالضمان رقم {replacementGuaranteeNo.Trim()} بتاريخ {executedAt:yyyy-MM-dd}.");
-                    int replacedGuaranteeId = WorkflowExecutionDataAccess.InsertGuaranteeVersion(
-                        context.CurrentGuarantee,
-                        context.Request.RootGuaranteeId,
-                        nextVersionNumber,
-                        context.CurrentGuarantee.Amount,
-                        context.CurrentGuarantee.ExpiryDate,
-                        replacedGuaranteeNote,
+                    WorkflowExecutionDataAccess.UpdateGuaranteeLifecycleStatus(
+                        context.CurrentGuarantee.Id,
                         GuaranteeLifecycleStatus.Replaced,
-                        context.CurrentGuarantee.ReplacesRootId,
+                        replacedGuaranteeNote,
                         newGuaranteeId,
-                        executedAt,
-                        connection,
-                        transaction);
-
-                    WorkflowExecutionDataAccess.CopyAttachments(
-                        context.CurrentGuarantee.Attachments,
-                        replacedGuaranteeId,
-                        executedAt,
                         connection,
                         transaction);
 

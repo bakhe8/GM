@@ -107,6 +107,66 @@ namespace GuaranteeManager.Tests
             Assert.DoesNotContain(excel.ExpiredFollowUpGuarantees!, guarantee => guarantee.GuaranteeNo == releasedExpired.GuaranteeNo);
         }
 
+        [Fact]
+        public void Run_PendingExtensionReport_UsesPendingRequestTypeExport()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+
+            Guarantee extensionSeed = _fixture.CreateGuarantee();
+            database.SaveGuarantee(extensionSeed, new List<string>());
+            Guarantee extensionCurrent = database.GetCurrentGuaranteeByNo(extensionSeed.GuaranteeNo)!;
+            WorkflowRequest extension = workflow.CreateExtensionRequest(
+                extensionCurrent.Id,
+                extensionCurrent.ExpiryDate.AddDays(30),
+                "pending extension",
+                "tester");
+
+            Guarantee reductionSeed = _fixture.CreateGuarantee();
+            reductionSeed.Amount = 10_000m;
+            database.SaveGuarantee(reductionSeed, new List<string>());
+            Guarantee reductionCurrent = database.GetCurrentGuaranteeByNo(reductionSeed.GuaranteeNo)!;
+            workflow.CreateReductionRequest(
+                reductionCurrent.Id,
+                5_000m,
+                "pending reduction",
+                "tester");
+
+            var excel = new CaptureExcelService();
+
+            bool exported = WorkspaceReportCatalog.Run("requests.pending.extension", database, excel);
+
+            Assert.True(exported);
+            Assert.Equal(RequestType.Extension, excel.PendingExportType);
+            Assert.Contains(excel.PendingExportRequests!, item => item.Request.Id == extension.Id);
+            Assert.DoesNotContain(excel.PendingExportRequests!, item => item.Request.Type != RequestType.Extension);
+            Assert.DoesNotContain(excel.PendingExportRequests!, item => item.Request.Status != RequestStatus.Pending);
+        }
+
+        [Fact]
+        public void Run_GuaranteeHistoryReport_UsesHistoryDocumentService()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            Guarantee seed = _fixture.CreateGuarantee();
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+
+            var excel = new CaptureExcelService();
+            var historyDocuments = new CaptureHistoryDocumentService();
+
+            bool exported = WorkspaceReportCatalog.Run(
+                "operational.guarantee-history",
+                database,
+                excel,
+                current.GuaranteeNo,
+                historyDocuments);
+
+            Assert.True(exported);
+            Assert.Equal(current.GuaranteeNo, historyDocuments.ExportGuarantee?.GuaranteeNo);
+            Assert.Contains(historyDocuments.ExportHistory!, item => item.Id == current.Id);
+            Assert.Empty(historyDocuments.ExportRequests!);
+        }
+
         private sealed class CaptureExcelService : IExcelService
         {
             public string? LastOutputPath => null;
@@ -116,6 +176,10 @@ namespace GuaranteeManager.Tests
             public IReadOnlyList<Guarantee>? VersionRowsWithoutAttachments { get; private set; }
 
             public IReadOnlyList<Guarantee>? ExpiredFollowUpGuarantees { get; private set; }
+
+            public RequestType? PendingExportType { get; private set; }
+
+            public IReadOnlyList<WorkflowRequestListItem>? PendingExportRequests { get; private set; }
 
             public bool ExportGuarantees(IReadOnlyList<Guarantee> guarantees) => throw new NotSupportedException();
             public bool ExportGuaranteesByBank(string bank, IReadOnlyList<Guarantee> guarantees) => throw new NotSupportedException();
@@ -155,7 +219,14 @@ namespace GuaranteeManager.Tests
             public bool ExportClosedWithoutExecutionRequests(IReadOnlyList<WorkflowRequestListItem> requests) => throw new NotSupportedException();
             public bool ExportSupersededRequests(IReadOnlyList<WorkflowRequestListItem> requests) => throw new NotSupportedException();
             public bool ExportRequestsWithoutResponseDocument(IReadOnlyList<WorkflowRequestListItem> requests) => throw new NotSupportedException();
-            public bool ExportPendingWorkflowRequestsByType(RequestType type, IReadOnlyList<WorkflowRequestListItem> requests) => throw new NotSupportedException();
+            public bool ExportPendingWorkflowRequestsByType(RequestType type, IReadOnlyList<WorkflowRequestListItem> requests)
+            {
+                PendingExportType = type;
+                PendingExportRequests = requests
+                    .Where(item => item.Request.Type == type && item.Request.Status == RequestStatus.Pending)
+                    .ToList();
+                return true;
+            }
             public bool ExportPendingRequestsByBank(string bank, IReadOnlyList<WorkflowRequestListItem> requests) => throw new NotSupportedException();
             public bool ExportWorkflowRequestsByBank(string bank, IReadOnlyList<WorkflowRequestListItem> requests) => throw new NotSupportedException();
             public bool ExportOldestPendingRequests(IReadOnlyList<WorkflowRequestListItem> requests, int topCount = 10) => throw new NotSupportedException();
@@ -164,6 +235,36 @@ namespace GuaranteeManager.Tests
             public bool ExportContractRelatedReleasedInPeriod(IReadOnlyList<WorkflowRequestListItem> requests, DateTime periodStart, DateTime periodEnd) => throw new NotSupportedException();
             public bool ExportEmployeeContractRequestsInPeriod(string employeeName, IReadOnlyList<WorkflowRequestListItem> requests, DateTime periodStart, DateTime periodEnd) => throw new NotSupportedException();
             public bool ExportExpiredPurchaseOrderOnlyWithoutExecutedExtension(IReadOnlyList<Guarantee> guarantees) => throw new NotSupportedException();
+        }
+
+        private sealed class CaptureHistoryDocumentService : IGuaranteeHistoryDocumentService
+        {
+            public string? LastOutputPath { get; private set; } = "history.xlsx";
+
+            public Guarantee? ExportGuarantee { get; private set; }
+
+            public IReadOnlyList<Guarantee>? ExportHistory { get; private set; }
+
+            public IReadOnlyList<WorkflowRequest>? ExportRequests { get; private set; }
+
+            public bool ExportHistoryToExcel(
+                Guarantee guarantee,
+                IReadOnlyList<Guarantee> history,
+                IReadOnlyList<WorkflowRequest> requests)
+            {
+                ExportGuarantee = guarantee;
+                ExportHistory = history.ToList();
+                ExportRequests = requests.ToList();
+                return true;
+            }
+
+            public bool PrintHistory(
+                Guarantee guarantee,
+                IReadOnlyList<Guarantee> history,
+                IReadOnlyList<WorkflowRequest> requests)
+            {
+                throw new NotSupportedException();
+            }
         }
     }
 }
