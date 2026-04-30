@@ -8,8 +8,8 @@
   - أسرع صورة دقيقة لوضع المشروع الحالي.
 - `git_workflow.md`
   - سياسة الفروع، الترقيم، ومعايير الانتقال بين `preview` و`rc` و`release`.
-- `releases/README_v1.1.0-preview.4.md`
-  - وصف النسخة التطويرية الحالية.
+- `releases/README_v1.1.0-rc.1.md`
+  - وصف مرشح الإطلاق الحالي.
 - `Assets/Documentation/Screenshots/README.md`
   - سياسة لقطات القبول ومخرجات الأداة.
 
@@ -30,6 +30,8 @@
   - قواعد workflow ودورة حياة الضمان.
 - `guides/User_Guide_Final.md`
   - دليل المستخدم.
+- `guides/Next_Development_Plan.md`
+  - حدود العمل بعد `rc.1` وما يذهب إلى المرحلة القادمة.
 - `guides/Repository_Stabilization_Checklist_2026-04-30.md`
   - قائمة تثبيت المستودع.
 - `guides/UIAutomation_Supported_API.md`

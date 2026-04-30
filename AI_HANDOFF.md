@@ -7,7 +7,7 @@ This is the short continuation point for a new AI/Codex chat. It intentionally a
 ## Current Branch
 
 - Branch: `feature/v1.1-operational-polish`
-- App target: `v1.1.0-preview.4`
+- App target: `v1.1.0-rc.1`
 - Always begin with `git status --short --branch`.
 
 ## Current Product Shape
@@ -36,9 +36,11 @@ This is the short continuation point for a new AI/Codex chat. It intentionally a
 
 ## Verification Baseline
 
-- Last focused test run: `dotnet test .\GuaranteeManager.Tests\GuaranteeManager.Tests.csproj --no-restore -p:BaseOutputPath=.\artifacts\preview4-version-test\`
+- Last focused test run: `dotnet test .\GuaranteeManager.Tests\GuaranteeManager.Tests.csproj --no-restore -p:BaseOutputPath=.\artifacts\rc1-version-test\`
 - Result: `107/107`.
 - Debug build passes: `dotnet build .\my_work.sln -c Debug --no-restore`.
+- Release package build passes through `.\scripts\publish_release.ps1`, including Release tests `105/105`.
+- Isolated package UAT passed from the `v1.1.0-preview.4` build and is the evidence used to promote this tree to `v1.1.0-rc.1`.
 
 ## Primary References
 
@@ -46,6 +48,7 @@ This is the short continuation point for a new AI/Codex chat. It intentionally a
 - `missing_features_report.md`
 - `Doc/guides/Workflow_Event_Logic_Study.md`
 - `Doc/guides/User_Guide_Final.md`
+- `Doc/guides/Next_Development_Plan.md`
 - `Doc/guides/Repository_Stabilization_Checklist_2026-04-30.md`
 
 ## Command To Start A New Chat

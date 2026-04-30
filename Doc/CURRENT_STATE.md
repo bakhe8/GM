@@ -4,7 +4,7 @@
 
 ## الخلاصة
 
-- النسخة التطويرية الحالية: `v1.1.0-preview.4`.
+- النسخة الحالية: `v1.1.0-rc.1`.
 - الفرع النشط: `feature/v1.1-operational-polish`.
 - الواجهة الرسمية الحالية هي ما تحت `Presentation/`.
 - أزيلت الأرشيفات القديمة من الشجرة حتى لا تبقى مرجعًا يوميًا مضللًا.
@@ -32,9 +32,11 @@
 
 ## آخر تحقق
 
-- `dotnet test .\GuaranteeManager.Tests\GuaranteeManager.Tests.csproj --no-restore -p:BaseOutputPath=.\artifacts\preview4-version-test\`
+- `dotnet test .\GuaranteeManager.Tests\GuaranteeManager.Tests.csproj --no-restore -p:BaseOutputPath=.\artifacts\rc1-version-test\`
 - النتيجة: `107/107`.
 - `dotnet build .\my_work.sln -c Debug --no-restore` نجح.
+- `.\scripts\publish_release.ps1` نجح وأنشأ حزمة `v1.1.0-rc.1` مع اختبارات Release ناجحة: `105/105`.
+- تمت ترقية `preview.4` إلى `rc.1` بعد UAT معزول على الحزمة المنشورة شمل إنشاء ضمان، تمديد، تسجيل رد بنك، إفراج، منع تكرار الإجراء النهائي، تصدير تقرير، وإنشاء نسخة احتياطية.
 
 ## المراجع الحية
 
@@ -42,4 +44,5 @@
 - `AI_HANDOFF.md`
 - `Doc/guides/Workflow_Event_Logic_Study.md`
 - `Doc/guides/User_Guide_Final.md`
+- `Doc/guides/Next_Development_Plan.md`
 - `Doc/guides/Repository_Stabilization_Checklist_2026-04-30.md`
