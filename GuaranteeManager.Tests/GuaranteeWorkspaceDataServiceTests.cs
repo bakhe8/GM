@@ -59,6 +59,66 @@ namespace GuaranteeManager.Tests
                 artifacts.Timeline.Select(item => item.Title));
             Assert.DoesNotContain("الإصدار الناتج", artifacts.Timeline[2].Detail);
             Assert.Contains("تم إنهاء دورة حياة الضمان بالإفراج", artifacts.Timeline[2].Detail);
+            Assert.Equal(TimelineEvidenceActionKind.ResponseDocument, artifacts.Timeline[2].EvidenceActionKind);
+            Assert.Equal("فتح رد البنك", artifacts.Timeline[2].EvidenceActionLabel);
+            Assert.Equal(TimelineEvidenceActionKind.Attachment, artifacts.Timeline[3].EvidenceActionKind);
+            Assert.Equal("فتح المرفق", artifacts.Timeline[3].EvidenceActionLabel);
+        }
+
+        [Fact]
+        public void BuildSelectionArtifacts_FromStoredTimeline_WiresEvidenceActionsToEvents()
+        {
+            DateTime start = new(2026, 4, 28, 8, 0, 0);
+            var current = CreateGuarantee(1, null, 1, true, start, 1_500_000m);
+            current.Attachments.Add(new AttachmentRecord
+            {
+                Id = 100,
+                GuaranteeId = current.Id,
+                OriginalFileName = "guarantee-image.pdf",
+                SavedFileName = "guarantee-image.pdf",
+                FileExtension = ".pdf",
+                UploadedAt = start.AddHours(4),
+                DocumentType = AttachmentDocumentType.GuaranteeImage
+            });
+            var request = new WorkflowRequest
+            {
+                Id = 12,
+                RootGuaranteeId = 1,
+                SequenceNumber = 1,
+                BaseVersionId = current.Id,
+                Type = RequestType.Release,
+                Status = RequestStatus.Executed,
+                RequestDate = start.AddHours(1),
+                ResponseRecordedAt = start.AddHours(2),
+                LetterSavedFileName = "release-letter.pdf",
+                ResponseNotes = "تم الرد دون مستند محفوظ."
+            };
+            var events = new[]
+            {
+                CreateEvent(1, "guarantee-created:1", "GuaranteeCreated", current.Id, null, null, start, 10, "إنشاء الضمان", "تم إنشاء الضمان.", "مكتمل", "Success"),
+                CreateEvent(1, "workflow-request-created:12", "WorkflowRequestCreated", current.Id, request.Id, null, start.AddHours(1), 20, "طلب إفراج", "القيمة المطلوبة: إفراج", "مسجل", "Info"),
+                CreateEvent(1, "workflow-response:12", "WorkflowResponseRecorded", current.Id, request.Id, null, start.AddHours(2), 30, "تسجيل رد طلب إفراج", "تم الرد دون مستند محفوظ.", "منفذ", "Success"),
+                CreateEvent(1, "attachment-added:1:guarantee-image.pdf", "AttachmentAdded", current.Id, null, 100, start.AddHours(4), 40, "إضافة مرفق صورة ضمان", "guarantee-image.pdf", "مضاف", "Info")
+            };
+
+            var service = new GuaranteeWorkspaceDataService(
+                new TimelineDatabaseStub(new[] { current }, new[] { request }, events),
+                new ContextActionService());
+            GuaranteeRow row = GuaranteeRow.FromGuarantee(current, new[] { request });
+
+            GuaranteeSelectionArtifacts artifacts = service.BuildSelectionArtifacts(row);
+
+            TimelineItem requestEvent = Assert.Single(artifacts.Timeline, item => item.Title == "طلب إفراج");
+            Assert.Equal(TimelineEvidenceActionKind.RequestLetter, requestEvent.EvidenceActionKind);
+            Assert.Equal("فتح خطاب الطلب", requestEvent.EvidenceActionLabel);
+
+            TimelineItem responseEvent = Assert.Single(artifacts.Timeline, item => item.Title == "تسجيل رد طلب إفراج");
+            Assert.Equal(TimelineEvidenceActionKind.ResponseDocument, responseEvent.EvidenceActionKind);
+            Assert.Equal("إلحاق رد البنك", responseEvent.EvidenceActionLabel);
+
+            TimelineItem attachmentEvent = Assert.Single(artifacts.Timeline, item => item.Title == "إضافة مرفق صورة ضمان");
+            Assert.Equal(TimelineEvidenceActionKind.Attachment, attachmentEvent.EvidenceActionKind);
+            Assert.Equal("فتح المرفق", attachmentEvent.EvidenceActionLabel);
         }
 
         [Fact]
@@ -188,19 +248,55 @@ namespace GuaranteeManager.Tests
             };
         }
 
+        private static GuaranteeTimelineEvent CreateEvent(
+            int rootId,
+            string eventKey,
+            string eventType,
+            int? guaranteeId,
+            int? workflowRequestId,
+            int? attachmentId,
+            DateTime occurredAt,
+            int sortOrder,
+            string title,
+            string details,
+            string status,
+            string toneKey)
+        {
+            return new GuaranteeTimelineEvent
+            {
+                RootId = rootId,
+                EventKey = eventKey,
+                EventType = eventType,
+                GuaranteeId = guaranteeId,
+                WorkflowRequestId = workflowRequestId,
+                AttachmentId = attachmentId,
+                OccurredAt = occurredAt,
+                SortOrder = sortOrder,
+                Title = title,
+                Details = details,
+                Status = status,
+                ToneKey = toneKey
+            };
+        }
+
         private sealed class TimelineDatabaseStub : IDatabaseService
         {
             private readonly List<Guarantee> _history;
             private readonly List<WorkflowRequest> _requests;
+            private readonly List<GuaranteeTimelineEvent> _events;
 
-            public TimelineDatabaseStub(IEnumerable<Guarantee> history, IEnumerable<WorkflowRequest> requests)
+            public TimelineDatabaseStub(
+                IEnumerable<Guarantee> history,
+                IEnumerable<WorkflowRequest> requests,
+                IEnumerable<GuaranteeTimelineEvent>? events = null)
             {
                 _history = history.ToList();
                 _requests = requests.ToList();
+                _events = events?.ToList() ?? new List<GuaranteeTimelineEvent>();
             }
 
             public List<Guarantee> GetGuaranteeHistory(int guaranteeId) => _history;
-            public List<GuaranteeTimelineEvent> GetGuaranteeTimelineEvents(int guaranteeId) => new();
+            public List<GuaranteeTimelineEvent> GetGuaranteeTimelineEvents(int guaranteeId) => _events.ToList();
 
             public List<WorkflowRequest> GetWorkflowRequestsByRootId(int rootId)
                 => _requests.Where(request => request.RootGuaranteeId == rootId).ToList();

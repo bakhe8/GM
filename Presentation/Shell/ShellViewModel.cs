@@ -115,6 +115,7 @@ namespace GuaranteeManager
             CopyGuaranteeIssueDateCommand = new RelayCommand(parameter => CopyGuaranteeIssueDate(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
             CopyGuaranteeExpiryDateCommand = new RelayCommand(parameter => CopyGuaranteeExpiryDate(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
             OpenAttachmentCommand = new RelayCommand(parameter => OpenAttachment(parameter as AttachmentItem), parameter => parameter is AttachmentItem);
+            OpenTimelineEvidenceCommand = new RelayCommand(parameter => OpenTimelineEvidence(parameter as TimelineItem), parameter => parameter is TimelineItem item && item.HasEvidenceAction);
             OpenOutputLetterCommand = new RelayCommand(parameter => OpenOutputLetter(parameter as GuaranteeOutputPreviewItem), parameter => parameter is GuaranteeOutputPreviewItem item && item.CanOpenLetter);
             OpenOutputResponseCommand = new RelayCommand(parameter => OpenOutputResponse(parameter as GuaranteeOutputPreviewItem), parameter => parameter is GuaranteeOutputPreviewItem item && item.CanOpenResponse);
             ShowAllAttachmentsCommand = new RelayCommand(_ => ShowAllAttachments(), _ => SelectedGuarantee != null);
@@ -214,6 +215,7 @@ namespace GuaranteeManager
         public ICommand CopyGuaranteeIssueDateCommand { get; }
         public ICommand CopyGuaranteeExpiryDateCommand { get; }
         public ICommand OpenAttachmentCommand { get; }
+        public ICommand OpenTimelineEvidenceCommand { get; }
         public ICommand OpenOutputLetterCommand { get; }
         public ICommand OpenOutputResponseCommand { get; }
         public ICommand ShowAllAttachmentsCommand { get; }
@@ -921,6 +923,48 @@ namespace GuaranteeManager
         private void OpenAttachment(AttachmentItem? item)
         {
             _sessionCoordinator.OpenAttachment(item);
+        }
+
+        private void OpenTimelineEvidence(TimelineItem? item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            switch (item.EvidenceActionKind)
+            {
+                case TimelineEvidenceActionKind.Attachment:
+                    if (item.EvidenceAttachment != null)
+                    {
+                        _sessionCoordinator.OpenAttachment(AttachmentItem.FromAttachment(item.EvidenceAttachment));
+                    }
+
+                    break;
+                case TimelineEvidenceActionKind.RequestLetter:
+                    if (item.EvidenceRequest != null)
+                    {
+                        _guaranteeWorkspace.OpenRequestLetter(item.EvidenceRequest);
+                    }
+
+                    break;
+                case TimelineEvidenceActionKind.ResponseDocument:
+                    if (item.EvidenceRequest != null)
+                    {
+                        if (item.EvidenceRequest.HasResponseDocument)
+                        {
+                            _guaranteeWorkspace.OpenResponseDocument(item.EvidenceRequest);
+                        }
+                        else
+                        {
+                            _guaranteeWorkspace.AttachResponseDocument(
+                                item.EvidenceRequest,
+                                SelectedGuarantee?.GuaranteeNo ?? string.Empty);
+                        }
+                    }
+
+                    break;
+            }
         }
 
         private void ShowAllAttachments()
@@ -1646,6 +1690,7 @@ namespace GuaranteeManager
                          CopyGuaranteeExpiryDateCommand,
                          ShowAllAttachmentsCommand,
                          ShowGuaranteeRequestsCommand,
+                         OpenTimelineEvidenceCommand,
                          OpenOutputLetterCommand,
                          OpenOutputResponseCommand
                      })

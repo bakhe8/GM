@@ -86,6 +86,7 @@ namespace GuaranteeManager.Services
             BackfillGuaranteeVersionEvents(connection);
             BackfillWorkflowRequestCreatedEvents(connection);
             BackfillWorkflowResponseEvents(connection);
+            BackfillWorkflowResponseDocumentEvents(connection);
             BackfillAttachmentEvents(connection);
         }
 
@@ -171,6 +172,36 @@ namespace GuaranteeManager.Services
                     details: BuildWorkflowResponseDetails(request),
                     status: request.StatusLabel,
                     toneKey: GetRequestToneKey(request.Status));
+            }
+        }
+
+        private static void BackfillWorkflowResponseDocumentEvents(SqliteConnection connection)
+        {
+            foreach (WorkflowRequest request in LoadWorkflowRequests(connection)
+                         .Where(request => request.ResponseRecordedAt.HasValue && request.HasResponseDocument))
+            {
+                if (ResponseEventCapturedDocument(connection, request.Id))
+                {
+                    continue;
+                }
+
+                string documentName = string.IsNullOrWhiteSpace(request.ResponseOriginalFileName)
+                    ? "تم إلحاق مستند رد البنك."
+                    : request.ResponseOriginalFileName.Trim();
+                InsertEventIfMissing(
+                    connection,
+                    request.RootGuaranteeId,
+                    request.ResultVersionId ?? request.BaseVersionId,
+                    request.Id,
+                    attachmentId: null,
+                    eventKey: $"workflow-response-document:{request.Id}",
+                    eventType: "WorkflowResponseDocumentAttached",
+                    occurredAt: GetResponseDocumentAttachmentTimestamp(request),
+                    sortOrder: 35,
+                    title: "إلحاق مستند رد البنك",
+                    details: documentName,
+                    status: "مرفق",
+                    toneKey: "Info");
             }
         }
 
@@ -351,6 +382,31 @@ namespace GuaranteeManager.Services
             }
 
             return detail;
+        }
+
+        private static bool ResponseEventCapturedDocument(SqliteConnection connection, int requestId)
+        {
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT Details FROM GuaranteeEvents WHERE EventKey = $eventKey LIMIT 1";
+            command.Parameters.AddWithValue("$eventKey", $"workflow-response:{requestId.ToString(CultureInfo.InvariantCulture)}");
+            object? value = command.ExecuteScalar();
+            string details = value == null || value == DBNull.Value
+                ? string.Empty
+                : Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
+
+            return details.Contains("رد البنك مرفق", StringComparison.Ordinal);
+        }
+
+        private static DateTime GetResponseDocumentAttachmentTimestamp(WorkflowRequest request)
+        {
+            if (!request.ResponseRecordedAt.HasValue)
+            {
+                return request.UpdatedAt;
+            }
+
+            return request.UpdatedAt > request.ResponseRecordedAt.Value
+                ? request.UpdatedAt
+                : request.ResponseRecordedAt.Value;
         }
 
         private static string GetRequestToneKey(RequestStatus status) => status switch

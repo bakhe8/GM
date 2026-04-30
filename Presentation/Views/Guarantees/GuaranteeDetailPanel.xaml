@@ -279,6 +279,28 @@
                                                             Background="{Binding StatusBackground}" BorderBrush="{Binding StatusBorder}" BorderThickness="1">
                                                         <TextBlock Text="{Binding Status}" FontSize="9" FontWeight="SemiBold" Foreground="{Binding Brush}" />
                                                     </Border>
+                                                    <Button Style="{StaticResource IconOnlyButton}"
+                                                            Width="20"
+                                                            Height="20"
+                                                            MinWidth="20"
+                                                            Margin="4,0,0,0"
+                                                            ToolTip="{Binding EvidenceActionHint}"
+                                                            Command="{Binding DataContext.OpenTimelineEvidenceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            Visibility="{Binding HasEvidenceAction, Converter={StaticResource TrueToVisibleCollapsedConverter}}"
+                                                            automation:AutomationProperties.AutomationId="{Binding EvidenceActionAutomationId}"
+                                                            automation:AutomationProperties.Name="{Binding EvidenceActionLabel}">
+                                                        <Border Width="18"
+                                                                Height="18"
+                                                                CornerRadius="9"
+                                                                Background="#F8FAFC"
+                                                                BorderBrush="#D8E1EE"
+                                                                BorderThickness="1">
+                                                            <Viewbox Width="10.5" Height="10.5">
+                                                                <Path Data="{StaticResource Icon.Paperclip}" Stroke="#2563EB" StrokeThickness="2.1" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                            </Viewbox>
+                                                        </Border>
+                                                    </Button>
                                                 </StackPanel>
                                                 <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{StaticResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap" />
                                             </StackPanel>

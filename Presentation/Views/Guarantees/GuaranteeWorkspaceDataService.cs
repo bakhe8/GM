@@ -350,7 +350,15 @@ namespace GuaranteeManager
                 .ToList();
             if (selectedEvents.Count > 0)
             {
-                return selectedEvents.Select(TimelineItem.FromEvent).ToList();
+                Dictionary<int, WorkflowRequest> requestsById = contextRequests.ToDictionary(request => request.Id);
+                Dictionary<int, AttachmentRecord> attachmentsById = history
+                    .SelectMany(version => version.Attachments)
+                    .GroupBy(attachment => attachment.Id)
+                    .ToDictionary(group => group.Key, group => group.First());
+
+                return selectedEvents
+                    .Select(item => TimelineItem.FromEvent(item, requestsById, attachmentsById))
+                    .ToList();
             }
 
             Dictionary<int, Guarantee> versionsById = history.ToDictionary(version => version.Id);

@@ -485,6 +485,39 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void GetGuaranteeTimelineEvents_BackfillsLateResponseDocumentAsSeparateEvent()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+            WorkflowRequest releaseRequest = workflow.CreateReleaseRequest(
+                current.Id,
+                "release without response document",
+                "tester");
+            workflow.RecordBankResponse(releaseRequest.Id, RequestStatus.Executed, "released without document");
+
+            List<GuaranteeTimelineEvent> beforeAttach = database.GetGuaranteeTimelineEvents(current.Id);
+            Assert.DoesNotContain(beforeAttach, item => item.EventType == "WorkflowResponseDocumentAttached");
+
+            string responsePath = _fixture.CreateSourceFile(".pdf", "late-response-document");
+            workflow.AttachResponseDocumentToClosedRequest(releaseRequest.Id, responsePath, "attached later");
+
+            List<GuaranteeTimelineEvent> afterAttach = database.GetGuaranteeTimelineEvents(current.Id);
+            List<GuaranteeTimelineEvent> secondRead = database.GetGuaranteeTimelineEvents(current.Id);
+
+            Assert.Equal(afterAttach.Count, secondRead.Count);
+            GuaranteeTimelineEvent documentEvent = Assert.Single(
+                afterAttach,
+                item => item.EventType == "WorkflowResponseDocumentAttached" && item.WorkflowRequestId == releaseRequest.Id);
+            Assert.Equal("إلحاق مستند رد البنك", documentEvent.Title);
+            Assert.Equal("مرفق", documentEvent.Status);
+            Assert.Contains(".pdf", documentEvent.Details);
+        }
+
+        [Fact]
         public void CreateReleaseRequest_AfterExecutedExtension_IsAllowedAndEndsExtendedGuarantee()
         {
             DatabaseService database = _fixture.CreateDatabaseService();

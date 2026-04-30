@@ -672,16 +672,37 @@ namespace GuaranteeManager
         }
     }
 
+    public enum TimelineEvidenceActionKind
+    {
+        None,
+        Attachment,
+        RequestLetter,
+        ResponseDocument
+    }
+
     public sealed class TimelineItem
     {
-        public TimelineItem(DateTime timestamp, string title, string detail, string status, Tone tone)
+        public TimelineItem(
+            DateTime timestamp,
+            string title,
+            string detail,
+            string status,
+            Tone tone,
+            TimelineEvidenceActionKind evidenceActionKind = TimelineEvidenceActionKind.None,
+            AttachmentRecord? evidenceAttachment = null,
+            WorkflowRequest? evidenceRequest = null,
+            string evidenceKey = "")
             : this(
                 timestamp.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
                 timestamp.ToString("HH:mm:ss", CultureInfo.InvariantCulture),
                 title,
                 detail,
                 status,
-                tone)
+                tone,
+                evidenceActionKind,
+                evidenceAttachment,
+                evidenceRequest,
+                evidenceKey)
         {
         }
 
@@ -690,7 +711,17 @@ namespace GuaranteeManager
         {
         }
 
-        private TimelineItem(string date, string time, string title, string detail, string status, Tone tone)
+        private TimelineItem(
+            string date,
+            string time,
+            string title,
+            string detail,
+            string status,
+            Tone tone,
+            TimelineEvidenceActionKind evidenceActionKind = TimelineEvidenceActionKind.None,
+            AttachmentRecord? evidenceAttachment = null,
+            WorkflowRequest? evidenceRequest = null,
+            string evidenceKey = "")
         {
             Date = date;
             Time = time;
@@ -700,6 +731,18 @@ namespace GuaranteeManager
             Brush = TonePalette.Foreground(tone);
             StatusBackground = TonePalette.Background(tone);
             StatusBorder = TonePalette.Border(tone);
+            EvidenceActionKind = NormalizeEvidenceActionKind(evidenceActionKind, evidenceAttachment, evidenceRequest);
+            EvidenceAttachment = EvidenceActionKind == TimelineEvidenceActionKind.Attachment ? evidenceAttachment : null;
+            EvidenceRequest = EvidenceActionKind is TimelineEvidenceActionKind.RequestLetter or TimelineEvidenceActionKind.ResponseDocument
+                ? evidenceRequest
+                : null;
+            EvidenceActionLabel = BuildEvidenceActionLabel(EvidenceActionKind, EvidenceAttachment, EvidenceRequest);
+            EvidenceActionHint = BuildEvidenceActionHint(EvidenceActionKind, EvidenceAttachment, EvidenceRequest);
+            EvidenceActionAutomationId = BuildEvidenceActionAutomationId(
+                EvidenceActionKind,
+                EvidenceAttachment,
+                EvidenceRequest,
+                evidenceKey);
         }
 
         public string Date { get; }
@@ -710,6 +753,13 @@ namespace GuaranteeManager
         public Brush Brush { get; }
         public Brush StatusBackground { get; }
         public Brush StatusBorder { get; }
+        public TimelineEvidenceActionKind EvidenceActionKind { get; }
+        public AttachmentRecord? EvidenceAttachment { get; }
+        public WorkflowRequest? EvidenceRequest { get; }
+        public bool HasEvidenceAction => EvidenceActionKind != TimelineEvidenceActionKind.None;
+        public string EvidenceActionLabel { get; }
+        public string EvidenceActionHint { get; }
+        public string EvidenceActionAutomationId { get; }
 
         public static TimelineItem FromRequest(WorkflowRequest request)
         {
@@ -729,14 +779,29 @@ namespace GuaranteeManager
                 tone);
         }
 
-        public static TimelineItem FromEvent(GuaranteeTimelineEvent timelineEvent)
+        public static TimelineItem FromEvent(
+            GuaranteeTimelineEvent timelineEvent,
+            IReadOnlyDictionary<int, WorkflowRequest>? requestsById = null,
+            IReadOnlyDictionary<int, AttachmentRecord>? attachmentsById = null)
         {
+            ResolveEvidence(
+                timelineEvent,
+                requestsById,
+                attachmentsById,
+                out TimelineEvidenceActionKind evidenceActionKind,
+                out AttachmentRecord? evidenceAttachment,
+                out WorkflowRequest? evidenceRequest);
+
             return new TimelineItem(
                 timelineEvent.OccurredAt,
                 timelineEvent.Title,
                 timelineEvent.Details,
                 timelineEvent.Status,
-                ParseTone(timelineEvent.ToneKey));
+                ParseTone(timelineEvent.ToneKey),
+                evidenceActionKind,
+                evidenceAttachment,
+                evidenceRequest,
+                timelineEvent.EventKey);
         }
 
         public static TimelineItem RequestCreated(WorkflowRequest request)
@@ -752,7 +817,10 @@ namespace GuaranteeManager
                 request.TypeLabel,
                 detail,
                 request.Status == RequestStatus.Pending ? request.StatusLabel : "مسجل",
-                request.Status == RequestStatus.Pending ? Tone.Warning : Tone.Info);
+                request.Status == RequestStatus.Pending ? Tone.Warning : Tone.Info,
+                TimelineEvidenceActionKind.RequestLetter,
+                evidenceRequest: request,
+                evidenceKey: $"workflow-request-created:{request.Id.ToString(CultureInfo.InvariantCulture)}");
         }
 
         public static TimelineItem BankResponse(WorkflowRequest request, string resultVersionLabel)
@@ -774,7 +842,10 @@ namespace GuaranteeManager
                 $"تسجيل رد {request.TypeLabel}",
                 detail,
                 request.StatusLabel,
-                GetRequestTone(request.Status));
+                GetRequestTone(request.Status),
+                TimelineEvidenceActionKind.ResponseDocument,
+                evidenceRequest: request,
+                evidenceKey: $"workflow-response:{request.Id.ToString(CultureInfo.InvariantCulture)}");
         }
 
         public static TimelineItem FromVersion(Guarantee version)
@@ -809,7 +880,12 @@ namespace GuaranteeManager
                 $"إضافة مرفق {documentType}",
                 name,
                 "مضاف",
-                Tone.Info);
+                Tone.Info,
+                TimelineEvidenceActionKind.Attachment,
+                evidenceAttachment: attachment,
+                evidenceKey: string.IsNullOrWhiteSpace(attachment.SavedFileName)
+                    ? $"attachment-added:{attachment.Id.ToString(CultureInfo.InvariantCulture)}"
+                    : $"attachment-added:{attachment.GuaranteeId.ToString(CultureInfo.InvariantCulture)}:{attachment.SavedFileName}");
         }
 
         public static TimelineItem StatusChanged(Guarantee version)
@@ -845,6 +921,128 @@ namespace GuaranteeManager
             return Enum.TryParse(toneKey, ignoreCase: true, out Tone tone)
                 ? tone
                 : Tone.Info;
+        }
+
+        private static void ResolveEvidence(
+            GuaranteeTimelineEvent timelineEvent,
+            IReadOnlyDictionary<int, WorkflowRequest>? requestsById,
+            IReadOnlyDictionary<int, AttachmentRecord>? attachmentsById,
+            out TimelineEvidenceActionKind evidenceActionKind,
+            out AttachmentRecord? evidenceAttachment,
+            out WorkflowRequest? evidenceRequest)
+        {
+            evidenceActionKind = TimelineEvidenceActionKind.None;
+            evidenceAttachment = null;
+            evidenceRequest = null;
+
+            if (timelineEvent.AttachmentId.HasValue
+                && attachmentsById?.TryGetValue(timelineEvent.AttachmentId.Value, out evidenceAttachment) == true)
+            {
+                evidenceActionKind = TimelineEvidenceActionKind.Attachment;
+                return;
+            }
+
+            if (!timelineEvent.WorkflowRequestId.HasValue
+                || requestsById?.TryGetValue(timelineEvent.WorkflowRequestId.Value, out evidenceRequest) != true)
+            {
+                evidenceRequest = null;
+                return;
+            }
+
+            evidenceActionKind = timelineEvent.EventType switch
+            {
+                "WorkflowRequestCreated" => TimelineEvidenceActionKind.RequestLetter,
+                "WorkflowResponseRecorded" => TimelineEvidenceActionKind.ResponseDocument,
+                "WorkflowResponseDocumentAttached" => TimelineEvidenceActionKind.ResponseDocument,
+                _ => TimelineEvidenceActionKind.None
+            };
+        }
+
+        private static TimelineEvidenceActionKind NormalizeEvidenceActionKind(
+            TimelineEvidenceActionKind evidenceActionKind,
+            AttachmentRecord? evidenceAttachment,
+            WorkflowRequest? evidenceRequest)
+        {
+            return evidenceActionKind switch
+            {
+                TimelineEvidenceActionKind.Attachment when evidenceAttachment != null =>
+                    TimelineEvidenceActionKind.Attachment,
+                TimelineEvidenceActionKind.RequestLetter when evidenceRequest?.HasLetter == true =>
+                    TimelineEvidenceActionKind.RequestLetter,
+                TimelineEvidenceActionKind.ResponseDocument
+                    when evidenceRequest != null
+                         && (evidenceRequest.HasResponseDocument || evidenceRequest.Status != RequestStatus.Pending) =>
+                    TimelineEvidenceActionKind.ResponseDocument,
+                _ => TimelineEvidenceActionKind.None
+            };
+        }
+
+        private static string BuildEvidenceActionLabel(
+            TimelineEvidenceActionKind evidenceActionKind,
+            AttachmentRecord? evidenceAttachment,
+            WorkflowRequest? evidenceRequest)
+        {
+            return evidenceActionKind switch
+            {
+                TimelineEvidenceActionKind.Attachment => "فتح المرفق",
+                TimelineEvidenceActionKind.RequestLetter => "فتح خطاب الطلب",
+                TimelineEvidenceActionKind.ResponseDocument when evidenceRequest?.HasResponseDocument == true => "فتح رد البنك",
+                TimelineEvidenceActionKind.ResponseDocument => "إلحاق رد البنك",
+                _ => string.Empty
+            };
+        }
+
+        private static string BuildEvidenceActionHint(
+            TimelineEvidenceActionKind evidenceActionKind,
+            AttachmentRecord? evidenceAttachment,
+            WorkflowRequest? evidenceRequest)
+        {
+            return evidenceActionKind switch
+            {
+                TimelineEvidenceActionKind.Attachment =>
+                    $"فتح {evidenceAttachment?.DocumentTypeLabel ?? "المرفق"} المرتبط بهذا الحدث.",
+                TimelineEvidenceActionKind.RequestLetter =>
+                    "فتح خطاب الطلب المرتبط بهذا الحدث.",
+                TimelineEvidenceActionKind.ResponseDocument when evidenceRequest?.HasResponseDocument == true =>
+                    "فتح مستند رد البنك المرتبط بهذا الحدث.",
+                TimelineEvidenceActionKind.ResponseDocument =>
+                    "إلحاق مستند رد البنك بهذا الحدث المغلق.",
+                _ => string.Empty
+            };
+        }
+
+        private static string BuildEvidenceActionAutomationId(
+            TimelineEvidenceActionKind evidenceActionKind,
+            AttachmentRecord? evidenceAttachment,
+            WorkflowRequest? evidenceRequest,
+            string evidenceKey)
+        {
+            if (evidenceActionKind == TimelineEvidenceActionKind.None)
+            {
+                return string.Empty;
+            }
+
+            string key = string.IsNullOrWhiteSpace(evidenceKey)
+                ? evidenceActionKind switch
+                {
+                    TimelineEvidenceActionKind.Attachment =>
+                        $"attachment:{evidenceAttachment?.Id.ToString(CultureInfo.InvariantCulture) ?? "0"}",
+                    TimelineEvidenceActionKind.RequestLetter =>
+                        $"request-letter:{evidenceRequest?.Id.ToString(CultureInfo.InvariantCulture) ?? "0"}",
+                    TimelineEvidenceActionKind.ResponseDocument =>
+                        $"response-document:{evidenceRequest?.Id.ToString(CultureInfo.InvariantCulture) ?? "0"}",
+                    _ => "none"
+                }
+                : evidenceKey;
+            string normalized = new string(key
+                .Where(character => char.IsAsciiLetterOrDigit(character) || character == '-' || character == ':')
+                .ToArray())
+                .Replace(':', '.')
+                .Replace('-', '.');
+
+            return string.IsNullOrWhiteSpace(normalized)
+                ? "GuaranteeTimeline.Evidence"
+                : $"GuaranteeTimeline.Evidence.{normalized}";
         }
 
         private static Tone GetLifecycleTone(GuaranteeLifecycleStatus status) => status switch

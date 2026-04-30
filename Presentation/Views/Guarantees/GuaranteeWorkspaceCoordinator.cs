@@ -487,6 +487,43 @@ namespace GuaranteeManager
                 "تعذر فتح رد البنك. الملف غير موجود.");
         }
 
+        public void AttachResponseDocument(WorkflowRequest request, string guaranteeNo)
+        {
+            if (request.HasResponseDocument)
+            {
+                OpenResponseDocument(request);
+                return;
+            }
+
+            if (request.Status == RequestStatus.Pending)
+            {
+                RegisterBankResponse(request, guaranteeNo);
+                return;
+            }
+
+            WorkflowRequestListItem listItem = BuildWorkflowRequestListItem(request, guaranteeNo);
+            if (!AttachResponseDocumentDialog.TryShow(listItem, out string responsePath, out string additionalNotes))
+            {
+                return;
+            }
+
+            try
+            {
+                _workflow.AttachResponseDocumentToClosedRequest(request.Id, responsePath, additionalNotes);
+                _refreshAfterWorkflowChange(request.RootGuaranteeId, request.Id);
+                _shellStatus.ShowSuccess("تم إلحاق مستند رد البنك.", $"الضمانات • {listItem.GuaranteeNo}");
+            }
+            catch (DeferredFilePromotionException ex)
+            {
+                _refreshAfterWorkflowChange(request.RootGuaranteeId, request.Id);
+                MessageBox.Show(ex.UserMessage, "إلحاق رد البنك", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "إلحاق رد البنك", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
         private Guarantee? GetGuarantee(GuaranteeRow target, string title)
         {
             Guarantee? current = _database.GetGuaranteeById(target.Id);
@@ -496,6 +533,38 @@ namespace GuaranteeManager
             }
 
             return current;
+        }
+
+        private WorkflowRequestListItem BuildWorkflowRequestListItem(WorkflowRequest request, string guaranteeNo)
+        {
+            Guarantee? current = _database.GetCurrentGuaranteeByRootId(request.RootGuaranteeId);
+            Guarantee? baseVersion = request.BaseVersionId > 0
+                ? _database.GetGuaranteeById(request.BaseVersionId)
+                : null;
+            Guarantee? resultVersion = request.ResultVersionId.HasValue
+                ? _database.GetGuaranteeById(request.ResultVersionId.Value)
+                : null;
+            Guarantee? displayVersion = current ?? resultVersion ?? baseVersion;
+
+            return new WorkflowRequestListItem
+            {
+                Request = request,
+                CurrentGuaranteeId = displayVersion?.Id ?? request.BaseVersionId,
+                RootGuaranteeId = request.RootGuaranteeId,
+                GuaranteeNo = string.IsNullOrWhiteSpace(guaranteeNo)
+                    ? displayVersion?.GuaranteeNo ?? "---"
+                    : guaranteeNo,
+                Supplier = displayVersion?.Supplier ?? string.Empty,
+                Bank = displayVersion?.Bank ?? string.Empty,
+                ReferenceType = displayVersion?.ReferenceType ?? GuaranteeReferenceType.None,
+                ReferenceNumber = displayVersion?.ReferenceNumber ?? string.Empty,
+                CurrentAmount = displayVersion?.Amount ?? 0m,
+                CurrentExpiryDate = displayVersion?.ExpiryDate ?? DateTime.MinValue,
+                CurrentVersionNumber = current?.VersionNumber ?? displayVersion?.VersionNumber ?? 1,
+                BaseVersionNumber = baseVersion?.VersionNumber ?? displayVersion?.VersionNumber ?? 1,
+                ResultVersionNumber = resultVersion?.VersionNumber,
+                LifecycleStatus = displayVersion?.LifecycleStatus ?? GuaranteeLifecycleStatus.Active
+            };
         }
 
         private static Guarantee? ResolveInquiryGuarantee(OperationalInquiryResult result)
