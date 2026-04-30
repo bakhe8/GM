@@ -30,7 +30,7 @@
 | فتح ضمان واتخاذ قرار | `Guarantees` / `Guarantee File` | `Dashboard`, `Requests` كدخول سياقي | canonical في `Guarantees` |
 | إنشاء ضمان جديد | `Guarantees` | لا حاجة لبيت ثانوي حقيقي | يبقى في `Guarantees` |
 | تعديل ضمان | `Guarantee File` | `Guarantees` كدخول إلى الملف | canonical في `Guarantee File` |
-| إطلاق أفعال authoring الثقيلة (`تمديد`, `إفراج`, `تخفيض`, `استبدال`, `نقض`, `تسييل`, `تحقق`) | `Guarantee File` | `Requests` فقط في صور محدودة جدًا عند eligibility واضحة | تُعاد مركزة في `Guarantee File` |
+| إطلاق أفعال authoring الثقيلة (`تمديد`, `إفراج`, `تخفيض`, `استبدال`, `تسييل`, `تحقق`) | `Guarantee File` | `Requests` فقط في صور محدودة جدًا عند eligibility واضحة | تُعاد مركزة في `Guarantee File` |
 | مراجعة سجل الضمان | `HistoryDialog` | `Requests`, `Guarantee File`, `OperationalInquiryDialog` | يبقى كمساحة فهم تقود إلى فعل |
 | عرض الجواب التشغيلي | `OperationalInquiryDialog` | `Guarantee File` كدخول | يبقى حوارًا متخصصًا |
 | تصدير تقرير ضمان واحد | `OperationalInquiryDialog` | `Guarantee File` عند الحاجة | يبقى سياقيًا |
@@ -51,13 +51,14 @@
 - إنشاء تسييل من المؤهلين
 - إنشاء تحقق من المؤهلين
 - إنشاء استبدال من المؤهلين
-- إنشاء نقض من المؤهلين
 
 **الحكم:**
 
 - لا تُحذف
 - لكن يجب أن تهدأ
 - ويجب ألا تبدو مساوية لمسار تنفيذ الطلب الحالي
+
+**ملاحظة 2026-04-30:** طلب النقض لم يعد ضمن هذه المسارات؛ أُلغي من البرنامج لأن الإفراج والتسييل بعد تأكيد البنك إجراءات نهائية.
 
 ### 2. Export flows داخل Requests وGuarantees
 

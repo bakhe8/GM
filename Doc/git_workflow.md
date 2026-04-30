@@ -79,14 +79,15 @@
 ## الحالة الحالية
 
 - `main` يمثل حاليًا الحالة المدموجة حتى دفعة `v1.1-kickoff` عند commit `d855be1`
-- الفرع النشط الآن: `feature/v1.1-operational-polish` وآخر دفعة برمجية مستقرة عليه عند `604bfd9`
+- الفرع النشط الآن: `feature/v1.1-operational-polish` وتُثبت حالته الحالية كـ `v1.1.0-preview.3` بعد اعتمادات stabilization الأخيرة
 - فرع `release/v1.0.x` يبقى مخصصًا فقط لأي hotfix يعود إلى خط `1.0.x`
-- النسخة التطويرية المعروضة داخل التطبيق على هذه الشجرة: `v1.1.0-preview.2`
+- النسخة التطويرية المعروضة داخل التطبيق على هذه الشجرة: `v1.1.0-preview.3`
 - لا يُستخدم `v1.0.1` لمسار الواجهة الجديدة؛ يبقى محجوزًا فقط لأي hotfix حرج على خط `v1.0.x`
 
 ## بوابة الترقية بين الإصدارات
 
 - `v1.1.0-preview.2` تمثل baseline نظيفة بعد إقفال جولة stabilization الأساسية
+- `v1.1.0-preview.3` تمثل baseline تجميد جديدة بعد تغييرات workflow/UI الواسعة وإلغاء مسار النقض
 - ننتقل إلى preview لاحقة فقط إذا ظهرت دفعات تطويرية مؤثرة جديدة بعد هذه baseline
 - ننتقل إلى `v1.1.0-rc.1` فقط بعد:
   1. اكتمال stabilization
@@ -99,7 +100,7 @@
 
 - `Doc/CURRENT_STATE.md`
 - `Doc/git_workflow.md`
-- `Doc/releases/README_v1.1.0-preview.2.md`
+- `Doc/releases/README_v1.1.0-preview.3.md`
 - `Doc/Assets/Documentation/Screenshots/README.md`
 - `missing_features_report.md` فقط إذا ظهر backlog جديد فعلًا
 

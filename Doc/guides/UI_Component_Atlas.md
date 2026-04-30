@@ -91,6 +91,10 @@
 
 - `Dashboard.Table.List`
 - عناصر عمل يومية منسقة كـ work items
+- أفعال الصف:
+  - `عرض`
+  - الانتقال إلى بيت العمل المناسب
+- النسخ ليس في الصف؛ مكانه لوحة التفاصيل.
 - handoff إلى:
   - `اليوم` نفسها
   - `الطلبات`
@@ -101,7 +105,8 @@
 
 - `Dashboard.Detail.PrimaryActionButton`
 - `Dashboard.Detail.OpenWorkspaceButton`
-- `Dashboard.Detail.CopyReferenceButton`
+- `Dashboard.Detail.Header.CopyTitle`
+- `Dashboard.Detail.CopyReference`
 - معلومات:
   - العنوان
   - التصنيف / نوع المتابعة
@@ -110,6 +115,7 @@
   - الاستحقاق / المدة
   - المساحة المستهدفة / المسار
   - الإجراء الموصى به / الإجراء المقترح
+- صفوف المعلومات تتبع نمط `DetailFactLine/DetailFactBlock`: أيقونة صغيرة، فراغ ثابت، اسم الحقل، قيمة، وزر نسخ شفاف في العمود الأخير.
 
 ### القراءة المعمارية
 
@@ -198,11 +204,9 @@ Queue-first surface لتنفيذ الطلب الحالي.
 #### Row Actions
 
 - **فعل يومي واحد ظاهر**
-- قائمة منسدلة صغيرة تخص الطلب نفسه فقط:
-  - عرض التفاصيل
-  - خطاب الطلب
-  - نسخ رقم الضمان / المورد / المرجع
+- لا توجد قائمة `نسخ` في الصف؛ النسخ يكون من لوحة التفاصيل عبر صفوف المعلومات.
 - تصدير الدفعات خرج من قائمة الصف إلى toolbar `إنشاء وتصدير`
+- تفاصيل الطلب وخطاب الطلب في لوحة التفاصيل، وليست داخل قائمة الصف.
 - سجل الضمان وفلترة طلبات نفس الضمان ليست داخل قائمة الصف حتى لا تتكرر مع بيوت أخرى أو أزرار تفصيلية
 
 #### Detail Panel
@@ -210,6 +214,9 @@ Queue-first surface لتنفيذ الطلب الحالي.
 - `Requests.Detail.PrimaryActionButton`
 - `Requests.Detail.OpenGuaranteeButton`
 - `Requests.Detail.OpenLetterButton`
+- `Requests.Detail.Header.CopyGuaranteeNo`
+- `Requests.Detail.Header.CopySupplier`
+- `Requests.Detail.CopyReference`
 - معلومات:
   - المرجع
   - الإصدار
@@ -310,6 +317,8 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 - `GuaranteeDetailPanel.Root`
 - `GuaranteeDetailPanel.ScrollViewer`
+- `GuaranteeDetailPanel.Header.CopyGuaranteeNo`
+- `GuaranteeDetailPanel.Header.CopyBeneficiary`
 
 #### Reference Facts
 
@@ -319,6 +328,11 @@ Queue-first surface لتنفيذ الطلب الحالي.
 - تاريخ الإصدار
 - تاريخ الانتهاء
 - الأيام المتبقية
+- هذه الكتلة هي معيار عرض معلومات اللوحات الجانبية في كل الواجهات:
+  - أيقونة صغيرة قبل اسم الحقل مع فراغ ثابت
+  - القيمة في عمود مستقل
+  - زر نسخ شفاف في العمود الأخير لكل صف قيمة
+  - مساحة الضغط أكبر من الأيقونة، لكن الأيقونة نفسها صغيرة وبلا حدود
 
 #### Timeline Section
 
@@ -392,7 +406,6 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 #### Toolbar
 
-- `Reports.Toolbar.Run`
 - `Reports.Toolbar.Reset`
 - `Reports.Filter.Category`
 - `كل التقارير`
@@ -419,6 +432,7 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 #### Detail Panel
 
+- `Reports.Detail.Header.CopyTitle`
 - `Reports.Detail.RunButton`
 - `Reports.Detail.OpenButton`
 - معلومات:
@@ -430,6 +444,7 @@ Queue-first surface لتنفيذ الطلب الحالي.
 ### القراءة المعمارية
 
 - هذا هو البيت الرسمي للتقارير والتصدير.
+- صف التقرير يحدد التقرير فقط؛ تشغيل التقرير وفتح آخر ملف ناتج يتمان من لوحة التفاصيل.
 - لا يفتح `البنوك` من داخله؛ `البنوك` بيت مستقل في السايدبار.
 
 ---
@@ -487,8 +502,9 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 #### Detail Panel
 
-- copy actions
-- فتح/انتقال حسب الحاجة
+- `Banks.Detail.Header.CopyTopBeneficiary`
+- صفوف المعلومات تحمل زر نسخ شفاف لكل قيمة.
+- فعل اللوحة السفلي الأساسي: عرض ضمانات البنك داخل `الضمانات` مع فلتر البنك.
 - معلومات:
   - إجمالي القيمة
   - الحصة
@@ -545,11 +561,15 @@ Queue-first surface لتنفيذ الطلب الحالي.
 
 #### Detail Panel
 
+- `Settings.Detail.Header.CopyTitle`
 - title / subtitle / badge
 - state
 - action
 - path
 - open path
+- `Settings.Detail.CopyPath`
+- `Settings.Detail.CopyOpenPath`
+- النسخ داخل صف المعلومة نفسه، وليس زرًا سفليًا مكررًا.
 
 ### القراءة المعمارية
 

@@ -10,7 +10,7 @@
   - سياسة الفروع، الترقيم، ومعايير الانتقال بين `preview` و`rc` و`release`.
 - `releases/README_v1.0.0.md`
   - وصف baseline المنشورة `v1.0.0`.
-- `releases/README_v1.1.0-preview.2.md`
+- `releases/README_v1.1.0-preview.3.md`
   - وصف النسخة التطويرية الحالية.
 - `Assets/Documentation/Screenshots/README.md`
   - سياسة لقطات القبول، baselines، ومخرجات الأداة.
@@ -32,6 +32,8 @@
   - خطة الانتقال الرسمية من تطوير الأداة إلى تطوير البرنامج الأصلي، مع أول ثلاث ساحات تنفيذ فعلية وقاعدة blocker-driven للأداة.
 - `guides/Product_Coverage_Matrix.md`
   - مصفوفة التغطية الحالية للمنتج: ما الذي صار مشبعًا، ومتى نعيد الفحص، ومتى لا تكون الأداة مبررة.
+- `guides/Repository_Stabilization_Checklist_2026-04-30.md`
+  - قائمة تجميد المستودع الحالية قبل تحويل العمل الكبير إلى commits ونسخة مراجعة مستقرة.
 - `guides/Next_Level_Development_Readiness.md`
   - مرجع الجاهزية الرسمي للانتقال إلى مستوى تطوير أعلى في البرنامج، مع نتائج build/tests/regressions والحكم التنفيذي.
 - `guides/Workflow_First_UI_Recovery_Plan.md`
