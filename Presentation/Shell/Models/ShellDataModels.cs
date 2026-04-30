@@ -607,8 +607,8 @@ namespace GuaranteeManager
             return suggestedArea switch
             {
                 GuaranteeFileFocusArea.Requests => "ينقلك إلى السجل الزمني وطلبات هذا الضمان داخل اللوحة الجانبية.",
-                GuaranteeFileFocusArea.Outputs => "ينقلك إلى المخرجات والأثر المرتبط بهذا الضمان داخل اللوحة الجانبية.",
-                GuaranteeFileFocusArea.Attachments => "ينقلك إلى لوحة الضمان الجانبية عند الأدلة والمرفقات الرسمية.",
+                GuaranteeFileFocusArea.Outputs => "ينقلك إلى السجل الزمني حيث يظهر أثر المخرجات المرتبطة بهذا الضمان.",
+                GuaranteeFileFocusArea.Attachments => "ينقلك إلى السجل الزمني حيث تظهر الأدلة والمرفقات الرسمية.",
                 GuaranteeFileFocusArea.Series => "ينقلك إلى لوحة الضمان الجانبية عند الخط الزمني لهذا الضمان.",
                 GuaranteeFileFocusArea.Actions => "ينقلك إلى الإجراءات السريعة المناسبة للحالة الحالية داخل لوحة الضمان.",
                 GuaranteeFileFocusArea.ExecutiveSummary => "ينقلك إلى الضمان المحدد داخل المحفظة.",

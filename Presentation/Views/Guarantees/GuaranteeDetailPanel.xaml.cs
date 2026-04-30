@@ -63,8 +63,8 @@ namespace GuaranteeManager
         {
             return area switch
             {
-                GuaranteeFileFocusArea.Attachments => AttachmentsAnchor,
-                GuaranteeFileFocusArea.Outputs => AttachmentsAnchor,
+                GuaranteeFileFocusArea.Attachments => TimelineAnchor,
+                GuaranteeFileFocusArea.Outputs => TimelineAnchor,
                 GuaranteeFileFocusArea.Actions => ActionsAnchor,
                 _ => TimelineAnchor
             };

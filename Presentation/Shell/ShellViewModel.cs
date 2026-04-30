@@ -1734,8 +1734,8 @@ namespace GuaranteeManager
                 GuaranteeFileFocusArea.Requests when requestIdToFocus.HasValue => "انتقل إلى الطلب المرتبط",
                 GuaranteeFileFocusArea.Requests => "انتقل إلى الطلبات المرتبطة",
                 GuaranteeFileFocusArea.Series => "انتقل إلى الخط الزمني",
-                GuaranteeFileFocusArea.Attachments => "انتقل إلى المرفقات",
-                GuaranteeFileFocusArea.Outputs => "انتقل إلى المخرجات المرتبطة",
+                GuaranteeFileFocusArea.Attachments => "انتقل إلى السجل الزمني",
+                GuaranteeFileFocusArea.Outputs => "انتقل إلى السجل الزمني",
                 GuaranteeFileFocusArea.Actions => "انتقل إلى الإجراءات",
                 _ => "لا يوجد قسم مقترح"
             };
