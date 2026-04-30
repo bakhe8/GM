@@ -59,7 +59,12 @@ namespace GuaranteeManager
             };
         }
 
-        public static Grid BuildReferenceWorkspace(UIElement toolbar, UIElement metrics, UIElement table, UIElement detailPanel)
+        public static Grid BuildReferenceWorkspace(
+            UIElement toolbar,
+            UIElement metrics,
+            UIElement table,
+            UIElement detailPanel,
+            UIElement? guidanceStrip = null)
         {
             var root = new Grid
             {
@@ -78,12 +83,31 @@ namespace GuaranteeManager
             main.RowDefinitions.Add(new RowDefinition { Height = new GridLength(10) });
             main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             main.RowDefinitions.Add(new RowDefinition { Height = new GridLength(10) });
-            main.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            if (guidanceStrip != null)
+            {
+                main.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                main.RowDefinitions.Add(new RowDefinition { Height = new GridLength(10) });
+                main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            }
+            else
+            {
+                main.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            }
 
             main.Children.Add(toolbar);
             Grid.SetRow(metrics, 2);
             main.Children.Add(metrics);
-            Grid.SetRow(table, 4);
+            if (guidanceStrip != null)
+            {
+                Grid.SetRow(table, 4);
+                Grid.SetRow(guidanceStrip, 6);
+                main.Children.Add(guidanceStrip);
+            }
+            else
+            {
+                Grid.SetRow(table, 4);
+            }
+
             main.Children.Add(table);
 
             root.Children.Add(main);

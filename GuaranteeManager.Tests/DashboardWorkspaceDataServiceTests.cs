@@ -79,6 +79,68 @@ namespace GuaranteeManager.Tests
             Assert.Equal("1", result.Metrics.Second.Value);
         }
 
+        [Fact]
+        public void BuildGuidanceState_UsesHighestPriorityItemAsSmartGuideTarget()
+        {
+            var service = new DashboardWorkspaceDataService();
+            DashboardWorkItem normal = CreateFollowUpItem(
+                DashboardScope.ExpiringSoon,
+                "قريبة الانتهاء",
+                "متابعة",
+                3,
+                "BG-TEST-SOON",
+                1000m,
+                "1,000 ريال",
+                DateTime.Today.AddDays(5),
+                DateTime.Today.AddDays(5).ToString("yyyy/MM/dd"),
+                "خلال 5 أيام");
+            DashboardWorkItem critical = CreateFollowUpItem(
+                DashboardScope.ExpiredFollowUp,
+                "منتهية تحتاج متابعة",
+                "حرج",
+                0,
+                "BG-TEST-OLD",
+                2000m,
+                "2,000 ريال",
+                DateTime.Today.AddDays(-3),
+                DateTime.Today.AddDays(-3).ToString("yyyy/MM/dd"),
+                "متأخر 3 أيام");
+
+            DashboardGuidanceState state = service.BuildGuidanceState(
+                new[] { normal, critical },
+                Array.Empty<Guarantee>(),
+                Array.Empty<WorkflowRequestListItem>());
+
+            Assert.Equal(DashboardGuidanceActionKind.OpenTopPriority, state.Guide.ActionKind);
+            Assert.Same(critical, state.Guide.TargetItem);
+            Assert.Contains("BG-TEST-OLD", state.Guide.PrimaryText, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void BuildGuidanceState_RecommendsExpiredFollowUpWhenNoPendingRequests()
+        {
+            var service = new DashboardWorkspaceDataService();
+            DashboardWorkItem expired = CreateFollowUpItem(
+                DashboardScope.ExpiredFollowUp,
+                "منتهية تحتاج متابعة",
+                "حرج",
+                0,
+                "BG-TEST-OLD",
+                2000m,
+                "2,000 ريال",
+                DateTime.Today.AddDays(-3),
+                DateTime.Today.AddDays(-3).ToString("yyyy/MM/dd"),
+                "متأخر 3 أيام");
+
+            DashboardGuidanceState state = service.BuildGuidanceState(
+                new[] { expired },
+                Array.Empty<Guarantee>(),
+                Array.Empty<WorkflowRequestListItem>());
+
+            Assert.Equal(DashboardGuidanceActionKind.FilterExpiredFollowUps, state.Recommendation.ActionKind);
+            Assert.Contains("1 ضمان منتهي", state.Recommendation.PrimaryText, StringComparison.Ordinal);
+        }
+
         private static DashboardWorkItem CreateFollowUpItem(
             DashboardScope scope,
             string category,

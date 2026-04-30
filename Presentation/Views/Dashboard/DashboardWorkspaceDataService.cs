@@ -225,6 +225,83 @@ namespace GuaranteeManager
                 true);
         }
 
+        public DashboardGuidanceState BuildGuidanceState(
+            IReadOnlyList<DashboardWorkItem> allItems,
+            IReadOnlyList<Guarantee> guarantees,
+            IReadOnlyList<WorkflowRequestListItem> pendingRequests)
+        {
+            DashboardWorkItem? topPriority = allItems
+                .OrderBy(item => item.PriorityRank)
+                .ThenBy(item => item.SortDate)
+                .ThenByDescending(item => item.Amount)
+                .FirstOrDefault();
+
+            DashboardGuidanceCard guide = topPriority == null
+                ? new DashboardGuidanceCard(
+                    "دليل اليوم الذكي",
+                    "لا توجد أعمال يومية معلقة الآن.",
+                    "المحفظة هادئة، ويمكنك فتح الضمانات لمراجعة السجل الكامل أو إضافة ضمان جديد.",
+                    "فتح الضمانات",
+                    DashboardGuidanceActionKind.OpenGuarantees,
+                    null)
+                : new DashboardGuidanceCard(
+                    "دليل اليوم الذكي",
+                    $"ابدأ من {topPriority.Reference} لأنه أعلى أولوية ظاهرة اليوم.",
+                    $"{topPriority.CategoryLabel} | {topPriority.NextAction}",
+                    topPriority.PrimaryActionLabel,
+                    DashboardGuidanceActionKind.OpenTopPriority,
+                    topPriority);
+
+            int pendingCount = pendingRequests.Count;
+            int expiredCount = allItems.Count(item => item.Scope == DashboardScope.ExpiredFollowUp);
+            int expiringSoonCount = allItems.Count(item => item.Scope == DashboardScope.ExpiringSoon);
+            int followUpCount = guarantees.Count(item => item.NeedsExpiryFollowUp || item.IsExpiringSoon);
+
+            DashboardGuidanceCard recommendation;
+            if (pendingCount > 0)
+            {
+                recommendation = new DashboardGuidanceCard(
+                    "توصيات تشغيلية",
+                    $"يوجد {pendingCount.ToString("N0", CultureInfo.InvariantCulture)} طلب بانتظار رد البنك.",
+                    "ابدأ بها لأنها تمثل مسارات مفتوحة ولا ينبغي إنشاء إجراء جديد قبل فهم الطلب القائم.",
+                    "عرض الطلبات المنتظرة",
+                    DashboardGuidanceActionKind.FilterPendingRequests,
+                    null);
+            }
+            else if (expiredCount > 0)
+            {
+                recommendation = new DashboardGuidanceCard(
+                    "توصيات تشغيلية",
+                    $"يوجد {expiredCount.ToString("N0", CultureInfo.InvariantCulture)} ضمان منتهي يحتاج قرارًا.",
+                    "المنتهية تحتاج حسمًا تشغيليًا قبل أن تبقى خارج الدورة بدون أثر واضح في السجل.",
+                    "عرض المنتهية",
+                    DashboardGuidanceActionKind.FilterExpiredFollowUps,
+                    null);
+            }
+            else if (expiringSoonCount > 0)
+            {
+                recommendation = new DashboardGuidanceCard(
+                    "توصيات تشغيلية",
+                    $"يوجد {expiringSoonCount.ToString("N0", CultureInfo.InvariantCulture)} ضمان قريب الانتهاء.",
+                    "راجعها قبل تاريخ الانتهاء لتحديد هل المطلوب تمديد أو إجراء آخر.",
+                    "عرض القريبة من الانتهاء",
+                    DashboardGuidanceActionKind.FilterExpiringSoon,
+                    null);
+            }
+            else
+            {
+                recommendation = new DashboardGuidanceCard(
+                    "توصيات تشغيلية",
+                    "لا توجد توصيات حرجة الآن.",
+                    $"إجمالي عناصر المتابعة الحالية {followUpCount.ToString("N0", CultureInfo.InvariantCulture)}، ويمكنك العودة لأعمال اليوم عند ظهور مستجدات.",
+                    "عرض كل أعمال اليوم",
+                    DashboardGuidanceActionKind.FilterAllWork,
+                    null);
+            }
+
+            return new DashboardGuidanceState(guide, recommendation);
+        }
+
         private static DashboardDetailProfile ResolveEmptyDetailProfile(string normalizedScope)
         {
             return normalizedScope switch
@@ -428,6 +505,28 @@ namespace GuaranteeManager
     public sealed record DashboardWorkspaceFilterResult(
         IReadOnlyList<DashboardWorkItem> Items,
         DashboardWorkspaceMetrics Metrics);
+
+    public sealed record DashboardGuidanceState(
+        DashboardGuidanceCard Guide,
+        DashboardGuidanceCard Recommendation);
+
+    public sealed record DashboardGuidanceCard(
+        string Title,
+        string PrimaryText,
+        string SecondaryText,
+        string ActionLabel,
+        DashboardGuidanceActionKind ActionKind,
+        DashboardWorkItem? TargetItem);
+
+    public enum DashboardGuidanceActionKind
+    {
+        OpenTopPriority,
+        FilterPendingRequests,
+        FilterExpiredFollowUps,
+        FilterExpiringSoon,
+        FilterAllWork,
+        OpenGuarantees
+    }
 
     public sealed record DashboardWorkspaceDetailState(
         string Title,

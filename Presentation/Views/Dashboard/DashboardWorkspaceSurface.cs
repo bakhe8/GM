@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows.Automation;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using GuaranteeManager.Models;
@@ -37,6 +38,14 @@ namespace GuaranteeManager
         private readonly TextBlock _portfolioAmountValue = BuildMetricValue();
         private readonly TextBlock _pendingValue = BuildMetricValue();
         private readonly TextBlock _followUpValue = BuildMetricValue();
+        private readonly TextBlock _guideTitle = BuildInsightTitle();
+        private readonly TextBlock _guidePrimary = BuildInsightPrimary();
+        private readonly TextBlock _guideSecondary = BuildInsightSecondary();
+        private readonly Button _guideActionButton = BuildInsightActionButton();
+        private readonly TextBlock _recommendationTitle = BuildInsightTitle();
+        private readonly TextBlock _recommendationPrimary = BuildInsightPrimary();
+        private readonly TextBlock _recommendationSecondary = BuildInsightSecondary();
+        private readonly Button _recommendationActionButton = BuildInsightActionButton();
         private readonly TextBlock _detailPanelHeading = BuildSectionHeading();
         private readonly TextBlock _detailActionsHeading = BuildSectionHeading(12);
         private readonly TextBlock _detailTitle = BuildDetailValue(16, FontWeights.Bold);
@@ -61,6 +70,7 @@ namespace GuaranteeManager
         private List<Guarantee> _guarantees = new();
         private List<WorkflowRequestListItem> _pendingRequests = new();
         private List<DashboardWorkItem> _allItems = new();
+        private DashboardGuidanceState? _guidanceState;
         private FrameworkElement? _detailExpiryLine;
 
         public DashboardWorkspaceSurface(
@@ -146,7 +156,8 @@ namespace GuaranteeManager
                 BuildToolbar(),
                 BuildMetrics(),
                 BuildTableSection(),
-                BuildDetailPanel());
+                BuildDetailPanel(),
+                BuildGuidanceStrip());
         }
 
         private Grid BuildToolbar()
@@ -222,6 +233,120 @@ namespace GuaranteeManager
             stack.Children.Add(value);
             card.Child = stack;
             return card;
+        }
+
+        private System.Windows.Controls.Primitives.UniformGrid BuildGuidanceStrip()
+        {
+            _guideActionButton.Click += RunGuidanceButton_Click;
+            _recommendationActionButton.Click += RunGuidanceButton_Click;
+            UiInstrumentation.Identify(_guideActionButton, "Dashboard.Guidance.GuideAction", "إجراء دليل اليوم الذكي");
+            UiInstrumentation.Identify(_recommendationActionButton, "Dashboard.Guidance.RecommendationAction", "إجراء التوصيات التشغيلية");
+
+            var strip = new System.Windows.Controls.Primitives.UniformGrid
+            {
+                Columns = 2,
+                MinHeight = 92
+            };
+
+            strip.Children.Add(BuildGuidanceCard(
+                "Icon.ShieldLock",
+                "#3B82F6",
+                _guideTitle,
+                _guidePrimary,
+                _guideSecondary,
+                _guideActionButton,
+                () => RunGuidanceAction(_guideActionButton.Tag as DashboardGuidanceCard),
+                "Dashboard.Guidance.GuideCard",
+                "دليل اليوم الذكي"));
+            strip.Children.Add(BuildGuidanceCard(
+                "Icon.Lightbulb",
+                "#EAB308",
+                _recommendationTitle,
+                _recommendationPrimary,
+                _recommendationSecondary,
+                _recommendationActionButton,
+                () => RunGuidanceAction(_recommendationActionButton.Tag as DashboardGuidanceCard),
+                "Dashboard.Guidance.RecommendationCard",
+                "توصيات تشغيلية"));
+            WorkspaceSurfaceChrome.ApplyMetricCardSpacing(strip);
+            return strip;
+        }
+
+        private Border BuildGuidanceCard(
+            string iconKey,
+            string accent,
+            TextBlock title,
+            TextBlock primary,
+            TextBlock secondary,
+            Button actionButton,
+            Action action,
+            string automationId,
+            string automationName)
+        {
+            var card = WorkspaceSurfaceChrome.Card(new Thickness(14, 10, 14, 10));
+            card.Margin = new Thickness(0);
+            card.Cursor = Cursors.Hand;
+            card.MouseLeftButtonUp += (_, e) =>
+            {
+                if (IsInsideButton(e.OriginalSource as DependencyObject))
+                {
+                    return;
+                }
+
+                action();
+            };
+            UiInstrumentation.Identify(card, automationId, automationName);
+
+            var grid = new Grid
+            {
+                FlowDirection = FlowDirection.LeftToRight
+            };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(54) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var iconFrame = new Border
+            {
+                Width = 38,
+                Height = 38,
+                CornerRadius = new CornerRadius(19),
+                BorderBrush = WorkspaceSurfaceChrome.BrushFrom(accent),
+                BorderThickness = new Thickness(1.4),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Child = CreateIcon(iconKey, accent, 20)
+            };
+            Grid.SetColumn(iconFrame, 0);
+            grid.Children.Add(iconFrame);
+
+            var content = new StackPanel
+            {
+                FlowDirection = FlowDirection.RightToLeft,
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+            content.Children.Add(title);
+            content.Children.Add(primary);
+            content.Children.Add(secondary);
+            content.Children.Add(actionButton);
+            Grid.SetColumn(content, 1);
+            grid.Children.Add(content);
+
+            card.Child = grid;
+            return card;
+        }
+
+        private static bool IsInsideButton(DependencyObject? source)
+        {
+            while (source != null)
+            {
+                if (source is Button)
+                {
+                    return true;
+                }
+
+                source = VisualTreeHelper.GetParent(source);
+            }
+
+            return false;
         }
 
         private UIElement BuildTableSection()
@@ -451,6 +576,7 @@ namespace GuaranteeManager
             }
 
             ApplyMetrics(filtered.Metrics);
+            ApplyGuidanceState(_dataService.BuildGuidanceState(_allItems, _guarantees, _pendingRequests));
             _summary.Text = _pager.BuildSummary();
             UpdateDetails();
         }
@@ -688,6 +814,67 @@ namespace GuaranteeManager
                 _showGuarantees);
         }
 
+        private void RunGuidanceButton_Click(object sender, RoutedEventArgs e)
+        {
+            e.Handled = true;
+            RunGuidanceAction((sender as FrameworkElement)?.Tag as DashboardGuidanceCard);
+        }
+
+        private void RunGuidanceAction(DashboardGuidanceCard? card)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            switch (card.ActionKind)
+            {
+                case DashboardGuidanceActionKind.OpenTopPriority:
+                    _coordinator.RunPrimaryAction(card.TargetItem, _openGuaranteeContext, _showGuarantees);
+                    break;
+                case DashboardGuidanceActionKind.FilterPendingRequests:
+                    ApplyGuidanceFilter(DashboardScopeFilters.PendingRequests, DashboardExpiryFollowUpFilters.All);
+                    break;
+                case DashboardGuidanceActionKind.FilterExpiredFollowUps:
+                    ApplyGuidanceFilter(DashboardScopeFilters.ExpiryFollowUps, DashboardExpiryFollowUpFilters.Expired);
+                    break;
+                case DashboardGuidanceActionKind.FilterExpiringSoon:
+                    ApplyGuidanceFilter(DashboardScopeFilters.ExpiryFollowUps, DashboardExpiryFollowUpFilters.ExpiringSoon);
+                    break;
+                case DashboardGuidanceActionKind.FilterAllWork:
+                    ApplyGuidanceFilter(DashboardScopeFilters.AllWork, DashboardExpiryFollowUpFilters.All);
+                    break;
+                case DashboardGuidanceActionKind.OpenGuarantees:
+                    _showGuarantees();
+                    break;
+            }
+        }
+
+        private void ApplyGuidanceFilter(string scopeFilter, string expiryFilter)
+        {
+            _pager.ResetToFirstPage();
+            SelectExpiryFollowUpFilter(expiryFilter);
+            bool changed = false;
+            foreach (object item in _scopeFilter.Items)
+            {
+                if (string.Equals(item as string, scopeFilter, StringComparison.Ordinal))
+                {
+                    if (!Equals(_scopeFilter.SelectedItem, item))
+                    {
+                        _scopeFilter.SelectedItem = item;
+                        changed = true;
+                    }
+
+                    break;
+                }
+            }
+
+            if (!changed)
+            {
+                ApplyFilters();
+            }
+        }
+
         private void UpdateDetails()
         {
             ApplyDetailState(_dataService.BuildDetailState(
@@ -704,6 +891,34 @@ namespace GuaranteeManager
             ApplyMetricCard(_criticalWorkLabel, _portfolioAmountValue, metrics.Second);
             ApplyMetricCard(_pendingRequestsLabel, _pendingValue, metrics.Third);
             ApplyMetricCard(_followUpsLabel, _followUpValue, metrics.Fourth);
+        }
+
+        private void ApplyGuidanceState(DashboardGuidanceState state)
+        {
+            _guidanceState = state;
+            ApplyGuidanceCard(_guideTitle, _guidePrimary, _guideSecondary, _guideActionButton, state.Guide);
+            ApplyGuidanceCard(
+                _recommendationTitle,
+                _recommendationPrimary,
+                _recommendationSecondary,
+                _recommendationActionButton,
+                state.Recommendation);
+        }
+
+        private static void ApplyGuidanceCard(
+            TextBlock title,
+            TextBlock primary,
+            TextBlock secondary,
+            Button actionButton,
+            DashboardGuidanceCard card)
+        {
+            title.Text = card.Title;
+            primary.Text = card.PrimaryText;
+            secondary.Text = card.SecondaryText;
+            actionButton.Content = card.ActionLabel;
+            actionButton.Tag = card;
+            AutomationProperties.SetName(actionButton, card.ActionLabel);
+            AutomationProperties.SetHelpText(actionButton, card.SecondaryText);
         }
 
         private void ApplyDetailState(DashboardWorkspaceDetailState state)
@@ -752,6 +967,55 @@ namespace GuaranteeManager
                 FontWeight = FontWeights.SemiBold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom(accentHex),
                 TextAlignment = TextAlignment.Right
+            };
+        }
+
+        private static TextBlock BuildInsightTitle()
+        {
+            return new TextBlock
+            {
+                FontSize = 12.5,
+                FontWeight = FontWeights.Bold,
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text"),
+                TextAlignment = TextAlignment.Right
+            };
+        }
+
+        private static TextBlock BuildInsightPrimary()
+        {
+            return new TextBlock
+            {
+                FontSize = 11.3,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#1F2937"),
+                Margin = new Thickness(0, 5, 0, 0),
+                TextAlignment = TextAlignment.Right,
+                TextWrapping = TextWrapping.Wrap
+            };
+        }
+
+        private static TextBlock BuildInsightSecondary()
+        {
+            return new TextBlock
+            {
+                FontSize = 10.3,
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
+                Margin = new Thickness(0, 3, 0, 0),
+                TextAlignment = TextAlignment.Right,
+                TextWrapping = TextWrapping.Wrap
+            };
+        }
+
+        private static Button BuildInsightActionButton()
+        {
+            return new Button
+            {
+                Style = WorkspaceSurfaceChrome.Style("PlainLinkButton"),
+                FontSize = 10.5,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#2563EB"),
+                Margin = new Thickness(0, 7, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Right
             };
         }
 
