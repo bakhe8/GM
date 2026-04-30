@@ -92,12 +92,11 @@ function Invoke-SmokeNavigationScenario {
     param([System.Windows.Automation.AutomationElement]$MainWindow)
 
     $screens = @(
-        @{ Label = "لوحة التحكم"; Slug = "dashboard" },
+        @{ Label = "اليوم"; Slug = "dashboard" },
         @{ Label = "الضمانات"; Slug = "guarantees" },
         @{ Label = "الطلبات"; Slug = "requests" },
         @{ Label = "البنوك"; Slug = "banks" },
         @{ Label = "التقارير"; Slug = "reports" },
-        @{ Label = "التنبيهات"; Slug = "notifications" },
         @{ Label = "الإعدادات"; Slug = "settings" }
     )
 

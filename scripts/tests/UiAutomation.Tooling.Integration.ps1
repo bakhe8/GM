@@ -1052,68 +1052,70 @@ try {
         return $payload
     } | Out-Null
 
-    Invoke-RegressionStep -Name "sidebar-guarantees" -ScriptBlock {
+    Invoke-RegressionStep -Name "sidebar-reports-for-history-print" -ScriptBlock {
         $payload = Invoke-UiExploreJson -Arguments @{
             Action = "Sidebar"
-            Label = "الضمانات"
+            Label = "التقارير"
             ReuseRunningSession = $true
         }
 
-        Assert-RegressionCondition ($payload.Action -eq "Sidebar") "Sidebar action payload was not returned for Guarantees."
+        Assert-RegressionCondition ($payload.Action -eq "Sidebar") "Sidebar action payload was not returned for Reports."
         return $payload
     } | Out-Null
 
-    Invoke-RegressionStep -Name "open-guarantee-history" -ScriptBlock {
+    Invoke-RegressionStep -Name "filter-history-print-report" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "SetField"
+            WindowAutomationId = "Shell.MainWindow"
+            AutomationId = "Reports.SearchBox"
+            Value = "طباعة سجل"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Action -eq "SetField") "Report catalog search field was not updated."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "select-history-print-report" -ScriptBlock {
+        $payload = Invoke-UiExploreJson -Arguments @{
+            Action = "Click"
+            WindowAutomationId = "Shell.MainWindow"
+            AutomationId = "Reports.Row.Show.operational.guarantee-history-print"
+            ReuseRunningSession = $true
+        }
+
+        Assert-RegressionCondition ($payload.Target.AutomationId -eq "Reports.Row.Show.operational.guarantee-history-print") "Could not select the guarantee history print report."
+        return $payload
+    } | Out-Null
+
+    Invoke-RegressionStep -Name "open-history-print-input" -ScriptBlock {
         Invoke-UiExploreJson -Arguments @{
             Action = "Click"
             WindowAutomationId = "Shell.MainWindow"
-            AutomationId = "GuaranteeDetailPanel.Action.History"
+            AutomationId = "Reports.Detail.RunButton"
             ReuseRunningSession = $true
         } | Out-Null
 
         $payload = Invoke-UiExploreJson -Arguments @{
             Action = "WaitWindow"
-            WindowAutomationId = "Dialog.GuaranteeHistory"
+            WindowTitle = "طباعة سجل ضمان محدد"
             ReuseRunningSession = $true
         }
 
-        Assert-RegressionCondition ($payload.Window.AutomationId -eq "Dialog.GuaranteeHistory") "WaitWindow did not resolve HistoryDialog."
+        Assert-RegressionCondition ($payload.Window.Name -eq "طباعة سجل ضمان محدد") "WaitWindow did not resolve the guarantee history print input dialog."
         return $payload
     } | Out-Null
 
-    Invoke-RegressionStep -Name "close-history-and-wait" -ScriptBlock {
-        Invoke-UiExploreJson -Arguments @{
-            Action = "Click"
-            WindowAutomationId = "Dialog.GuaranteeHistory"
-            AutomationId = "Dialog.GuaranteeHistory.CloseFooterButton"
-            ReuseRunningSession = $true
-        } | Out-Null
-
+    Invoke-RegressionStep -Name "fill-history-print-input" -ScriptBlock {
         $payload = Invoke-UiExploreJson -Arguments @{
-            Action = "WaitWindowClosed"
-            WindowAutomationId = "Dialog.GuaranteeHistory"
+            Action = "SetField"
+            WindowTitle = "طباعة سجل ضمان محدد"
+            Label = "رقم الضمان"
+            Value = "BG-2026-0007"
             ReuseRunningSession = $true
         }
 
-        Assert-RegressionCondition ($payload.Closed -eq $true) "HistoryDialog did not close within the expected wait window."
-        return $payload
-    } | Out-Null
-
-    Invoke-RegressionStep -Name "reopen-history-for-print" -ScriptBlock {
-        Invoke-UiExploreJson -Arguments @{
-            Action = "Click"
-            WindowAutomationId = "Shell.MainWindow"
-            AutomationId = "GuaranteeDetailPanel.Action.History"
-            ReuseRunningSession = $true
-        } | Out-Null
-
-        $payload = Invoke-UiExploreJson -Arguments @{
-            Action = "WaitWindow"
-            WindowAutomationId = "Dialog.GuaranteeHistory"
-            ReuseRunningSession = $true
-        }
-
-        Assert-RegressionCondition ($payload.Window.AutomationId -eq "Dialog.GuaranteeHistory") "HistoryDialog did not reopen for print integration."
+        Assert-RegressionCondition ($payload.Action -eq "SetField") "Guarantee history print input was not filled."
         return $payload
     } | Out-Null
 
@@ -1121,7 +1123,7 @@ try {
         $payload = Invoke-UiExploreJson -Arguments @{
             Action = "CapabilityOn"
             CapabilityName = "ExplorationAssist"
-            LeaseMilliseconds = 8000
+            LeaseMilliseconds = 12000
             Reason = "integration-exploration-assist-external"
             ReuseRunningSession = $true
         }
@@ -1133,8 +1135,8 @@ try {
     Invoke-RegressionStep -Name "open-history-print-window" -ScriptBlock {
         Invoke-UiExploreJson -Arguments @{
             Action = "Click"
-            WindowAutomationId = "Dialog.GuaranteeHistory"
-            AutomationId = "Dialog.GuaranteeHistory.PrintButton"
+            WindowTitle = "طباعة سجل ضمان محدد"
+            Name = "إنشاء التقرير"
             ReuseRunningSession = $true
         } | Out-Null
 
@@ -1195,24 +1197,6 @@ try {
         }
 
         Assert-RegressionCondition ($payload.Closed -eq $true) "External print window did not close within the expected wait window."
-        return $payload
-    } | Out-Null
-
-    Invoke-RegressionStep -Name "close-history-after-print" -ScriptBlock {
-        Invoke-UiExploreJson -Arguments @{
-            Action = "Click"
-            WindowAutomationId = "Dialog.GuaranteeHistory"
-            AutomationId = "Dialog.GuaranteeHistory.CloseFooterButton"
-            ReuseRunningSession = $true
-        } | Out-Null
-
-        $payload = Invoke-UiExploreJson -Arguments @{
-            Action = "WaitWindowClosed"
-            WindowAutomationId = "Dialog.GuaranteeHistory"
-            ReuseRunningSession = $true
-        }
-
-        Assert-RegressionCondition ($payload.Closed -eq $true) "HistoryDialog did not close after the print integration path."
         return $payload
     } | Out-Null
 

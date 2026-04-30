@@ -23,6 +23,9 @@ DevSeedRuntime/
 Attachments/_staging/
 releases/*.zip
 releases/v*/
+
+# Generated root-level report exports
+/Guarantees_*.xlsx
 /tmp-*.json
 /_acceptance*.png
 /_acceptance2_*.png
