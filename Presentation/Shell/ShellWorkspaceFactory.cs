@@ -68,6 +68,7 @@ namespace GuaranteeManager
 
         public FrameworkElement CreateRequestsWorkspace(
             Action<int> refreshAfterWorkflowChange,
+            Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
             Action? selectionChanged = null,
             string? initialSearchText = null,
             int? initialRequestId = null)
@@ -82,6 +83,7 @@ namespace GuaranteeManager
                 _database,
                 _workflow,
                 refreshAfterWorkflowChange,
+                openGuaranteeContext,
                 selectionChanged,
                 initialSearchText,
                 initialRequestId);

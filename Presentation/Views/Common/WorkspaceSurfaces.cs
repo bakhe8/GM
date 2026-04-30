@@ -63,7 +63,7 @@ namespace GuaranteeManager
             UIElement toolbar,
             UIElement metrics,
             UIElement table,
-            UIElement detailPanel,
+            UIElement? detailPanel,
             UIElement? guidanceStrip = null)
         {
             var root = new Grid
@@ -72,7 +72,10 @@ namespace GuaranteeManager
                 FlowDirection = FlowDirection.LeftToRight
             };
             root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(400) });
+            if (detailPanel != null)
+            {
+                root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(400) });
+            }
 
             var main = new Grid
             {
@@ -111,8 +114,12 @@ namespace GuaranteeManager
             main.Children.Add(table);
 
             root.Children.Add(main);
-            Grid.SetColumn(detailPanel, 1);
-            root.Children.Add(detailPanel);
+            if (detailPanel != null)
+            {
+                Grid.SetColumn(detailPanel, 1);
+                root.Children.Add(detailPanel);
+            }
+
             return root;
         }
 

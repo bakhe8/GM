@@ -1379,6 +1379,7 @@ namespace GuaranteeManager
                 ShellWorkspaceKeys.Requests,
                 _workspaceFactory.CreateRequestsWorkspace(
                     RefreshAfterWorkflowChange,
+                    (rootId, area, requestIdToFocus) => OpenGuaranteeContext("requests", rootId, area, requestIdToFocus),
                     () =>
                     {
                         if (string.Equals(CurrentWorkspaceKey, ShellWorkspaceKeys.Requests, StringComparison.Ordinal)

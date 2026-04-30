@@ -15,6 +15,7 @@ namespace GuaranteeManager
     public sealed class RequestsWorkspaceSurface : UserControl
     {
         private readonly Func<IReadOnlyList<WorkflowRequestListItem>> _loadRequests;
+        private readonly Action<int, GuaranteeFileFocusArea, int?> _openGuaranteeContext;
         private readonly Action? _selectionChanged;
         private readonly RequestsWorkspaceDataService _dataService;
         private readonly RequestsWorkspaceCoordinator _coordinator;
@@ -49,11 +50,13 @@ namespace GuaranteeManager
             IDatabaseService database,
             IWorkflowService workflow,
             Action<int>? onChanged,
+            Action<int, GuaranteeFileFocusArea, int?> openGuaranteeContext,
             Action? selectionChanged = null,
             string? initialSearchText = null,
             int? initialRequestId = null)
         {
             _loadRequests = loadRequests;
+            _openGuaranteeContext = openGuaranteeContext;
             _selectionChanged = selectionChanged;
             _dataService = new RequestsWorkspaceDataService();
             _coordinator = new RequestsWorkspaceCoordinator(database, workflow, App.CurrentApp.GetRequiredService<IShellStatusService>(), onChanged);
@@ -90,7 +93,7 @@ namespace GuaranteeManager
                 BuildToolbarBlock(),
                 BuildMetrics(),
                 BuildTableSection(),
-                BuildDetailPanel());
+                null);
         }
 
         private void ConfigureButtons()
@@ -206,7 +209,6 @@ namespace GuaranteeManager
         {
             _list.SelectionChanged += (_, _) =>
             {
-                UpdateDetails();
                 _selectionChanged?.Invoke();
             };
             return WorkspaceSurfaceChrome.BuildReferenceTableShell(
@@ -232,11 +234,12 @@ namespace GuaranteeManager
             AddHeader(inner, "نوع الطلب", 2, false);
             AddHeader(inner, "القيمة المطلوبة", 3, false);
             AddHeader(inner, "القيمة الحالية", 4, false);
-            AddHeader(inner, "تاريخ الطلب", 5, false);
-            AddHeader(inner, "البنك", 6, true);
-            AddHeader(inner, "المورد", 7, true);
-            AddHeader(inner, "الإصدار", 8, false);
-            AddHeader(inner, "رقم الضمان", 9, true);
+            AddHeader(inner, "عمر الطلب", 5, false);
+            AddHeader(inner, "تاريخ الطلب", 6, false);
+            AddHeader(inner, "البنك", 7, true);
+            AddHeader(inner, "المورد", 8, true);
+            AddHeader(inner, "الإصدار", 9, false);
+            AddHeader(inner, "رقم الضمان", 10, true);
             header.Children.Add(inner);
             return header;
         }
@@ -527,6 +530,7 @@ namespace GuaranteeManager
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.35, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.35, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.0, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.0, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.35, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.45, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.72, GridUnitType.Star) });
@@ -622,6 +626,8 @@ namespace GuaranteeManager
                 Margin = new Thickness(10, 0, 0, 0)
             };
             actions.Children.Add(CreateRowButton(item.QueueActionLabel, "Icon.Document", item, OpenResponseFromRow_Click, item.CanRunQueueAction, item.QueueActionHint));
+            actions.Children.Add(CreateRowButton("خطاب", "Icon.Document", item, OpenLetterFromRow_Click, item.CanOpenLetter, item.CanOpenLetter ? "فتح خطاب الطلب." : "لا يوجد خطاب محفوظ لهذا الطلب."));
+            actions.Children.Add(CreateRowButton("الضمان", "Icon.View", item, OpenGuaranteeFromRow_Click, item.Item.RootGuaranteeId > 0, "فتح الضمان في واجهة الضمانات عند السجل الزمني."));
             Grid.SetColumn(actions, 0);
             row.Children.Add(actions);
 
@@ -629,11 +635,12 @@ namespace GuaranteeManager
             row.Children.Add(BuildCell(item.RequestType, 2, "TableCellCenter"));
             row.Children.Add(BuildCell(item.RequestedValue, 3, "TableCellCenter"));
             row.Children.Add(BuildCell(item.CurrentValue, 4, "TableCellCenter"));
-            row.Children.Add(BuildCell(item.RequestDate, 5, "TableCellCenter"));
-            row.Children.Add(BuildBankCell(item, 6));
-            row.Children.Add(BuildCell(item.Supplier, 7, "TableCellRight"));
-            row.Children.Add(BuildCell(item.VersionLabel, 8, "TableCellCenter"));
-            row.Children.Add(BuildCell(item.GuaranteeNo, 9, "TableCellRight"));
+            row.Children.Add(BuildCell(item.RequestAge, 5, "TableCellCenter", item.RequestAgeBrush));
+            row.Children.Add(BuildCell(item.RequestDate, 6, "TableCellCenter"));
+            row.Children.Add(BuildBankCell(item, 7));
+            row.Children.Add(BuildCell(item.Supplier, 8, "TableCellRight"));
+            row.Children.Add(BuildCell(item.VersionLabel, 9, "TableCellCenter"));
+            row.Children.Add(BuildCell(item.GuaranteeNo, 10, "TableCellRight"));
 
             return row;
         }
@@ -697,7 +704,7 @@ namespace GuaranteeManager
             ToolTipService.SetShowOnDisabled(button, true);
             UiInstrumentation.Identify(
                 button,
-                UiInstrumentation.SanitizeAutomationKey($"Requests.RowAction.{text}", item.GuaranteeNo),
+                UiInstrumentation.SanitizeAutomationKey($"Requests.RowAction.{text}.{item.Item.Request.Id}", item.GuaranteeNo),
                 $"{text} | {item.GuaranteeNo}");
             button.Click += handler;
             return button;
@@ -830,6 +837,23 @@ namespace GuaranteeManager
         {
             SelectRowFromSender(sender);
             UseResponseAction();
+        }
+
+        private void OpenLetterFromRow_Click(object sender, RoutedEventArgs e)
+        {
+            SelectRowFromSender(sender);
+            OpenLetter();
+        }
+
+        private void OpenGuaranteeFromRow_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not FrameworkElement element || element.Tag is not RequestListDisplayItem item)
+            {
+                return;
+            }
+
+            SelectRowFromSender(sender);
+            _openGuaranteeContext(item.Item.RootGuaranteeId, GuaranteeFileFocusArea.Series, null);
         }
 
         private void SelectRowFromSender(object sender)

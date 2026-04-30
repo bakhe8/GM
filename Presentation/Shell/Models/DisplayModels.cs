@@ -63,6 +63,11 @@ namespace GuaranteeManager
             RequestedValue = item.RequestedValueDisplay;
             CurrentValue = item.CurrentValueDisplay;
             RequestDate = item.Request.RequestDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+            RequestAge = BuildRequestAge(item.Request);
+            int pendingAgeDays = Math.Max(0, (DateTime.Today - item.Request.RequestDate.Date).Days);
+            RequestAgeBrush = item.Request.Status == GuaranteeManager.Models.RequestStatus.Pending
+                ? TonePalette.Foreground(pendingAgeDays >= 10 ? Tone.Warning : Tone.Info)
+                : TonePalette.Foreground(Tone.Success);
             ResponseDate = item.ResponseDateLabel;
             VersionLabel = item.RelatedVersionLabel;
         }
@@ -82,6 +87,8 @@ namespace GuaranteeManager
         public string RequestedValue { get; }
         public string CurrentValue { get; }
         public string RequestDate { get; }
+        public string RequestAge { get; }
+        public Brush RequestAgeBrush { get; }
         public string ResponseDate { get; }
         public string VersionLabel { get; }
         public bool CanRegisterResponse => Item.Request.Status == GuaranteeManager.Models.RequestStatus.Pending;
@@ -98,6 +105,19 @@ namespace GuaranteeManager
                 : CanRegisterResponse
                     ? "الطلب معلق ويمكن تسجيل رد البنك عليه مباشرة."
                     : "لا يوجد إجراء استجابة متاح لهذا السجل حاليًا.";
+
+        private static string BuildRequestAge(WorkflowRequest request)
+        {
+            DateTime referenceDate = request.Status == GuaranteeManager.Models.RequestStatus.Pending
+                ? DateTime.Today
+                : (request.ResponseRecordedAt?.Date ?? DateTime.Today);
+            int days = Math.Max(0, (referenceDate - request.RequestDate.Date).Days);
+            string dayText = days.ToString("N0", CultureInfo.InvariantCulture);
+
+            return request.Status == GuaranteeManager.Models.RequestStatus.Pending
+                ? $"ينتظر {dayText} يوم"
+                : $"استغرق {dayText} يوم";
+        }
     }
 
     public sealed class AttachmentItem
