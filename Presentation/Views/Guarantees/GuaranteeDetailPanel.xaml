@@ -302,19 +302,16 @@
                                                                     <Path Data="{StaticResource Icon.Paperclip}" Stroke="#2563EB" StrokeThickness="2.1" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                                                 </Viewbox>
                                                             </Border>
-                                                            <Border Width="42"
-                                                                    Height="20"
+                                                            <Border Height="18"
+                                                                    Width="18"
                                                                     CornerRadius="9"
                                                                     Background="#EFF6FF"
                                                                     BorderBrush="#BFDBFE"
                                                                     BorderThickness="1"
                                                                     Visibility="{Binding IsAttachEvidenceAction, Converter={StaticResource TrueToVisibleCollapsedConverter}}">
-                                                                <TextBlock Text="إرفاق"
-                                                                           FontSize="8.7"
-                                                                           FontWeight="SemiBold"
-                                                                           Foreground="#2563EB"
-                                                                           HorizontalAlignment="Center"
-                                                                           VerticalAlignment="Center" />
+                                                                <Viewbox Width="10.5" Height="10.5">
+                                                                    <Path Data="{StaticResource Icon.NewTransaction}" Stroke="#2563EB" StrokeThickness="2.1" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                                </Viewbox>
                                                             </Border>
                                                         </Grid>
                                                     </Button>

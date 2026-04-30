@@ -771,8 +771,8 @@ namespace GuaranteeManager
         public bool IsAttachEvidenceAction => EvidenceActionKind == TimelineEvidenceActionKind.OfficialAttachment
             || EvidenceActionKind == TimelineEvidenceActionKind.ResponseDocument && EvidenceRequest?.HasResponseDocument != true;
         public bool IsOpenEvidenceAction => HasEvidenceAction && !IsAttachEvidenceAction;
-        public double EvidenceActionWidth => IsAttachEvidenceAction ? 44d : 20d;
-        public double EvidenceActionHeight => IsAttachEvidenceAction ? 22d : 20d;
+        public double EvidenceActionWidth => 20d;
+        public double EvidenceActionHeight => 20d;
         public string EvidenceActionLabel { get; }
         public string EvidenceActionHint { get; }
         public string EvidenceActionAutomationId { get; }
