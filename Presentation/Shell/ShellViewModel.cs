@@ -753,15 +753,7 @@ namespace GuaranteeManager
             }
         }
 
-        private void CreateNewGuarantee()
-        {
-            _guaranteeWorkspace.CreateNewGuarantee();
-        }
 
-        private void EditGuarantee(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.EditGuarantee);
-        }
 
         private int? ResolveContextRequestId(GuaranteeRow target)
         {
@@ -865,347 +857,40 @@ namespace GuaranteeManager
                 : requestedArea;
         }
 
-        private void RunSelectedInquiry()
-        {
-            GuaranteeRow? target = ResolveTarget(SelectedGuarantee);
-            OperationalInquiryOption? option = SelectedOperationalInquiryOption;
-            if (target == null || option == null)
-            {
-                return;
-            }
 
-            LatestInquiryResult = _guaranteeWorkspace.RunInquiry(target, option);
-            _diagnostics.RecordEvent(
-                "guarantee.inquiry",
-                "run",
-                new
-                {
-                    target.Id,
-                    target.RootId,
-                    target.GuaranteeNo,
-                    InquiryId = option.Id
-                });
-            WriteDiagnosticsState("run-inquiry");
-        }
 
-        private void CreateExtensionRequest(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CreateExtensionRequest);
-        }
 
-        private void CreateReleaseRequest(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CreateReleaseRequest);
-        }
 
-        private void CreateReductionRequest(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CreateReductionRequest);
-        }
 
-        private void CreateLiquidationRequest(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CreateLiquidationRequest);
-        }
 
-        private void CreateVerificationRequest(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CreateVerificationRequest);
-        }
 
-        private void CreateReplacementRequest(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CreateReplacementRequest);
-        }
 
-        private void RegisterBankResponse(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.RegisterBankResponse);
-        }
 
-        private void OpenAttachment(AttachmentItem? item)
-        {
-            _sessionCoordinator.OpenAttachment(item);
-        }
 
-        private void OpenTimelineEvidence(TimelineItem? item)
-        {
-            if (item == null)
-            {
-                return;
-            }
 
-            switch (item.EvidenceActionKind)
-            {
-                case TimelineEvidenceActionKind.Attachment:
-                    if (item.EvidenceAttachment != null)
-                    {
-                        _sessionCoordinator.OpenAttachment(AttachmentItem.FromAttachment(item.EvidenceAttachment));
-                    }
 
-                    break;
-                case TimelineEvidenceActionKind.RequestLetter:
-                    if (item.EvidenceRequest != null)
-                    {
-                        _guaranteeWorkspace.OpenRequestLetter(item.EvidenceRequest);
-                    }
 
-                    break;
-                case TimelineEvidenceActionKind.ResponseDocument:
-                    if (item.EvidenceRequest != null)
-                    {
-                        if (item.EvidenceRequest.HasResponseDocument)
-                        {
-                            _guaranteeWorkspace.OpenResponseDocument(item.EvidenceRequest);
-                        }
-                        else
-                        {
-                            _guaranteeWorkspace.AttachResponseDocument(
-                                item.EvidenceRequest,
-                                SelectedGuarantee?.GuaranteeNo ?? string.Empty);
-                        }
-                    }
 
-                    break;
-                case TimelineEvidenceActionKind.OfficialAttachment:
-                    ExecuteGuaranteeAction(
-                        SelectedGuarantee,
-                        target => _guaranteeWorkspace.AttachTimelineEvidence(target, item),
-                        syncSelection: true);
-                    break;
-            }
-        }
 
-        private void ShowAllAttachments()
-        {
-            ExecuteGuaranteeAction(SelectedGuarantee, target => _guaranteeWorkspace.ShowAttachments(target, showEmptyMessage: true));
-        }
 
-        private void OpenRequestPreview(GuaranteeRequestPreviewItem? item)
-        {
-            if (item == null)
-            {
-                return;
-            }
 
-            FocusGuaranteeSection(GuaranteeFocusArea.Requests, item.Request.Id);
-        }
 
-        private void RegisterRequestPreviewResponse(GuaranteeRequestPreviewItem? item)
-        {
-            if (item?.CanRegisterResponse != true || SelectedGuarantee == null)
-            {
-                return;
-            }
 
-            _guaranteeWorkspace.RegisterBankResponse(item.Request, SelectedGuarantee.GuaranteeNo);
-        }
 
-        private void OpenRequestPreviewLetter(GuaranteeRequestPreviewItem? item)
-        {
-            if (item != null)
-            {
-                _guaranteeWorkspace.OpenRequestLetter(item.Request);
-            }
-        }
 
-        private void OpenRequestPreviewResponse(GuaranteeRequestPreviewItem? item)
-        {
-            if (item != null)
-            {
-                _guaranteeWorkspace.OpenResponseDocument(item.Request);
-            }
-        }
 
-        private void FocusSuggestedGuaranteeArea()
-        {
-            if (SelectedGuarantee?.HasSuggestedFocus == true)
-            {
-                FocusGuaranteeSection(SelectedGuarantee.SuggestedFocusArea);
-            }
-        }
 
-        private void FocusLatestInquirySection()
-        {
-            if (LatestInquiryResult != null &&
-                InquiryContextRoutingResolver.TryResolve(LatestInquiryResult, out GuaranteeFocusArea area, out int? requestIdToFocus))
-            {
-                FocusGuaranteeSection(area, requestIdToFocus);
-            }
-        }
 
-        private static string FormatOfficialAttachmentCount(int count)
-        {
-            return count switch
-            {
-                1 => "مرفق رسمي واحد",
-                2 => "مرفقان رسميان",
-                _ => $"{count.ToString("N0", CultureInfo.InvariantCulture)} مرفقات رسمية"
-            };
-        }
 
-        private void CopyGuaranteeNo(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CopyGuaranteeNo, syncSelection: true);
-        }
 
-        private void CopyGuaranteeSupplier(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CopySupplier, syncSelection: true);
-        }
 
-        private void CopyGuaranteeReferenceType(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CopyReferenceType, syncSelection: true);
-        }
 
-        private void CopyGuaranteeReferenceNumber(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CopyReferenceNumber, syncSelection: true);
-        }
 
-        private void CopyGuaranteeType(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CopyGuaranteeType, syncSelection: true);
-        }
 
-        private void CopyGuaranteeIssueDate(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CopyIssueDate, syncSelection: true);
-        }
 
-        private void CopyGuaranteeExpiryDate(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(row, _guaranteeWorkspace.CopyExpiryDate, syncSelection: true);
-        }
 
-        public void FocusGuaranteeSection(GuaranteeFocusArea area, int? requestIdToFocus = null)
-        {
-            if (SelectedGuarantee == null)
-            {
-                return;
-            }
 
-            _currentGuaranteeFocusArea = area;
-            int? nextFocusedRequestId = area == GuaranteeFocusArea.Requests ? requestIdToFocus : null;
-            _guaranteeFocusRequestVersion++;
-            if (_focusedGuaranteeRequestId != nextFocusedRequestId)
-            {
-                _focusedGuaranteeRequestId = nextFocusedRequestId;
-                RaiseGuaranteeContextSectionTextProperties();
-                RefreshSelectedGuaranteeArtifacts();
-            }
 
-            GuaranteeFocusRequested?.Invoke(area, requestIdToFocus);
-        }
-
-        private void OpenOutputLetter(GuaranteeOutputPreviewItem? item)
-        {
-            if (item != null)
-            {
-                _guaranteeWorkspace.OpenRequestLetter(item.Request);
-            }
-        }
-
-        private void OpenOutputResponse(GuaranteeOutputPreviewItem? item)
-        {
-            if (item != null)
-            {
-                _guaranteeWorkspace.OpenResponseDocument(item.Request);
-            }
-        }
-
-        private void OpenLatestInquiryDialog()
-        {
-            if (LatestInquiryResult != null)
-            {
-                _guaranteeWorkspace.ShowInquiryResult(LatestInquiryResult);
-            }
-        }
-
-        private void OpenLatestInquiryLetter()
-        {
-            if (LatestInquiryResult?.RelatedRequest != null)
-            {
-                _guaranteeWorkspace.OpenRequestLetter(LatestInquiryResult.RelatedRequest);
-            }
-        }
-
-        private void OpenLatestInquiryResponse()
-        {
-            if (LatestInquiryResult?.RelatedRequest != null)
-            {
-                _guaranteeWorkspace.OpenResponseDocument(LatestInquiryResult.RelatedRequest);
-            }
-        }
-
-        public void RunInquiryAction(string actionId, GuaranteeRow? row)
-        {
-            GuaranteeRow? target = ResolveTarget(row);
-            if (target == null || string.IsNullOrWhiteSpace(actionId))
-            {
-                return;
-            }
-
-            SelectedGuarantee = target;
-            SelectedOperationalInquiryOption = OperationalInquiryOptions.FirstOrDefault(option => option.Id == actionId)
-                                               ?? SelectedOperationalInquiryOption;
-
-            Guarantee? guarantee = _database.GetGuaranteeById(target.Id);
-            if (guarantee == null)
-            {
-                MessageBox.Show("تعذر تحميل الضمان المحدد لتنفيذ الاستعلام.", "الاستعلامات التشغيلية", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            ContextActionAvailability availability = GuaranteeInquiryActionSupport.GetAvailability(actionId, guarantee);
-            if (!availability.IsEnabled)
-            {
-                MessageBox.Show(
-                    availability.DisabledReason ?? "هذا الاستعلام غير متاح لهذا السجل حاليًا.",
-                    "الاستعلامات التشغيلية",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
-                return;
-            }
-
-            LatestInquiryResult = _guaranteeWorkspace.RunInquiry(target, new OperationalInquiryOption(actionId, "استعلام مباشر", actionId, string.Empty));
-        }
-
-        public ContextActionAvailability GetInquiryAvailability(GuaranteeRow row, string actionId)
-        {
-            Guarantee? guarantee = _database.GetGuaranteeById(row.Id);
-            return guarantee == null
-                ? ContextActionAvailability.Disabled("تعذر تحميل السجل الحالي لتقييم إتاحة هذا الاستعلام.")
-                : GuaranteeInquiryActionSupport.GetAvailability(actionId, guarantee);
-        }
-
-        private void ExecuteGuaranteeAction(GuaranteeRow? row, Action<GuaranteeRow> action, bool syncSelection = false)
-        {
-            GuaranteeRow? target = ResolveTarget(row);
-            if (target == null)
-            {
-                return;
-            }
-
-            if (syncSelection)
-            {
-                SelectedGuarantee = target;
-            }
-
-            action(target);
-        }
-
-        private GuaranteeRow? ResolveTarget(GuaranteeRow? row)
-        {
-            GuaranteeRow? target = row ?? SelectedGuarantee;
-            if (target == null)
-            {
-                MessageBox.Show("اختر ضماناً أولاً.", "إجراء الضمان", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-
-            return target;
-        }
 
         private void RefreshAfterWorkflowChange(int rootIdToRestore)
         {
