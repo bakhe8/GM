@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using ClosedXML.Excel;
 using GuaranteeManager.Models;
-using GuaranteeManager.Utils;
 
 namespace GuaranteeManager.Services
 {
@@ -111,8 +110,7 @@ namespace GuaranteeManager.Services
                 ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "المبلغ", guarantee.Amount.ToString("N2"), "النوع", ExcelReportSupport.ValueOrDash(guarantee.GuaranteeType));
                 ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "تاريخ الانتهاء", guarantee.ExpiryDate.ToString("yyyy-MM-dd"), "الحالة الزمنية", guarantee.StatusLabel);
                 ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "الحالة التشغيلية", guarantee.LifecycleStatusLabel, "المرفقات", guarantee.AttachmentCount.ToString());
-                ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "المستفيد", BusinessPartyDefaults.NormalizeBeneficiary(guarantee.Beneficiary), "نوع المرجع", guarantee.ReferenceTypeLabel);
-                ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "رقم المرجع", ExcelReportSupport.ValueOrDash(guarantee.ReferenceNumber), "معرّف السجل", guarantee.Id.ToString());
+                ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "نوع المرجع", guarantee.ReferenceTypeLabel, "رقم المرجع", ExcelReportSupport.ValueOrDash(guarantee.ReferenceNumber));
                 ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "تاريخ الإدخال", guarantee.CreatedAt.ToString("yyyy-MM-dd HH:mm"), "اكتمال المرجع", guarantee.HasReference ? "مكتمل" : "غير مكتمل");
 
                 detailsSheet.Cell(row, 1).Value = "الملاحظات";

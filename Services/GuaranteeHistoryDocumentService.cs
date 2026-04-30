@@ -8,7 +8,6 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using ClosedXML.Excel;
 using GuaranteeManager.Models;
-using GuaranteeManager.Utils;
 using Microsoft.Win32;
 
 namespace GuaranteeManager.Services
@@ -157,7 +156,6 @@ namespace GuaranteeManager.Services
             worksheet.RightToLeft = true;
 
             Guarantee current = ResolveSummaryGuarantee(guarantee, orderedHistory);
-            string beneficiary = ResolveBeneficiary(current);
             string supplier = ExcelReportSupport.ValueOrDash(current.Supplier);
             int pendingRequests = orderedRequests.Count(item => item.Status == RequestStatus.Pending);
             int totalAttachments = orderedHistory.Sum(item => item.AttachmentCount);
@@ -199,7 +197,7 @@ namespace GuaranteeManager.Services
             int row = 9;
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "رقم الضمان", current.GuaranteeNo, "المرجع الرئيسي", BuildReferenceSummary(current));
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "المورد", supplier, "البنك", current.Bank);
-            ExcelReportSupport.WriteOverviewRow(worksheet, row++, "المستفيد", beneficiary, "نوع الضمان", ExcelReportSupport.ValueOrDash(current.GuaranteeType));
+            ExcelReportSupport.WriteOverviewRow(worksheet, row++, "نوع الضمان", ExcelReportSupport.ValueOrDash(current.GuaranteeType), "نوع المرجع", current.ReferenceTypeLabel);
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "القيمة الحالية", $"{current.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال", "تاريخ الانتهاء", current.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture));
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "الطلبات المعلقة", pendingRequests.ToString("N0", CultureInfo.InvariantCulture), "إجمالي المرفقات", totalAttachments.ToString("N0", CultureInfo.InvariantCulture));
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "أول إنشاء", firstCreated, "آخر تحديث", lastUpdated);
@@ -553,11 +551,6 @@ namespace GuaranteeManager.Services
             var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));
             brush.Freeze();
             return brush;
-        }
-
-        private static string ResolveBeneficiary(Guarantee guarantee)
-        {
-            return BusinessPartyDefaults.NormalizeBeneficiary(guarantee.Beneficiary);
         }
 
         private static string BuildReferenceSummary(Guarantee guarantee)

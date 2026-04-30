@@ -106,6 +106,32 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void SingleGuaranteeReport_DoesNotShowBeneficiary()
+        {
+            Guarantee guarantee = _fixture.CreateGuarantee("BG-EXCEL-SINGLE");
+            guarantee.Supplier = "شركة التشغيل الطبي";
+            guarantee.Bank = "بنك ساب";
+            guarantee.Beneficiary = "مستفيد ثابت لا يعرض في Excel";
+
+            string outputPath = _fixture.CreateArtifactPath(".xlsx");
+            var excel = new ExcelService();
+
+            bool exported = excel.ExportSingleGuaranteeReportToPath(guarantee, outputPath);
+
+            Assert.True(exported);
+
+            using var workbook = new XLWorkbook(outputPath);
+            IXLWorksheet worksheet = workbook.Worksheet("بيانات الضمان");
+            string usedText = string.Join(
+                "|",
+                worksheet.CellsUsed().Select(cell => cell.GetString()));
+
+            Assert.Contains("المورد", usedText);
+            Assert.DoesNotContain("المستفيد", usedText);
+            Assert.DoesNotContain("مستفيد ثابت لا يعرض في Excel", usedText);
+        }
+
+        [Fact]
         public void StatisticsWorksheet_ReplacesLegacyClosedColumnWithExpiryFollowUp()
         {
             using var workbook = new XLWorkbook();
@@ -182,6 +208,7 @@ namespace GuaranteeManager.Tests
             Assert.Contains("شركة الخدمات الطبية", overview.Cell(2, 1).GetString());
             Assert.Equal("المورد", overview.Cell(10, 1).GetString());
             Assert.Equal("شركة الخدمات الطبية", overview.Cell(10, 2).GetString());
+            Assert.DoesNotContain("المستفيد", ReadColumn(overview, 1, 9, 15));
             Assert.Contains("المورد", versionHeaders);
             Assert.DoesNotContain("المستفيد", versionHeaders);
             Assert.Equal("شركة الخدمات الطبية", versions.Cell(5, 5).GetString());
@@ -192,6 +219,14 @@ namespace GuaranteeManager.Tests
             return Enumerable
                 .Range(1, columns)
                 .Select(column => worksheet.Cell(row, column).GetString())
+                .ToList();
+        }
+
+        private static List<string> ReadColumn(IXLWorksheet worksheet, int column, int firstRow, int lastRow)
+        {
+            return Enumerable
+                .Range(firstRow, lastRow - firstRow + 1)
+                .Select(row => worksheet.Cell(row, column).GetString())
                 .ToList();
         }
     }
