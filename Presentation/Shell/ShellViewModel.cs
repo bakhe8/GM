@@ -173,13 +173,10 @@ namespace GuaranteeManager
             ? "لا توجد ملفات جاهزة"
             : $"{GuaranteeOutputsPreview.Count.ToString("N0", CultureInfo.InvariantCulture)} مخرجات جاهزة";
         public string AttachmentsSummaryText => Attachments.Count == 0
-            ? "لا توجد مرفقات رسمية محفوظة على هذا الملف حاليًا. ستبقى خطابات الطلب وردود البنك داخل قسم المخرجات عند توفرها."
+            ? "لا توجد مرفقات رسمية مجمعة على هذا الملف حاليًا."
             : SelectedGuarantee?.IsCurrentVersion == false
-                ? $"هذه هي المرفقات الرسمية المحفوظة على الإصدار {SelectedGuarantee.VersionLabel}. يوجد {FormatOfficialAttachmentCount(Attachments.Count)}."
-            : $"هذه هي الأدلة الرسمية المحفوظة على كل إصدارات الملف. يوجد {FormatOfficialAttachmentCount(Attachments.Count)}، بينما تبقى خطابات الطلب وردود البنك ضمن المخرجات.";
-        public string OfficialAttachmentsHeading => Attachments.Count == 0
-            ? "المرفقات الرسمية"
-            : $"المرفقات الرسمية ({Attachments.Count.ToString("N0", CultureInfo.InvariantCulture)})";
+                ? $"يوجد {FormatOfficialAttachmentCount(Attachments.Count)} على الإصدار {SelectedGuarantee.VersionLabel}."
+            : $"يوجد {FormatOfficialAttachmentCount(Attachments.Count)} عبر كل إصدارات الملف.";
         public bool HasOutputShortcuts => HasLatestLetterOutput || HasLatestResponseOutput;
         public string OutputShortcutsSummaryText => HasOutputShortcuts
             ? "اختصارات آخر المستندات الناتجة"
@@ -1671,7 +1668,6 @@ namespace GuaranteeManager
             OnPropertyChanged(nameof(OutputsSummaryText));
             OnPropertyChanged(nameof(OutputsAvailabilityLabel));
             OnPropertyChanged(nameof(AttachmentsSummaryText));
-            OnPropertyChanged(nameof(OfficialAttachmentsHeading));
             OnPropertyChanged(nameof(HasOutputShortcuts));
             OnPropertyChanged(nameof(OutputShortcutsSummaryText));
         }

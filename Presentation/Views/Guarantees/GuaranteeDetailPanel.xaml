@@ -355,7 +355,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Orientation="Horizontal" FlowDirection="RightToLeft">
-                                    <TextBlock Text="الأدلة والمرفقات" FontSize="13" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" VerticalAlignment="Center" />
+                                    <TextBlock Text="ملخص الأدلة" FontSize="13" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" VerticalAlignment="Center" />
                                     <Viewbox Width="14" Height="14" Margin="0,0,6,0" VerticalAlignment="Center">
                                         <Path Data="{StaticResource Icon.Paperclip}" Stroke="{StaticResource Brush.Text}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                     </Viewbox>
@@ -377,7 +377,7 @@
                                        FontSize="10.4"
                                        Foreground="{StaticResource Brush.Muted}"
                                        TextWrapping="Wrap"
-                                       Margin="0,0,0,10" />
+                                       Margin="0,0,0,8" />
                             <WrapPanel FlowDirection="RightToLeft" Margin="0,0,0,10" Visibility="Collapsed">
                                 <WrapPanel.Style>
                                     <Style TargetType="WrapPanel">
@@ -420,40 +420,9 @@
                                     <TextBlock Text="أحدث رد بنك" FontSize="10.3" Foreground="{StaticResource Brush.Blue}" />
                                 </Button>
                             </WrapPanel>
-                            <TextBlock Text="{Binding OfficialAttachmentsHeading}"
-                                       FontSize="10.8"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource Brush.Text}"
-                                       Margin="0,0,0,6" />
-                            <ItemsControl ItemsSource="{Binding Attachments}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Button Style="{StaticResource PlainLinkButton}"
-                                                Command="{Binding DataContext.OpenAttachmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                CommandParameter="{Binding}"
-                                                ToolTip="{Binding DocumentType}">
-                                            <Grid Height="32" Margin="0,0,0,4" FlowDirection="LeftToRight">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="70" />
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="54" />
-                                                    <ColumnDefinition Width="22" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="{Binding Date}" FontSize="9.5" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" FlowDirection="LeftToRight" />
-                                                <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource Brush.Text}" VerticalAlignment="Center" Margin="8,0" FlowDirection="RightToLeft" />
-                                                <TextBlock Grid.Column="2" Text="{Binding Size}" FontSize="10" Foreground="#4B5563" VerticalAlignment="Center" HorizontalAlignment="Right" />
-                                                <Border Grid.Column="3" Width="16" Height="18" CornerRadius="2" Background="#FEE2E2" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding FileKind}" FontSize="5.5" FontWeight="Bold" Foreground="#DC2626"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                </Border>
-                                            </Grid>
-                                        </Button>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
                             <Button Style="{StaticResource PlainLinkButton}"
                                     Command="{Binding ShowAllAttachmentsCommand}"
-                                    Margin="0,8,0,0"
+                                    Margin="0,0,0,0"
                                     Visibility="{Binding SelectedGuarantee.OpenAttachmentsAction.IsEnabled, Converter={StaticResource TrueToVisibleCollapsedConverter}}"
                                     IsEnabled="{Binding SelectedGuarantee.OpenAttachmentsAction.IsEnabled}"
                                     ToolTip="{Binding SelectedGuarantee.OpenAttachmentsAction.Hint}"
