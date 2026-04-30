@@ -4,7 +4,7 @@
 
 ## الخلاصة
 
-- النسخة التطويرية الحالية: `v1.1.0-preview.3`.
+- النسخة التطويرية الحالية: `v1.1.0-preview.4`.
 - الفرع النشط: `feature/v1.1-operational-polish`.
 - الواجهة الرسمية الحالية هي ما تحت `Presentation/`.
 - أزيلت الأرشيفات القديمة من الشجرة حتى لا تبقى مرجعًا يوميًا مضللًا.
@@ -32,8 +32,8 @@
 
 ## آخر تحقق
 
-- `dotnet test .\GuaranteeManager.Tests\GuaranteeManager.Tests.csproj --no-restore -p:BaseOutputPath=.\artifacts\supplier-beneficiary-testbin\`
-- النتيجة: `101/101`.
+- `dotnet test .\GuaranteeManager.Tests\GuaranteeManager.Tests.csproj --no-restore -p:BaseOutputPath=.\artifacts\preview4-version-test\`
+- النتيجة: `107/107`.
 - `dotnet build .\my_work.sln -c Debug --no-restore` نجح.
 
 ## المراجع الحية

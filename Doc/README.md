@@ -8,7 +8,7 @@
   - أسرع صورة دقيقة لوضع المشروع الحالي.
 - `git_workflow.md`
   - سياسة الفروع، الترقيم، ومعايير الانتقال بين `preview` و`rc` و`release`.
-- `releases/README_v1.1.0-preview.3.md`
+- `releases/README_v1.1.0-preview.4.md`
   - وصف النسخة التطويرية الحالية.
 - `Assets/Documentation/Screenshots/README.md`
   - سياسة لقطات القبول ومخرجات الأداة.

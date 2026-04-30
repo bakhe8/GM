@@ -7,7 +7,7 @@ This is the short continuation point for a new AI/Codex chat. It intentionally a
 ## Current Branch
 
 - Branch: `feature/v1.1-operational-polish`
-- App target: `v1.1.0-preview.3`
+- App target: `v1.1.0-preview.4`
 - Always begin with `git status --short --branch`.
 
 ## Current Product Shape
@@ -36,8 +36,8 @@ This is the short continuation point for a new AI/Codex chat. It intentionally a
 
 ## Verification Baseline
 
-- Last focused test run: `dotnet test .\GuaranteeManager.Tests\GuaranteeManager.Tests.csproj --no-restore -p:BaseOutputPath=.\artifacts\supplier-beneficiary-testbin\`
-- Result: `101/101`.
+- Last focused test run: `dotnet test .\GuaranteeManager.Tests\GuaranteeManager.Tests.csproj --no-restore -p:BaseOutputPath=.\artifacts\preview4-version-test\`
+- Result: `107/107`.
 - Debug build passes: `dotnet build .\my_work.sln -c Debug --no-restore`.
 
 ## Primary References
