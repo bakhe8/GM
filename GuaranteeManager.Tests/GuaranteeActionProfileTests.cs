@@ -46,7 +46,7 @@ namespace GuaranteeManager.Tests
             GuaranteeActionProfile profile = GuaranteeActionProfile.Build(guarantee, requests);
 
             Assert.Equal(GuaranteeFileFocusArea.Requests, profile.SuggestedFocusArea);
-            Assert.Contains("شاشة الطلبات", profile.OpenFileAction.Hint);
+            Assert.Contains("السجل الزمني", profile.OpenFileAction.Hint);
         }
 
         [Fact]

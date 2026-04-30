@@ -89,7 +89,7 @@
                                  Background="Transparent"
                                  Text="{Binding GlobalSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                  KeyDown="ShellGlobalSearchBox_KeyDown"
-                                 ToolTip="بحث عام على مستوى البرنامج. أمثلة: الطلبات: تمديد ، المتابعات: منتهي ، الإعدادات"
+                                 ToolTip="بحث عام على مستوى البرنامج. أمثلة: الضمانات: ساب ، المتابعات: منتهي ، الإعدادات"
                                  automation:AutomationProperties.AutomationId="Shell.GlobalSearchBox"
                                  automation:AutomationProperties.Name="البحث الشامل" />
                         <TextBlock Grid.Column="0"
@@ -184,30 +184,6 @@
                                     <Path Data="{StaticResource Icon.Dashboard}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                 </Viewbox>
                                 <TextBlock Text="اليوم" Style="{StaticResource NavLabelText}" />
-                            </StackPanel>
-                        </Button>
-
-                        <!-- الطلبات -->
-                        <Button
-                                Margin="0,2,0,0"
-                                Command="{Binding ShowRequestsCommand}"
-                                automation:AutomationProperties.AutomationId="Shell.Sidebar.Requests"
-                                automation:AutomationProperties.Name="الطلبات">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding CurrentWorkspaceKey}" Value="{x:Static local:ShellWorkspaceKeys.Requests}">
-                                            <Setter Property="Background" Value="#1D5ED8" />
-                                            <Setter Property="Foreground" Value="White" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                            <StackPanel>
-                                <Viewbox Width="20" Height="20" Margin="0,0,0,2">
-                                    <Path Data="{StaticResource Icon.Requests}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                </Viewbox>
-                                <TextBlock Text="الطلبات" Style="{StaticResource NavLabelText}" />
                             </StackPanel>
                         </Button>
 

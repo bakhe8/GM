@@ -254,7 +254,6 @@ function Get-UiWorkspaceKeyForSidebarAutomationId {
     switch ($SidebarAutomationId.Trim()) {
         "Shell.Sidebar.Dashboard" { return "Dashboard" }
         "Shell.Sidebar.Guarantees" { return "Guarantees" }
-        "Shell.Sidebar.Requests" { return "Requests" }
         "Shell.Sidebar.Banks" { return "Banks" }
         "Shell.Sidebar.Reports" { return "Reports" }
         "Shell.Sidebar.Notifications" { return "Notifications" }
@@ -272,7 +271,6 @@ function Get-UiWorkspaceKeyForLabel {
     switch ($WorkspaceLabel.Trim()) {
         "لوحة التحكم" { return "Dashboard" }
         "الضمانات" { return "Guarantees" }
-        "الطلبات" { return "Requests" }
         "البنوك" { return "Banks" }
         "التقارير" { return "Reports" }
         "التنبيهات" { return "Notifications" }

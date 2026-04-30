@@ -3016,7 +3016,7 @@ namespace GuaranteeManager
         {
             return focusArea switch
             {
-                GuaranteeFileFocusArea.Requests when requestIdToFocus.HasValue => "الطلب المرتبط داخل شاشة الطلبات",
+                GuaranteeFileFocusArea.Requests when requestIdToFocus.HasValue => "الطلب المرتبط داخل السجل الزمني",
                 GuaranteeFileFocusArea.Requests => "طلبات الضمان",
                 GuaranteeFileFocusArea.Outputs => "طلبات الضمان ومخرجاته",
                 GuaranteeFileFocusArea.Attachments => "مرفقات الضمان في اللوحة الجانبية",

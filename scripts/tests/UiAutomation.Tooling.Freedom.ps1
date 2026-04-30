@@ -181,10 +181,10 @@ try {
         return $payload
     } | Out-Null
 
-    Invoke-RegressionStep -Name "workspace-requests-via-automationid" -ScriptBlock {
+    Invoke-RegressionStep -Name "workspace-reports-via-automationid" -ScriptBlock {
         Invoke-UiExploreJson -Arguments @{
             Action = "Sidebar"
-            AutomationId = "Shell.Sidebar.Requests"
+            AutomationId = "Shell.Sidebar.Reports"
             ReuseRunningSession = $true
         } | Out-Null
 
@@ -193,7 +193,7 @@ try {
             ReuseRunningSession = $true
         }
 
-        Assert-RegressionCondition ($payload.ShellState.CurrentWorkspaceKey -eq "Requests") "Sidebar by AutomationId did not switch to Requests."
+        Assert-RegressionCondition ($payload.ShellState.CurrentWorkspaceKey -eq "Reports") "Sidebar by AutomationId did not switch to Reports."
         return $payload
     } | Out-Null
 

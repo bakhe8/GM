@@ -105,7 +105,6 @@ namespace GuaranteeManager
             CreateVerificationRequestCommand = new RelayCommand(parameter => CreateVerificationRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             CreateReplacementRequestCommand = new RelayCommand(parameter => CreateReplacementRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             RegisterBankResponseCommand = new RelayCommand(parameter => RegisterBankResponse(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
-            ShowRowRequestsCommand = new RelayCommand(parameter => ShowRowRequests(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
             CopyGuaranteeNoCommand = new RelayCommand(parameter => CopyGuaranteeNo(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
             CopyGuaranteeSupplierCommand = new RelayCommand(parameter => CopyGuaranteeSupplier(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
             CopyGuaranteeReferenceTypeCommand = new RelayCommand(parameter => CopyGuaranteeReferenceType(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
@@ -122,7 +121,6 @@ namespace GuaranteeManager
             ResumeLastFileCommand = new RelayCommand(_ => ResumeLastFile(), _ => HasLastFile);
             ShowDashboardCommand = new RelayCommand(_ => ShowDashboardWorkspace());
             ShowGuaranteesCommand = new RelayCommand(_ => ShowGuaranteesWorkspace());
-            ShowRequestsCommand = new RelayCommand(_ => ShowRequestsWorkspace());
             ShowBanksCommand = new RelayCommand(_ => ShowBanksWorkspace());
             ShowReportsCommand = new RelayCommand(_ => ShowReportsWorkspace());
             ShowSettingsCommand = new RelayCommand(_ => ShowSettingsWorkspace());
@@ -201,7 +199,6 @@ namespace GuaranteeManager
         public ICommand CreateVerificationRequestCommand { get; }
         public ICommand CreateReplacementRequestCommand { get; }
         public ICommand RegisterBankResponseCommand { get; }
-        public ICommand ShowRowRequestsCommand { get; }
         public ICommand CopyGuaranteeNoCommand { get; }
         public ICommand CopyGuaranteeSupplierCommand { get; }
         public ICommand CopyGuaranteeReferenceTypeCommand { get; }
@@ -218,7 +215,6 @@ namespace GuaranteeManager
         public ICommand ResumeLastFileCommand { get; }
         public ICommand ShowDashboardCommand { get; }
         public ICommand ShowGuaranteesCommand { get; }
-        public ICommand ShowRequestsCommand { get; }
         public ICommand ShowBanksCommand { get; }
         public ICommand ShowReportsCommand { get; }
         public ICommand ShowSettingsCommand { get; }
@@ -493,7 +489,7 @@ namespace GuaranteeManager
         {
             ShellWorkspaceKeys.Dashboard => "اليوم",
             ShellWorkspaceKeys.Guarantees => "الضمانات",
-            ShellWorkspaceKeys.Requests => "الطلبات",
+            ShellWorkspaceKeys.Requests => "مركز الطلبات",
             ShellWorkspaceKeys.Banks => "البنوك",
             ShellWorkspaceKeys.Reports => "التقارير",
             ShellWorkspaceKeys.Settings => "الإعدادات",
@@ -1034,14 +1030,6 @@ namespace GuaranteeManager
             {
                 FocusGuaranteeSection(area, requestIdToFocus);
             }
-        }
-
-        private void ShowRowRequests(GuaranteeRow? row)
-        {
-            ExecuteGuaranteeAction(
-                row,
-                target => ShowRequestsForGuarantee(target, ResolveContextRequestId(target)),
-                syncSelection: true);
         }
 
         private static string FormatOfficialAttachmentCount(int count)

@@ -38,7 +38,6 @@
 - السايدبار:
   - `Shell.Sidebar.Dashboard`
   - `Shell.Sidebar.Guarantees`
-  - `Shell.Sidebar.Requests`
   - `Shell.Sidebar.Reports`
   - `Shell.Sidebar.Settings`
 - شريط الحالة:

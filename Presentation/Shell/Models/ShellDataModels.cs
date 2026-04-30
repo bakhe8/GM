@@ -75,10 +75,6 @@ namespace GuaranteeManager
         public string GuaranteeNo { get; }
         public string AutomationKey => BuildAutomationKey(GuaranteeNo, Id);
         public string RowAutomationName => $"{GuaranteeNo} | {Beneficiary}";
-        public string RowMoreAutomationId => BuildRowActionAutomationId("More");
-        public string RowMoreAutomationName => $"المزيد | {GuaranteeNo}";
-        public string RowRequestsAutomationId => BuildRowActionAutomationId("Requests");
-        public string RowRequestsAutomationName => $"الطلبات | {GuaranteeNo}";
         public string Beneficiary { get; }
         public string Bank { get; }
         public ImageSource BankLogo => GetBankLogo(Bank);
@@ -138,9 +134,6 @@ namespace GuaranteeManager
             OnPropertyChanged(nameof(HasOfficialAttachments));
             OnPropertyChanged(nameof(OpenAttachmentsAction));
         }
-
-        private string BuildRowActionAutomationId(string action)
-            => $"Guarantees.RowAction.{action}.{AutomationKey}";
 
         private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
@@ -545,17 +538,17 @@ namespace GuaranteeManager
             {
                 summaryTitle = $"يوجد {pendingCount.ToString("N0", CultureInfo.InvariantCulture)} طلب قيد التنفيذ على هذا الملف";
                 summaryDetail = latestPending == null
-                    ? "المتابعة الأقرب الآن هي مراجعة الطلبات المعلقة وتسجيل رد البنك عند وصوله."
+                    ? "المتابعة الأقرب الآن هي مراجعة السجل الزمني وتسجيل رد البنك عند وصوله."
                     : $"أقرب نقطة متابعة الآن: {latestPending.TypeLabel} بتاريخ {latestPending.RequestDate:yyyy/MM/dd}.";
                 suggestedArea = GuaranteeFileFocusArea.Requests;
-                suggestedLabel = "اذهب إلى الطلبات";
+                suggestedLabel = "راجع السجل";
             }
             else if (guarantee.NeedsExpiryFollowUp)
             {
                 summaryTitle = "الضمان منتهٍ ويحتاج متابعة مباشرة";
-                summaryDetail = "لا توجد طلبات معلقة حاليًا، لذا الأفضل البدء من الطلبات أو الاستعلامات لمعرفة سبب بقاء الضمان دون إغلاق.";
+                summaryDetail = "لا توجد طلبات معلقة حاليًا، لذا الأفضل البدء من السجل الزمني أو الاستعلامات لمعرفة سبب بقاء الضمان دون إغلاق.";
                 suggestedArea = GuaranteeFileFocusArea.Requests;
-                suggestedLabel = "راجع الطلبات";
+                suggestedLabel = "راجع السجل";
             }
             else if (outputCount > 0)
             {
@@ -613,8 +606,8 @@ namespace GuaranteeManager
         {
             return suggestedArea switch
             {
-                GuaranteeFileFocusArea.Requests => "يفتح شاشة الطلبات مفلترة على هذا الضمان حتى تبدأ من نقطة المتابعة الحالية.",
-                GuaranteeFileFocusArea.Outputs => "يفتح شاشة الطلبات للوصول إلى المخرجات والأثر المرتبط بهذا الضمان.",
+                GuaranteeFileFocusArea.Requests => "ينقلك إلى السجل الزمني وطلبات هذا الضمان داخل اللوحة الجانبية.",
+                GuaranteeFileFocusArea.Outputs => "ينقلك إلى المخرجات والأثر المرتبط بهذا الضمان داخل اللوحة الجانبية.",
                 GuaranteeFileFocusArea.Attachments => "ينقلك إلى لوحة الضمان الجانبية عند الأدلة والمرفقات الرسمية.",
                 GuaranteeFileFocusArea.Series => "ينقلك إلى لوحة الضمان الجانبية عند الخط الزمني لهذا الضمان.",
                 GuaranteeFileFocusArea.Actions => "ينقلك إلى الإجراءات السريعة المناسبة للحالة الحالية داخل لوحة الضمان.",
@@ -1203,7 +1196,7 @@ namespace GuaranteeManager
         public Brush StatusBorder { get; }
         public bool IsContextTarget { get; }
         public string ContextLabel => IsContextTarget ? "الطلب المفتوح الآن" : string.Empty;
-        public string ContextAutomationStatus => IsContextTarget ? "هذا هو الطلب الذي تم فتح شاشة الطلبات منه." : string.Empty;
+        public string ContextAutomationStatus => IsContextTarget ? "هذا هو الطلب الذي تم فتح مركز الطلبات منه." : string.Empty;
         public bool CanRegisterResponse => Request.Status == RequestStatus.Pending;
         public bool CanOpenLetter => Request.HasLetter;
         public bool CanOpenResponse => Request.HasResponseDocument;

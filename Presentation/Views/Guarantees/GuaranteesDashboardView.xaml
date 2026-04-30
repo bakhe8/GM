@@ -223,27 +223,25 @@
                             <Border Style="{StaticResource ReferenceTableHeaderDivider}" />
                             <Grid Margin="9,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="2.75*" />
                                     <ColumnDefinition Width="1.18*" />
                                     <ColumnDefinition Width="1.15*" />
                                     <ColumnDefinition Width="1.00*" />
                                     <ColumnDefinition Width="1.00*" />
                                     <ColumnDefinition Width="1.15*" />
                                     <ColumnDefinition Width="1.34*" />
-                                    <ColumnDefinition Width="1.48*" />
+                                    <ColumnDefinition Width="1.70*" />
                                     <ColumnDefinition Width="0.74*" />
                                     <ColumnDefinition Width="1.30*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="الإجراءات" Style="{StaticResource TableHeaderText}" />
-                                <TextBlock Grid.Column="1" Text="الحالة التشغيلية" Style="{StaticResource TableHeaderText}" />
-                                <TextBlock Grid.Column="2" Text="حالة الوقت" Style="{StaticResource TableHeaderText}" />
-                                <TextBlock Grid.Column="3" Text="تاريخ الانتهاء" Style="{StaticResource TableHeaderText}" />
-                                <TextBlock Grid.Column="4" Text="تاريخ الإصدار" Style="{StaticResource TableHeaderText}" />
-                                <TextBlock Grid.Column="5" Text="المبلغ" Style="{StaticResource TableHeaderText}" />
-                                <TextBlock Grid.Column="6" Text="البنك" Style="{StaticResource TableHeaderRight}" />
-                                <TextBlock Grid.Column="7" Text="اسم المستفيد" Style="{StaticResource TableHeaderRight}" />
-                                <TextBlock Grid.Column="8" Text="الإصدار" Style="{StaticResource TableHeaderText}" />
-                                <TextBlock Grid.Column="9" Text="رقم الضمان" Style="{StaticResource TableHeaderRight}" />
+                                <TextBlock Grid.Column="0" Text="الحالة التشغيلية" Style="{StaticResource TableHeaderText}" />
+                                <TextBlock Grid.Column="1" Text="حالة الوقت" Style="{StaticResource TableHeaderText}" />
+                                <TextBlock Grid.Column="2" Text="تاريخ الانتهاء" Style="{StaticResource TableHeaderText}" />
+                                <TextBlock Grid.Column="3" Text="تاريخ الإصدار" Style="{StaticResource TableHeaderText}" />
+                                <TextBlock Grid.Column="4" Text="المبلغ" Style="{StaticResource TableHeaderText}" />
+                                <TextBlock Grid.Column="5" Text="البنك" Style="{StaticResource TableHeaderRight}" />
+                                <TextBlock Grid.Column="6" Text="اسم المستفيد" Style="{StaticResource TableHeaderRight}" />
+                                <TextBlock Grid.Column="7" Text="الإصدار" Style="{StaticResource TableHeaderText}" />
+                                <TextBlock Grid.Column="8" Text="رقم الضمان" Style="{StaticResource TableHeaderRight}" />
                             </Grid>
                         </Grid>
 
@@ -273,61 +271,37 @@
                                                           CommandParameter="{Binding}" />
                                         </Grid.InputBindings>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="2.75*" />
                                             <ColumnDefinition Width="1.18*" />
                                             <ColumnDefinition Width="1.15*" />
                                             <ColumnDefinition Width="1.00*" />
                                             <ColumnDefinition Width="1.00*" />
                                             <ColumnDefinition Width="1.15*" />
                                             <ColumnDefinition Width="1.34*" />
-                                            <ColumnDefinition Width="1.48*" />
+                                            <ColumnDefinition Width="1.70*" />
                                             <ColumnDefinition Width="0.74*" />
                                             <ColumnDefinition Width="1.30*" />
                                         </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
-                                            <Button Style="{StaticResource PrimaryButton}"
-                                                    Height="26"
-                                                    MinWidth="70"
-                                                    Padding="7,0"
-                                                    FontSize="9.5"
-                                                    Margin="0,0,4,0"
-                                                    ToolTip="يعرض طلبات هذا الضمان فقط في شاشة الطلبات"
-                                                    ToolTipService.ShowOnDisabled="True"
-                                                    Command="{Binding DataContext.ShowRowRequestsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}"
-                                                    automation:AutomationProperties.AutomationId="{Binding RowRequestsAutomationId}"
-                                                    automation:AutomationProperties.Name="{Binding RowRequestsAutomationName}"
-                                                    automation:AutomationProperties.HelpText="يعرض طلبات هذا الضمان فقط في شاشة الطلبات."
-                                                    automation:AutomationProperties.ItemStatus="{Binding GuaranteeNo}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Viewbox Width="10" Height="10" Margin="0,0,3,0" VerticalAlignment="Center">
-                                                        <Path Data="{StaticResource Icon.Requests}" Stroke="White" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                    </Viewbox>
-                                                    <TextBlock Text="الطلبات" />
-                                                </StackPanel>
-                                            </Button>
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="1"
+                                        <TextBlock Grid.Column="0"
                                                    Text="{Binding WorkStatus}"
                                                    Style="{StaticResource TableCellCenter}"
                                                    FontSize="9.5"
                                                    Foreground="{Binding WorkBrush}" />
-                                        <TextBlock Grid.Column="2"
+                                        <TextBlock Grid.Column="1"
                                                    Text="{Binding TimeStatus}"
                                                    Style="{StaticResource TableCellCenter}"
                                                    FontSize="9.5"
                                                    Foreground="{Binding TimeBrush}" />
-                                        <TextBlock Grid.Column="3" Text="{Binding ExpiryDate}" Style="{StaticResource TableCellCenter}" />
-                                        <TextBlock Grid.Column="4" Text="{Binding IssueDate}" Style="{StaticResource TableCellCenter}" />
-                                        <TextBlock Grid.Column="5" Text="{Binding Amount}" Style="{StaticResource TableCellCenter}" />
-                                        <StackPanel Grid.Column="6" Orientation="Horizontal" FlowDirection="RightToLeft" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
+                                        <TextBlock Grid.Column="2" Text="{Binding ExpiryDate}" Style="{StaticResource TableCellCenter}" />
+                                        <TextBlock Grid.Column="3" Text="{Binding IssueDate}" Style="{StaticResource TableCellCenter}" />
+                                        <TextBlock Grid.Column="4" Text="{Binding Amount}" Style="{StaticResource TableCellCenter}" />
+                                        <StackPanel Grid.Column="5" Orientation="Horizontal" FlowDirection="RightToLeft" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
                                             <Image Source="{Binding BankLogo}" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality" />
                                             <Border Width="8" />
                                             <TextBlock Text="{Binding Bank}" Style="{StaticResource TableCellText}" TextAlignment="Right" VerticalAlignment="Center" />
                                         </StackPanel>
-                                        <TextBlock Grid.Column="7" Text="{Binding Beneficiary}" Style="{StaticResource TableCellRight}" />
-                                        <TextBlock Grid.Column="8" Text="{Binding VersionLabel}" Style="{StaticResource TableCellCenter}" />
-                                        <TextBlock Grid.Column="9" Text="{Binding GuaranteeNo}" Style="{StaticResource TableCellRight}" />
+                                        <TextBlock Grid.Column="6" Text="{Binding Beneficiary}" Style="{StaticResource TableCellRight}" />
+                                        <TextBlock Grid.Column="7" Text="{Binding VersionLabel}" Style="{StaticResource TableCellCenter}" />
+                                        <TextBlock Grid.Column="8" Text="{Binding GuaranteeNo}" Style="{StaticResource TableCellRight}" />
                                     </Grid>
                                     </StackPanel>
                                 </DataTemplate>

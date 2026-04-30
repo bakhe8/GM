@@ -334,8 +334,8 @@
                             <Button Style="{StaticResource PlainLinkButton}"
                                     Command="{Binding ShowGuaranteeRequestsCommand}"
                                     automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Timeline.ShowAllRequests"
-                                    automation:AutomationProperties.Name="عرض جميع الطلبات من الخط الزمني">
-                                <TextBlock Text="انتقل إلى الطلبات الكاملة" FontSize="10.5" Foreground="{StaticResource Brush.Blue}" />
+                                    automation:AutomationProperties.Name="فتح مركز الطلبات من الخط الزمني">
+                                <TextBlock Text="فتح مركز الطلبات" FontSize="10.5" Foreground="{StaticResource Brush.Blue}" />
                             </Button>
                         </StackPanel>
                     </Border>

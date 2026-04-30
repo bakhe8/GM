@@ -58,7 +58,7 @@ namespace GuaranteeManager
             _dataService = new RequestsWorkspaceDataService();
             _coordinator = new RequestsWorkspaceCoordinator(database, workflow, App.CurrentApp.GetRequiredService<IShellStatusService>(), onChanged);
             _pager = new ReferenceTablePagerController("Requests", "طلب", 10, () => ApplyFilters());
-            UiInstrumentation.Identify(this, "Requests.Workspace", "الطلبات");
+            UiInstrumentation.Identify(this, "Requests.Workspace", "مركز الطلبات");
             UiInstrumentation.Identify(_searchInput, "Requests.SearchBox", "بحث الطلبات");
             UiInstrumentation.Identify(_statusFilter, "Requests.Filter.Status", "حالة الطلبات");
             UiInstrumentation.Identify(_list, "Requests.Table.List", "قائمة الطلبات");
@@ -880,10 +880,10 @@ namespace GuaranteeManager
             _responseAttachHint.Text = state.ResponseAttachHint;
             _openGuaranteeButton.IsEnabled = state.CanOpenGuarantee;
             _openGuaranteeButton.ToolTip = state.CanOpenGuarantee
-                ? "يعرض الطلبات المرتبطة بهذا الضمان فقط داخل شاشة الطلبات."
+                ? "يعرض الطلبات المرتبطة بهذا الضمان فقط داخل مركز الطلبات."
                 : "اختر طلبًا أولًا لفلترة الطلبات حسب الضمان.";
             AutomationProperties.SetName(_openGuaranteeButton, "طلبات الضمان");
-            AutomationProperties.SetHelpText(_openGuaranteeButton, "يعرض الطلبات المرتبطة بهذا الضمان فقط داخل شاشة الطلبات.");
+            AutomationProperties.SetHelpText(_openGuaranteeButton, "يعرض الطلبات المرتبطة بهذا الضمان فقط داخل مركز الطلبات.");
             _letterButton.IsEnabled = state.CanOpenLetter;
             _letterButton.ToolTip = state.LetterAttachmentMeta;
             _responseDocumentButton.IsEnabled = state.CanOpenResponse;

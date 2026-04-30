@@ -143,7 +143,7 @@ namespace GuaranteeManager
                 return;
             }
 
-            string notes = $"طلب تمديد من واجهة الطلبات. {ExtensionRequestFlowSupport.BuildReasonSummary(guarantee)}";
+            string notes = $"طلب تمديد من مركز الطلبات. {ExtensionRequestFlowSupport.BuildReasonSummary(guarantee)}";
             ExecuteEligibleRequest(
                 "طلب تمديد",
                 guarantee,
@@ -202,7 +202,7 @@ namespace GuaranteeManager
                 "طلب تخفيض",
                 guarantee,
                 reloadRequests,
-                () => _workflow.CreateReductionRequest(guarantee.Id, requestedAmount, "طلب تخفيض من واجهة الطلبات", Environment.UserName),
+                () => _workflow.CreateReductionRequest(guarantee.Id, requestedAmount, "طلب تخفيض من مركز الطلبات", Environment.UserName),
                 $"تم إنشاء طلب تخفيض للضمان {guarantee.GuaranteeNo}.");
         }
 
@@ -230,7 +230,7 @@ namespace GuaranteeManager
                 "طلب إفراج",
                 guarantee,
                 reloadRequests,
-                () => _workflow.CreateReleaseRequest(guarantee.Id, "طلب إفراج من واجهة الطلبات", Environment.UserName),
+                () => _workflow.CreateReleaseRequest(guarantee.Id, "طلب إفراج من مركز الطلبات", Environment.UserName),
                 $"تم إنشاء طلب إفراج للضمان {guarantee.GuaranteeNo}.");
         }
 
@@ -250,13 +250,13 @@ namespace GuaranteeManager
                     $"أدخل ملاحظات طلب التسييل للضمان {guarantee.GuaranteeNo}.",
                     "ملاحظات الطلب",
                     "إنشاء الطلب",
-                    "طلب تسييل من واجهة الطلبات.",
+                    "طلب تسييل من مركز الطلبات.",
                     out string notes))
             {
                 return;
             }
 
-            string normalizedNotes = string.IsNullOrWhiteSpace(notes) ? "طلب تسييل من واجهة الطلبات." : notes.Trim();
+            string normalizedNotes = string.IsNullOrWhiteSpace(notes) ? "طلب تسييل من مركز الطلبات." : notes.Trim();
             ExecuteEligibleRequest(
                 "طلب تسييل",
                 guarantee,
@@ -281,13 +281,13 @@ namespace GuaranteeManager
                     $"أدخل ملاحظات طلب التحقق للضمان {guarantee.GuaranteeNo}.",
                     "ملاحظات الطلب",
                     "إنشاء الطلب",
-                    "طلب تحقق من واجهة الطلبات.",
+                    "طلب تحقق من مركز الطلبات.",
                     out string notes))
             {
                 return;
             }
 
-            string normalizedNotes = string.IsNullOrWhiteSpace(notes) ? "طلب تحقق من واجهة الطلبات." : notes.Trim();
+            string normalizedNotes = string.IsNullOrWhiteSpace(notes) ? "طلب تحقق من مركز الطلبات." : notes.Trim();
             ExecuteEligibleRequest(
                 "طلب تحقق",
                 guarantee,

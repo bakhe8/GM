@@ -94,7 +94,6 @@ function Invoke-SmokeNavigationScenario {
     $screens = @(
         @{ Label = "اليوم"; Slug = "dashboard" },
         @{ Label = "الضمانات"; Slug = "guarantees" },
-        @{ Label = "الطلبات"; Slug = "requests" },
         @{ Label = "البنوك"; Slug = "banks" },
         @{ Label = "التقارير"; Slug = "reports" },
         @{ Label = "الإعدادات"; Slug = "settings" }
