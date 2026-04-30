@@ -112,7 +112,7 @@ namespace GuaranteeManager
                 _pager.ResetToFirstPage();
                 ApplyFilters();
             };
-            var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث باسم البنك أو المستفيد الأعلى...");
+            var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث باسم البنك أو المورد الأعلى...");
             Grid.SetColumn(searchBox, 2);
             toolbar.Children.Add(searchBox);
 
@@ -178,7 +178,7 @@ namespace GuaranteeManager
             AddHeader(inner, "قريب الانتهاء", 3, false);
             AddHeader(inner, "منتهي", 4, false);
             AddHeader(inner, "إجمالي القيمة", 5, false);
-            AddHeader(inner, "المستفيد الأعلى", 6, true);
+            AddHeader(inner, "المورد الأعلى", 6, true);
             AddHeader(inner, "البنك", 7, true);
             header.Children.Add(inner);
             return header;
@@ -375,7 +375,7 @@ namespace GuaranteeManager
             row.Children.Add(BuildCell(item.ExpiringDisplay, 3, "TableCellCenter", WorkspaceSurfaceChrome.BrushFrom("#E09408")));
             row.Children.Add(BuildCell(item.ExpiredDisplay, 4, "TableCellCenter", WorkspaceSurfaceChrome.BrushFrom("#EF4444")));
             row.Children.Add(BuildCell(item.AmountDisplay, 5, "TableCellCenter"));
-            row.Children.Add(BuildCell(item.TopBeneficiary, 6, "TableCellRight"));
+            row.Children.Add(BuildCell(item.TopSupplier, 6, "TableCellRight"));
 
             var bankCell = new StackPanel
             {

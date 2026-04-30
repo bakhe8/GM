@@ -515,7 +515,7 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(this, "Dialog.NewGuarantee", Title);
             UiInstrumentation.Identify(_guaranteeNoInput, "Dialog.NewGuarantee.GuaranteeNoInput", "رقم الضمان");
             UiInstrumentation.Identify(_supplierInput, "Dialog.NewGuarantee.SupplierInput", "المورد");
-            UiInstrumentation.Identify(_beneficiaryInput, "Dialog.NewGuarantee.BeneficiaryInput", "المستفيد");
+            UiInstrumentation.Identify(_beneficiaryInput, "Dialog.NewGuarantee.BeneficiaryInput", "الجهة المستفيدة");
             UiInstrumentation.Identify(_bankInput, "Dialog.NewGuarantee.BankInput", "البنك");
             UiInstrumentation.Identify(_typeInput, "Dialog.NewGuarantee.TypeInput", "نوع الضمان");
             UiInstrumentation.Identify(_amountInput, "Dialog.NewGuarantee.AmountInput", "المبلغ");
@@ -549,6 +549,8 @@ namespace GuaranteeManager
 
             _amountInput.Text = "0";
             _expiryInput.Text = DateTime.Today.AddMonths(6).ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+            _beneficiaryInput.Text = BusinessPartyDefaults.DefaultBeneficiaryName;
+            _beneficiaryInput.IsReadOnly = true;
             _notesInput.Height = 58;
             _notesInput.AcceptsReturn = true;
             _notesInput.TextWrapping = TextWrapping.Wrap;
@@ -577,7 +579,7 @@ namespace GuaranteeManager
 
             fields.Children.Add(BuildField("رقم الضمان", _guaranteeNoInput));
             fields.Children.Add(BuildField("المورد", _supplierInput));
-            fields.Children.Add(BuildField("المستفيد", _beneficiaryInput));
+            fields.Children.Add(BuildField("الجهة المستفيدة", _beneficiaryInput));
             fields.Children.Add(BuildField("البنك", _bankInput));
             fields.Children.Add(BuildField("نوع الضمان", _typeInput));
             fields.Children.Add(BuildField("المبلغ", _amountInput));
@@ -713,7 +715,7 @@ namespace GuaranteeManager
             _input = new NewGuaranteeInput(
                 guaranteeNo,
                 supplier,
-                string.IsNullOrWhiteSpace(beneficiary) ? supplier : beneficiary,
+                BusinessPartyDefaults.NormalizeBeneficiary(beneficiary),
                 bank,
                 guaranteeType,
                 amount,
@@ -1030,14 +1032,14 @@ namespace GuaranteeManager
                 return;
             }
 
-            string effectiveBeneficiary = string.IsNullOrWhiteSpace(beneficiary) ? supplier : beneficiary;
+            string effectiveBeneficiary = BusinessPartyDefaults.NormalizeBeneficiary(beneficiary);
             string referenceSummary = BuildReferenceSummary(referenceType, referenceNumber);
             string attachmentSummary = _attachments.Count == 0
                 ? "بدون مرفقات إضافية"
                 : $"{_attachments.Count.ToString("N0", CultureInfo.InvariantCulture)} مرفق سيُحفظ";
             string beneficiarySummary = string.IsNullOrWhiteSpace(beneficiary)
-                ? $"سيُستخدم المورد كمستفيد: {effectiveBeneficiary}"
-                : $"المستفيد: {effectiveBeneficiary}";
+                ? $"سيُستخدم المستفيد الافتراضي: {effectiveBeneficiary}"
+                : $"الجهة المستفيدة: {effectiveBeneficiary}";
 
             SetConsequenceState(
                 "سيُنشأ ضمان جديد كالإصدار الأول.",
@@ -1137,7 +1139,7 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(this, "Dialog.EditGuarantee", Title);
             UiInstrumentation.Identify(_guaranteeNoInput, "Dialog.EditGuarantee.GuaranteeNoInput", "رقم الضمان");
             UiInstrumentation.Identify(_supplierInput, "Dialog.EditGuarantee.SupplierInput", "المورد");
-            UiInstrumentation.Identify(_beneficiaryInput, "Dialog.EditGuarantee.BeneficiaryInput", "المستفيد");
+            UiInstrumentation.Identify(_beneficiaryInput, "Dialog.EditGuarantee.BeneficiaryInput", "الجهة المستفيدة");
             UiInstrumentation.Identify(_bankInput, "Dialog.EditGuarantee.BankInput", "البنك");
             UiInstrumentation.Identify(_typeInput, "Dialog.EditGuarantee.TypeInput", "نوع الضمان");
             UiInstrumentation.Identify(_amountInput, "Dialog.EditGuarantee.AmountInput", "المبلغ");
@@ -1173,7 +1175,8 @@ namespace GuaranteeManager
 
             _guaranteeNoInput.Text = currentGuarantee.GuaranteeNo;
             _supplierInput.Text = currentGuarantee.Supplier;
-            _beneficiaryInput.Text = string.IsNullOrWhiteSpace(currentGuarantee.Beneficiary) ? currentGuarantee.Supplier : currentGuarantee.Beneficiary;
+            _beneficiaryInput.Text = BusinessPartyDefaults.NormalizeBeneficiary(currentGuarantee.Beneficiary);
+            _beneficiaryInput.IsReadOnly = true;
             _bankInput.Text = currentGuarantee.Bank;
             _typeInput.Text = currentGuarantee.GuaranteeType;
             _amountInput.Text = currentGuarantee.Amount.ToString("N2", CultureInfo.InvariantCulture);
@@ -1213,7 +1216,7 @@ namespace GuaranteeManager
 
             fields.Children.Add(BuildField("رقم الضمان", _guaranteeNoInput));
             fields.Children.Add(BuildField("المورد", _supplierInput));
-            fields.Children.Add(BuildField("المستفيد", _beneficiaryInput));
+            fields.Children.Add(BuildField("الجهة المستفيدة", _beneficiaryInput));
             fields.Children.Add(BuildField("البنك", _bankInput));
             fields.Children.Add(BuildField("نوع الضمان", _typeInput));
             fields.Children.Add(BuildField("المبلغ", _amountInput));
@@ -1376,7 +1379,7 @@ namespace GuaranteeManager
             _input = new EditGuaranteeInput(
                 guaranteeNo,
                 supplier,
-                string.IsNullOrWhiteSpace(beneficiary) ? supplier : beneficiary,
+                BusinessPartyDefaults.NormalizeBeneficiary(beneficiary),
                 bank,
                 guaranteeType,
                 amount,
@@ -1636,8 +1639,8 @@ namespace GuaranteeManager
             string referenceNumber = _referenceNumberInput.Text.Trim();
             string notes = _notesInput.Text.Trim();
             GuaranteeReferenceType referenceType = (_referenceTypeInput.SelectedItem as ReferenceTypeOption)?.Value ?? GuaranteeReferenceType.None;
-            string effectiveBeneficiary = string.IsNullOrWhiteSpace(beneficiary) ? supplier : beneficiary;
-            string currentBeneficiary = string.IsNullOrWhiteSpace(_currentGuarantee.Beneficiary) ? _currentGuarantee.Supplier : _currentGuarantee.Beneficiary;
+            string effectiveBeneficiary = BusinessPartyDefaults.NormalizeBeneficiary(beneficiary);
+            string currentBeneficiary = BusinessPartyDefaults.NormalizeBeneficiary(_currentGuarantee.Beneficiary);
             string currentNotes = _currentGuarantee.Notes?.Trim() ?? string.Empty;
 
             return !string.Equals(guaranteeNo, _currentGuarantee.GuaranteeNo, StringComparison.Ordinal)
@@ -1793,8 +1796,8 @@ namespace GuaranteeManager
                 return;
             }
 
-            string effectiveBeneficiary = string.IsNullOrWhiteSpace(beneficiary) ? supplier : beneficiary;
-            string currentBeneficiary = string.IsNullOrWhiteSpace(_currentGuarantee.Beneficiary) ? _currentGuarantee.Supplier : _currentGuarantee.Beneficiary;
+            string effectiveBeneficiary = BusinessPartyDefaults.NormalizeBeneficiary(beneficiary);
+            string currentBeneficiary = BusinessPartyDefaults.NormalizeBeneficiary(_currentGuarantee.Beneficiary);
 
             var changeLabels = new List<string>();
             if (!string.Equals(guaranteeNo, _currentGuarantee.GuaranteeNo, StringComparison.Ordinal))
@@ -1809,7 +1812,7 @@ namespace GuaranteeManager
 
             if (!string.Equals(effectiveBeneficiary, currentBeneficiary, StringComparison.Ordinal))
             {
-                changeLabels.Add("المستفيد");
+                changeLabels.Add("الجهة المستفيدة");
             }
 
             if (!string.Equals(bank, _currentGuarantee.Bank, StringComparison.Ordinal))
@@ -1967,7 +1970,8 @@ namespace GuaranteeManager
             _amountInput.Text = currentGuarantee.Amount.ToString("N2", CultureInfo.InvariantCulture);
             _expiryInput.Text = currentGuarantee.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
             _typeInput.Text = currentGuarantee.GuaranteeType;
-            _beneficiaryInput.Text = string.IsNullOrWhiteSpace(currentGuarantee.Beneficiary) ? currentGuarantee.Supplier : currentGuarantee.Beneficiary;
+            _beneficiaryInput.Text = BusinessPartyDefaults.NormalizeBeneficiary(currentGuarantee.Beneficiary);
+            _beneficiaryInput.IsReadOnly = true;
             _referenceNumberInput.Text = currentGuarantee.ReferenceNumber;
             _notesInput.Text = $"استبدال للضمان {currentGuarantee.GuaranteeNo}";
             _notesInput.Height = 58;
@@ -1999,7 +2003,7 @@ namespace GuaranteeManager
             fields.Children.Add(BuildField("المبلغ البديل", _amountInput));
             fields.Children.Add(BuildField("تاريخ الانتهاء البديل", _expiryInput));
             fields.Children.Add(BuildField("نوع الضمان البديل", _typeInput));
-            fields.Children.Add(BuildField("المستفيد البديل", _beneficiaryInput));
+            fields.Children.Add(BuildField("الجهة المستفيدة للبديل", _beneficiaryInput));
             fields.Children.Add(BuildField("نوع المرجع", _referenceTypeInput));
             fields.Children.Add(BuildField("رقم المرجع", _referenceNumberInput));
             fields.Children.Add(BuildField("ملاحظات", _notesInput));
@@ -2110,7 +2114,7 @@ namespace GuaranteeManager
                 replacementAmount,
                 replacementExpiryDate.Date,
                 replacementGuaranteeType,
-                string.IsNullOrWhiteSpace(replacementBeneficiary) ? replacementSupplier : replacementBeneficiary,
+                BusinessPartyDefaults.NormalizeBeneficiary(replacementBeneficiary),
                 replacementReferenceType,
                 replacementReferenceNumber,
                 string.IsNullOrWhiteSpace(notes) ? $"استبدال للضمان {_currentGuarantee.GuaranteeNo}" : notes);
@@ -2487,7 +2491,7 @@ namespace GuaranteeManager
             string bank = guarantee?.Bank ?? _result.CurrentGuarantee?.Bank ?? _result.SelectedGuarantee?.Bank ?? string.Empty;
             string beneficiary = guarantee == null
                 ? _result.Subject
-                : string.IsNullOrWhiteSpace(guarantee.Beneficiary) ? guarantee.Supplier : guarantee.Beneficiary;
+                : BusinessPartyDefaults.NormalizeBeneficiary(guarantee.Beneficiary);
             string headline = guarantee == null
                 ? _result.EventDateLabel.Split(' ')[0]
                 : $"{guarantee.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال";

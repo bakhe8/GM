@@ -28,6 +28,7 @@ namespace GuaranteeManager
 
         private GuaranteeRow(
             Guarantee guarantee,
+            string supplier,
             string beneficiary,
             string amount,
             string amountDescription,
@@ -43,6 +44,7 @@ namespace GuaranteeManager
             Id = guarantee.Id;
             RootId = guarantee.RootId ?? guarantee.Id;
             IsCurrentVersion = guarantee.IsCurrent;
+            Supplier = supplier;
             Beneficiary = beneficiary;
             Bank = guarantee.Bank;
             GuaranteeNo = guarantee.GuaranteeNo;
@@ -74,7 +76,8 @@ namespace GuaranteeManager
         public bool IsCurrentVersion { get; }
         public string GuaranteeNo { get; }
         public string AutomationKey => BuildAutomationKey(GuaranteeNo, Id);
-        public string RowAutomationName => $"{GuaranteeNo} | {Beneficiary}";
+        public string RowAutomationName => $"{GuaranteeNo} | {Supplier}";
+        public string Supplier { get; }
         public string Beneficiary { get; }
         public string Bank { get; }
         public ImageSource BankLogo => GetBankLogo(Bank);
@@ -153,14 +156,16 @@ namespace GuaranteeManager
             bool hasPendingRequest = relatedRequests.Any(request => request.Status == RequestStatus.Pending);
             (string timeStatus, Tone timeTone) = GetTimeStatus(guarantee);
             (string workStatus, Tone workTone) = GetWorkStatus(guarantee, hasPendingRequest);
-            string beneficiary = string.IsNullOrWhiteSpace(guarantee.Beneficiary)
-                ? guarantee.Supplier
-                : guarantee.Beneficiary;
+            string supplier = string.IsNullOrWhiteSpace(guarantee.Supplier)
+                ? "---"
+                : guarantee.Supplier.Trim();
+            string beneficiary = BusinessPartyDefaults.NormalizeBeneficiary(guarantee.Beneficiary);
             GuaranteeActionProfile actionProfile = GuaranteeActionProfile.Build(guarantee, relatedRequests);
 
             return new GuaranteeRow(
                 guarantee,
-                string.IsNullOrWhiteSpace(beneficiary) ? "---" : beneficiary,
+                supplier,
+                beneficiary,
                 FormatAmount(guarantee.Amount),
                 NumberToArabicWords(guarantee.Amount) + " ريال سعودي",
                 FormatDate(guarantee.CreatedAt),

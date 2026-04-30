@@ -107,6 +107,16 @@ namespace GuaranteeManager.Tests
             AddViolations(
                 connection,
                 violations,
+                "Generated guarantees must use the single program beneficiary.",
+                @"
+                    SELECT Id, GuaranteeNo, Beneficiary
+                    FROM Guarantees
+                    WHERE TRIM(IFNULL(Beneficiary, '')) <> 'مستشفى الملك فيصل التخصصي ومركز الأبحاث'",
+                reader => $"guarantee={reader.GetInt32(0)}, no={reader.GetString(1)}, beneficiary={ReadNullableString(reader, 2)}");
+
+            AddViolations(
+                connection,
+                violations,
                 "A root cannot have duplicate pending requests of the same type.",
                 @"
                     SELECT RootId, RequestType, COUNT(*)
@@ -200,6 +210,13 @@ namespace GuaranteeManager.Tests
             return reader.IsDBNull(ordinal)
                 ? "null"
                 : reader.GetInt32(ordinal).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        private static string ReadNullableString(SqliteDataReader reader, int ordinal)
+        {
+            return reader.IsDBNull(ordinal)
+                ? "null"
+                : reader.GetString(ordinal);
         }
     }
 }

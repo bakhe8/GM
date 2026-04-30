@@ -208,7 +208,7 @@ namespace GuaranteeManager.Services
             string safeGuaranteeType = EncodeLetterText(guarantee.GuaranteeType);
             string safeReferenceType = EncodeLetterText(guarantee.ReferenceTypeLabel);
             string safeReferenceNumber = EncodeLetterText(guarantee.ReferenceNumber);
-            string safeBeneficiary = EncodeLetterText(guarantee.Beneficiary);
+            string safeBeneficiary = EncodeLetterText(BusinessPartyDefaults.NormalizeBeneficiary(guarantee.Beneficiary));
             string safeCurrentLabel = System.Net.WebUtility.HtmlEncode(currentValue.Label);
             string safeCurrentValue = EncodeLetterText(currentValue.Value);
             string safeRequestedLabel = System.Net.WebUtility.HtmlEncode(requestedValue.Label);

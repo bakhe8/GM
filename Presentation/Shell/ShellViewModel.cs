@@ -746,7 +746,7 @@ namespace GuaranteeManager
                         row.Id,
                         row.RootId,
                         row.GuaranteeNo,
-                        row.Beneficiary,
+                        row.Supplier,
                         row.Bank
                     });
                 WriteDiagnosticsState("select-guarantee");
@@ -1819,7 +1819,7 @@ namespace GuaranteeManager
                 SelectedGuarantee?.Id,
                 SelectedGuarantee?.RootId,
                 SelectedGuarantee?.GuaranteeNo ?? string.Empty,
-                SelectedGuarantee?.Beneficiary ?? string.Empty,
+                SelectedGuarantee?.Supplier ?? string.Empty,
                 SelectedGuarantee?.Bank ?? string.Empty);
         }
 

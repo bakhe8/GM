@@ -79,6 +79,7 @@ namespace GuaranteeManager.Services
             EnsureVersioningSchema(connection);
             HashSet<string> guaranteeColumns = SqliteSchemaInspector.GetTableColumns(connection, "Guarantees");
             EnsureBeneficiaryColumn(connection, guaranteeColumns);
+            NormalizeGuaranteeBeneficiaries(connection);
             EnsureReferenceColumns(connection, guaranteeColumns);
             EnsureLifecycleStatusColumn(connection, guaranteeColumns);
             EnsureReplacementRelationColumns(connection, guaranteeColumns);
@@ -341,6 +342,21 @@ namespace GuaranteeManager.Services
                 alter.CommandText = "ALTER TABLE Guarantees ADD COLUMN Beneficiary TEXT";
                 alter.ExecuteNonQuery();
                 columns.Add("Beneficiary");
+            }
+        }
+
+        private static void NormalizeGuaranteeBeneficiaries(SqliteConnection connection)
+        {
+            var cmd = connection.CreateCommand();
+            cmd.CommandText = @"
+                UPDATE Guarantees
+                SET Beneficiary = $beneficiary
+                WHERE TRIM(IFNULL(Beneficiary, '')) <> $beneficiary";
+            cmd.Parameters.AddWithValue("$beneficiary", BusinessPartyDefaults.DefaultBeneficiaryName);
+            int updated = cmd.ExecuteNonQuery();
+            if (updated > 0)
+            {
+                SimpleLogger.Log($"NormalizeGuaranteeBeneficiaries: normalized {updated} guarantee beneficiary value(s).");
             }
         }
 

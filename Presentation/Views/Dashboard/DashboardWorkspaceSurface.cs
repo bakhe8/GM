@@ -203,7 +203,7 @@ namespace GuaranteeManager
                 _pager.ResetToFirstPage();
                 ApplyFilters();
             };
-            var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث باسم المستفيد أو البنك أو رقم الضمان...");
+            var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث باسم المورد أو البنك أو رقم الضمان...");
             Grid.SetColumn(searchBox, 4);
             toolbar.Children.Add(searchBox);
             return toolbar;

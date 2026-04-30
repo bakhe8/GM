@@ -4,12 +4,28 @@ using System.Linq;
 using System.Text.Json;
 using GuaranteeManager.Models;
 using GuaranteeManager.Services;
+using GuaranteeManager.Utils;
 using Xunit;
 
 namespace GuaranteeManager.Tests
 {
     public sealed class GuaranteeWorkspaceDataServiceTests
     {
+        [Fact]
+        public void GuaranteeRow_FromGuarantee_UsesSupplierAsDisplayedParty()
+        {
+            DateTime start = new(2026, 4, 28, 8, 0, 0);
+            Guarantee guarantee = CreateGuarantee(1, null, 1, true, start, 1_500_000m);
+            guarantee.Supplier = "شركة التشغيل الطبي";
+            guarantee.Beneficiary = BusinessPartyDefaults.DefaultBeneficiaryName;
+
+            GuaranteeRow row = GuaranteeRow.FromGuarantee(guarantee, Array.Empty<WorkflowRequest>());
+
+            Assert.Equal("شركة التشغيل الطبي", row.Supplier);
+            Assert.Equal(BusinessPartyDefaults.DefaultBeneficiaryName, row.Beneficiary);
+            Assert.Equal("BG-TEST-0001 | شركة التشغيل الطبي", row.RowAutomationName);
+        }
+
         [Fact]
         public void BuildSelectionArtifacts_ForCurrentGuarantee_BuildsFullChronologicalTimeline()
         {
@@ -253,7 +269,7 @@ namespace GuaranteeManager.Tests
                 IsCurrent = isCurrent,
                 GuaranteeNo = "BG-TEST-0001",
                 Supplier = "مورد اختبار",
-                Beneficiary = "مستفيد اختبار",
+                Beneficiary = BusinessPartyDefaults.DefaultBeneficiaryName,
                 Bank = "بنك ساب",
                 Amount = amount,
                 CreatedAt = createdAt,

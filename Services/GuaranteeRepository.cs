@@ -45,7 +45,7 @@ namespace GuaranteeManager.Services
 
                     cmd.Parameters.AddWithValue("$referenceType", g.ReferenceType.ToString());
                     cmd.Parameters.AddWithValue("$referenceNumber", g.ReferenceNumber ?? string.Empty);
-                    cmd.Parameters.AddWithValue("$ben", g.Beneficiary ?? "");
+                    cmd.Parameters.AddWithValue("$ben", BusinessPartyDefaults.NormalizeBeneficiary(g.Beneficiary));
                     cmd.Parameters.AddWithValue("$sup", g.Supplier);
                     cmd.Parameters.AddWithValue("$bank", g.Bank);
                     cmd.Parameters.AddWithValue("$no", g.GuaranteeNo);
@@ -558,7 +558,7 @@ namespace GuaranteeManager.Services
                         VALUES ($sup, $bank, $no, $amt, $exp, $type, $ben, $notes, $now, $pid, $ver, 1, $referenceType, $referenceNumber, $lifecycle, $replacesRootId, $replacedByRootId);
                         SELECT last_insert_rowid();";
 
-                    cmd.Parameters.AddWithValue("$ben", newG.Beneficiary ?? "");
+                    cmd.Parameters.AddWithValue("$ben", BusinessPartyDefaults.NormalizeBeneficiary(newG.Beneficiary));
                     cmd.Parameters.AddWithValue("$referenceType", newG.ReferenceType.ToString());
                     cmd.Parameters.AddWithValue("$referenceNumber", newG.ReferenceNumber ?? string.Empty);
                     cmd.Parameters.AddWithValue("$lifecycle", newG.LifecycleStatus.ToString());

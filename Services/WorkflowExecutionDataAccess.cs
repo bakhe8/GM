@@ -90,7 +90,7 @@ namespace GuaranteeManager.Services
             insertGuaranteeCommand.Parameters.AddWithValue("$amount", amount);
             insertGuaranteeCommand.Parameters.AddWithValue("$expiryDate", PersistedDateTime.FormatDate(expiryDate));
             insertGuaranteeCommand.Parameters.AddWithValue("$guaranteeType", sourceGuarantee.GuaranteeType);
-            insertGuaranteeCommand.Parameters.AddWithValue("$beneficiary", sourceGuarantee.Beneficiary ?? string.Empty);
+            insertGuaranteeCommand.Parameters.AddWithValue("$beneficiary", BusinessPartyDefaults.NormalizeBeneficiary(sourceGuarantee.Beneficiary));
             insertGuaranteeCommand.Parameters.AddWithValue("$notes", notes);
             insertGuaranteeCommand.Parameters.AddWithValue("$createdAt", PersistedDateTime.FormatDateTime(createdAt));
             insertGuaranteeCommand.Parameters.AddWithValue("$rootId", rootId);
@@ -138,7 +138,7 @@ namespace GuaranteeManager.Services
             insertNewGuaranteeCommand.Parameters.AddWithValue("$amount", amount);
             insertNewGuaranteeCommand.Parameters.AddWithValue("$expiryDate", PersistedDateTime.FormatDate(expiryDate));
             insertNewGuaranteeCommand.Parameters.AddWithValue("$guaranteeType", guaranteeType);
-            insertNewGuaranteeCommand.Parameters.AddWithValue("$beneficiary", beneficiary ?? string.Empty);
+            insertNewGuaranteeCommand.Parameters.AddWithValue("$beneficiary", BusinessPartyDefaults.NormalizeBeneficiary(beneficiary));
             insertNewGuaranteeCommand.Parameters.AddWithValue("$notes", notes);
             insertNewGuaranteeCommand.Parameters.AddWithValue("$createdAt", PersistedDateTime.FormatDateTime(createdAt));
             insertNewGuaranteeCommand.Parameters.AddWithValue("$referenceType", referenceType.ToString());

@@ -55,7 +55,7 @@ namespace GuaranteeManager.Tests
                 Amount = 1000m + _sequence,
                 ExpiryDate = DateTime.Today.AddDays(90),
                 GuaranteeType = "Performance",
-                Beneficiary = "General Beneficiary",
+                Beneficiary = BusinessPartyDefaults.DefaultBeneficiaryName,
                 ReferenceType = GuaranteeReferenceType.Contract,
                 ReferenceNumber = $"REF-{token}",
                 Notes = $"Seed data {token}"

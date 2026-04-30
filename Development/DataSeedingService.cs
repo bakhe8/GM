@@ -51,18 +51,6 @@ namespace GuaranteeManager.Development
             "صيانة"
         };
 
-        private readonly string[] _beneficiaries =
-        {
-            "وزارة المالية - إدارة المشتريات",
-            "الهيئة الملكية للجبيل وينبع",
-            "وزارة الصحة - المستشفيات الحكومية",
-            "شركة أرامكو السعودية",
-            "وزارة التعليم - الإدارة العامة للمشاريع",
-            "أمانة منطقة الرياض",
-            "وزارة النقل والخدمات اللوجستية",
-            "الهيئة السعودية للمقاولين"
-        };
-
         public DataSeedingService(IDatabaseService databaseService, IWorkflowService workflowService)
         {
             _databaseService = databaseService;
@@ -904,7 +892,6 @@ namespace GuaranteeManager.Development
             int si = supplierIndex % _suppliers.Length;
             int bi = _counter % _banks.Length;
             int ti = _counter % _guaranteeTypes.Length;
-            int beni = _counter % _beneficiaries.Length;
 
             return new Guarantee
             {
@@ -914,7 +901,7 @@ namespace GuaranteeManager.Development
                 Amount = amount,
                 ExpiryDate = DateTime.Today.AddDays(expiryDaysFromToday),
                 GuaranteeType = _guaranteeTypes[ti],
-                Beneficiary = _beneficiaries[beni],
+                Beneficiary = BusinessPartyDefaults.DefaultBeneficiaryName,
                 ReferenceType = refType,
                 ReferenceNumber = refNumber,
                 LifecycleStatus = GuaranteeLifecycleStatus.Active,

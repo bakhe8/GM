@@ -161,7 +161,7 @@ namespace GuaranteeManager.Tests
                 category,
                 priority,
                 rank,
-                "مستفيد اختبار",
+                "مورد اختبار",
                 "بنك اختبار",
                 new DrawingImage(),
                 reference,

@@ -109,11 +109,11 @@
                                      Style="{StaticResource SearchTextBox}"
                                      Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                      FlowDirection="RightToLeft"
-                                     ToolTip="ابحث برقم الضمان، اسم المستفيد، رقم العقد..."
+                                     ToolTip="ابحث برقم الضمان، اسم المورد، رقم العقد..."
                                      automation:AutomationProperties.AutomationId="Guarantees.SearchBox"
                                      automation:AutomationProperties.Name="بحث الضمانات" />
                             <TextBlock Grid.Column="0"
-                                       Text="ابحث برقم الضمان، اسم المستفيد، رقم العقد..."
+                                      Text="ابحث برقم الضمان، اسم المورد، رقم العقد..."
                                        FontSize="11"
                                        Foreground="#94A3B8"
                                        VerticalAlignment="Center"
@@ -243,7 +243,7 @@
                                 <TextBlock Grid.Column="3" Text="تاريخ الإصدار" Style="{StaticResource TableHeaderText}" />
                                 <TextBlock Grid.Column="4" Text="المبلغ" Style="{StaticResource TableHeaderText}" />
                                 <TextBlock Grid.Column="5" Text="البنك" Style="{StaticResource TableHeaderRight}" />
-                                <TextBlock Grid.Column="6" Text="اسم المستفيد" Style="{StaticResource TableHeaderRight}" />
+                                <TextBlock Grid.Column="6" Text="المورد" Style="{StaticResource TableHeaderRight}" />
                                 <TextBlock Grid.Column="7" Text="الإصدار" Style="{StaticResource TableHeaderText}" />
                                 <TextBlock Grid.Column="8" Text="رقم الضمان" Style="{StaticResource TableHeaderRight}" />
                             </Grid>
@@ -303,7 +303,7 @@
                                             <Border Width="8" />
                                             <TextBlock Text="{Binding Bank}" Style="{StaticResource TableCellText}" TextAlignment="Right" VerticalAlignment="Center" />
                                         </StackPanel>
-                                        <TextBlock Grid.Column="6" Text="{Binding Beneficiary}" Style="{StaticResource TableCellRight}" />
+                                        <TextBlock Grid.Column="6" Text="{Binding Supplier}" Style="{StaticResource TableCellRight}" />
                                         <TextBlock Grid.Column="7" Text="{Binding VersionLabel}" Style="{StaticResource TableCellCenter}" />
                                         <TextBlock Grid.Column="8" Text="{Binding GuaranteeNo}" Style="{StaticResource TableCellRight}" />
                                     </Grid>

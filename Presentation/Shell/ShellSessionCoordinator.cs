@@ -14,7 +14,7 @@ namespace GuaranteeManager
             return new ShellLastFileState(
                 row.RootId,
                 row.GuaranteeNo,
-                $"{row.Beneficiary} | {row.Bank}");
+                $"{row.Supplier} | {row.Bank}");
         }
 
         public Guarantee? ResolveLastFileGuarantee(ShellLastFileState state, IDatabaseService database)

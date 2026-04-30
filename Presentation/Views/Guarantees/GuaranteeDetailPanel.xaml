@@ -59,15 +59,15 @@
                         <Viewbox Width="14" Height="14" VerticalAlignment="Center">
                             <Path Data="{StaticResource Icon.User}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                         </Viewbox>
-                        <TextBlock Text="{Binding SelectedGuarantee.Beneficiary}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" Margin="8,0,0,0" />
+                        <TextBlock Text="{Binding SelectedGuarantee.Supplier}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" Margin="8,0,0,0" />
                         <Border Width="3" />
                         <Button Style="{StaticResource IconOnlyButton}"
                                 Margin="0"
-                                ToolTip="نسخ اسم المستفيد"
+                                ToolTip="نسخ اسم المورد"
                                 Command="{Binding CopyGuaranteeSupplierCommand}"
                                 CommandParameter="{Binding SelectedGuarantee}"
-                                automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Header.CopyBeneficiary"
-                                automation:AutomationProperties.Name="نسخ اسم المستفيد">
+                                automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Header.CopySupplier"
+                                automation:AutomationProperties.Name="نسخ اسم المورد">
                             <Viewbox Width="12" Height="12">
                                 <Path Data="{StaticResource Icon.Copy}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                             </Viewbox>

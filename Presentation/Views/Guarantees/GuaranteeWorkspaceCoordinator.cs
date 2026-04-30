@@ -102,7 +102,7 @@ namespace GuaranteeManager
             if (HasOperationalFieldChanges(current, input))
             {
                 MessageBox.Show(
-                    "التعديل من هذه الواجهة مخصص للتصحيح الإداري الوصفي فقط مثل اسم المورد/المستفيد أو الملاحظات والمرفقات. لا يمكن تغيير رقم الضمان أو البنك أو النوع أو المبلغ أو تاريخ الانتهاء أو بيانات المرجع من هنا لأنها تؤثر في منطق الطلبات ودورة حياة الضمان.",
+                    "التعديل من هذه الواجهة مخصص للتصحيح الإداري الوصفي فقط مثل اسم المورد أو الجهة المستفيدة أو الملاحظات والمرفقات. لا يمكن تغيير رقم الضمان أو البنك أو النوع أو المبلغ أو تاريخ الانتهاء أو بيانات المرجع من هنا لأنها تؤثر في منطق الطلبات ودورة حياة الضمان.",
                     "تعديل الضمان",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
@@ -451,7 +451,7 @@ namespace GuaranteeManager
 
         public void CopySupplier(GuaranteeRow target)
         {
-            CopyValue(target.Beneficiary, "اسم المستفيد", target.GuaranteeNo);
+            CopyValue(target.Supplier, "اسم المورد", target.GuaranteeNo);
         }
 
         public void CopyReferenceType(GuaranteeRow target)

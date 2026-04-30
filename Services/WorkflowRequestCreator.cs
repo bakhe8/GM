@@ -238,12 +238,13 @@ namespace GuaranteeManager.Services
                 new WorkflowRequestedData
                 {
                     ReplacementGuaranteeNo = replacementGuaranteeNo.Trim(),
-                    ReplacementSupplier = replacementSupplier?.Trim() ?? guarantee.Supplier,
-                    ReplacementBank = replacementBank?.Trim() ?? guarantee.Bank,
+                    ReplacementSupplier = string.IsNullOrWhiteSpace(replacementSupplier) ? guarantee.Supplier : replacementSupplier.Trim(),
+                    ReplacementBank = string.IsNullOrWhiteSpace(replacementBank) ? guarantee.Bank : replacementBank.Trim(),
                     ReplacementAmount = replacementAmount,
                     ReplacementExpiryDate = replacementExpiryDate.Date,
-                    ReplacementGuaranteeType = replacementGuaranteeType?.Trim() ?? guarantee.GuaranteeType,
-                    ReplacementBeneficiary = replacementBeneficiary?.Trim() ?? guarantee.Beneficiary,
+                    ReplacementGuaranteeType = string.IsNullOrWhiteSpace(replacementGuaranteeType) ? guarantee.GuaranteeType : replacementGuaranteeType.Trim(),
+                    ReplacementBeneficiary = BusinessPartyDefaults.NormalizeBeneficiary(
+                        string.IsNullOrWhiteSpace(replacementBeneficiary) ? guarantee.Beneficiary : replacementBeneficiary),
                     ReplacementReferenceType = normalizedReferenceType,
                     ReplacementReferenceNumber = normalizedReferenceNumber
                 },

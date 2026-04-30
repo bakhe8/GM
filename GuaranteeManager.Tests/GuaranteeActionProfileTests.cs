@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using GuaranteeManager.Models;
+using GuaranteeManager.Utils;
 using Xunit;
 
 namespace GuaranteeManager.Tests
@@ -82,7 +83,7 @@ namespace GuaranteeManager.Tests
                 Amount = 1000,
                 ExpiryDate = DateTime.Today.AddDays(30),
                 GuaranteeType = "ابتدائي",
-                Beneficiary = "مستفيد اختبار",
+                Beneficiary = BusinessPartyDefaults.DefaultBeneficiaryName,
                 LifecycleStatus = status,
                 IsCurrent = true,
                 VersionNumber = 1

@@ -22,8 +22,8 @@ namespace GuaranteeManager
                 {
                     Guarantee first = group.First();
                     decimal amount = group.Sum(item => item.Amount);
-                    string topBeneficiary = group
-                        .GroupBy(item => string.IsNullOrWhiteSpace(item.Beneficiary) ? item.Supplier : item.Beneficiary)
+                    string topSupplier = group
+                        .GroupBy(item => string.IsNullOrWhiteSpace(item.Supplier) ? "---" : item.Supplier.Trim())
                         .OrderByDescending(item => item.Count())
                         .Select(item => item.Key)
                         .FirstOrDefault() ?? "---";
@@ -36,7 +36,7 @@ namespace GuaranteeManager
                         group.Count(item => item.IsExpired),
                         amount,
                         totalAmount <= 0 ? 0 : (amount / totalAmount) * 100m,
-                        topBeneficiary,
+                        topSupplier,
                         GuaranteeRow.ResolveBankLogo(first.Bank));
                 })
                 .OrderByDescending(item => item.Amount)
@@ -74,7 +74,7 @@ namespace GuaranteeManager
             {
                 query = query.Where(item =>
                     item.Bank.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) ||
-                    item.TopBeneficiary.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase));
+                    item.TopSupplier.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase));
             }
 
             query = sortFilter switch
@@ -121,7 +121,7 @@ namespace GuaranteeManager
                 selectedItem.Bank,
                 selectedItem.Count == 0
                     ? "لا توجد ضمانات مرتبطة بهذا البنك بعد."
-                    : $"أعلى مستفيد: {selectedItem.TopBeneficiary}",
+                    : $"أعلى مورد: {selectedItem.TopSupplier}",
                 selectedItem.PortfolioStatusLabel,
                 selectedItem.PortfolioStatusBrush,
                 selectedItem.PortfolioStatusBackground,
@@ -175,7 +175,7 @@ namespace GuaranteeManager
         int Expired,
         decimal Amount,
         decimal Share,
-        string TopBeneficiary,
+        string TopSupplier,
         ImageSource Logo)
     {
         public string AmountDisplay => $"{Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال";

@@ -8,6 +8,7 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using ClosedXML.Excel;
 using GuaranteeManager.Models;
+using GuaranteeManager.Utils;
 using Microsoft.Win32;
 
 namespace GuaranteeManager.Services
@@ -526,7 +527,7 @@ namespace GuaranteeManager.Services
 
         private static string ResolveBeneficiary(Guarantee guarantee)
         {
-            return string.IsNullOrWhiteSpace(guarantee.Beneficiary) ? guarantee.Supplier : guarantee.Beneficiary;
+            return BusinessPartyDefaults.NormalizeBeneficiary(guarantee.Beneficiary);
         }
 
         private static string BuildReferenceSummary(Guarantee guarantee)
