@@ -4,4 +4,5 @@
     <local:EmptyStringToVisibilityConverter x:Key="EmptyStringToVisibilityConverter" />
     <local:NullToCollapsedConverter x:Key="NullToCollapsedConverter" />
     <local:TrueToVisibleCollapsedConverter x:Key="TrueToVisibleCollapsedConverter" />
+    <local:BankLogoSourceConverter x:Key="BankLogoSourceConverter" />
 </ResourceDictionary>

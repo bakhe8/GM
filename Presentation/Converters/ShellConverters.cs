@@ -60,4 +60,24 @@ namespace GuaranteeManager
             return Binding.DoNothing;
         }
     }
+
+    public sealed class BankLogoSourceConverter : IValueConverter
+    {
+        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            string bankName = (value as string)?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(bankName) ||
+                string.Equals(bankName, "كل البنوك", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return GuaranteeRow.ResolveBankLogo(bankName);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return Binding.DoNothing;
+        }
+    }
 }

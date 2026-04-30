@@ -58,7 +58,34 @@
                               MinWidth="124"
                               Tag="{StaticResource Icon.Banks}"
                               automation:AutomationProperties.AutomationId="Guarantees.Filter.Bank"
-                              automation:AutomationProperties.Name="فلتر البنك" />
+                              automation:AutomationProperties.Name="فلتر البنك">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal"
+                                            FlowDirection="RightToLeft"
+                                            HorizontalAlignment="Right">
+                                    <Image Source="{Binding Converter={StaticResource BankLogoSourceConverter}}"
+                                           Width="16"
+                                           Height="16"
+                                           Margin="0,0,7,0"
+                                           VerticalAlignment="Center"
+                                           RenderOptions.BitmapScalingMode="HighQuality">
+                                        <Image.Style>
+                                            <Style TargetType="Image">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Source, RelativeSource={RelativeSource Self}}" Value="{x:Null}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Image.Style>
+                                    </Image>
+                                    <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                     <ComboBox Grid.Column="6"
                               Style="{StaticResource FilterComboBox}"
                               ItemsSource="{Binding GuaranteeTypeOptions}"
