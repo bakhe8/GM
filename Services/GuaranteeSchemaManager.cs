@@ -18,6 +18,7 @@ namespace GuaranteeManager.Services
             }
 
             EnsureAttachmentDocumentTypeColumn(connection);
+            EnsureAttachmentTimelineEventColumn(connection);
         }
 
         public static void EnsureBaseSchema(SqliteConnection connection)
@@ -257,9 +258,11 @@ namespace GuaranteeManager.Services
                     FileExtension TEXT NOT NULL,
                     UploadedAt TEXT NOT NULL,
                     DocumentType TEXT NOT NULL DEFAULT 'SupportingDocument',
+                    TimelineEventKey TEXT,
                     FOREIGN KEY(GuaranteeId) REFERENCES Guarantees(Id) ON DELETE CASCADE
                 );
                 CREATE INDEX IF NOT EXISTS idx_attachment_guarantee ON Attachments(GuaranteeId);
+                CREATE INDEX IF NOT EXISTS idx_attachment_timeline_event ON Attachments(TimelineEventKey);
             ";
             command.ExecuteNonQuery();
 
@@ -312,6 +315,22 @@ namespace GuaranteeManager.Services
             alter.CommandText = "ALTER TABLE Attachments ADD COLUMN DocumentType TEXT NOT NULL DEFAULT 'SupportingDocument'";
             alter.ExecuteNonQuery();
             SimpleLogger.Log("Added DocumentType column to Attachments table.");
+        }
+
+        private static void EnsureAttachmentTimelineEventColumn(SqliteConnection connection)
+        {
+            HashSet<string> columns = SqliteSchemaInspector.GetTableColumns(connection, "Attachments");
+            if (!columns.Contains("TimelineEventKey"))
+            {
+                var alter = connection.CreateCommand();
+                alter.CommandText = "ALTER TABLE Attachments ADD COLUMN TimelineEventKey TEXT";
+                alter.ExecuteNonQuery();
+                SimpleLogger.Log("Added TimelineEventKey column to Attachments table.");
+            }
+
+            var index = connection.CreateCommand();
+            index.CommandText = "CREATE INDEX IF NOT EXISTS idx_attachment_timeline_event ON Attachments(TimelineEventKey)";
+            index.ExecuteNonQuery();
         }
 
         private static void EnsureBeneficiaryColumn(SqliteConnection connection, HashSet<string> columns)

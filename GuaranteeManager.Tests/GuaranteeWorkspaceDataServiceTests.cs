@@ -80,6 +80,17 @@ namespace GuaranteeManager.Tests
                 UploadedAt = start.AddHours(4),
                 DocumentType = AttachmentDocumentType.GuaranteeImage
             });
+            current.Attachments.Add(new AttachmentRecord
+            {
+                Id = 101,
+                GuaranteeId = current.Id,
+                OriginalFileName = "creation-evidence.pdf",
+                SavedFileName = "creation-evidence.pdf",
+                FileExtension = ".pdf",
+                UploadedAt = start.AddHours(5),
+                DocumentType = AttachmentDocumentType.SupportingDocument,
+                TimelineEventKey = "guarantee-created:1"
+            });
             var request = new WorkflowRequest
             {
                 Id = 12,
@@ -114,7 +125,11 @@ namespace GuaranteeManager.Tests
 
             TimelineItem responseEvent = Assert.Single(artifacts.Timeline, item => item.Title == "تسجيل رد طلب إفراج");
             Assert.Equal(TimelineEvidenceActionKind.ResponseDocument, responseEvent.EvidenceActionKind);
-            Assert.Equal("إلحاق رد البنك", responseEvent.EvidenceActionLabel);
+            Assert.Equal("إرفاق", responseEvent.EvidenceActionLabel);
+
+            TimelineItem guaranteeEvent = Assert.Single(artifacts.Timeline, item => item.Title == "إنشاء الضمان");
+            Assert.Equal(TimelineEvidenceActionKind.Attachment, guaranteeEvent.EvidenceActionKind);
+            Assert.Equal("فتح المرفق", guaranteeEvent.EvidenceActionLabel);
 
             TimelineItem attachmentEvent = Assert.Single(artifacts.Timeline, item => item.Title == "إضافة مرفق صورة ضمان");
             Assert.Equal(TimelineEvidenceActionKind.Attachment, attachmentEvent.EvidenceActionKind);
@@ -303,6 +318,7 @@ namespace GuaranteeManager.Tests
 
             public void SaveGuarantee(Guarantee g, List<string> tempFilePaths) => throw new NotSupportedException();
             public void SaveGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> attachments) => throw new NotSupportedException();
+            public void AddGuaranteeAttachments(int guaranteeId, List<AttachmentInput> attachments) => throw new NotSupportedException();
             public int UpdateGuarantee(Guarantee g, List<string> newTempFiles, List<AttachmentRecord> removedAttachments) => throw new NotSupportedException();
             public int UpdateGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> newAttachments, List<AttachmentRecord> removedAttachments) => throw new NotSupportedException();
             public List<Guarantee> QueryGuarantees(GuaranteeQueryOptions options) => throw new NotSupportedException();

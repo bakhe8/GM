@@ -355,9 +355,17 @@ namespace GuaranteeManager
                     .SelectMany(version => version.Attachments)
                     .GroupBy(attachment => attachment.Id)
                     .ToDictionary(group => group.Key, group => group.First());
+                Dictionary<string, AttachmentRecord> attachmentsByEventKey = history
+                    .SelectMany(version => version.Attachments)
+                    .Where(attachment => !string.IsNullOrWhiteSpace(attachment.TimelineEventKey))
+                    .GroupBy(attachment => attachment.TimelineEventKey, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(
+                        group => group.Key,
+                        group => group.OrderByDescending(attachment => attachment.UploadedAt).First(),
+                        StringComparer.OrdinalIgnoreCase);
 
                 return selectedEvents
-                    .Select(item => TimelineItem.FromEvent(item, requestsById, attachmentsById))
+                    .Select(item => TimelineItem.FromEvent(item, requestsById, attachmentsById, attachmentsByEventKey))
                     .ToList();
             }
 

@@ -964,6 +964,12 @@ namespace GuaranteeManager
                     }
 
                     break;
+                case TimelineEvidenceActionKind.OfficialAttachment:
+                    ExecuteGuaranteeAction(
+                        SelectedGuarantee,
+                        target => _guaranteeWorkspace.AttachTimelineEvidence(target, item),
+                        syncSelection: true);
+                    break;
             }
         }
 

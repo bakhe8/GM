@@ -7,6 +7,7 @@ using System.Windows;
 using GuaranteeManager.Models;
 using GuaranteeManager.Services;
 using GuaranteeManager.Utils;
+using Microsoft.Win32;
 using MessageBox = GuaranteeManager.Services.AppMessageBox;
 
 namespace GuaranteeManager
@@ -521,6 +522,50 @@ namespace GuaranteeManager
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "إلحاق رد البنك", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        public void AttachTimelineEvidence(GuaranteeRow target, TimelineItem item)
+        {
+            int guaranteeId = item.EvidenceGuaranteeId ?? target.Id;
+            var dialog = new OpenFileDialog
+            {
+                Title = "إرفاق دليل للحدث",
+                Filter = "ملفات المستندات|*.pdf;*.doc;*.docx;*.png;*.jpg;*.jpeg|كل الملفات|*.*",
+                Multiselect = true
+            };
+
+            if (dialog.ShowDialog(Application.Current.MainWindow) != true)
+            {
+                return;
+            }
+
+            List<AttachmentInput> attachments = dialog.FileNames
+                .Where(file => !string.IsNullOrWhiteSpace(file))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(file => new AttachmentInput(file, AttachmentDocumentType.SupportingDocument, item.EvidenceKey))
+                .ToList();
+            if (attachments.Count == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                _database.AddGuaranteeAttachments(guaranteeId, attachments);
+                _refreshAfterWorkflowChange(target.RootId, item.EvidenceRequest?.Id);
+                _shellStatus.ShowSuccess(
+                    attachments.Count == 1 ? "تم إرفاق الدليل بالحدث." : "تم إرفاق الأدلة بالحدث.",
+                    $"الضمانات • {target.GuaranteeNo}");
+            }
+            catch (DeferredFilePromotionException ex)
+            {
+                _refreshAfterWorkflowChange(target.RootId, item.EvidenceRequest?.Id);
+                MessageBox.Show(ex.UserMessage, "إرفاق دليل", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "إرفاق دليل", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 

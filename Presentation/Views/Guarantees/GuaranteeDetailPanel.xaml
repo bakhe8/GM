@@ -280,9 +280,9 @@
                                                         <TextBlock Text="{Binding Status}" FontSize="9" FontWeight="SemiBold" Foreground="{Binding Brush}" />
                                                     </Border>
                                                     <Button Style="{StaticResource IconOnlyButton}"
-                                                            Width="20"
-                                                            Height="20"
-                                                            MinWidth="20"
+                                                            Width="{Binding EvidenceActionWidth}"
+                                                            Height="{Binding EvidenceActionHeight}"
+                                                            MinWidth="{Binding EvidenceActionWidth}"
                                                             Margin="4,0,0,0"
                                                             ToolTip="{Binding EvidenceActionHint}"
                                                             Command="{Binding DataContext.OpenTimelineEvidenceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -290,16 +290,33 @@
                                                             Visibility="{Binding HasEvidenceAction, Converter={StaticResource TrueToVisibleCollapsedConverter}}"
                                                             automation:AutomationProperties.AutomationId="{Binding EvidenceActionAutomationId}"
                                                             automation:AutomationProperties.Name="{Binding EvidenceActionLabel}">
-                                                        <Border Width="18"
-                                                                Height="18"
-                                                                CornerRadius="9"
-                                                                Background="#F8FAFC"
-                                                                BorderBrush="#D8E1EE"
-                                                                BorderThickness="1">
-                                                            <Viewbox Width="10.5" Height="10.5">
-                                                                <Path Data="{StaticResource Icon.Paperclip}" Stroke="#2563EB" StrokeThickness="2.1" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                            </Viewbox>
-                                                        </Border>
+                                                        <Grid>
+                                                            <Border Width="18"
+                                                                    Height="18"
+                                                                    CornerRadius="9"
+                                                                    Background="#F8FAFC"
+                                                                    BorderBrush="#D8E1EE"
+                                                                    BorderThickness="1"
+                                                                    Visibility="{Binding IsOpenEvidenceAction, Converter={StaticResource TrueToVisibleCollapsedConverter}}">
+                                                                <Viewbox Width="10.5" Height="10.5">
+                                                                    <Path Data="{StaticResource Icon.Paperclip}" Stroke="#2563EB" StrokeThickness="2.1" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                                </Viewbox>
+                                                            </Border>
+                                                            <Border Width="42"
+                                                                    Height="20"
+                                                                    CornerRadius="9"
+                                                                    Background="#EFF6FF"
+                                                                    BorderBrush="#BFDBFE"
+                                                                    BorderThickness="1"
+                                                                    Visibility="{Binding IsAttachEvidenceAction, Converter={StaticResource TrueToVisibleCollapsedConverter}}">
+                                                                <TextBlock Text="إرفاق"
+                                                                           FontSize="8.7"
+                                                                           FontWeight="SemiBold"
+                                                                           Foreground="#2563EB"
+                                                                           HorizontalAlignment="Center"
+                                                                           VerticalAlignment="Center" />
+                                                            </Border>
+                                                        </Grid>
                                                     </Button>
                                                 </StackPanel>
                                                 <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{StaticResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap" />

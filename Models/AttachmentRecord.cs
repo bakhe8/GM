@@ -12,6 +12,7 @@ namespace GuaranteeManager.Models
         public string SavedFileName { get; set; } = string.Empty;
         public string FileExtension { get; set; } = string.Empty;
         public AttachmentDocumentType DocumentType { get; set; } = AttachmentDocumentType.SupportingDocument;
+        public string TimelineEventKey { get; set; } = string.Empty;
         public DateTime UploadedAt { get; set; } = DateTime.Now;
         public string DocumentTypeLabel => AttachmentDocumentTypeText.Label(DocumentType);
 

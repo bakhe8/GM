@@ -12,7 +12,7 @@ namespace GuaranteeManager.Models
         Other
     }
 
-    public sealed record AttachmentInput(string FilePath, AttachmentDocumentType DocumentType)
+    public sealed record AttachmentInput(string FilePath, AttachmentDocumentType DocumentType, string TimelineEventKey = "")
     {
         public string DocumentTypeLabel => AttachmentDocumentTypeText.Label(DocumentType);
 

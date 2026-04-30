@@ -8,6 +8,7 @@ namespace GuaranteeManager.Services
     {
         void SaveGuarantee(Guarantee g, List<string> tempFilePaths);
         void SaveGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> attachments);
+        void AddGuaranteeAttachments(int guaranteeId, List<AttachmentInput> attachments);
         int UpdateGuarantee(Guarantee g, List<string> newTempFiles, List<AttachmentRecord> removedAttachments);
         int UpdateGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> newAttachments, List<AttachmentRecord> removedAttachments);
         List<Guarantee> QueryGuarantees(GuaranteeQueryOptions options);

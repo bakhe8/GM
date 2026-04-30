@@ -126,6 +126,38 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void AddGuaranteeAttachments_AppendsEvidenceWithoutCreatingNewVersion()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            string sourceAttachmentPath = _fixture.CreateSourceFile(".pdf", "timeline-evidence");
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+
+            database.AddGuaranteeAttachments(
+                current.Id,
+                new List<AttachmentInput>
+                {
+                    new(
+                        sourceAttachmentPath,
+                        AttachmentDocumentType.SupportingDocument,
+                        $"guarantee-created:{current.Id}")
+                });
+
+            Guarantee reloaded = database.GetGuaranteeById(current.Id)!;
+            List<Guarantee> history = database.GetGuaranteeHistory(current.Id);
+            List<GuaranteeTimelineEvent> events = database.GetGuaranteeTimelineEvents(current.Id);
+
+            AttachmentRecord attachment = Assert.Single(reloaded.Attachments);
+            Assert.Equal(AttachmentDocumentType.SupportingDocument, attachment.DocumentType);
+            Assert.Equal($"guarantee-created:{current.Id}", attachment.TimelineEventKey);
+            Assert.True(File.Exists(attachment.FilePath));
+            Assert.Single(history);
+            Assert.DoesNotContain(events, item => item.EventType == "AttachmentAdded" && item.AttachmentId == attachment.Id);
+        }
+
+        [Fact]
         public void CreateWorkflowRequests_AssignsSequentialNumbersAndCreatesLetters()
         {
             DatabaseService database = _fixture.CreateDatabaseService();

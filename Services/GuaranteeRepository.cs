@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using Microsoft.Data.Sqlite;
@@ -110,6 +111,77 @@ namespace GuaranteeManager.Services
             if (committed)
             {
                 _attachmentStorage.FinalizeStagedCopies(stagedAttachments, "SaveGuarantee");
+            }
+        }
+
+        public void AddAttachments(int guaranteeId, List<AttachmentInput> attachments)
+        {
+            using var scope = SimpleLogger.BeginScope("GuaranteeRepository.AddAttachments");
+            List<AttachmentInput> attachmentInputs = attachments ?? new List<AttachmentInput>();
+            if (attachmentInputs.Count == 0)
+            {
+                return;
+            }
+
+            List<StagedAttachmentFile> stagedAttachments = _attachmentStorage.StageCopies(attachmentInputs.Select(attachment => attachment.FilePath));
+            bool committed = false;
+            using var connection = SqliteConnectionFactory.Open(_connectionString);
+            using (var transaction = connection.BeginTransaction())
+            {
+                try
+                {
+                    var guaranteeCommand = connection.CreateCommand();
+                    guaranteeCommand.Transaction = transaction;
+                    guaranteeCommand.CommandText = "SELECT GuaranteeNo FROM Guarantees WHERE Id = $id LIMIT 1";
+                    guaranteeCommand.Parameters.AddWithValue("$id", guaranteeId);
+                    object? guaranteeNoValue = guaranteeCommand.ExecuteScalar();
+                    if (guaranteeNoValue == null || guaranteeNoValue == DBNull.Value)
+                    {
+                        throw new InvalidOperationException("تعذر العثور على الضمان المرتبط بالمرفق.");
+                    }
+
+                    for (int i = 0; i < stagedAttachments.Count; i++)
+                    {
+                        StagedAttachmentFile stagedAttachment = stagedAttachments[i];
+                        AttachmentDocumentType documentType = i < attachmentInputs.Count
+                            ? attachmentInputs[i].DocumentType
+                            : AttachmentDocumentType.SupportingDocument;
+
+                        var attachmentCommand = connection.CreateCommand();
+                        attachmentCommand.Transaction = transaction;
+                        attachmentCommand.CommandText = @"
+                            INSERT INTO Attachments (GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt, DocumentType, TimelineEventKey)
+                            VALUES ($gid, $orig, $saved, $ext, $now, $documentType, $timelineEventKey)";
+                        attachmentCommand.Parameters.AddWithValue("$gid", guaranteeId);
+                        attachmentCommand.Parameters.AddWithValue("$orig", stagedAttachment.OriginalFileName);
+                        attachmentCommand.Parameters.AddWithValue("$saved", stagedAttachment.SavedFileName);
+                        attachmentCommand.Parameters.AddWithValue("$ext", stagedAttachment.FileExtension);
+                        attachmentCommand.Parameters.AddWithValue("$now", PersistedDateTime.FormatDateTime(DateTime.Now));
+                        attachmentCommand.Parameters.AddWithValue("$documentType", documentType.ToString());
+                        attachmentCommand.Parameters.AddWithValue("$timelineEventKey", attachmentInputs[i].TimelineEventKey ?? string.Empty);
+                        attachmentCommand.ExecuteNonQuery();
+                    }
+
+                    transaction.Commit();
+                    committed = true;
+                    string guaranteeNo = Convert.ToString(guaranteeNoValue, CultureInfo.InvariantCulture) ?? guaranteeId.ToString(CultureInfo.InvariantCulture);
+                    SimpleLogger.Log($"Added {attachmentInputs.Count} attachments to guarantee {guaranteeNo} (id={guaranteeId}).");
+                    SimpleLogger.LogAudit("AddGuaranteeAttachments", guaranteeNo, $"Count={attachmentInputs.Count}");
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    _attachmentStorage.CleanupStagedCopies(stagedAttachments);
+                    throw OperationFailure.LogAndWrap(
+                        ex,
+                        "GuaranteeRepository.AddAttachments",
+                        "تعذر إرفاق المستند بالضمان المحدد.");
+                }
+            }
+
+            if (committed)
+            {
+                _attachmentStorage.FinalizeStagedCopies(stagedAttachments, "AddGuaranteeAttachments");
             }
         }
 
@@ -744,7 +816,7 @@ namespace GuaranteeManager.Services
             }
 
             command.CommandText = $@"
-                SELECT Id, GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt, DocumentType
+                SELECT Id, GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt, DocumentType, TimelineEventKey
                 FROM Attachments
                 WHERE GuaranteeId IN ({string.Join(", ", parameterNames)})
                 ORDER BY UploadedAt ASC, Id ASC";

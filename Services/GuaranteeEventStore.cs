@@ -210,7 +210,8 @@ namespace GuaranteeManager.Services
             var command = connection.CreateCommand();
             command.CommandText = @"
                 SELECT a.Id, a.GuaranteeId, COALESCE(g.RootId, g.Id) AS RootId,
-                       a.OriginalFileName, a.SavedFileName, a.FileExtension, a.UploadedAt, a.DocumentType
+                       a.OriginalFileName, a.SavedFileName, a.FileExtension, a.UploadedAt, a.DocumentType,
+                       a.TimelineEventKey
                 FROM Attachments a
                 INNER JOIN Guarantees g ON g.Id = a.GuaranteeId
                 ORDER BY RootId, LOWER(IFNULL(a.SavedFileName, '')), a.UploadedAt, a.Id";
@@ -222,6 +223,12 @@ namespace GuaranteeManager.Services
                 {
                     int rootId = reader.GetInt32(2);
                     string savedFileName = reader.IsDBNull(4) ? string.Empty : reader.GetString(4);
+                    string timelineEventKey = reader.IsDBNull(8) ? string.Empty : reader.GetString(8);
+                    if (!string.IsNullOrWhiteSpace(timelineEventKey))
+                    {
+                        continue;
+                    }
+
                     string key = string.IsNullOrWhiteSpace(savedFileName)
                         ? $"attachment-id:{reader.GetInt32(0).ToString(CultureInfo.InvariantCulture)}"
                         : $"attachment-file:{rootId.ToString(CultureInfo.InvariantCulture)}:{savedFileName}";

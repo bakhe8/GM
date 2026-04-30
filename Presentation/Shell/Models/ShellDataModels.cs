@@ -677,7 +677,8 @@ namespace GuaranteeManager
         None,
         Attachment,
         RequestLetter,
-        ResponseDocument
+        ResponseDocument,
+        OfficialAttachment
     }
 
     public sealed class TimelineItem
@@ -691,6 +692,7 @@ namespace GuaranteeManager
             TimelineEvidenceActionKind evidenceActionKind = TimelineEvidenceActionKind.None,
             AttachmentRecord? evidenceAttachment = null,
             WorkflowRequest? evidenceRequest = null,
+            int? evidenceGuaranteeId = null,
             string evidenceKey = "")
             : this(
                 timestamp.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
@@ -702,6 +704,7 @@ namespace GuaranteeManager
                 evidenceActionKind,
                 evidenceAttachment,
                 evidenceRequest,
+                evidenceGuaranteeId,
                 evidenceKey)
         {
         }
@@ -721,6 +724,7 @@ namespace GuaranteeManager
             TimelineEvidenceActionKind evidenceActionKind = TimelineEvidenceActionKind.None,
             AttachmentRecord? evidenceAttachment = null,
             WorkflowRequest? evidenceRequest = null,
+            int? evidenceGuaranteeId = null,
             string evidenceKey = "")
         {
             Date = date;
@@ -731,18 +735,23 @@ namespace GuaranteeManager
             Brush = TonePalette.Foreground(tone);
             StatusBackground = TonePalette.Background(tone);
             StatusBorder = TonePalette.Border(tone);
-            EvidenceActionKind = NormalizeEvidenceActionKind(evidenceActionKind, evidenceAttachment, evidenceRequest);
+            EvidenceKey = evidenceKey ?? string.Empty;
+            EvidenceActionKind = NormalizeEvidenceActionKind(evidenceActionKind, evidenceAttachment, evidenceRequest, evidenceGuaranteeId);
             EvidenceAttachment = EvidenceActionKind == TimelineEvidenceActionKind.Attachment ? evidenceAttachment : null;
             EvidenceRequest = EvidenceActionKind is TimelineEvidenceActionKind.RequestLetter or TimelineEvidenceActionKind.ResponseDocument
                 ? evidenceRequest
                 : null;
+            EvidenceGuaranteeId = EvidenceActionKind == TimelineEvidenceActionKind.OfficialAttachment
+                ? evidenceGuaranteeId
+                : evidenceGuaranteeId ?? EvidenceAttachment?.GuaranteeId ?? EvidenceRequest?.BaseVersionId;
             EvidenceActionLabel = BuildEvidenceActionLabel(EvidenceActionKind, EvidenceAttachment, EvidenceRequest);
             EvidenceActionHint = BuildEvidenceActionHint(EvidenceActionKind, EvidenceAttachment, EvidenceRequest);
             EvidenceActionAutomationId = BuildEvidenceActionAutomationId(
                 EvidenceActionKind,
                 EvidenceAttachment,
                 EvidenceRequest,
-                evidenceKey);
+                EvidenceGuaranteeId,
+                EvidenceKey);
         }
 
         public string Date { get; }
@@ -754,9 +763,16 @@ namespace GuaranteeManager
         public Brush StatusBackground { get; }
         public Brush StatusBorder { get; }
         public TimelineEvidenceActionKind EvidenceActionKind { get; }
+        public string EvidenceKey { get; }
         public AttachmentRecord? EvidenceAttachment { get; }
         public WorkflowRequest? EvidenceRequest { get; }
+        public int? EvidenceGuaranteeId { get; }
         public bool HasEvidenceAction => EvidenceActionKind != TimelineEvidenceActionKind.None;
+        public bool IsAttachEvidenceAction => EvidenceActionKind == TimelineEvidenceActionKind.OfficialAttachment
+            || EvidenceActionKind == TimelineEvidenceActionKind.ResponseDocument && EvidenceRequest?.HasResponseDocument != true;
+        public bool IsOpenEvidenceAction => HasEvidenceAction && !IsAttachEvidenceAction;
+        public double EvidenceActionWidth => IsAttachEvidenceAction ? 44d : 20d;
+        public double EvidenceActionHeight => IsAttachEvidenceAction ? 22d : 20d;
         public string EvidenceActionLabel { get; }
         public string EvidenceActionHint { get; }
         public string EvidenceActionAutomationId { get; }
@@ -782,12 +798,14 @@ namespace GuaranteeManager
         public static TimelineItem FromEvent(
             GuaranteeTimelineEvent timelineEvent,
             IReadOnlyDictionary<int, WorkflowRequest>? requestsById = null,
-            IReadOnlyDictionary<int, AttachmentRecord>? attachmentsById = null)
+            IReadOnlyDictionary<int, AttachmentRecord>? attachmentsById = null,
+            IReadOnlyDictionary<string, AttachmentRecord>? attachmentsByEventKey = null)
         {
             ResolveEvidence(
                 timelineEvent,
                 requestsById,
                 attachmentsById,
+                attachmentsByEventKey,
                 out TimelineEvidenceActionKind evidenceActionKind,
                 out AttachmentRecord? evidenceAttachment,
                 out WorkflowRequest? evidenceRequest);
@@ -801,6 +819,7 @@ namespace GuaranteeManager
                 evidenceActionKind,
                 evidenceAttachment,
                 evidenceRequest,
+                timelineEvent.GuaranteeId,
                 timelineEvent.EventKey);
         }
 
@@ -857,7 +876,10 @@ namespace GuaranteeManager
                     "إنشاء الضمان",
                     $"تم إنشاء الضمان بقيمة {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال وانتهاء {version.ExpiryDate:yyyy/MM/dd}.",
                     "مكتمل",
-                    Tone.Success);
+                    Tone.Success,
+                    TimelineEvidenceActionKind.OfficialAttachment,
+                    evidenceGuaranteeId: version.Id,
+                    evidenceKey: $"guarantee-created:{version.Id.ToString(CultureInfo.InvariantCulture)}");
             }
 
             return new TimelineItem(
@@ -865,7 +887,10 @@ namespace GuaranteeManager
                 $"إصدار جديد {version.VersionLabel}",
                 $"تم حفظ شروط هذا الإصدار: المبلغ {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال | الانتهاء {version.ExpiryDate:yyyy/MM/dd}.",
                 "موثق",
-                Tone.Info);
+                Tone.Info,
+                TimelineEvidenceActionKind.OfficialAttachment,
+                evidenceGuaranteeId: version.Id,
+                evidenceKey: $"guarantee-version:{version.Id.ToString(CultureInfo.InvariantCulture)}");
         }
 
         public static TimelineItem AttachmentAdded(AttachmentRecord attachment)
@@ -899,7 +924,10 @@ namespace GuaranteeManager
                     ? GetTerminalLifecycleDetail(version)
                     : $"أصبحت حالة الضمان: {version.LifecycleStatusLabel} ضمن الإصدار {version.VersionLabel}.",
                 version.LifecycleStatusLabel,
-                GetLifecycleTone(version.LifecycleStatus));
+                GetLifecycleTone(version.LifecycleStatus),
+                TimelineEvidenceActionKind.OfficialAttachment,
+                evidenceGuaranteeId: version.Id,
+                evidenceKey: $"guarantee-status:{version.Id.ToString(CultureInfo.InvariantCulture)}:{version.LifecycleStatus}");
         }
 
         public static TimelineItem Created(string date)
@@ -927,6 +955,7 @@ namespace GuaranteeManager
             GuaranteeTimelineEvent timelineEvent,
             IReadOnlyDictionary<int, WorkflowRequest>? requestsById,
             IReadOnlyDictionary<int, AttachmentRecord>? attachmentsById,
+            IReadOnlyDictionary<string, AttachmentRecord>? attachmentsByEventKey,
             out TimelineEvidenceActionKind evidenceActionKind,
             out AttachmentRecord? evidenceAttachment,
             out WorkflowRequest? evidenceRequest)
@@ -934,6 +963,13 @@ namespace GuaranteeManager
             evidenceActionKind = TimelineEvidenceActionKind.None;
             evidenceAttachment = null;
             evidenceRequest = null;
+
+            if (!string.IsNullOrWhiteSpace(timelineEvent.EventKey)
+                && attachmentsByEventKey?.TryGetValue(timelineEvent.EventKey, out evidenceAttachment) == true)
+            {
+                evidenceActionKind = TimelineEvidenceActionKind.Attachment;
+                return;
+            }
 
             if (timelineEvent.AttachmentId.HasValue
                 && attachmentsById?.TryGetValue(timelineEvent.AttachmentId.Value, out evidenceAttachment) == true)
@@ -946,14 +982,19 @@ namespace GuaranteeManager
                 || requestsById?.TryGetValue(timelineEvent.WorkflowRequestId.Value, out evidenceRequest) != true)
             {
                 evidenceRequest = null;
+                evidenceActionKind = CanAttachOfficialEvidenceToEvent(timelineEvent.EventType)
+                    ? TimelineEvidenceActionKind.OfficialAttachment
+                    : TimelineEvidenceActionKind.None;
                 return;
             }
 
             evidenceActionKind = timelineEvent.EventType switch
             {
-                "WorkflowRequestCreated" => TimelineEvidenceActionKind.RequestLetter,
+                "WorkflowRequestCreated" when evidenceRequest?.HasLetter == true => TimelineEvidenceActionKind.RequestLetter,
+                "WorkflowRequestCreated" => TimelineEvidenceActionKind.OfficialAttachment,
                 "WorkflowResponseRecorded" => TimelineEvidenceActionKind.ResponseDocument,
                 "WorkflowResponseDocumentAttached" => TimelineEvidenceActionKind.ResponseDocument,
+                _ when CanAttachOfficialEvidenceToEvent(timelineEvent.EventType) => TimelineEvidenceActionKind.OfficialAttachment,
                 _ => TimelineEvidenceActionKind.None
             };
         }
@@ -961,7 +1002,8 @@ namespace GuaranteeManager
         private static TimelineEvidenceActionKind NormalizeEvidenceActionKind(
             TimelineEvidenceActionKind evidenceActionKind,
             AttachmentRecord? evidenceAttachment,
-            WorkflowRequest? evidenceRequest)
+            WorkflowRequest? evidenceRequest,
+            int? evidenceGuaranteeId)
         {
             return evidenceActionKind switch
             {
@@ -973,8 +1015,16 @@ namespace GuaranteeManager
                     when evidenceRequest != null
                          && (evidenceRequest.HasResponseDocument || evidenceRequest.Status != RequestStatus.Pending) =>
                     TimelineEvidenceActionKind.ResponseDocument,
+                TimelineEvidenceActionKind.OfficialAttachment =>
+                    TimelineEvidenceActionKind.OfficialAttachment,
                 _ => TimelineEvidenceActionKind.None
             };
+        }
+
+        private static bool CanAttachOfficialEvidenceToEvent(string eventType)
+        {
+            return !string.Equals(eventType, "AttachmentAdded", StringComparison.Ordinal)
+                   && !string.Equals(eventType, "WorkflowResponseDocumentAttached", StringComparison.Ordinal);
         }
 
         private static string BuildEvidenceActionLabel(
@@ -987,7 +1037,8 @@ namespace GuaranteeManager
                 TimelineEvidenceActionKind.Attachment => "فتح المرفق",
                 TimelineEvidenceActionKind.RequestLetter => "فتح خطاب الطلب",
                 TimelineEvidenceActionKind.ResponseDocument when evidenceRequest?.HasResponseDocument == true => "فتح رد البنك",
-                TimelineEvidenceActionKind.ResponseDocument => "إلحاق رد البنك",
+                TimelineEvidenceActionKind.ResponseDocument => "إرفاق",
+                TimelineEvidenceActionKind.OfficialAttachment => "إرفاق",
                 _ => string.Empty
             };
         }
@@ -1006,7 +1057,9 @@ namespace GuaranteeManager
                 TimelineEvidenceActionKind.ResponseDocument when evidenceRequest?.HasResponseDocument == true =>
                     "فتح مستند رد البنك المرتبط بهذا الحدث.",
                 TimelineEvidenceActionKind.ResponseDocument =>
-                    "إلحاق مستند رد البنك بهذا الحدث المغلق.",
+                    "إرفاق مستند رد البنك بهذا الحدث المغلق.",
+                TimelineEvidenceActionKind.OfficialAttachment =>
+                    "إرفاق مستند رسمي بهذا الحدث.",
                 _ => string.Empty
             };
         }
@@ -1015,6 +1068,7 @@ namespace GuaranteeManager
             TimelineEvidenceActionKind evidenceActionKind,
             AttachmentRecord? evidenceAttachment,
             WorkflowRequest? evidenceRequest,
+            int? evidenceGuaranteeId,
             string evidenceKey)
         {
             if (evidenceActionKind == TimelineEvidenceActionKind.None)
@@ -1031,6 +1085,8 @@ namespace GuaranteeManager
                         $"request-letter:{evidenceRequest?.Id.ToString(CultureInfo.InvariantCulture) ?? "0"}",
                     TimelineEvidenceActionKind.ResponseDocument =>
                         $"response-document:{evidenceRequest?.Id.ToString(CultureInfo.InvariantCulture) ?? "0"}",
+                    TimelineEvidenceActionKind.OfficialAttachment =>
+                        $"official-attachment:{evidenceGuaranteeId?.ToString(CultureInfo.InvariantCulture) ?? "0"}",
                     _ => "none"
                 }
                 : evidenceKey;

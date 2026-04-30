@@ -56,7 +56,7 @@ namespace GuaranteeManager.Services
             var attachments = new List<AttachmentRecord>();
             var cmd = connection.CreateCommand();
             cmd.Transaction = transaction;
-            cmd.CommandText = "SELECT Id, GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt, DocumentType FROM Attachments WHERE GuaranteeId = $gid";
+            cmd.CommandText = "SELECT Id, GuaranteeId, OriginalFileName, SavedFileName, FileExtension, UploadedAt, DocumentType, TimelineEventKey FROM Attachments WHERE GuaranteeId = $gid";
             cmd.Parameters.AddWithValue("$gid", guaranteeId);
 
             using var reader = cmd.ExecuteReader();
@@ -80,7 +80,8 @@ namespace GuaranteeManager.Services
                 UploadedAt = PersistedDateTime.Parse(reader.GetString(5)),
                 DocumentType = reader.IsDBNull(6)
                     ? AttachmentDocumentType.SupportingDocument
-                    : AttachmentDocumentTypeText.Parse(reader.GetString(6))
+                    : AttachmentDocumentTypeText.Parse(reader.GetString(6)),
+                TimelineEventKey = reader.IsDBNull(7) ? string.Empty : reader.GetString(7)
             };
         }
 

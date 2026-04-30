@@ -70,6 +70,11 @@ namespace GuaranteeManager.Services
             _guaranteeRepository.SaveGuaranteeWithAttachments(g, attachments);
         }
 
+        public void AddGuaranteeAttachments(int guaranteeId, List<AttachmentInput> attachments)
+        {
+            _guaranteeRepository.AddAttachments(guaranteeId, attachments);
+        }
+
         public int UpdateGuarantee(Guarantee g, List<string> newTempFiles, List<AttachmentRecord> removedAttachments)
         {
             return _guaranteeRepository.UpdateGuarantee(g, newTempFiles, removedAttachments);
