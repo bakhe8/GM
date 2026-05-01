@@ -27,7 +27,7 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
-        public void BuildSelectionArtifacts_ForCurrentGuarantee_BuildsFullChronologicalTimeline()
+        public void BuildSelectionArtifacts_ForCurrentGuarantee_BuildsNewestFirstTimeline()
         {
             DateTime start = new(2026, 4, 28, 8, 0, 0);
             var current = CreateGuarantee(1, null, 1, true, start, 1_500_000m);
@@ -67,18 +67,18 @@ namespace GuaranteeManager.Tests
             Assert.Equal(
                 new[]
                 {
-                    "إنشاء الضمان",
-                    "طلب إفراج",
+                    "إضافة مرفق رد البنك",
                     "تسجيل رد طلب إفراج",
-                    "إضافة مرفق رد البنك"
+                    "طلب إفراج",
+                    "إنشاء الضمان"
                 },
                 artifacts.Timeline.Select(item => item.Title));
-            Assert.DoesNotContain("الإصدار الناتج", artifacts.Timeline[2].Detail);
-            Assert.Contains("تم إنهاء دورة حياة الضمان بالإفراج", artifacts.Timeline[2].Detail);
-            Assert.Equal(TimelineEvidenceActionKind.ResponseDocument, artifacts.Timeline[2].EvidenceActionKind);
-            Assert.Equal("فتح رد البنك", artifacts.Timeline[2].EvidenceActionLabel);
-            Assert.Equal(TimelineEvidenceActionKind.Attachment, artifacts.Timeline[3].EvidenceActionKind);
-            Assert.Equal("فتح المرفق", artifacts.Timeline[3].EvidenceActionLabel);
+            Assert.DoesNotContain("الإصدار الناتج", artifacts.Timeline[1].Detail);
+            Assert.Contains("تم إنهاء دورة حياة الضمان بالإفراج", artifacts.Timeline[1].Detail);
+            Assert.Equal(TimelineEvidenceActionKind.ResponseDocument, artifacts.Timeline[1].EvidenceActionKind);
+            Assert.Equal("فتح رد البنك", artifacts.Timeline[1].EvidenceActionLabel);
+            Assert.Equal(TimelineEvidenceActionKind.Attachment, artifacts.Timeline[0].EvidenceActionKind);
+            Assert.Equal("فتح المرفق", artifacts.Timeline[0].EvidenceActionLabel);
         }
 
         [Fact]
@@ -235,12 +235,12 @@ namespace GuaranteeManager.Tests
             Assert.Equal(
                 new[]
                 {
-                    "إنشاء الضمان",
-                    "طلب تمديد",
-                    "تسجيل رد طلب تمديد",
-                    "الإصدار الثاني",
+                    "تسجيل رد طلب إفراج",
                     "طلب إفراج",
-                    "تسجيل رد طلب إفراج"
+                    "الإصدار الثاني",
+                    "تسجيل رد طلب تمديد",
+                    "طلب تمديد",
+                    "إنشاء الضمان"
                 },
                 artifacts.Timeline.Select(item => item.Title));
 

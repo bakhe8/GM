@@ -325,9 +325,9 @@ namespace GuaranteeManager
             List<GuaranteeTimelineEvent> selectedEvents = (selectedGuarantee.IsCurrentVersion
                 ? storedEvents
                 : storedEvents.Where(item => item.GuaranteeId == selectedGuarantee.Id))
-                .OrderBy(item => item.OccurredAt)
-                .ThenBy(item => item.SortOrder)
-                .ThenBy(item => item.Id)
+                .OrderByDescending(item => item.OccurredAt)
+                .ThenByDescending(item => item.SortOrder)
+                .ThenByDescending(item => item.Id)
                 .ToList();
             if (selectedEvents.Count > 0)
             {
@@ -407,8 +407,8 @@ namespace GuaranteeManager
             }
 
             return events
-                .OrderBy(item => item.Timestamp)
-                .ThenBy(item => item.Priority)
+                .OrderByDescending(item => item.Timestamp)
+                .ThenByDescending(item => item.Priority)
                 .Select(item => item.Item)
                 .ToList();
         }

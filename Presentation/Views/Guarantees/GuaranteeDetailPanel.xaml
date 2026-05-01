@@ -95,7 +95,6 @@
                             <RowDefinition Height="28" />
                             <RowDefinition Height="28" />
                             <RowDefinition Height="28" />
-                            <RowDefinition Height="28" />
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
@@ -148,22 +147,13 @@
 
                         <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                             <Viewbox Width="12" Height="12" VerticalAlignment="Center">
-                                <Path Data="{StaticResource Icon.History}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                            </Viewbox>
-                            <Border Width="7" />
-                            <TextBlock Text="الإصدار" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
-                        </StackPanel>
-                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding SelectedGuarantee.VersionLabel}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
-
-                        <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Viewbox Width="12" Height="12" VerticalAlignment="Center">
                                 <Path Data="{StaticResource Icon.Calendar}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                             </Viewbox>
                             <Border Width="7" />
                             <TextBlock Text="تاريخ الإصدار" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding SelectedGuarantee.IssueDate}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
-                        <Button Grid.Row="3"
+                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding SelectedGuarantee.IssueDate}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
+                        <Button Grid.Row="2"
                                 Grid.Column="3"
                                 Padding="0"
                                 HorizontalAlignment="Center"
@@ -179,19 +169,19 @@
                             </Viewbox>
                         </Button>
 
-                        <StackPanel Grid.Row="4" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                             <Viewbox Width="12" Height="12" VerticalAlignment="Center">
                                 <Path Data="{StaticResource Icon.History}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                             </Viewbox>
                             <Border Width="7" />
                             <TextBlock Text="تاريخ الانتهاء" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
                         </StackPanel>
-                        <StackPanel Grid.Row="4" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <StackPanel Grid.Row="3" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
                             <TextBlock Text="{Binding SelectedGuarantee.ExpiryDate}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" />
                             <Border Width="7" />
                             <TextBlock Text="{Binding SelectedGuarantee.ExpiryRemainingLabel}" FontSize="10" FontWeight="SemiBold" Foreground="{Binding SelectedGuarantee.TimeBrush}" VerticalAlignment="Center" />
                         </StackPanel>
-                        <Button Grid.Row="4"
+                        <Button Grid.Row="3"
                                 Grid.Column="3"
                                 Padding="0"
                                 HorizontalAlignment="Center"
