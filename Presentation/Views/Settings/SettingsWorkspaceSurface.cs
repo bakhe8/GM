@@ -22,7 +22,7 @@ namespace GuaranteeManager
         private readonly TextBlock _allValue = BuildMetricValue();
         private readonly TextBlock _dataValue = BuildMetricValue();
         private readonly TextBlock _workflowValue = BuildMetricValue();
-        private readonly TextBlock _detailTitle = BuildDetailValue(16, FontWeights.Bold);
+        private readonly TextBlock _detailTitle = BuildDetailValue(18, FontWeights.Bold);
         private readonly TextBlock _detailSubtitle = BuildMutedText(11, FontWeights.SemiBold);
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
         private readonly Border _detailStatusBadgeBorder = new();

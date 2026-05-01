@@ -26,12 +26,12 @@ namespace GuaranteeManager
         private readonly TextBlock _guaranteeCountValue = BuildMetricValue();
         private readonly TextBlock _amountValue = BuildMetricValue();
         private readonly Image _detailLogo = new() { Width = 36, Height = 36 };
-        private readonly TextBlock _detailTitle = BuildDetailValue(16, FontWeights.Bold);
-        private readonly TextBlock _detailSubtitle = BuildMutedText(11, FontWeights.SemiBold);
+        private readonly TextBlock _detailTitle = BuildDetailValue(18, FontWeights.Bold);
+        private readonly TextBlock _detailSubtitle = BuildMutedText(12, FontWeights.SemiBold);
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
         private readonly Border _detailStatusBadgeBorder = new();
         private readonly TextBlock _detailAmountHeadline = BuildAmountHeadline();
-        private readonly TextBlock _detailAmountCaption = BuildMutedText(11, FontWeights.Normal);
+        private readonly TextBlock _detailAmountCaption = BuildMutedText(11.5, FontWeights.Normal);
         private readonly TextBlock _detailCount = BuildDetailValue(12, FontWeights.Bold);
         private readonly TextBlock _detailActive = BuildDetailValue(12, FontWeights.Bold);
         private readonly TextBlock _detailExpiring = BuildDetailValue(12, FontWeights.Bold);
@@ -620,7 +620,7 @@ namespace GuaranteeManager
         {
             return new TextBlock
             {
-                FontSize = 32,
+                FontSize = 34,
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                 Margin = new Thickness(0, 12, 0, 0),

@@ -37,15 +37,15 @@ namespace GuaranteeManager
         private readonly TextBlock _recommendationPrimary = BuildInsightPrimary();
         private readonly TextBlock _recommendationSecondary = BuildInsightSecondary();
         private readonly Button _recommendationActionButton = BuildInsightActionButton();
-        private readonly TextBlock _detailPanelHeading = BuildSectionHeading();
+        private readonly TextBlock _detailPanelHeading = BuildSectionHeading(18);
         private readonly TextBlock _detailActionsHeading = BuildSectionHeading(12);
         private readonly TextBlock _detailTitle = BuildDetailValue(16, FontWeights.Bold);
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
         private readonly Border _detailStatusBadgeBorder = new();
-        private readonly Image _detailBankLogo = new() { Width = 18, Height = 18 };
+        private readonly Image _detailBankLogo = new() { Width = 17, Height = 17 };
         private readonly TextBlock _detailBankText = BuildMutedText(12, FontWeights.SemiBold);
         private readonly TextBlock _detailAmountHeadline = BuildAmountHeadline();
-        private readonly TextBlock _detailAmountCaption = BuildMutedText(11, FontWeights.Normal);
+        private readonly TextBlock _detailAmountCaption = BuildMutedText(11.5, FontWeights.Normal);
         private readonly TextBlock _detailDue = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailExpiry = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailAction = BuildDetailValue(12, FontWeights.SemiBold);
@@ -430,7 +430,7 @@ namespace GuaranteeManager
                 HorizontalAlignment = HorizontalAlignment.Right
             };
             row.Children.Add(_detailBankLogo);
-            _detailBankText.Margin = new Thickness(8, 0, 0, 0);
+            _detailBankText.Margin = new Thickness(7, 0, 0, 0);
             row.Children.Add(_detailBankText);
             return row;
         }
@@ -951,7 +951,7 @@ namespace GuaranteeManager
         {
             return new TextBlock
             {
-                FontSize = 28,
+                FontSize = 34,
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                 Margin = new Thickness(0, 12, 0, 0),
