@@ -155,8 +155,8 @@ namespace GuaranteeManager
                 guarantee,
                 supplier,
                 beneficiary,
-                FormatAmount(guarantee.Amount),
-                NumberToArabicWords(guarantee.Amount) + " ريال سعودي",
+                ArabicAmountFormatter.FormatNumber(guarantee.Amount),
+                ArabicAmountFormatter.FormatSaudiRiyalsInWords(guarantee.Amount),
                 FormatDate(guarantee.CreatedAt),
                 FormatDate(guarantee.ExpiryDate),
                 GetExpiryRemainingLabel(guarantee.ExpiryDate),
@@ -224,62 +224,6 @@ namespace GuaranteeManager
         };
 
         private static string FormatDate(DateTime date) => date.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
-
-        private static string FormatAmount(decimal amount) => amount.ToString("N0", CultureInfo.InvariantCulture);
-
-        private static string NumberToArabicWords(decimal amount)
-        {
-            long n = (long)Math.Round(amount);
-            if (n == 0) return "صفر";
-            var parts = new System.Collections.Generic.List<string>();
-            if (n >= 1_000_000_000) { long g = n / 1_000_000_000; n %= 1_000_000_000; parts.Add(g == 1 ? "مليار" : g == 2 ? "ملياران" : ArabicGroupWord(g, "مليارات", "مليار")); }
-            if (n >= 1_000_000)     { long g = n / 1_000_000;     n %= 1_000_000;     parts.Add(g == 1 ? "مليون" : g == 2 ? "مليونان" : ArabicGroupWord(g, "ملايين", "مليون")); }
-            if (n >= 1_000)         { long g = n / 1_000;         n %= 1_000;         parts.Add(g == 1 ? "ألف"   : g == 2 ? "ألفان"   : ArabicGroupWord(g, "آلاف", "ألف")); }
-            if (n >= 100) { parts.Add(ArabicHundreds((int)(n / 100))); n %= 100; }
-            if (n > 0)    { parts.Add(ArabicUnderHundred((int)n)); }
-            return string.Join(" و", parts);
-        }
-
-        private static string ArabicGroupWord(long count, string fewForm, string manyForm)
-        {
-            string c = ArabicSmallCount(count);
-            return count >= 3 && count <= 10 ? $"{c} {fewForm}" : $"{c} {manyForm}";
-        }
-
-        private static string ArabicSmallCount(long n)
-        {
-            if (n <= 19) return ArabicUnderHundred((int)n);
-            if (n < 100) return ArabicUnderHundred((int)(n % 10)) + " و" + ArabicTens((int)(n / 10));
-            return ArabicHundreds((int)(n / 100)) + (n % 100 > 0 ? " و" + ArabicSmallCount(n % 100) : "");
-        }
-
-        private static string ArabicUnderHundred(int n) => n switch
-        {
-            1  => "واحد",       2  => "اثنان",      3  => "ثلاثة",
-            4  => "أربعة",      5  => "خمسة",       6  => "ستة",
-            7  => "سبعة",       8  => "ثمانية",     9  => "تسعة",
-            10 => "عشرة",       11 => "أحد عشر",    12 => "اثنا عشر",
-            13 => "ثلاثة عشر",  14 => "أربعة عشر",  15 => "خمسة عشر",
-            16 => "ستة عشر",    17 => "سبعة عشر",   18 => "ثمانية عشر",
-            19 => "تسعة عشر",
-            _ when n % 10 == 0 => ArabicTens(n / 10),
-            _ => ArabicUnderHundred(n % 10) + " و" + ArabicTens(n / 10)
-        };
-
-        private static string ArabicTens(int tens) => tens switch
-        {
-            2 => "عشرون",   3 => "ثلاثون",  4 => "أربعون",
-            5 => "خمسون",   6 => "ستون",    7 => "سبعون",
-            8 => "ثمانون",  9 => "تسعون",   _ => ""
-        };
-
-        private static string ArabicHundreds(int h) => h switch
-        {
-            1 => "مئة",      2 => "مئتان",    3 => "ثلاثمئة",
-            4 => "أربعمئة", 5 => "خمسمئة",  6 => "ستمئة",
-            7 => "سبعمئة",  8 => "ثمانمئة", 9 => "تسعمئة",
-            _ => ""
-        };
 
         private static ImageSource GetBankLogo(string bankName)
         {

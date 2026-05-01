@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows.Media;
 using GuaranteeManager.Models;
+using GuaranteeManager.Utils;
 
 namespace GuaranteeManager
 {
@@ -127,7 +128,7 @@ namespace GuaranteeManager
                 selectedItem.PortfolioStatusBackground,
                 selectedItem.PortfolioStatusBorder,
                 selectedItem.AmountDisplay,
-                "إجمالي قيمة الضمانات لدى البنك",
+                selectedItem.AmountInWords,
                 selectedItem.CountDisplay,
                 WorkspaceSurfaceChrome.BrushFrom("#16A34A"),
                 selectedItem.ActiveDisplay,
@@ -178,7 +179,8 @@ namespace GuaranteeManager
         string TopSupplier,
         ImageSource Logo)
     {
-        public string AmountDisplay => $"{Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال";
+        public string AmountDisplay => ArabicAmountFormatter.FormatSaudiRiyals(Amount);
+        public string AmountInWords => ArabicAmountFormatter.FormatSaudiRiyalsInWords(Amount);
         public string ShareDisplay => $"{Share:0.#}%";
         public string CountDisplay => Count.ToString("N0", CultureInfo.InvariantCulture);
         public string ActiveDisplay => Active.ToString("N0", CultureInfo.InvariantCulture);

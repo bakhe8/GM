@@ -45,8 +45,8 @@ namespace GuaranteeManager.Services
             File.WriteAllText(fullPath, BuildRequestLetterHtml(
                 "خطاب طلب تخفيض ضمان بنكي",
                 guarantee,
-                ("المبلغ الحالي", guarantee.Amount.ToString("N2")),
-                ("المبلغ المطلوب بعد التخفيض", requestedAmount.ToString("N2")),
+                ("المبلغ الحالي", FormatLetterAmount(guarantee.Amount)),
+                ("المبلغ المطلوب بعد التخفيض", FormatLetterAmount(requestedAmount)),
                 notes,
                 createdBy,
                 "نأمل التكرم بتخفيض مبلغ الضمان المشار إليه أعلاه إلى القيمة الموضحة في هذا الخطاب، مع الإبقاء على بقية بيانات الضمان دون تغيير ما لم يرد من البنك ما يخالف ذلك."), Encoding.UTF8);
@@ -150,7 +150,7 @@ namespace GuaranteeManager.Services
 
             string bodyText =
                 $"نأمل التكرم باستبدال الضمان المشار إليه أعلاه بضمان بديل رقم {replacementGuaranteeNo}." +
-                $"{Environment.NewLine}مبلغ الضمان البديل المطلوب: {replacementAmount:N2}" +
+                $"{Environment.NewLine}مبلغ الضمان البديل المطلوب: {FormatLetterAmount(replacementAmount)}" +
                 $"{Environment.NewLine}تاريخ انتهاء الضمان البديل: {replacementExpiryDate:yyyy-MM-dd}" +
                 $"{Environment.NewLine}ويُعتمد التنفيذ النهائي وفق ما يرد في مستند رد البنك.";
 
@@ -209,6 +209,7 @@ namespace GuaranteeManager.Services
             string safeReferenceType = EncodeLetterText(guarantee.ReferenceTypeLabel);
             string safeReferenceNumber = EncodeLetterText(guarantee.ReferenceNumber);
             string safeBeneficiary = EncodeLetterText(BusinessPartyDefaults.NormalizeBeneficiary(guarantee.Beneficiary));
+            string safeGuaranteeAmount = EncodeLetterText(FormatLetterAmount(guarantee.Amount));
             string safeCurrentLabel = System.Net.WebUtility.HtmlEncode(currentValue.Label);
             string safeCurrentValue = EncodeLetterText(currentValue.Value);
             string safeRequestedLabel = System.Net.WebUtility.HtmlEncode(requestedValue.Label);
@@ -272,6 +273,9 @@ namespace GuaranteeManager.Services
             text-align: right;
             vertical-align: top;
         }}
+        td {{
+            white-space: pre-line;
+        }}
         th {{
             background: #f2f2f2;
             width: 24%;
@@ -332,7 +336,7 @@ namespace GuaranteeManager.Services
         <tr><th>المستفيد</th><td>{safeBeneficiary}</td></tr>
         <tr><th>نوع المرجع</th><td>{safeReferenceType}</td></tr>
         <tr><th>رقم المرجع</th><td>{safeReferenceNumber}</td></tr>
-        <tr><th>المبلغ</th><td>{guarantee.Amount:N2}</td></tr>
+        <tr><th>المبلغ</th><td>{safeGuaranteeAmount}</td></tr>
         <tr><th>{safeCurrentLabel}</th><td>{safeCurrentValue}</td></tr>
         <tr><th>{safeRequestedLabel}</th><td>{safeRequestedValue}</td></tr>
     </table>
@@ -360,6 +364,11 @@ namespace GuaranteeManager.Services
         private static string EncodeLetterText(string? value)
         {
             return System.Net.WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(value) ? "---" : value);
+        }
+
+        private static string FormatLetterAmount(decimal amount)
+        {
+            return ArabicAmountFormatter.FormatSaudiRiyalsForLetter(amount);
         }
     }
 

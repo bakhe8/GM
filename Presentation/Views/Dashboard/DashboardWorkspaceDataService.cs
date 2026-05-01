@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows.Media;
 using GuaranteeManager.Models;
+using GuaranteeManager.Utils;
 
 namespace GuaranteeManager
 {
@@ -335,8 +336,8 @@ namespace GuaranteeManager
                 GuaranteeRow.ResolveBankLogo(item.Bank),
                 item.GuaranteeNo,
                 item.CurrentAmount,
-                $"{item.CurrentAmount.ToString("N0", CultureInfo.InvariantCulture)} ريال",
-                "القيمة الحالية للضمان",
+                ArabicAmountFormatter.FormatSaudiRiyals(item.CurrentAmount),
+                ArabicAmountFormatter.FormatSaudiRiyalsInWords(item.CurrentAmount),
                 item.Request.RequestDate.Date,
                 item.Request.RequestDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
                 $"ينتظر منذ {ageDays.ToString("N0", CultureInfo.InvariantCulture)} يوم",
@@ -392,8 +393,8 @@ namespace GuaranteeManager
                 GuaranteeRow.ResolveBankLogo(item.Bank),
                 item.GuaranteeNo,
                 item.Amount,
-                $"{item.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال",
-                "قيمة الضمان المتأثرة",
+                ArabicAmountFormatter.FormatSaudiRiyals(item.Amount),
+                ArabicAmountFormatter.FormatSaudiRiyalsInWords(item.Amount),
                 item.ExpiryDate.Date,
                 item.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
                 $"متأخر {daysLate.ToString("N0", CultureInfo.InvariantCulture)} يوماً",
@@ -442,8 +443,8 @@ namespace GuaranteeManager
                 GuaranteeRow.ResolveBankLogo(item.Bank),
                 item.GuaranteeNo,
                 item.Amount,
-                $"{item.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال",
-                "قيمة الضمان الحالية",
+                ArabicAmountFormatter.FormatSaudiRiyals(item.Amount),
+                ArabicAmountFormatter.FormatSaudiRiyalsInWords(item.Amount),
                 item.ExpiryDate.Date,
                 item.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
                 $"خلال {daysLeft.ToString("N0", CultureInfo.InvariantCulture)} يوم",
