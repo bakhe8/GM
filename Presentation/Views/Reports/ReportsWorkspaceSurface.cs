@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Windows.Automation;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using GuaranteeManager.Utils;
@@ -16,7 +17,10 @@ namespace GuaranteeManager
         private readonly List<ReportWorkspaceItem> _allReports;
         private readonly ListBox _list = new();
         private readonly TextBox _searchInput = new();
-        private readonly ComboBox _categoryFilter = new();
+        private readonly Border _portfolioMetricCard = new();
+        private readonly Border _requestsMetricCard = new();
+        private readonly Border _operationalMetricCard = new();
+        private readonly Border _totalMetricCard = new();
         private readonly TextBlock _summary = BuildMutedText(12, FontWeights.SemiBold);
         private readonly TextBlock _portfolioValue = BuildMetricValue();
         private readonly TextBlock _requestsValue = BuildMetricValue();
@@ -34,6 +38,7 @@ namespace GuaranteeManager
         private readonly Button _runButton = new();
         private readonly Button _openButton = new();
         private readonly ReferenceTablePagerController _pager;
+        private string _selectedCategoryFilter = ReportWorkspaceItem.AllFilterLabel;
 
         public ReportsWorkspaceSurface(
             IReadOnlyList<WorkspaceReportCatalog.WorkspaceReportAction> actions,
@@ -46,7 +51,10 @@ namespace GuaranteeManager
             _pager = new ReferenceTablePagerController("Reports", "تقرير", 10, ApplyFilters);
             UiInstrumentation.Identify(this, "Reports.Workspace", "التقارير");
             UiInstrumentation.Identify(_searchInput, "Reports.SearchBox", "بحث التقارير");
-            UiInstrumentation.Identify(_categoryFilter, "Reports.Filter.Category", "نوع التقرير");
+            UiInstrumentation.Identify(_portfolioMetricCard, "Reports.Filter.Category.Portfolio", ReportWorkspaceItem.PortfolioFilterLabel);
+            UiInstrumentation.Identify(_requestsMetricCard, "Reports.Filter.Category.Requests", ReportWorkspaceItem.RequestsFilterLabel);
+            UiInstrumentation.Identify(_operationalMetricCard, "Reports.Filter.Category.Operational", ReportWorkspaceItem.OperationalFilterLabel);
+            UiInstrumentation.Identify(_totalMetricCard, "Reports.Filter.Category.All", ReportWorkspaceItem.AllFilterLabel);
             UiInstrumentation.Identify(_list, "Reports.Table.List", "قائمة التقارير");
 
             FlowDirection = FlowDirection.RightToLeft;
@@ -100,23 +108,7 @@ namespace GuaranteeManager
         private Grid BuildToolbar()
         {
             var toolbar = new Grid { FlowDirection = FlowDirection.LeftToRight };
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-            _categoryFilter.Style = WorkspaceSurfaceChrome.Style("FilterComboBox");
-            _categoryFilter.Items.Add("كل التقارير");
-            _categoryFilter.Items.Add("تقارير المحفظة");
-            _categoryFilter.Items.Add("تقارير الطلبات");
-            _categoryFilter.Items.Add("تقارير تشغيلية");
-            _categoryFilter.SelectedIndex = 0;
-            _categoryFilter.SelectionChanged += (_, _) =>
-            {
-                _pager.ResetToFirstPage();
-                ApplyFilters();
-            };
-            Grid.SetColumn(_categoryFilter, 0);
-            toolbar.Children.Add(_categoryFilter);
 
             _searchInput.TextChanged += (_, _) =>
             {
@@ -124,7 +116,7 @@ namespace GuaranteeManager
                 ApplyFilters();
             };
             var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث بعنوان التقرير أو وصفه أو مفتاحه...");
-            Grid.SetColumn(searchBox, 2);
+            Grid.SetColumn(searchBox, 0);
             toolbar.Children.Add(searchBox);
 
             return toolbar;
@@ -136,12 +128,124 @@ namespace GuaranteeManager
             {
                 Columns = 4
             };
-            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("تقارير المحفظة", _portfolioValue, "#2563EB"));
-            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("تقارير الطلبات", _requestsValue, "#E09408"));
-            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("تقارير تشغيلية", _operationalValue, "#16A34A"));
-            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("إجمالي التقارير", _totalValue, "#0F172A"));
+            ConfigureMetricFilterCard(
+                _portfolioMetricCard,
+                ReportWorkspaceItem.PortfolioFilterLabel,
+                _portfolioValue,
+                "#2563EB");
+            ConfigureMetricFilterCard(
+                _requestsMetricCard,
+                ReportWorkspaceItem.RequestsFilterLabel,
+                _requestsValue,
+                "#E09408");
+            ConfigureMetricFilterCard(
+                _operationalMetricCard,
+                ReportWorkspaceItem.OperationalFilterLabel,
+                _operationalValue,
+                "#16A34A");
+            ConfigureMetricFilterCard(
+                _totalMetricCard,
+                "إجمالي التقارير",
+                _totalValue,
+                "#0F172A",
+                ReportWorkspaceItem.AllFilterLabel);
+
+            metrics.Children.Add(_portfolioMetricCard);
+            metrics.Children.Add(_requestsMetricCard);
+            metrics.Children.Add(_operationalMetricCard);
+            metrics.Children.Add(_totalMetricCard);
             WorkspaceSurfaceChrome.ApplyMetricCardSpacing(metrics);
+            UpdateMetricCardStates();
             return metrics;
+        }
+
+        private void ConfigureMetricFilterCard(
+            Border card,
+            string label,
+            TextBlock value,
+            string accentHex,
+            string? categoryFilter = null)
+        {
+            string filter = categoryFilter ?? label;
+            Border template = WorkspaceSurfaceChrome.MetricCard(label, value, accentHex);
+            UIElement content = template.Child;
+            template.Child = null;
+            card.Style = template.Style;
+            card.Child = content;
+            card.Padding = template.Padding;
+            card.MinHeight = template.MinHeight;
+            card.Tag = new ReportMetricFilter(filter, accentHex);
+            card.Cursor = Cursors.Hand;
+            card.Focusable = true;
+            card.ToolTip = $"عرض {filter}";
+            card.MouseLeftButtonUp += MetricFilterCard_MouseLeftButtonUp;
+            card.KeyDown += MetricFilterCard_KeyDown;
+            AutomationProperties.SetHelpText(card, $"فلترة قائمة التقارير حسب {filter}.");
+        }
+
+        private void MetricFilterCard_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Border card && card.Tag is ReportMetricFilter filter)
+            {
+                SelectCategoryFilter(filter.CategoryFilter);
+                e.Handled = true;
+            }
+        }
+
+        private void MetricFilterCard_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Enter && e.Key != Key.Space)
+            {
+                return;
+            }
+
+            if (sender is Border card && card.Tag is ReportMetricFilter filter)
+            {
+                SelectCategoryFilter(filter.CategoryFilter);
+                e.Handled = true;
+            }
+        }
+
+        private void SelectCategoryFilter(string categoryFilter, bool resetPage = true, bool apply = true)
+        {
+            string normalized = NormalizeCategoryFilter(categoryFilter);
+            bool changed = !string.Equals(_selectedCategoryFilter, normalized, StringComparison.Ordinal);
+            _selectedCategoryFilter = normalized;
+            UpdateMetricCardStates();
+
+            if (resetPage)
+            {
+                _pager.ResetToFirstPage();
+            }
+
+            if (apply && (changed || resetPage))
+            {
+                ApplyFilters();
+            }
+        }
+
+        private void UpdateMetricCardStates()
+        {
+            ApplyMetricCardState(_portfolioMetricCard);
+            ApplyMetricCardState(_requestsMetricCard);
+            ApplyMetricCardState(_operationalMetricCard);
+            ApplyMetricCardState(_totalMetricCard);
+        }
+
+        private void ApplyMetricCardState(Border card)
+        {
+            if (card.Tag is not ReportMetricFilter filter)
+            {
+                return;
+            }
+
+            bool selected = string.Equals(_selectedCategoryFilter, filter.CategoryFilter, StringComparison.Ordinal);
+            card.Background = WorkspaceSurfaceChrome.BrushFrom(selected ? "#F8FBFF" : "#FFFFFF");
+            card.BorderBrush = WorkspaceSurfaceChrome.BrushFrom(selected ? filter.AccentHex : "#E3E9F2");
+            card.BorderThickness = new Thickness(selected ? 2 : 1);
+            AutomationProperties.SetName(card, selected
+                ? $"{filter.CategoryFilter} محدد"
+                : $"فلتر {filter.CategoryFilter}");
         }
 
         private UIElement BuildTableSection()
@@ -308,7 +412,8 @@ namespace GuaranteeManager
         private void ApplyFilters()
         {
             _list.Items.Clear();
-            string category = _categoryFilter.SelectedItem as string ?? "كل التقارير";
+            string category = NormalizeCategoryFilter(_selectedCategoryFilter);
+            UpdateMetricCardStates();
             ReportsWorkspaceFilterResult filtered = _dataService.BuildFilteredItems(
                 _allReports,
                 _searchInput.Text,
@@ -429,6 +534,18 @@ namespace GuaranteeManager
             _requestsValue.Text = metrics.Requests;
             _operationalValue.Text = metrics.Operational;
             _totalValue.Text = metrics.Total;
+            UpdateMetricCardStates();
+        }
+
+        private static string NormalizeCategoryFilter(string? categoryFilter)
+        {
+            return categoryFilter switch
+            {
+                ReportWorkspaceItem.PortfolioFilterLabel => ReportWorkspaceItem.PortfolioFilterLabel,
+                ReportWorkspaceItem.RequestsFilterLabel => ReportWorkspaceItem.RequestsFilterLabel,
+                ReportWorkspaceItem.OperationalFilterLabel => ReportWorkspaceItem.OperationalFilterLabel,
+                _ => ReportWorkspaceItem.AllFilterLabel
+            };
         }
 
         private static TextBlock BuildMetricValue()
@@ -492,6 +609,8 @@ namespace GuaranteeManager
                 }
             };
         }
+
+        private sealed record ReportMetricFilter(string CategoryFilter, string AccentHex);
 
     }
 }

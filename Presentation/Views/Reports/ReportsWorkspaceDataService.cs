@@ -217,6 +217,7 @@ namespace GuaranteeManager
         string CategoryFilter,
         Brush CategoryBrush)
     {
+        public const string AllFilterLabel = "كل التقارير";
         public const string PortfolioFilterLabel = "تقارير المحفظة";
         public const string RequestsFilterLabel = "تقارير الطلبات";
         public const string OperationalFilterLabel = "تقارير تشغيلية";
