@@ -240,22 +240,16 @@ namespace GuaranteeManager
 
         private Border BuildDetailPanel()
         {
-#if DEBUG
-            const double quickActionsHeight = 176;
-#else
-            const double quickActionsHeight = 134;
-#endif
             return WorkspaceSurfaceChrome.BuildReferenceDetailPanel(
                 BuildDetailContent(),
-                BuildDetailActions(),
-                quickActionsHeight);
+                BuildDetailActions());
         }
 
         private UIElement BuildDetailContent()
         {
             _detailStatusBadgeBorder.Style = WorkspaceSurfaceChrome.Style("StatusPill");
             _detailStatusBadgeBorder.HorizontalAlignment = HorizontalAlignment.Left;
-            _detailStatusBadgeBorder.Margin = new Thickness(0, 8, 0, 12);
+            _detailStatusBadgeBorder.Margin = new Thickness(0, 0, 0, 12);
             _detailStatusBadgeBorder.Child = _detailStatusBadge;
 
             return new StackPanel
@@ -278,7 +272,7 @@ namespace GuaranteeManager
         {
             var grid = new Grid
             {
-                Margin = new Thickness(0, 0, 0, 8),
+                Margin = new Thickness(0, 0, 0, 12),
                 FlowDirection = FlowDirection.LeftToRight
             };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });

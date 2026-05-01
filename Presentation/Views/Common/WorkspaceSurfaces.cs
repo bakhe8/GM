@@ -125,7 +125,7 @@ namespace GuaranteeManager
         public static Border BuildReferenceDetailPanel(
             UIElement scrollContent,
             UIElement? quickActions = null,
-            double quickActionsHeight = 90)
+            double quickActionsHeight = double.NaN)
         {
             var border = new Border
             {
@@ -139,7 +139,11 @@ namespace GuaranteeManager
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             grid.RowDefinitions.Add(new RowDefinition
             {
-                Height = quickActions == null ? new GridLength(0) : new GridLength(quickActionsHeight)
+                Height = quickActions == null
+                    ? new GridLength(0)
+                    : double.IsNaN(quickActionsHeight)
+                        ? GridLength.Auto
+                        : new GridLength(quickActionsHeight)
             });
 
             var scroll = new ScrollViewer
