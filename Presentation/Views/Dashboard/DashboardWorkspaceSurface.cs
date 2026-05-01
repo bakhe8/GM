@@ -39,7 +39,7 @@ namespace GuaranteeManager
         private readonly Button _recommendationActionButton = BuildInsightActionButton();
         private readonly TextBlock _detailPanelHeading = BuildSectionHeading(18);
         private readonly TextBlock _detailActionsHeading = BuildSectionHeading(12);
-        private readonly TextBlock _detailTitle = BuildDetailValue(16, FontWeights.Bold);
+        private readonly TextBlock _detailTitle = BuildDashboardSupplierText();
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
         private readonly Border _detailStatusBadgeBorder = new();
         private readonly Image _detailBankLogo = new() { Width = 17, Height = 17 };
@@ -411,16 +411,9 @@ namespace GuaranteeManager
             var row = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                FlowDirection = FlowDirection.RightToLeft,
-                HorizontalAlignment = HorizontalAlignment.Right,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 0)
+                FlowDirection = FlowDirection.RightToLeft
             };
             row.Children.Add(CreateIcon("Icon.User", "#94A3B8", 14));
-            _detailTitle.FlowDirection = FlowDirection.RightToLeft;
-            _detailTitle.HorizontalAlignment = HorizontalAlignment.Right;
-            _detailTitle.MaxWidth = 340;
-            _detailTitle.Margin = new Thickness(8, 0, 0, 0);
             row.Children.Add(_detailTitle);
             row.Children.Add(new Border { Width = 3 });
             row.Children.Add(BuildInlineCopyButton(
@@ -933,6 +926,17 @@ namespace GuaranteeManager
                 FontSize = size,
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
+            };
+        }
+
+        private static TextBlock BuildDashboardSupplierText()
+        {
+            return new TextBlock
+            {
+                FontSize = 16,
+                FontWeight = FontWeights.Bold,
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text"),
+                Margin = new Thickness(8, 0, 0, 0)
             };
         }
 
