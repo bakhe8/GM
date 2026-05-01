@@ -81,6 +81,60 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void BuildSnapshot_SplitsExpiringSoonByPendingRequestPresence()
+        {
+            DateTime start = new(2026, 4, 28, 8, 0, 0);
+            Guarantee expiringWithRequest = CreateGuarantee(20, null, 1, true, start, 5_000m);
+            expiringWithRequest.GuaranteeNo = "BG-SOON-WITH-REQUEST";
+            expiringWithRequest.ExpiryDate = DateTime.Today.AddDays(5);
+
+            Guarantee expiringWithoutRequest = CreateGuarantee(21, null, 1, true, start, 6_000m);
+            expiringWithoutRequest.GuaranteeNo = "BG-SOON-WITHOUT-REQUEST";
+            expiringWithoutRequest.ExpiryDate = DateTime.Today.AddDays(7);
+
+            Guarantee expiredOpen = CreateGuarantee(22, null, 1, true, start, 7_000m);
+            expiredOpen.GuaranteeNo = "BG-EXPIRED-OPEN";
+            expiredOpen.ExpiryDate = DateTime.Today.AddDays(-2);
+
+            WorkflowRequestListItem pendingRequest = CreatePendingRequest(expiringWithRequest, 701);
+            var service = new GuaranteeWorkspaceDataService(
+                new TimelineDatabaseStub(
+                    new[] { expiringWithRequest, expiringWithoutRequest, expiredOpen },
+                    Array.Empty<WorkflowRequest>(),
+                    requestItems: new[] { pendingRequest }),
+                new ContextActionService());
+
+            GuaranteeWorkspaceSnapshot expiringSnapshot = service.BuildSnapshot(
+                string.Empty,
+                "كل البنوك",
+                "كل البنوك",
+                "كل الأنواع",
+                "كل الأنواع",
+                GuaranteeStatusFilter.ExpiringSoon,
+                10,
+                1);
+
+            GuaranteeRow expiringRow = Assert.Single(expiringSnapshot.Rows);
+            Assert.Equal(expiringWithoutRequest.GuaranteeNo, expiringRow.GuaranteeNo);
+            Assert.Equal("1", expiringSnapshot.ExpiringSoonCount);
+            Assert.Equal("2", expiringSnapshot.ExpiredFollowUpCount);
+
+            GuaranteeWorkspaceSnapshot followUpSnapshot = service.BuildSnapshot(
+                string.Empty,
+                "كل البنوك",
+                "كل البنوك",
+                "كل الأنواع",
+                "كل الأنواع",
+                GuaranteeStatusFilter.NeedsFollowUp,
+                10,
+                1);
+
+            Assert.Contains(followUpSnapshot.Rows, row => row.GuaranteeNo == expiringWithRequest.GuaranteeNo);
+            Assert.Contains(followUpSnapshot.Rows, row => row.GuaranteeNo == expiredOpen.GuaranteeNo);
+            Assert.DoesNotContain(followUpSnapshot.Rows, row => row.GuaranteeNo == expiringWithoutRequest.GuaranteeNo);
+        }
+
+        [Fact]
         public void BuildSelectionArtifacts_ForCurrentGuarantee_BuildsNewestFirstTimeline()
         {
             DateTime start = new(2026, 4, 28, 8, 0, 0);
@@ -364,19 +418,49 @@ namespace GuaranteeManager.Tests
             };
         }
 
+        private static WorkflowRequestListItem CreatePendingRequest(Guarantee guarantee, int requestId)
+        {
+            return new WorkflowRequestListItem
+            {
+                Request = new WorkflowRequest
+                {
+                    Id = requestId,
+                    RootGuaranteeId = guarantee.RootId ?? guarantee.Id,
+                    BaseVersionId = guarantee.Id,
+                    SequenceNumber = 1,
+                    Type = RequestType.Extension,
+                    Status = RequestStatus.Pending,
+                    RequestDate = DateTime.Today.AddDays(-2)
+                },
+                CurrentGuaranteeId = guarantee.Id,
+                RootGuaranteeId = guarantee.RootId ?? guarantee.Id,
+                GuaranteeNo = guarantee.GuaranteeNo,
+                Supplier = guarantee.Supplier,
+                Bank = guarantee.Bank,
+                CurrentAmount = guarantee.Amount,
+                CurrentExpiryDate = guarantee.ExpiryDate,
+                CurrentVersionNumber = guarantee.VersionNumber,
+                BaseVersionNumber = guarantee.VersionNumber,
+                LifecycleStatus = guarantee.LifecycleStatus
+            };
+        }
+
         private sealed class TimelineDatabaseStub : IDatabaseService
         {
             private readonly List<Guarantee> _history;
             private readonly List<WorkflowRequest> _requests;
+            private readonly List<WorkflowRequestListItem> _requestItems;
             private readonly List<GuaranteeTimelineEvent> _events;
 
             public TimelineDatabaseStub(
                 IEnumerable<Guarantee> history,
                 IEnumerable<WorkflowRequest> requests,
-                IEnumerable<GuaranteeTimelineEvent>? events = null)
+                IEnumerable<GuaranteeTimelineEvent>? events = null,
+                IEnumerable<WorkflowRequestListItem>? requestItems = null)
             {
                 _history = history.ToList();
                 _requests = requests.ToList();
+                _requestItems = requestItems?.ToList() ?? new List<WorkflowRequestListItem>();
                 _events = events?.ToList() ?? new List<GuaranteeTimelineEvent>();
             }
 
@@ -473,7 +557,17 @@ namespace GuaranteeManager.Tests
             public bool HasPendingWorkflowRequest(int rootId, RequestType requestType) => throw new NotSupportedException();
             public int GetPendingWorkflowRequestCount() => throw new NotSupportedException();
             public WorkflowRequest? GetWorkflowRequestById(int requestId) => throw new NotSupportedException();
-            public List<WorkflowRequestListItem> QueryWorkflowRequests(WorkflowRequestQueryOptions options) => new();
+            public List<WorkflowRequestListItem> QueryWorkflowRequests(WorkflowRequestQueryOptions options)
+            {
+                IEnumerable<WorkflowRequestListItem> query = _requestItems;
+
+                if (options.RequestStatus.HasValue)
+                {
+                    query = query.Where(item => item.Request.Status == options.RequestStatus.Value);
+                }
+
+                return query.ToList();
+            }
             public int CountWorkflowRequests(WorkflowRequestQueryOptions? options = null) => throw new NotSupportedException();
             public List<WorkflowRequestListItem> SearchWorkflowRequests(string query) => throw new NotSupportedException();
             public void RecordWorkflowResponse(int requestId, RequestStatus newStatus, string responseNotes, string responseOriginalFileName, string responseSavedFileName, int? resultVersionId = null) => throw new NotSupportedException();
@@ -489,7 +583,7 @@ namespace GuaranteeManager.Tests
             public List<string> GetBankReferences() => throw new NotSupportedException();
             public List<string> GetUniqueValues(string columnName) => throw new NotSupportedException();
             public bool IsGuaranteeNoUnique(string guaranteeNo) => throw new NotSupportedException();
-            public Guarantee? GetGuaranteeById(int guaranteeId) => throw new NotSupportedException();
+            public Guarantee? GetGuaranteeById(int guaranteeId) => _history.FirstOrDefault(guarantee => guarantee.Id == guaranteeId);
             public Guarantee? GetCurrentGuaranteeByRootId(int rootId) => throw new NotSupportedException();
             public Guarantee? GetCurrentGuaranteeByNo(string guaranteeNo) => throw new NotSupportedException();
             public int CreateNewVersion(Guarantee newG, int sourceId, List<string> newTempFiles, List<AttachmentRecord> inheritedAttachments) => throw new NotSupportedException();

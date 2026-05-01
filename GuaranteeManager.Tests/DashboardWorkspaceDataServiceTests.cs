@@ -127,6 +127,48 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void BuildItems_ExpiringSoonScope_OnlyIncludesGuaranteesWithPendingRequests()
+        {
+            var service = new DashboardWorkspaceDataService();
+            var expiringWithRequest = CreateGuarantee(
+                "BG-SOON-WITH-REQUEST",
+                DateTime.Today.AddDays(5),
+                GuaranteeLifecycleStatus.Active,
+                3_000m);
+            var expiringWithoutRequest = CreateGuarantee(
+                "BG-SOON-WITHOUT-REQUEST",
+                DateTime.Today.AddDays(8),
+                GuaranteeLifecycleStatus.Active,
+                4_000m);
+            var pendingRequest = CreatePendingRequest(expiringWithRequest, 501);
+            var guarantees = new[] { expiringWithRequest, expiringWithoutRequest };
+
+            List<DashboardWorkItem> items = service.BuildItems(
+                guarantees,
+                new[] { pendingRequest });
+
+            List<DashboardWorkItem> expiringItems = items
+                .Where(item => item.Scope == DashboardScope.ExpiringSoon)
+                .ToList();
+            DashboardWorkItem item = Assert.Single(expiringItems);
+            Assert.Equal(expiringWithRequest.GuaranteeNo, item.Reference);
+            Assert.Equal("طلب تمديد", item.RequiredLabel);
+            Assert.DoesNotContain(items, item => item.Reference == expiringWithoutRequest.GuaranteeNo);
+
+            DashboardWorkspaceFilterResult result = service.BuildFilteredItems(
+                items,
+                string.Empty,
+                DashboardScopeFilters.AllWork,
+                false,
+                string.Empty,
+                guarantees,
+                new[] { pendingRequest });
+
+            DashboardMetricCard expiringCard = Assert.Single(result.Metrics.Cards, card => card.Label == "قريبة الانتهاء");
+            Assert.Equal("1", expiringCard.Value);
+        }
+
+        [Fact]
         public void BuildGuidanceState_UsesHighestPriorityItemAsSmartGuideTarget()
         {
             var service = new DashboardWorkspaceDataService();
@@ -241,6 +283,8 @@ namespace GuaranteeManager.Tests
                 "BG-OPEN" => 101,
                 "BG-RELEASED" => 102,
                 "BG-SOON" => 103,
+                "BG-SOON-WITH-REQUEST" => 104,
+                "BG-SOON-WITHOUT-REQUEST" => 105,
                 _ => 199
             };
 
@@ -258,6 +302,33 @@ namespace GuaranteeManager.Tests
                 GuaranteeType = "ابتدائي",
                 Beneficiary = "مستفيد اختبار",
                 LifecycleStatus = lifecycleStatus
+            };
+        }
+
+        private static WorkflowRequestListItem CreatePendingRequest(Guarantee guarantee, int requestId)
+        {
+            return new WorkflowRequestListItem
+            {
+                Request = new WorkflowRequest
+                {
+                    Id = requestId,
+                    RootGuaranteeId = guarantee.RootId ?? guarantee.Id,
+                    BaseVersionId = guarantee.Id,
+                    SequenceNumber = 1,
+                    Type = RequestType.Extension,
+                    Status = RequestStatus.Pending,
+                    RequestDate = DateTime.Today.AddDays(-2)
+                },
+                CurrentGuaranteeId = guarantee.Id,
+                RootGuaranteeId = guarantee.RootId ?? guarantee.Id,
+                GuaranteeNo = guarantee.GuaranteeNo,
+                Supplier = guarantee.Supplier,
+                Bank = guarantee.Bank,
+                CurrentAmount = guarantee.Amount,
+                CurrentExpiryDate = guarantee.ExpiryDate,
+                CurrentVersionNumber = guarantee.VersionNumber,
+                BaseVersionNumber = guarantee.VersionNumber,
+                LifecycleStatus = guarantee.LifecycleStatus
             };
         }
     }

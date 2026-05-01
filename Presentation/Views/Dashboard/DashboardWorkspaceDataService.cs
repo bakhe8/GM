@@ -71,6 +71,7 @@ namespace GuaranteeManager
         {
             var items = new List<DashboardWorkItem>();
             Dictionary<int, WorkflowRequestListItem> latestPendingByRoot = pendingRequests
+                .Where(item => item.Request.Status == RequestStatus.Pending)
                 .GroupBy(item => item.RootGuaranteeId)
                 .ToDictionary(
                     group => group.Key,
@@ -85,7 +86,7 @@ namespace GuaranteeManager
                 .OrderBy(item => item.ExpiryDate)
                 .Select(item => BuildExpiredFollowUpItem(item, ResolvePending(latestPendingByRoot, item))));
             items.AddRange(guarantees
-                .Where(item => item.IsExpiringSoon)
+                .Where(item => item.IsExpiringSoon && HasPendingRequest(latestPendingByRoot, item))
                 .OrderBy(item => item.ExpiryDate)
                 .Select(item => BuildExpiringSoonItem(item, ResolvePending(latestPendingByRoot, item))));
 
@@ -260,7 +261,10 @@ namespace GuaranteeManager
             int pendingCount = pendingRequests.Count;
             int expiredCount = allItems.Count(item => item.Scope == DashboardScope.ExpiredFollowUp);
             int expiringSoonCount = allItems.Count(item => item.Scope == DashboardScope.ExpiringSoon);
-            int followUpCount = guarantees.Count(item => item.NeedsExpiryFollowUp || item.IsExpiringSoon);
+            HashSet<int> pendingRootIds = BuildPendingRootIds(pendingRequests);
+            int followUpCount = guarantees.Count(item =>
+                item.NeedsExpiryFollowUp ||
+                (item.IsExpiringSoon && pendingRootIds.Contains(GetRootId(item))));
 
             DashboardGuidanceCard recommendation;
             if (pendingCount > 0)
@@ -361,11 +365,24 @@ namespace GuaranteeManager
             IReadOnlyDictionary<int, WorkflowRequestListItem> latestPendingByRoot,
             Guarantee guarantee)
         {
-            int rootId = guarantee.RootId ?? guarantee.Id;
+            int rootId = GetRootId(guarantee);
             return latestPendingByRoot.TryGetValue(rootId, out WorkflowRequestListItem? pending)
                 ? pending
                 : null;
         }
+
+        private static bool HasPendingRequest(
+            IReadOnlyDictionary<int, WorkflowRequestListItem> latestPendingByRoot,
+            Guarantee guarantee)
+            => latestPendingByRoot.ContainsKey(GetRootId(guarantee));
+
+        private static HashSet<int> BuildPendingRootIds(IReadOnlyList<WorkflowRequestListItem> pendingRequests)
+            => pendingRequests
+                .Where(item => item.Request.Status == RequestStatus.Pending)
+                .Select(item => item.RootGuaranteeId)
+                .ToHashSet();
+
+        private static int GetRootId(Guarantee guarantee) => guarantee.RootId ?? guarantee.Id;
 
         private static DashboardWorkItem BuildExpiredFollowUpItem(Guarantee item, WorkflowRequestListItem? pendingRequest)
         {
@@ -479,7 +496,8 @@ namespace GuaranteeManager
         {
             if (string.Equals(normalizedScope, DashboardScopeFilters.ExpiryFollowUps, StringComparison.Ordinal))
             {
-                int expiringCount = guarantees.Count(item => item.IsExpiringSoon);
+                HashSet<int> pendingRootIds = BuildPendingRootIds(pendingRequests);
+                int expiringCount = guarantees.Count(item => item.IsExpiringSoon && pendingRootIds.Contains(GetRootId(item)));
                 int expiredCount = guarantees.Count(item => item.NeedsExpiryFollowUp);
 
                 return new DashboardWorkspaceMetrics(new[]
@@ -511,7 +529,8 @@ namespace GuaranteeManager
                 });
             }
 
-            int expiringSoonCount = guarantees.Count(item => item.IsExpiringSoon);
+            HashSet<int> defaultPendingRootIds = BuildPendingRootIds(pendingRequests);
+            int expiringSoonCount = guarantees.Count(item => item.IsExpiringSoon && defaultPendingRootIds.Contains(GetRootId(item)));
             int expiredFollowUpCount = guarantees.Count(item => item.NeedsExpiryFollowUp);
             return new DashboardWorkspaceMetrics(new[]
             {

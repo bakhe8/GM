@@ -117,31 +117,23 @@ namespace GuaranteeManager
                 includeAttachments: false,
                 limit: null);
 
-            List<Guarantee> portfolio = QueryGuarantees(
-                searchText,
-                selectedBank,
-                allBanksLabel,
-                selectedGuaranteeType,
-                allTypesLabel,
-                selectedStatusFilter,
-                includeAttachments: false,
-                limit: null);
+            HashSet<int> pendingRootIds = BuildPendingRootIds(pendingRequests);
+            List<Guarantee> portfolio = ApplyStatusFilter(
+                    basePortfolio,
+                    selectedStatusFilter,
+                    pendingRootIds)
+                .ToList();
 
             int totalCount = portfolio.Count;
             int totalPages = ReferenceTablePagerController.CalculateTotalPages(totalCount, pageSize);
             int currentPage = System.Math.Clamp(pageNumber, 1, totalPages);
             int offset = (currentPage - 1) * pageSize;
 
-            List<Guarantee> currentGuarantees = QueryGuarantees(
-                searchText,
-                selectedBank,
-                allBanksLabel,
-                selectedGuaranteeType,
-                allTypesLabel,
-                selectedStatusFilter,
-                includeAttachments: true,
-                limit: pageSize,
-                offset: offset);
+            List<Guarantee> currentGuarantees = portfolio
+                .Skip(offset)
+                .Take(pageSize)
+                .Select(guarantee => _database.GetGuaranteeById(guarantee.Id) ?? guarantee)
+                .ToList();
 
             HashSet<int> visibleRootIds = basePortfolio
                 .Select(guarantee => guarantee.RootId ?? guarantee.Id)
@@ -186,9 +178,13 @@ namespace GuaranteeManager
             List<Guarantee> active = basePortfolio
                 .Where(guarantee => guarantee.LifecycleStatus == GuaranteeLifecycleStatus.Active && !guarantee.IsExpired && !guarantee.IsExpiringSoon)
                 .ToList();
-            List<Guarantee> expiringSoon = basePortfolio.Where(guarantee => guarantee.IsExpiringSoon).ToList();
+            List<Guarantee> expiringSoon = basePortfolio
+                .Where(guarantee => IsExpiringSoonWithoutPendingRequest(guarantee, pendingRootIds))
+                .ToList();
             List<Guarantee> expired = basePortfolio.Where(IsClosedExpiredGuarantee).ToList();
-            List<Guarantee> expiredFollowUp = basePortfolio.Where(guarantee => guarantee.NeedsExpiryFollowUp).ToList();
+            List<Guarantee> expiredFollowUp = basePortfolio
+                .Where(guarantee => NeedsGuaranteeFollowUp(guarantee, pendingRootIds))
+                .ToList();
             decimal pendingAmount = visiblePendingRequests
                 .GroupBy(request => request.RootGuaranteeId)
                 .Select(group => group.First().CurrentAmount)
@@ -296,32 +292,6 @@ namespace GuaranteeManager
                 offset));
         }
 
-        private List<Guarantee> QueryGuarantees(
-            string searchText,
-            string selectedBank,
-            string allBanksLabel,
-            string selectedGuaranteeType,
-            string allTypesLabel,
-            GuaranteeStatusFilter selectedStatusFilter,
-            bool includeAttachments,
-            int? limit,
-            int? offset = null)
-        {
-            return _database.QueryGuarantees(BuildGuaranteeQueryOptions(
-                searchText,
-                selectedBank,
-                allBanksLabel,
-                selectedGuaranteeType,
-                allTypesLabel,
-                ResolveTimeStatus(selectedStatusFilter),
-                includeAttachments,
-                limit,
-                offset,
-                ResolveLifecycleStatus(selectedStatusFilter),
-                ResolveLifecycleStatuses(selectedStatusFilter),
-                selectedStatusFilter == GuaranteeStatusFilter.NeedsFollowUp));
-        }
-
         private static GuaranteeQueryOptions BuildGuaranteeQueryOptions(
             string searchText,
             string selectedBank,
@@ -352,28 +322,51 @@ namespace GuaranteeManager
             };
         }
 
-        private static GuaranteeTimeStatus? ResolveTimeStatus(GuaranteeStatusFilter selectedStatusFilter) => selectedStatusFilter switch
+        private static IEnumerable<Guarantee> ApplyStatusFilter(
+            IEnumerable<Guarantee> portfolio,
+            GuaranteeStatusFilter selectedStatusFilter,
+            IReadOnlySet<int> pendingRootIds)
         {
-            GuaranteeStatusFilter.Active => GuaranteeTimeStatus.Active,
-            GuaranteeStatusFilter.ExpiringSoon => GuaranteeTimeStatus.ExpiringSoon,
-            _ => null
-        };
-
-        private static GuaranteeLifecycleStatus? ResolveLifecycleStatus(GuaranteeStatusFilter selectedStatusFilter) => selectedStatusFilter switch
-        {
-            GuaranteeStatusFilter.Active => GuaranteeLifecycleStatus.Active,
-            _ => null
-        };
-
-        private static IReadOnlyCollection<GuaranteeLifecycleStatus>? ResolveLifecycleStatuses(GuaranteeStatusFilter selectedStatusFilter) => selectedStatusFilter switch
-        {
-            GuaranteeStatusFilter.Expired => new[]
+            return selectedStatusFilter switch
             {
-                GuaranteeLifecycleStatus.Expired,
-                GuaranteeLifecycleStatus.Closed
-            },
-            _ => null
-        };
+                GuaranteeStatusFilter.Active => portfolio.Where(guarantee =>
+                    guarantee.LifecycleStatus == GuaranteeLifecycleStatus.Active &&
+                    !guarantee.IsExpired &&
+                    !guarantee.IsExpiringSoon),
+                GuaranteeStatusFilter.ExpiringSoon => portfolio.Where(guarantee =>
+                    IsExpiringSoonWithoutPendingRequest(guarantee, pendingRootIds)),
+                GuaranteeStatusFilter.NeedsFollowUp => portfolio.Where(guarantee =>
+                    NeedsGuaranteeFollowUp(guarantee, pendingRootIds)),
+                GuaranteeStatusFilter.Expired => portfolio.Where(IsClosedExpiredGuarantee),
+                _ => portfolio
+            };
+        }
+
+        private static HashSet<int> BuildPendingRootIds(IReadOnlyList<WorkflowRequestListItem> pendingRequests)
+            => pendingRequests
+                .Where(request => request.Request.Status == RequestStatus.Pending)
+                .Select(request => request.RootGuaranteeId)
+                .ToHashSet();
+
+        private static bool IsExpiringSoonWithoutPendingRequest(
+            Guarantee guarantee,
+            IReadOnlySet<int> pendingRootIds)
+            => IsActionableExpiringSoon(guarantee) && !pendingRootIds.Contains(GetRootId(guarantee));
+
+        private static bool IsExpiringSoonWithPendingRequest(
+            Guarantee guarantee,
+            IReadOnlySet<int> pendingRootIds)
+            => IsActionableExpiringSoon(guarantee) && pendingRootIds.Contains(GetRootId(guarantee));
+
+        private static bool IsActionableExpiringSoon(Guarantee guarantee)
+            => guarantee.LifecycleStatus == GuaranteeLifecycleStatus.Active && guarantee.IsExpiringSoon;
+
+        private static bool NeedsGuaranteeFollowUp(
+            Guarantee guarantee,
+            IReadOnlySet<int> pendingRootIds)
+            => guarantee.NeedsExpiryFollowUp || IsExpiringSoonWithPendingRequest(guarantee, pendingRootIds);
+
+        private static int GetRootId(Guarantee guarantee) => guarantee.RootId ?? guarantee.Id;
 
         private static bool IsClosedExpiredGuarantee(Guarantee guarantee)
             => guarantee.LifecycleStatus is GuaranteeLifecycleStatus.Expired or GuaranteeLifecycleStatus.Closed;
