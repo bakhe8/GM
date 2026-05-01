@@ -32,14 +32,7 @@ namespace GuaranteeManager
         private readonly ComboBox _expiryFollowUpFilter = new();
         private readonly TextBlock _summary = BuildMutedText(12, FontWeights.SemiBold);
         private readonly Grid _tableHeaderInner = new();
-        private readonly TextBlock _lastFileLabel = BuildMetricLabel("#2563EB");
-        private readonly TextBlock _criticalWorkLabel = BuildMetricLabel("#EF4444");
-        private readonly TextBlock _pendingRequestsLabel = BuildMetricLabel("#E09408");
-        private readonly TextBlock _followUpsLabel = BuildMetricLabel("#0F172A");
-        private readonly TextBlock _guaranteeCountValue = BuildMetricValue(22);
-        private readonly TextBlock _portfolioAmountValue = BuildMetricValue();
-        private readonly TextBlock _pendingValue = BuildMetricValue();
-        private readonly TextBlock _followUpValue = BuildMetricValue();
+        private readonly System.Windows.Controls.Primitives.UniformGrid _metricsGrid = new();
         private readonly TextBlock _guideTitle = BuildInsightTitle();
         private readonly TextBlock _guidePrimary = BuildInsightPrimary();
         private readonly TextBlock _guideSecondary = BuildInsightSecondary();
@@ -265,21 +258,8 @@ namespace GuaranteeManager
 
         private System.Windows.Controls.Primitives.UniformGrid BuildMetrics()
         {
-            var metrics = new System.Windows.Controls.Primitives.UniformGrid
-            {
-                Columns = 4
-            };
-            metrics.Children.Add(BuildMetricCard(_lastFileLabel, _guaranteeCountValue));
-            metrics.Children.Add(BuildMetricCard(_criticalWorkLabel, _portfolioAmountValue));
-            metrics.Children.Add(BuildMetricCard(_pendingRequestsLabel, _pendingValue));
-            metrics.Children.Add(BuildMetricCard(_followUpsLabel, _followUpValue));
-            WorkspaceSurfaceChrome.ApplyMetricCardSpacing(metrics);
-            return metrics;
-        }
-
-        private Border BuildMetricCard(TextBlock label, TextBlock value)
-        {
-            return WorkspaceSurfaceChrome.MetricCard(label, value);
+            _metricsGrid.Columns = 3;
+            return _metricsGrid;
         }
 
         private System.Windows.Controls.Primitives.UniformGrid BuildGuidanceStrip()
@@ -439,6 +419,8 @@ namespace GuaranteeManager
             _detailStatusBadgeBorder.HorizontalAlignment = HorizontalAlignment.Left;
             _detailStatusBadgeBorder.Margin = new Thickness(0, 0, 0, 12);
             _detailStatusBadgeBorder.Child = _detailStatusBadge;
+            _detailAmountCaption.HorizontalAlignment = HorizontalAlignment.Right;
+            _detailAmountCaption.FlowDirection = FlowDirection.RightToLeft;
 
             _detailExpiryLine = WorkspaceSurfaceChrome.DetailFactLine(_detailExpiryLabel, _detailExpiry, "Icon.History");
 
@@ -936,10 +918,16 @@ namespace GuaranteeManager
 
         private void ApplyMetrics(DashboardWorkspaceMetrics metrics)
         {
-            ApplyMetricCard(_lastFileLabel, _guaranteeCountValue, metrics.First);
-            ApplyMetricCard(_criticalWorkLabel, _portfolioAmountValue, metrics.Second);
-            ApplyMetricCard(_pendingRequestsLabel, _pendingValue, metrics.Third);
-            ApplyMetricCard(_followUpsLabel, _followUpValue, metrics.Fourth);
+            IReadOnlyList<DashboardMetricCard> cards = GetVisibleMetricCards(metrics);
+            _metricsGrid.Columns = cards.Count;
+            _metricsGrid.Children.Clear();
+
+            foreach (DashboardMetricCard card in cards)
+            {
+                _metricsGrid.Children.Add(WorkspaceSurfaceChrome.MetricCard(card.Label, card.Value, card.AccentHex));
+            }
+
+            WorkspaceSurfaceChrome.ApplyMetricCardSpacing(_metricsGrid);
         }
 
         private void ApplyGuidanceState(DashboardGuidanceState state)
@@ -994,16 +982,6 @@ namespace GuaranteeManager
             _primaryActionButton.IsEnabled = state.CanRunPrimaryAction;
         }
 
-        private static TextBlock BuildMetricValue(double fontSize = 27)
-        {
-            return WorkspaceSurfaceChrome.MetricValueText(fontSize < 30 ? 30 : fontSize);
-        }
-
-        private static TextBlock BuildMetricLabel(string accentHex)
-        {
-            return WorkspaceSurfaceChrome.MetricLabelText(string.Empty, accentHex);
-        }
-
         private static TextBlock BuildInsightTitle()
         {
             return new TextBlock
@@ -1053,12 +1031,14 @@ namespace GuaranteeManager
             };
         }
 
-        private static void ApplyMetricCard(TextBlock labelBlock, TextBlock valueBlock, DashboardMetricCard card)
+        private static IReadOnlyList<DashboardMetricCard> GetVisibleMetricCards(DashboardWorkspaceMetrics metrics)
         {
-            labelBlock.Text = card.Label;
-            labelBlock.Foreground = WorkspaceSurfaceChrome.BrushFrom(card.AccentHex);
-            valueBlock.Text = card.Value;
-            valueBlock.FontSize = card.Value.Length > 10 ? 22 : 32;
+            if (string.Equals(metrics.First.Label, "آخر ضمان", StringComparison.Ordinal))
+            {
+                return new[] { metrics.Second, metrics.Third, metrics.Fourth };
+            }
+
+            return new[] { metrics.First, metrics.Second, metrics.Third, metrics.Fourth };
         }
 
         private void ApplyDetailLabels(DashboardDetailProfile detailProfile)
