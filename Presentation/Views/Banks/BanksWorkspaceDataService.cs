@@ -186,19 +186,33 @@ namespace GuaranteeManager
         public string ActiveDisplay => Active.ToString("N0", CultureInfo.InvariantCulture);
         public string ExpiringDisplay => ExpiringSoon.ToString("N0", CultureInfo.InvariantCulture);
         public string ExpiredDisplay => Expired.ToString("N0", CultureInfo.InvariantCulture);
-        public string PortfolioStatusLabel => Count == 0 ? "لا ضمانات بعد" : Expired == Count ? "محفظة منتهية" : ExpiringSoon > 0 ? "تحتاج متابعة" : "محفظة نشطة";
-        public Brush PortfolioStatusBrush => Expired == Count
-            ? (Count == 0 ? WorkspaceSurfaceChrome.BrushFrom("#64748B") : WorkspaceSurfaceChrome.BrushFrom("#EF4444"))
+        public string PortfolioStatusLabel => Count == 0
+            ? "لا ضمانات بعد"
+            : Expired == Count
+                ? "كلها منتهية"
+                : Expired > 0
+                    ? $"منتهي: {Expired.ToString("N0", CultureInfo.InvariantCulture)}"
+                    : ExpiringSoon > 0
+                        ? $"قريب الانتهاء: {ExpiringSoon.ToString("N0", CultureInfo.InvariantCulture)}"
+                        : "محفظة نشطة";
+        public Brush PortfolioStatusBrush => Count == 0
+            ? WorkspaceSurfaceChrome.BrushFrom("#64748B")
+            : Expired > 0
+                ? WorkspaceSurfaceChrome.BrushFrom("#EF4444")
             : ExpiringSoon > 0
                 ? WorkspaceSurfaceChrome.BrushFrom("#E09408")
                 : WorkspaceSurfaceChrome.BrushFrom("#16A34A");
-        public Brush PortfolioStatusBackground => Expired == Count
-            ? (Count == 0 ? WorkspaceSurfaceChrome.BrushFrom("#F8FAFC") : WorkspaceSurfaceChrome.BrushFrom("#FFF3F3"))
+        public Brush PortfolioStatusBackground => Count == 0
+            ? WorkspaceSurfaceChrome.BrushFrom("#F8FAFC")
+            : Expired > 0
+                ? WorkspaceSurfaceChrome.BrushFrom("#FFF3F3")
             : ExpiringSoon > 0
                 ? WorkspaceSurfaceChrome.BrushFrom("#FFF9EC")
                 : WorkspaceSurfaceChrome.BrushFrom("#F2FBF4");
-        public Brush PortfolioStatusBorder => Expired == Count
-            ? (Count == 0 ? WorkspaceSurfaceChrome.BrushFrom("#E2E8F0") : WorkspaceSurfaceChrome.BrushFrom("#F7C5C5"))
+        public Brush PortfolioStatusBorder => Count == 0
+            ? WorkspaceSurfaceChrome.BrushFrom("#E2E8F0")
+            : Expired > 0
+                ? WorkspaceSurfaceChrome.BrushFrom("#F7C5C5")
             : ExpiringSoon > 0
                 ? WorkspaceSurfaceChrome.BrushFrom("#F6DE99")
                 : WorkspaceSurfaceChrome.BrushFrom("#C9EFCF");

@@ -351,14 +351,14 @@ namespace GuaranteeManager
                 Margin = new Thickness(9, 0, 9, 0),
                 FlowDirection = FlowDirection.LeftToRight
             };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.4, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.15, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.0, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.2, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.0, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.35, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.9, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.85, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.85, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.75, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.95, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.75, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.45, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.35, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.45, GridUnitType.Star) });
             return grid;
         }
 
@@ -424,24 +424,35 @@ namespace GuaranteeManager
             row.Children.Add(BuildCell(item.AmountDisplay, 5, "TableCellCenter"));
             row.Children.Add(BuildCell(item.TopSupplier, 6, "TableCellRight"));
 
-            var bankCell = new StackPanel
+            var bankCell = new Grid
             {
-                Orientation = Orientation.Horizontal,
-                FlowDirection = FlowDirection.RightToLeft,
-                VerticalAlignment = VerticalAlignment.Center
+                FlowDirection = FlowDirection.LeftToRight,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
-            bankCell.Children.Add(new Image
+            bankCell.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            bankCell.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var bankName = new TextBlock
+            {
+                Text = item.Bank,
+                Style = WorkspaceSurfaceChrome.Style("TableCellRight"),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                TextAlignment = TextAlignment.Right
+            };
+            Grid.SetColumn(bankName, 0);
+            bankCell.Children.Add(bankName);
+
+            var logo = new Image
             {
                 Source = item.Logo,
                 Width = 18,
                 Height = 18,
-                Margin = new Thickness(0, 0, 8, 0)
-            });
-            bankCell.Children.Add(new TextBlock
-            {
-                Text = item.Bank,
-                Style = WorkspaceSurfaceChrome.Style("TableCellRight")
-            });
+                Margin = new Thickness(8, 0, 0, 0)
+            };
+            Grid.SetColumn(logo, 1);
+            bankCell.Children.Add(logo);
+
             Grid.SetColumn(bankCell, 7);
             row.Children.Add(bankCell);
 
