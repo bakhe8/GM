@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows.Media;
@@ -29,8 +30,9 @@ namespace GuaranteeManager
             IEnumerable<SettingPathItem> query = allItems;
             query = categoryFilter switch
             {
-                "بيانات" => query.Where(item => item.Category == "بيانات"),
-                "سير العمل" => query.Where(item => item.Category == "سير العمل"),
+                SettingsPathFilters.Data => query.Where(item => item.Category == SettingsPathFilters.Data),
+                SettingsPathFilters.Workflow => query.Where(item => item.Category == SettingsPathFilters.Workflow),
+                SettingsPathFilters.Attention => query.Where(item => !item.IsReady),
                 _ => query
             };
 
@@ -44,11 +46,22 @@ namespace GuaranteeManager
 
             return new SettingsWorkspaceFilterResult(
                 query.ToList(),
-                new SettingsWorkspaceMetrics(
-                    File.Exists(AppPaths.DatabasePath) ? "موجودة" : "غير موجودة",
-                    Directory.Exists(AppPaths.AttachmentsFolder) ? "جاهزة" : "تحتاج إنشاء",
-                    Directory.Exists(AppPaths.WorkflowLettersFolder) ? "جاهزة" : "تحتاج إنشاء",
-                    Directory.Exists(AppPaths.WorkflowResponsesFolder) ? "جاهزة" : "تحتاج إنشاء"));
+                BuildMetrics(allItems));
+        }
+
+        private static SettingsWorkspaceMetrics BuildMetrics(IReadOnlyList<SettingPathItem> allItems)
+        {
+            int dataTotal = allItems.Count(item => item.Category == SettingsPathFilters.Data);
+            int dataReady = allItems.Count(item => item.Category == SettingsPathFilters.Data && item.IsReady);
+            int workflowTotal = allItems.Count(item => item.Category == SettingsPathFilters.Workflow);
+            int workflowReady = allItems.Count(item => item.Category == SettingsPathFilters.Workflow && item.IsReady);
+            int attentionCount = allItems.Count(item => !item.IsReady);
+
+            return new SettingsWorkspaceMetrics(
+                allItems.Count.ToString("N0", CultureInfo.InvariantCulture),
+                $"{dataReady.ToString("N0", CultureInfo.InvariantCulture)}/{dataTotal.ToString("N0", CultureInfo.InvariantCulture)}",
+                $"{workflowReady.ToString("N0", CultureInfo.InvariantCulture)}/{workflowTotal.ToString("N0", CultureInfo.InvariantCulture)}",
+                attentionCount.ToString("N0", CultureInfo.InvariantCulture));
         }
 
         public SettingsWorkspaceDetailState BuildDetailState(SettingPathItem? selectedItem)
@@ -85,10 +98,10 @@ namespace GuaranteeManager
     }
 
     public sealed record SettingsWorkspaceMetrics(
-        string Database,
-        string Attachments,
-        string Letters,
-        string Responses);
+        string Total,
+        string Data,
+        string Workflow,
+        string Attention);
 
     public sealed record SettingsWorkspaceFilterResult(
         IReadOnlyList<SettingPathItem> Items,
@@ -115,5 +128,24 @@ namespace GuaranteeManager
         public Brush StateBorder => WorkspaceSurfaceChrome.BrushFrom(IsReady ? "#C9EFCF" : "#F7C5C5");
         public Brush CategoryBrush => WorkspaceSurfaceChrome.BrushFrom(Category == "بيانات" ? "#2563EB" : "#E09408");
         public string ActionLabel => IsReady ? "يمكن فتح المسار أو نسخه مباشرة." : "راجع وجود المجلد أو أنشئه قبل المتابعة.";
+    }
+
+    public static class SettingsPathFilters
+    {
+        public const string All = "كل المسارات";
+        public const string Data = "بيانات";
+        public const string Workflow = "سير العمل";
+        public const string Attention = "تحتاج مراجعة";
+
+        public static string Normalize(string? filter)
+        {
+            return filter switch
+            {
+                Data => Data,
+                Workflow => Workflow,
+                Attention => Attention,
+                _ => All
+            };
+        }
     }
 }

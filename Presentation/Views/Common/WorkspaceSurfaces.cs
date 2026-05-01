@@ -123,7 +123,10 @@ namespace GuaranteeManager
             return root;
         }
 
-        public static Border BuildReferenceDetailPanel(UIElement scrollContent, UIElement? quickActions = null)
+        public static Border BuildReferenceDetailPanel(
+            UIElement scrollContent,
+            UIElement? quickActions = null,
+            double quickActionsHeight = 90)
         {
             var border = new Border
             {
@@ -135,7 +138,10 @@ namespace GuaranteeManager
 
             var grid = new Grid();
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            grid.RowDefinitions.Add(new RowDefinition { Height = quickActions == null ? new GridLength(0) : new GridLength(90) });
+            grid.RowDefinitions.Add(new RowDefinition
+            {
+                Height = quickActions == null ? new GridLength(0) : new GridLength(quickActionsHeight)
+            });
 
             var scroll = new ScrollViewer
             {
