@@ -242,8 +242,8 @@ namespace GuaranteeManager
             _detailStatusBadgeBorder.HorizontalAlignment = HorizontalAlignment.Left;
             _detailStatusBadgeBorder.Margin = new Thickness(0, 0, 0, 12);
             _detailStatusBadgeBorder.Child = _detailStatusBadge;
-            _detailAmountCaption.HorizontalAlignment = HorizontalAlignment.Right;
-            _detailAmountCaption.FlowDirection = FlowDirection.RightToLeft;
+            _detailAmountCaption.HorizontalAlignment = HorizontalAlignment.Left;
+            _detailAmountCaption.TextAlignment = TextAlignment.Right;
 
             return new StackPanel
             {

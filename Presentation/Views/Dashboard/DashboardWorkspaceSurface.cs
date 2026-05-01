@@ -419,8 +419,8 @@ namespace GuaranteeManager
             _detailStatusBadgeBorder.HorizontalAlignment = HorizontalAlignment.Left;
             _detailStatusBadgeBorder.Margin = new Thickness(0, 0, 0, 12);
             _detailStatusBadgeBorder.Child = _detailStatusBadge;
-            _detailAmountCaption.HorizontalAlignment = HorizontalAlignment.Right;
-            _detailAmountCaption.FlowDirection = FlowDirection.RightToLeft;
+            _detailAmountCaption.HorizontalAlignment = HorizontalAlignment.Left;
+            _detailAmountCaption.TextAlignment = TextAlignment.Right;
 
             _detailExpiryLine = WorkspaceSurfaceChrome.DetailFactLine(_detailExpiryLabel, _detailExpiry, "Icon.History");
 
@@ -1142,8 +1142,7 @@ namespace GuaranteeManager
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                 Margin = new Thickness(0, 12, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Left,
-                TextAlignment = TextAlignment.Right,
-                FlowDirection = FlowDirection.LeftToRight
+                TextAlignment = TextAlignment.Right
             };
         }
 
