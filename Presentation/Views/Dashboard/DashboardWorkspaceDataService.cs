@@ -277,7 +277,7 @@ namespace GuaranteeManager
                     "توصيات تشغيلية",
                     $"يوجد {expiredCount.ToString("N0", CultureInfo.InvariantCulture)} ضمان منتهي يحتاج قرارًا.",
                     "المنتهية لا تقبل تمديدًا أو تسييلًا؛ الإجراء المتاح هو الإفراج/إعادة الضمان وتوثيق الرد.",
-                    "عرض المنتهية",
+                    "عرض الضمانات المنتهية",
                     DashboardGuidanceActionKind.FilterExpiredFollowUps,
                     null);
             }
@@ -501,7 +501,7 @@ namespace GuaranteeManager
                         DashboardScopeFilters.ExpiryFollowUps,
                         DashboardExpiryFollowUpFilters.ExpiringSoon),
                     new DashboardMetricCard(
-                        "منتهية",
+                        "ضمانات منتهية",
                         expiredCount.ToString("N0", CultureInfo.InvariantCulture),
                         "#EF4444",
                         DashboardScopeFilters.ExpiryFollowUps,
@@ -532,7 +532,7 @@ namespace GuaranteeManager
                     DashboardScopeFilters.ExpiryFollowUps,
                     DashboardExpiryFollowUpFilters.ExpiringSoon),
                 new DashboardMetricCard(
-                    "منتهية",
+                    "ضمانات منتهية",
                     expiredFollowUpCount.ToString("N0", CultureInfo.InvariantCulture),
                     "#EF4444",
                     DashboardScopeFilters.ExpiryFollowUps,

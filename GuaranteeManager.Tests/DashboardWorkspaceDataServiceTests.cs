@@ -82,7 +82,7 @@ namespace GuaranteeManager.Tests
                     && card.ExpiryFilter == DashboardExpiryFollowUpFilters.ExpiringSoon);
             Assert.Contains(
                 result.Metrics.Cards,
-                card => card.Label == "منتهية"
+                card => card.Label == "ضمانات منتهية"
                     && card.ScopeFilter == DashboardScopeFilters.ExpiryFollowUps
                     && card.ExpiryFilter == DashboardExpiryFollowUpFilters.Expired);
         }

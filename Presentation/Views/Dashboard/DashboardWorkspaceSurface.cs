@@ -403,16 +403,23 @@ namespace GuaranteeManager
 
         private UIElement BuildDashboardTitleRow()
         {
-            var row = new StackPanel
+            var row = new Grid
             {
-                Orientation = Orientation.Horizontal,
                 FlowDirection = FlowDirection.RightToLeft,
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 0, 0)
             };
-            row.Children.Add(CreateIcon("Icon.User", "#94A3B8", 14));
-            _detailTitle.Margin = new Thickness(8, 0, 0, 0);
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            UIElement icon = CreateIcon("Icon.User", "#94A3B8", 14);
+            Grid.SetColumn(icon, 0);
+            row.Children.Add(icon);
+
+            _detailTitle.HorizontalAlignment = HorizontalAlignment.Stretch;
+            _detailTitle.Margin = new Thickness(0, 0, 7, 0);
+            Grid.SetColumn(_detailTitle, 1);
             row.Children.Add(_detailTitle);
             return row;
         }
