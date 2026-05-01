@@ -301,29 +301,70 @@ namespace GuaranteeManager
 
         public static Border MetricCard(string label, string value, string accent)
         {
-            var border = Card(new Thickness(14, 10, 14, 10));
+            TextBlock valueBlock = MetricValueText(value.Length > 16 ? 24 : 32);
+            valueBlock.Text = value;
+            return MetricCard(label, valueBlock, accent);
+        }
+
+        public static Border MetricCard(string label, TextBlock value, string accent)
+        {
+            return MetricCard(MetricLabelText(label, accent), value);
+        }
+
+        public static Border MetricCard(TextBlock label, TextBlock value)
+        {
+            ConfigureMetricLabel(label);
+            ConfigureMetricValue(value);
+            var border = Card(new Thickness(16, 12, 16, 12));
             border.Margin = new Thickness(0);
+            border.MinHeight = 84;
+
             var stack = new StackPanel();
-            stack.Children.Add(new TextBlock
-            {
-                Text = label,
-                FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = BrushFrom(accent),
-                TextAlignment = TextAlignment.Right
-            });
-            stack.Children.Add(new TextBlock
-            {
-                Text = value,
-                FontSize = value.Length > 14 ? 18 : 27,
-                FontWeight = FontWeights.Bold,
-                Foreground = BrushFrom("#0F172A"),
-                Margin = new Thickness(0, 4, 0, 0),
-                TextAlignment = TextAlignment.Right,
-                TextTrimming = TextTrimming.CharacterEllipsis
-            });
+            stack.Children.Add(label);
+            stack.Children.Add(value);
             border.Child = stack;
             return border;
+        }
+
+        public static TextBlock MetricValueText(double fontSize = 32)
+        {
+            var textBlock = new TextBlock
+            {
+                Text = "0",
+                FontSize = fontSize
+            };
+            ConfigureMetricValue(textBlock);
+            return textBlock;
+        }
+
+        public static TextBlock MetricLabelText(string label, string accent)
+        {
+            var textBlock = new TextBlock
+            {
+                Text = label,
+                Foreground = BrushFrom(accent)
+            };
+            ConfigureMetricLabel(textBlock);
+            return textBlock;
+        }
+
+        public static void ConfigureMetricLabel(TextBlock label)
+        {
+            label.FontSize = 13;
+            label.FontWeight = FontWeights.SemiBold;
+            label.HorizontalAlignment = HorizontalAlignment.Center;
+            label.TextAlignment = TextAlignment.Center;
+            label.TextTrimming = TextTrimming.CharacterEllipsis;
+        }
+
+        public static void ConfigureMetricValue(TextBlock value)
+        {
+            value.FontWeight = FontWeights.Bold;
+            value.Foreground = BrushFrom("#0F172A");
+            value.Margin = new Thickness(0, 2, 0, 0);
+            value.HorizontalAlignment = HorizontalAlignment.Center;
+            value.TextAlignment = TextAlignment.Center;
+            value.TextTrimming = TextTrimming.CharacterEllipsis;
         }
 
         public static void ApplyMetricCardSpacing(Panel metrics)

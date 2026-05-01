@@ -225,14 +225,7 @@ namespace GuaranteeManager
 
         private Border BuildMetricCard(TextBlock label, TextBlock value)
         {
-            var card = WorkspaceSurfaceChrome.Card(new Thickness(14, 10, 14, 10));
-            card.Margin = new Thickness(0);
-
-            var stack = new StackPanel();
-            stack.Children.Add(label);
-            stack.Children.Add(value);
-            card.Child = stack;
-            return card;
+            return WorkspaceSurfaceChrome.MetricCard(label, value);
         }
 
         private System.Windows.Controls.Primitives.UniformGrid BuildGuidanceStrip()
@@ -948,26 +941,12 @@ namespace GuaranteeManager
 
         private static TextBlock BuildMetricValue(double fontSize = 27)
         {
-            return new TextBlock
-            {
-                FontSize = fontSize,
-                FontWeight = FontWeights.Bold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
-                Margin = new Thickness(0, 4, 0, 0),
-                TextAlignment = TextAlignment.Right,
-                TextTrimming = TextTrimming.CharacterEllipsis
-            };
+            return WorkspaceSurfaceChrome.MetricValueText(fontSize < 30 ? 30 : fontSize);
         }
 
         private static TextBlock BuildMetricLabel(string accentHex)
         {
-            return new TextBlock
-            {
-                FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom(accentHex),
-                TextAlignment = TextAlignment.Right
-            };
+            return WorkspaceSurfaceChrome.MetricLabelText(string.Empty, accentHex);
         }
 
         private static TextBlock BuildInsightTitle()
@@ -1024,6 +1003,7 @@ namespace GuaranteeManager
             labelBlock.Text = card.Label;
             labelBlock.Foreground = WorkspaceSurfaceChrome.BrushFrom(card.AccentHex);
             valueBlock.Text = card.Value;
+            valueBlock.FontSize = card.Value.Length > 10 ? 22 : 32;
         }
 
         private void ApplyDetailLabels(DashboardDetailProfile detailProfile)

@@ -136,30 +136,12 @@ namespace GuaranteeManager
             {
                 Columns = 4
             };
-            metrics.Children.Add(BuildMetricCard("تقارير المحفظة", _portfolioValue, "#2563EB"));
-            metrics.Children.Add(BuildMetricCard("تقارير الطلبات", _requestsValue, "#E09408"));
-            metrics.Children.Add(BuildMetricCard("تقارير تشغيلية", _operationalValue, "#16A34A"));
-            metrics.Children.Add(BuildMetricCard("إجمالي التقارير", _totalValue, "#0F172A"));
+            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("تقارير المحفظة", _portfolioValue, "#2563EB"));
+            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("تقارير الطلبات", _requestsValue, "#E09408"));
+            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("تقارير تشغيلية", _operationalValue, "#16A34A"));
+            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("إجمالي التقارير", _totalValue, "#0F172A"));
             WorkspaceSurfaceChrome.ApplyMetricCardSpacing(metrics);
             return metrics;
-        }
-
-        private Border BuildMetricCard(string label, TextBlock value, string accent)
-        {
-            var card = WorkspaceSurfaceChrome.Card(new Thickness(14, 10, 14, 10));
-            card.Margin = new Thickness(0);
-            var stack = new StackPanel();
-            stack.Children.Add(new TextBlock
-            {
-                Text = label,
-                FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom(accent),
-                TextAlignment = TextAlignment.Right
-            });
-            stack.Children.Add(value);
-            card.Child = stack;
-            return card;
         }
 
         private UIElement BuildTableSection()
@@ -451,15 +433,7 @@ namespace GuaranteeManager
 
         private static TextBlock BuildMetricValue()
         {
-            return new TextBlock
-            {
-                Text = "0",
-                FontSize = 28,
-                FontWeight = FontWeights.Bold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
-                Margin = new Thickness(0, 4, 0, 0),
-                TextAlignment = TextAlignment.Right
-            };
+            return WorkspaceSurfaceChrome.MetricValueText();
         }
 
         private static TextBlock BuildDetailValue(double fontSize, FontWeight fontWeight)

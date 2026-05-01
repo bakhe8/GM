@@ -125,30 +125,11 @@ namespace GuaranteeManager
             {
                 Columns = 3
             };
-            metrics.Children.Add(BuildMetricCard("عدد البنوك", _bankCountValue, "#2563EB"));
-            metrics.Children.Add(BuildMetricCard("إجمالي الضمانات", _guaranteeCountValue, "#0F172A"));
-            metrics.Children.Add(BuildMetricCard("إجمالي القيمة", _amountValue, "#E09408"));
+            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("عدد البنوك", _bankCountValue, "#2563EB"));
+            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("إجمالي الضمانات", _guaranteeCountValue, "#0F172A"));
+            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("إجمالي القيمة", _amountValue, "#E09408"));
             WorkspaceSurfaceChrome.ApplyMetricCardSpacing(metrics);
             return metrics;
-        }
-
-        private Border BuildMetricCard(string label, TextBlock value, string accent)
-        {
-            var card = WorkspaceSurfaceChrome.Card(new Thickness(14, 10, 14, 10));
-            card.Margin = new Thickness(0);
-
-            var stack = new StackPanel();
-            stack.Children.Add(new TextBlock
-            {
-                Text = label,
-                FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom(accent),
-                TextAlignment = TextAlignment.Right
-            });
-            stack.Children.Add(value);
-            card.Child = stack;
-            return card;
         }
 
         private UIElement BuildTableSection()
@@ -558,6 +539,7 @@ namespace GuaranteeManager
             _bankCountValue.Text = metrics.BankCount;
             _guaranteeCountValue.Text = metrics.GuaranteeCount;
             _amountValue.Text = metrics.Amount;
+            _amountValue.FontSize = metrics.Amount.Length > 18 ? 22 : 32;
         }
 
         private void ApplyDetailState(BanksWorkspaceDetailState state)
@@ -584,15 +566,7 @@ namespace GuaranteeManager
 
         private static TextBlock BuildMetricValue()
         {
-            return new TextBlock
-            {
-                Text = "0",
-                FontSize = 28,
-                FontWeight = FontWeights.Bold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
-                Margin = new Thickness(0, 4, 0, 0),
-                TextAlignment = TextAlignment.Right
-            };
+            return WorkspaceSurfaceChrome.MetricValueText();
         }
 
         private static TextBlock BuildAmountHeadline()

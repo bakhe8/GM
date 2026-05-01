@@ -137,81 +137,36 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Style="{StaticResource Card}" Padding="16,12">
-                        <Grid FlowDirection="LeftToRight">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="40" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" FlowDirection="RightToLeft" HorizontalAlignment="Center">
-                                <TextBlock Text="طلبات معلقة" Style="{StaticResource KpiTitle}" Foreground="{StaticResource Brush.Orange}" />
-                                <TextBlock Text="{Binding PendingRequestCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
-                                <TextBlock Text="{Binding PendingRequestMeta}" Style="{StaticResource KpiMeta}" />
-                            </StackPanel>
-                            <Border Grid.Column="1" Width="36" Height="36" CornerRadius="18" BorderBrush="{StaticResource Brush.Orange}" BorderThickness="1.5">
-                                <Viewbox Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <Path Data="{StaticResource Icon.History}" Stroke="{StaticResource Brush.Orange}" StrokeThickness="2.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                </Viewbox>
-                            </Border>
-                        </Grid>
+                    <Border Grid.Column="0" Style="{StaticResource Card}" Padding="16,12" MinHeight="84">
+                        <StackPanel FlowDirection="RightToLeft" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="طلبات معلقة" Style="{StaticResource KpiTitle}" Foreground="{StaticResource Brush.Orange}" />
+                            <TextBlock Text="{Binding PendingRequestCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
+                            <TextBlock Text="{Binding PendingRequestMeta}" Style="{StaticResource KpiMeta}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
                     </Border>
 
-                    <Border Grid.Column="2" Style="{StaticResource Card}" Padding="16,12">
-                        <Grid FlowDirection="LeftToRight">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="40" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" FlowDirection="RightToLeft" HorizontalAlignment="Center">
-                                <TextBlock Text="تحتاج متابعة" Style="{StaticResource KpiTitle}" Foreground="#C2410C" />
-                                <TextBlock Text="{Binding ExpiredFollowUpCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
-                                <TextBlock Text="{Binding ExpiredFollowUpMeta}" Style="{StaticResource KpiMeta}" />
-                            </StackPanel>
-                            <Border Grid.Column="1" Width="36" Height="36" CornerRadius="18" BorderBrush="#FDBA74" BorderThickness="1.5">
-                                <Viewbox Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <Path Data="{StaticResource Icon.Notifications}" Stroke="#EA580C" StrokeThickness="2.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                </Viewbox>
-                            </Border>
-                        </Grid>
+                    <Border Grid.Column="2" Style="{StaticResource Card}" Padding="16,12" MinHeight="84">
+                        <StackPanel FlowDirection="RightToLeft" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="تحتاج متابعة" Style="{StaticResource KpiTitle}" Foreground="#C2410C" />
+                            <TextBlock Text="{Binding ExpiredFollowUpCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
+                            <TextBlock Text="{Binding ExpiredFollowUpMeta}" Style="{StaticResource KpiMeta}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
                     </Border>
 
-                    <Border Grid.Column="4" Style="{StaticResource Card}" Padding="16,12">
-                        <Grid FlowDirection="LeftToRight">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="40" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" FlowDirection="RightToLeft" HorizontalAlignment="Center">
-                                <TextBlock Text="قريب الانتهاء" Style="{StaticResource KpiTitle}" Foreground="{StaticResource Brush.Orange}" />
-                                <TextBlock Text="{Binding ExpiringSoonCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
-                                <TextBlock Text="{Binding ExpiringSoonMeta}" Style="{StaticResource KpiMeta}" />
-                                <TextBlock Text="خلال 30 يوم" Style="{StaticResource KpiMeta}" Foreground="#F59E0B" FontWeight="SemiBold" />
-                            </StackPanel>
-                            <Border Grid.Column="1" Width="36" Height="36" CornerRadius="18" BorderBrush="{StaticResource Brush.Orange}" BorderThickness="1.5">
-                                <Viewbox Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <Path Data="{StaticResource Icon.Calendar}" Stroke="{StaticResource Brush.Orange}" StrokeThickness="2.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                </Viewbox>
-                            </Border>
-                        </Grid>
+                    <Border Grid.Column="4" Style="{StaticResource Card}" Padding="16,12" MinHeight="84">
+                        <StackPanel FlowDirection="RightToLeft" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="قريب الانتهاء" Style="{StaticResource KpiTitle}" Foreground="{StaticResource Brush.Orange}" />
+                            <TextBlock Text="{Binding ExpiringSoonCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
+                            <TextBlock Text="{Binding ExpiringSoonMeta}" Style="{StaticResource KpiMeta}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
                     </Border>
 
-                    <Border Grid.Column="6" Style="{StaticResource Card}" Padding="16,12">
-                        <Grid FlowDirection="LeftToRight">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="40" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" FlowDirection="RightToLeft" HorizontalAlignment="Center">
-                                <TextBlock Text="نشط" Style="{StaticResource KpiTitle}" Foreground="{StaticResource Brush.Green}" />
-                                <TextBlock Text="{Binding ActiveCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
-                                <TextBlock Text="{Binding ActiveMeta}" Style="{StaticResource KpiMeta}" />
-                            </StackPanel>
-                            <Border Grid.Column="1" Width="36" Height="36" CornerRadius="18" BorderBrush="{StaticResource Brush.Green}" BorderThickness="1.5">
-                                <Viewbox Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <Path Data="{StaticResource Icon.Check}" Stroke="{StaticResource Brush.Green}" StrokeThickness="2.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                </Viewbox>
-                            </Border>
-                        </Grid>
+                    <Border Grid.Column="6" Style="{StaticResource Card}" Padding="16,12" MinHeight="84">
+                        <StackPanel FlowDirection="RightToLeft" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="نشط" Style="{StaticResource KpiTitle}" Foreground="{StaticResource Brush.Green}" />
+                            <TextBlock Text="{Binding ActiveCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
+                            <TextBlock Text="{Binding ActiveMeta}" Style="{StaticResource KpiMeta}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
                     </Border>
                 </Grid>
 
