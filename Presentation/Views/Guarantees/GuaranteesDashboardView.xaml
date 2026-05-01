@@ -330,24 +330,24 @@
                                         <TextBlock Grid.Column="3" Text="{Binding IssueDate}" Style="{StaticResource TableCellCenter}" />
                                         <TextBlock Grid.Column="4" Text="{Binding Amount}" Style="{StaticResource TableCellCenter}" />
                                         <Grid Grid.Column="5"
-                                              FlowDirection="LeftToRight"
+                                              FlowDirection="RightToLeft"
                                               HorizontalAlignment="Stretch"
-                                              VerticalAlignment="Center">
+                                              VerticalAlignment="Center"
+                                              ClipToBounds="True">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0"
+                                            <Image Grid.Column="0"
+                                                   Source="{Binding BankLogo}"
+                                                   Width="16"
+                                                   Height="16"
+                                                   RenderOptions.BitmapScalingMode="HighQuality" />
+                                            <TextBlock Grid.Column="1"
                                                        Text="{Binding Bank}"
                                                        Style="{StaticResource TableCellRight}"
                                                        HorizontalAlignment="Stretch"
                                                        TextAlignment="Right" />
-                                            <Image Grid.Column="1"
-                                                   Source="{Binding BankLogo}"
-                                                   Width="16"
-                                                   Height="16"
-                                                   Margin="8,0,0,0"
-                                                   RenderOptions.BitmapScalingMode="HighQuality" />
                                         </Grid>
                                         <TextBlock Grid.Column="6" Text="{Binding Supplier}" Style="{StaticResource TableCellRight}" />
                                         <TextBlock Grid.Column="7" Text="{Binding GuaranteeNo}" Style="{StaticResource TableCellRight}" />

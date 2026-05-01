@@ -424,37 +424,7 @@ namespace GuaranteeManager
             row.Children.Add(BuildCell(item.AmountDisplay, 5, "TableCellCenter"));
             row.Children.Add(BuildCell(item.TopSupplier, 6, "TableCellRight"));
 
-            var bankCell = new Grid
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Stretch
-            };
-            bankCell.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            bankCell.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            var bankName = new TextBlock
-            {
-                Text = item.Bank,
-                Style = WorkspaceSurfaceChrome.Style("TableCellRight"),
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                TextAlignment = TextAlignment.Right
-            };
-            Grid.SetColumn(bankName, 0);
-            bankCell.Children.Add(bankName);
-
-            var logo = new Image
-            {
-                Source = item.Logo,
-                Width = 18,
-                Height = 18,
-                Margin = new Thickness(8, 0, 0, 0)
-            };
-            Grid.SetColumn(logo, 1);
-            bankCell.Children.Add(logo);
-
-            Grid.SetColumn(bankCell, 7);
-            row.Children.Add(bankCell);
+            row.Children.Add(WorkspaceSurfaceChrome.BankTableCell(item.Bank, item.Logo, 7, logoSize: 18));
 
             return row;
         }

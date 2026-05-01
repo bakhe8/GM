@@ -220,6 +220,44 @@ namespace GuaranteeManager
             return header;
         }
 
+        public static Grid BankTableCell(string bankName, ImageSource? logoSource, int column, double logoSize = 16)
+        {
+            var cell = new Grid
+            {
+                FlowDirection = FlowDirection.RightToLeft,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Center,
+                ClipToBounds = true
+            };
+            cell.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            cell.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var logo = new Image
+            {
+                Source = logoSource,
+                Width = logoSize,
+                Height = logoSize,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center
+            };
+            RenderOptions.SetBitmapScalingMode(logo, BitmapScalingMode.HighQuality);
+            Grid.SetColumn(logo, 0);
+            cell.Children.Add(logo);
+
+            var name = new TextBlock
+            {
+                Text = bankName,
+                Style = Style("TableCellRight"),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                TextAlignment = TextAlignment.Right
+            };
+            Grid.SetColumn(name, 1);
+            cell.Children.Add(name);
+
+            Grid.SetColumn(cell, column);
+            return cell;
+        }
+
         public static Button ToolbarButton(string text, bool primary = false, string? automationId = null)
         {
             Button button = new Button

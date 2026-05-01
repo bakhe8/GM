@@ -636,37 +636,7 @@ namespace GuaranteeManager
 
         private static UIElement BuildBankCell(DashboardWorkItem item, int column)
         {
-            var bankCell = new Grid
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            bankCell.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            bankCell.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            var bankName = new TextBlock
-            {
-                Text = item.Bank,
-                Style = WorkspaceSurfaceChrome.Style("TableCellRight"),
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                TextAlignment = TextAlignment.Right
-            };
-            Grid.SetColumn(bankName, 0);
-            bankCell.Children.Add(bankName);
-
-            var logo = new Image
-            {
-                Source = item.BankLogo,
-                Width = 16,
-                Height = 16,
-                Margin = new Thickness(8, 0, 0, 0)
-            };
-            Grid.SetColumn(logo, 1);
-            bankCell.Children.Add(logo);
-
-            Grid.SetColumn(bankCell, column);
-            return bankCell;
+            return WorkspaceSurfaceChrome.BankTableCell(item.Bank, item.BankLogo, column);
         }
 
         private void OpenSelectedPrimaryAction()
