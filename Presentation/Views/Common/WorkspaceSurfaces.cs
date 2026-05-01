@@ -220,17 +220,23 @@ namespace GuaranteeManager
             return header;
         }
 
-        public static Grid BankTableCell(string bankName, ImageSource? logoSource, int column, double logoSize = 16)
+        public static Grid BankTableCell(string bankName, ImageSource? logoSource, int column, double logoSize = 16, double textMaxWidth = 132)
         {
             var cell = new Grid
             {
-                FlowDirection = FlowDirection.RightToLeft,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Center,
                 ClipToBounds = true
             };
-            cell.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            cell.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var content = new Grid
+            {
+                FlowDirection = FlowDirection.RightToLeft,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            content.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            content.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
             var logo = new Image
             {
@@ -242,17 +248,20 @@ namespace GuaranteeManager
             };
             RenderOptions.SetBitmapScalingMode(logo, BitmapScalingMode.HighQuality);
             Grid.SetColumn(logo, 0);
-            cell.Children.Add(logo);
+            content.Children.Add(logo);
 
             var name = new TextBlock
             {
                 Text = bankName,
                 Style = Style("TableCellRight"),
-                HorizontalAlignment = HorizontalAlignment.Stretch,
+                MaxWidth = textMaxWidth,
+                HorizontalAlignment = HorizontalAlignment.Right,
                 TextAlignment = TextAlignment.Right
             };
             Grid.SetColumn(name, 1);
-            cell.Children.Add(name);
+            content.Children.Add(name);
+
+            cell.Children.Add(content);
 
             Grid.SetColumn(cell, column);
             return cell;

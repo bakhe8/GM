@@ -424,7 +424,7 @@ namespace GuaranteeManager
             row.Children.Add(BuildCell(item.AmountDisplay, 5, "TableCellCenter"));
             row.Children.Add(BuildCell(item.TopSupplier, 6, "TableCellRight"));
 
-            row.Children.Add(WorkspaceSurfaceChrome.BankTableCell(item.Bank, item.Logo, 7, logoSize: 18));
+            row.Children.Add(WorkspaceSurfaceChrome.BankTableCell(item.Bank, item.Logo, 7, logoSize: 18, textMaxWidth: 178));
 
             return row;
         }

@@ -643,7 +643,7 @@ namespace GuaranteeManager
 
         private static UIElement BuildBankCell(DashboardWorkItem item, int column)
         {
-            return WorkspaceSurfaceChrome.BankTableCell(item.Bank, item.BankLogo, column);
+            return WorkspaceSurfaceChrome.BankTableCell(item.Bank, item.BankLogo, column, textMaxWidth: 118);
         }
 
         private void OpenSelectedPrimaryAction()
