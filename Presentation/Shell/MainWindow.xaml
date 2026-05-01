@@ -62,9 +62,51 @@
                             Orientation="Horizontal"
                             VerticalAlignment="Center"
                             Margin="8,0,0,0">
-                    <Button Style="{StaticResource ChromeButton}" Click="CloseButton_Click" Content="X" />
-                    <Button Style="{StaticResource ChromeButton}" Click="MaximizeButton_Click" Content="□" automation:AutomationProperties.AutomationId="Shell.MaximizeButton" automation:AutomationProperties.Name="تكبير" />
-                    <Button Style="{StaticResource ChromeButton}" Click="MinimizeButton_Click" Content="-" automation:AutomationProperties.AutomationId="Shell.MinimizeButton" automation:AutomationProperties.Name="تصغير" />
+                    <Button Style="{StaticResource ChromeCloseButton}"
+                            Click="CloseButton_Click"
+                            automation:AutomationProperties.AutomationId="Shell.CloseButton"
+                            automation:AutomationProperties.Name="إغلاق">
+                        <Viewbox Width="10" Height="10">
+                            <Path Data="{StaticResource Icon.Close}"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  StrokeThickness="2"
+                                  StrokeStartLineCap="Square"
+                                  StrokeEndLineCap="Square" />
+                        </Viewbox>
+                    </Button>
+                    <Button Style="{StaticResource ChromeButton}"
+                            Click="MaximizeButton_Click"
+                            automation:AutomationProperties.AutomationId="Shell.MaximizeButton"
+                            automation:AutomationProperties.Name="تكبير أو استعادة">
+                        <Viewbox Width="10" Height="10">
+                            <Path Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  StrokeThickness="1.8"
+                                  StrokeLineJoin="Miter">
+                                <Path.Style>
+                                    <Style TargetType="Path">
+                                        <Setter Property="Data" Value="{StaticResource Icon.WindowMaximize}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized">
+                                                <Setter Property="Data" Value="{StaticResource Icon.WindowRestore}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Path.Style>
+                            </Path>
+                        </Viewbox>
+                    </Button>
+                    <Button Style="{StaticResource ChromeButton}"
+                            Click="MinimizeButton_Click"
+                            automation:AutomationProperties.AutomationId="Shell.MinimizeButton"
+                            automation:AutomationProperties.Name="تصغير">
+                        <Viewbox Width="10" Height="10">
+                            <Path Data="{StaticResource Icon.WindowMinimize}"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  StrokeThickness="1.8"
+                                  StrokeStartLineCap="Square"
+                                  StrokeEndLineCap="Square" />
+                        </Viewbox>
+                    </Button>
                 </StackPanel>
 
                 <Border Grid.Column="1"
@@ -130,10 +172,42 @@
                            Height="20"
                            Margin="9,0,0,0" />
                     <Border Width="1" Height="22" Background="#24466F" Margin="13,0,10,0" />
-                    <TextBlock Text="☰"
-                               Foreground="White"
-                               FontSize="17"
-                               VerticalAlignment="Center" />
+                    <Button x:Name="ShellMenuButton"
+                            Style="{StaticResource ChromeButton}"
+                            Width="30"
+                            Height="30"
+                            Click="ShellMenuButton_Click"
+                            ToolTip="قائمة التطبيق"
+                            automation:AutomationProperties.AutomationId="Shell.AppMenuButton"
+                            automation:AutomationProperties.Name="قائمة التطبيق">
+                        <Button.ContextMenu>
+                            <ContextMenu Width="170"
+                                         FlowDirection="RightToLeft">
+                                <MenuItem Header="اليوم"
+                                          Command="{Binding PlacementTarget.DataContext.ShowDashboardCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                <MenuItem Header="الضمانات"
+                                          Command="{Binding PlacementTarget.DataContext.ShowGuaranteesCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                <MenuItem Header="البنوك"
+                                          Command="{Binding PlacementTarget.DataContext.ShowBanksCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                <MenuItem Header="التقارير"
+                                          Command="{Binding PlacementTarget.DataContext.ShowReportsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                <MenuItem Header="الإعدادات"
+                                          Command="{Binding PlacementTarget.DataContext.ShowSettingsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                <Separator />
+                                <MenuItem Header="حول البرنامج"
+                                          Click="AboutMenuItem_Click" />
+                                <MenuItem Header="خروج"
+                                          Command="{Binding PlacementTarget.DataContext.ExitCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                        <Viewbox Width="16" Height="16">
+                            <Path Data="{StaticResource Icon.Menu}"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  StrokeThickness="2"
+                                  StrokeStartLineCap="Square"
+                                  StrokeEndLineCap="Square" />
+                        </Viewbox>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>

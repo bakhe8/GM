@@ -67,6 +67,12 @@
     <!-- Close / X -->
     <Geometry x:Key="Icon.Close">M18,6 L6,18 M6,6 L18,18</Geometry>
 
+    <!-- Window chrome -->
+    <Geometry x:Key="Icon.WindowMinimize">M6,12 H18</Geometry>
+    <Geometry x:Key="Icon.WindowMaximize">M6,6 H18 V18 H6 Z</Geometry>
+    <Geometry x:Key="Icon.WindowRestore">M8,8 H18 V18 H8 Z M6,16 V6 H16</Geometry>
+    <Geometry x:Key="Icon.Menu">M4,7 H20 M4,12 H20 M4,17 H20</Geometry>
+
     <!-- Document -->
     <Geometry x:Key="Icon.Document">M14,2 H6 A2,2 0 0,0 4,4 V20 A2,2 0 0,0 6,22 H18 A2,2 0 0,0 20,20 V8 L14,2 Z M14,2 V8 H20 M16,13 H8 M16,17 H8 M10,9 H8</Geometry>
 

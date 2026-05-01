@@ -82,6 +82,32 @@ namespace GuaranteeManager
             Close();
         }
 
+        private void ShellMenuButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button button || button.ContextMenu == null)
+            {
+                return;
+            }
+
+            button.ContextMenu.PlacementTarget = button;
+            button.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            var menuWidth = double.IsNaN(button.ContextMenu.Width) || button.ContextMenu.Width <= 0
+                ? button.ContextMenu.ActualWidth
+                : button.ContextMenu.Width;
+            button.ContextMenu.HorizontalOffset = button.ActualWidth - menuWidth;
+            button.ContextMenu.IsOpen = true;
+            e.Handled = true;
+        }
+
+        private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            AppMessageBox.Show(
+                $"إدارة الضمانات البنكية\n{AppReleaseInfo.VersionTag} | {AppReleaseInfo.RuntimeTag}",
+                "حول البرنامج",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+
         private void ToggleWindowState()
         {
             WindowState = WindowState == WindowState.Maximized
