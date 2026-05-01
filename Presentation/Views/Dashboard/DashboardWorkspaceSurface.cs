@@ -198,16 +198,20 @@ namespace GuaranteeManager
             var panel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                FlowDirection = FlowDirection.RightToLeft
+                FlowDirection = FlowDirection.LeftToRight
             };
 
             ConfigureScopeButton(_allWorkScopeButton, DashboardScopeFilters.AllWork);
             ConfigureScopeButton(_pendingRequestsScopeButton, DashboardScopeFilters.PendingRequests);
             ConfigureScopeButton(_expiryFollowUpsScopeButton, DashboardScopeFilters.ExpiryFollowUps);
 
-            panel.Children.Add(_allWorkScopeButton);
-            panel.Children.Add(_pendingRequestsScopeButton);
             panel.Children.Add(_expiryFollowUpsScopeButton);
+            panel.Children.Add(_pendingRequestsScopeButton);
+            panel.Children.Add(_allWorkScopeButton);
+            WorkspaceSurfaceChrome.ApplyToolbarGroupSpacing(
+                _expiryFollowUpsScopeButton,
+                _pendingRequestsScopeButton,
+                _allWorkScopeButton);
             UpdateScopeButtons();
             return panel;
         }
@@ -219,7 +223,7 @@ namespace GuaranteeManager
             button.Height = 36;
             button.MinWidth = 138;
             button.FontSize = 11;
-            button.Margin = new Thickness(0, 0, 8, 0);
+            button.FlowDirection = FlowDirection.RightToLeft;
             button.Click += (_, _) => SelectScopeFilter(scope);
             AutomationProperties.SetName(button, scope);
         }

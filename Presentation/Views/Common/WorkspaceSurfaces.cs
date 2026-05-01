@@ -386,6 +386,16 @@ namespace GuaranteeManager
             }
         }
 
+        public static void ApplyToolbarGroupSpacing(params FrameworkElement[] elements)
+        {
+            for (int index = 0; index < elements.Length; index++)
+            {
+                elements[index].Margin = index == elements.Length - 1
+                    ? new Thickness(0)
+                    : new Thickness(0, 0, 8, 0);
+            }
+        }
+
         public static Grid InfoLine(string label, TextBlock value)
         {
             return DetailFactLine(label, value, "Icon.Document");

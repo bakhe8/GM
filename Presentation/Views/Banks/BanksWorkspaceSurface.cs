@@ -121,16 +121,20 @@ namespace GuaranteeManager
             var panel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                FlowDirection = FlowDirection.RightToLeft
+                FlowDirection = FlowDirection.LeftToRight
             };
 
             ConfigureSortButton(_highestValueSortButton, BankSortFilters.HighestValue);
             ConfigureSortButton(_mostCountSortButton, BankSortFilters.MostCount);
             ConfigureSortButton(_mostActiveSortButton, BankSortFilters.MostActive);
 
-            panel.Children.Add(_highestValueSortButton);
-            panel.Children.Add(_mostCountSortButton);
             panel.Children.Add(_mostActiveSortButton);
+            panel.Children.Add(_mostCountSortButton);
+            panel.Children.Add(_highestValueSortButton);
+            WorkspaceSurfaceChrome.ApplyToolbarGroupSpacing(
+                _mostActiveSortButton,
+                _mostCountSortButton,
+                _highestValueSortButton);
             UpdateSortButtons();
             return panel;
         }
@@ -142,7 +146,7 @@ namespace GuaranteeManager
             button.Height = 36;
             button.MinWidth = 112;
             button.FontSize = 11;
-            button.Margin = new Thickness(0, 0, 8, 0);
+            button.FlowDirection = FlowDirection.RightToLeft;
             button.Click += (_, _) => SelectSortFilter(sortFilter);
             AutomationProperties.SetName(button, sortFilter);
         }
