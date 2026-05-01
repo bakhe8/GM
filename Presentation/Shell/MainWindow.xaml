@@ -109,55 +109,6 @@
                     </Button>
                 </StackPanel>
 
-                <Border Grid.Column="1"
-                        Width="450"
-                        Height="28"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Margin="14,0"
-                        Background="White"
-                        BorderBrush="#D8E1EE"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                    <Grid FlowDirection="RightToLeft" Margin="10,0,10,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="30" />
-                        </Grid.ColumnDefinitions>
-
-                        <TextBox x:Name="ShellGlobalSearchBox"
-                                 Grid.Column="0"
-                                 Style="{StaticResource SearchTextBox}"
-                                 Background="Transparent"
-                                 Text="{Binding GlobalSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                 KeyDown="ShellGlobalSearchBox_KeyDown"
-                                 ToolTip="بحث عام على مستوى البرنامج. أمثلة: الضمانات: ساب ، المتابعات: منتهي ، الإعدادات"
-                                 automation:AutomationProperties.AutomationId="Shell.GlobalSearchBox"
-                                 automation:AutomationProperties.Name="البحث الشامل" />
-                        <TextBlock Grid.Column="0"
-                                   Text="ابحث عامًّا أو اكتب: المتابعات: منتهي"
-                                   FontSize="11"
-                                   Foreground="#94A3B8"
-                                   VerticalAlignment="Center"
-                                   IsHitTestVisible="False"
-                                   Visibility="{Binding Text, ElementName=ShellGlobalSearchBox, Converter={StaticResource EmptyStringToVisibilityConverter}}" />
-                        <Button Grid.Column="1"
-                                Width="24"
-                                Height="24"
-                                Command="{Binding ExecuteGlobalSearchCommand}"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Cursor="Hand"
-                                ToolTip="تنفيذ البحث الشامل"
-                                automation:AutomationProperties.AutomationId="Shell.GlobalSearchButton"
-                                automation:AutomationProperties.Name="تنفيذ البحث الشامل">
-                            <Viewbox Width="14" Height="14">
-                                <Path Data="{StaticResource Icon.Search}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                            </Viewbox>
-                        </Button>
-                    </Grid>
-                </Border>
-
                 <StackPanel Grid.Column="2"
                             Orientation="Horizontal"
                             VerticalAlignment="Center"

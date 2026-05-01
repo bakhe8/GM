@@ -58,15 +58,6 @@ namespace GuaranteeManager
             DragMove();
         }
 
-        private void ShellGlobalSearchBox_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter && DataContext is ShellViewModel viewModel)
-            {
-                viewModel.ExecuteGlobalSearch();
-                e.Handled = true;
-            }
-        }
-
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState.Minimized;
