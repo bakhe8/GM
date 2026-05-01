@@ -396,6 +396,11 @@ namespace GuaranteeManager
             };
 
             row.Children.Add(_detailPanelHeading);
+            row.Children.Add(new Border { Width = 3 });
+            row.Children.Add(BuildInlineCopyButton(
+                "نسخ رقم الضمان",
+                "Dashboard.Detail.CopyReference",
+                () => _detailPanelHeading.Text));
             Grid.SetColumn(row, 1);
             grid.Children.Add(row);
             return grid;
@@ -417,6 +422,11 @@ namespace GuaranteeManager
             _detailTitle.MaxWidth = 340;
             _detailTitle.Margin = new Thickness(8, 0, 0, 0);
             row.Children.Add(_detailTitle);
+            row.Children.Add(new Border { Width = 3 });
+            row.Children.Add(BuildInlineCopyButton(
+                "نسخ اسم المورد",
+                "Dashboard.Detail.CopyTitle",
+                () => _detailTitle.Text));
             return row;
         }
 
@@ -924,6 +934,32 @@ namespace GuaranteeManager
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
             };
+        }
+
+        private static Button BuildInlineCopyButton(
+            string tooltip,
+            string automationId,
+            Func<string> valueFactory)
+        {
+            var button = new Button
+            {
+                Style = WorkspaceSurfaceChrome.Style("IconOnlyButton"),
+                Margin = new Thickness(0),
+                ToolTip = tooltip,
+                Content = CreateIcon("Icon.Copy", "#64748B", 12)
+            };
+            button.Click += (_, e) =>
+            {
+                string value = valueFactory().Trim();
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    Clipboard.SetText(value);
+                }
+
+                e.Handled = true;
+            };
+            UiInstrumentation.Identify(button, automationId, tooltip);
+            return button;
         }
 
         private static TextBlock BuildMutedText(double size, FontWeight weight)
