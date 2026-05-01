@@ -132,9 +132,9 @@
                             Padding="16,12"
                             MinHeight="84"
                             Cursor="Hand"
-                            ToolTip="عرض الضمانات المنتهية"
+                            ToolTip="عرض الضمانات المنتهية أو المغلقة"
                             automation:AutomationProperties.AutomationId="Guarantees.FilterCard.Expired"
-                            automation:AutomationProperties.Name="فلتر الضمانات المنتهية">
+                            automation:AutomationProperties.Name="فلتر الضمانات المنتهية أو المغلقة">
                         <Border.Style>
                             <Style TargetType="Border" BasedOn="{StaticResource Card}">
                                 <Setter Property="BorderThickness" Value="2" />
@@ -152,7 +152,7 @@
                                           CommandParameter="Expired" />
                         </Border.InputBindings>
                         <StackPanel FlowDirection="RightToLeft" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="منتهية" Style="{StaticResource KpiTitle}" Foreground="#EF4444" />
+                            <TextBlock Text="ضمانات منتهية" Style="{StaticResource KpiTitle}" Foreground="#EF4444" />
                             <TextBlock Text="{Binding ExpiredCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
                             <TextBlock Text="{Binding ExpiredMeta}" Style="{StaticResource KpiMeta}" TextTrimming="CharacterEllipsis" />
                         </StackPanel>

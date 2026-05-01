@@ -63,7 +63,7 @@ namespace GuaranteeManager
 
     public sealed class DashboardWorkspaceDataService
     {
-        private const string ExpiredFollowUpMetricLabel = "تحتاج متابعة";
+        private const string ExpiredFollowUpMetricLabel = "منتهيه تحتاج اغلاق";
 
         public List<DashboardWorkItem> BuildItems(
             IReadOnlyList<Guarantee> guarantees,
@@ -277,9 +277,9 @@ namespace GuaranteeManager
             {
                 recommendation = new DashboardGuidanceCard(
                     "توصيات تشغيلية",
-                    $"يوجد {expiredCount.ToString("N0", CultureInfo.InvariantCulture)} ضمان منتهي يحتاج متابعة.",
+                    $"يوجد {expiredCount.ToString("N0", CultureInfo.InvariantCulture)} ضمان منتهي يحتاج إغلاقًا.",
                     "المنتهية لا تقبل تمديدًا أو تسييلًا؛ الإجراء المتاح هو الإفراج/إعادة الضمان وتوثيق الرد.",
-                    "عرض التي تحتاج متابعة",
+                    "عرض التي تحتاج إغلاق",
                     DashboardGuidanceActionKind.FilterExpiredFollowUps,
                     null);
             }

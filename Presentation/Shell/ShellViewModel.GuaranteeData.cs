@@ -157,6 +157,11 @@ namespace GuaranteeManager
 
         private static GuaranteeStatusFilter ResolveGuaranteeStatusFilter(Guarantee guarantee)
         {
+            if (guarantee.LifecycleStatus is GuaranteeLifecycleStatus.Expired or GuaranteeLifecycleStatus.Closed)
+            {
+                return GuaranteeStatusFilter.Expired;
+            }
+
             if (guarantee.NeedsExpiryFollowUp)
             {
                 return GuaranteeStatusFilter.NeedsFollowUp;

@@ -810,7 +810,21 @@ namespace GuaranteeManager.Services
                 command.Parameters.AddWithValue("$guaranteeType", normalizedGuaranteeType);
             }
 
-            if (options.LifecycleStatus.HasValue)
+            if (options.LifecycleStatuses is { Count: > 0 } lifecycleStatuses)
+            {
+                List<string> parameterNames = new();
+                int index = 0;
+                foreach (GuaranteeLifecycleStatus lifecycleStatus in lifecycleStatuses.Distinct())
+                {
+                    string parameterName = $"$lifecycleStatus{index.ToString(CultureInfo.InvariantCulture)}";
+                    parameterNames.Add(parameterName);
+                    command.Parameters.AddWithValue(parameterName, lifecycleStatus.ToString());
+                    index++;
+                }
+
+                sql.Append($" AND LifecycleStatus IN ({string.Join(", ", parameterNames)})");
+            }
+            else if (options.LifecycleStatus.HasValue)
             {
                 sql.Append(" AND LifecycleStatus = $lifecycleStatus");
                 command.Parameters.AddWithValue("$lifecycleStatus", options.LifecycleStatus.Value.ToString());

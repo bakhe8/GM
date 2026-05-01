@@ -187,7 +187,7 @@ namespace GuaranteeManager
                 .Where(guarantee => guarantee.LifecycleStatus == GuaranteeLifecycleStatus.Active && !guarantee.IsExpired && !guarantee.IsExpiringSoon)
                 .ToList();
             List<Guarantee> expiringSoon = basePortfolio.Where(guarantee => guarantee.IsExpiringSoon).ToList();
-            List<Guarantee> expired = basePortfolio.Where(guarantee => guarantee.IsExpired).ToList();
+            List<Guarantee> expired = basePortfolio.Where(IsClosedExpiredGuarantee).ToList();
             List<Guarantee> expiredFollowUp = basePortfolio.Where(guarantee => guarantee.NeedsExpiryFollowUp).ToList();
             decimal pendingAmount = visiblePendingRequests
                 .GroupBy(request => request.RootGuaranteeId)
@@ -318,6 +318,7 @@ namespace GuaranteeManager
                 limit,
                 offset,
                 ResolveLifecycleStatus(selectedStatusFilter),
+                ResolveLifecycleStatuses(selectedStatusFilter),
                 selectedStatusFilter == GuaranteeStatusFilter.NeedsFollowUp));
         }
 
@@ -332,6 +333,7 @@ namespace GuaranteeManager
             int? limit,
             int? offset,
             GuaranteeLifecycleStatus? lifecycleStatus = null,
+            IReadOnlyCollection<GuaranteeLifecycleStatus>? lifecycleStatuses = null,
             bool needsExpiryFollowUpOnly = false)
         {
             return new GuaranteeQueryOptions
@@ -341,6 +343,7 @@ namespace GuaranteeManager
                 GuaranteeType = selectedGuaranteeType == allTypesLabel ? null : selectedGuaranteeType,
                 TimeStatus = selectedTimeStatus,
                 LifecycleStatus = lifecycleStatus,
+                LifecycleStatuses = lifecycleStatuses,
                 NeedsExpiryFollowUpOnly = needsExpiryFollowUpOnly,
                 IncludeAttachments = includeAttachments,
                 Limit = limit,
@@ -353,7 +356,6 @@ namespace GuaranteeManager
         {
             GuaranteeStatusFilter.Active => GuaranteeTimeStatus.Active,
             GuaranteeStatusFilter.ExpiringSoon => GuaranteeTimeStatus.ExpiringSoon,
-            GuaranteeStatusFilter.Expired => GuaranteeTimeStatus.Expired,
             _ => null
         };
 
@@ -362,6 +364,19 @@ namespace GuaranteeManager
             GuaranteeStatusFilter.Active => GuaranteeLifecycleStatus.Active,
             _ => null
         };
+
+        private static IReadOnlyCollection<GuaranteeLifecycleStatus>? ResolveLifecycleStatuses(GuaranteeStatusFilter selectedStatusFilter) => selectedStatusFilter switch
+        {
+            GuaranteeStatusFilter.Expired => new[]
+            {
+                GuaranteeLifecycleStatus.Expired,
+                GuaranteeLifecycleStatus.Closed
+            },
+            _ => null
+        };
+
+        private static bool IsClosedExpiredGuarantee(Guarantee guarantee)
+            => guarantee.LifecycleStatus is GuaranteeLifecycleStatus.Expired or GuaranteeLifecycleStatus.Closed;
 
         private static string FormatMeta(decimal amount)
         {

@@ -27,7 +27,7 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
-        public void BuildSnapshot_SeparatesExpiredTotalFromExpiredFollowUp()
+        public void BuildSnapshot_SeparatesClosedExpiredFromExpiredNeedsClosure()
         {
             DateTime start = new(2026, 4, 28, 8, 0, 0);
             Guarantee expiredOpen = CreateGuarantee(10, null, 1, true, start, 2_000m);
@@ -35,17 +35,22 @@ namespace GuaranteeManager.Tests
             expiredOpen.ExpiryDate = DateTime.Today.AddDays(-3);
             expiredOpen.LifecycleStatus = GuaranteeLifecycleStatus.Active;
 
-            Guarantee expiredReleased = CreateGuarantee(11, null, 1, true, start, 1_000m);
+            Guarantee expiredClosed = CreateGuarantee(11, null, 1, true, start, 1_000m);
+            expiredClosed.GuaranteeNo = "BG-EXPIRED-CLOSED";
+            expiredClosed.ExpiryDate = DateTime.Today.AddDays(-5);
+            expiredClosed.LifecycleStatus = GuaranteeLifecycleStatus.Expired;
+
+            Guarantee expiredReleased = CreateGuarantee(12, null, 1, true, start, 4_000m);
             expiredReleased.GuaranteeNo = "BG-EXPIRED-RELEASED";
-            expiredReleased.ExpiryDate = DateTime.Today.AddDays(-5);
+            expiredReleased.ExpiryDate = DateTime.Today.AddDays(-7);
             expiredReleased.LifecycleStatus = GuaranteeLifecycleStatus.Released;
 
-            Guarantee active = CreateGuarantee(12, null, 1, true, start, 3_000m);
+            Guarantee active = CreateGuarantee(13, null, 1, true, start, 3_000m);
             active.GuaranteeNo = "BG-ACTIVE";
             active.ExpiryDate = DateTime.Today.AddDays(90);
 
             var service = new GuaranteeWorkspaceDataService(
-                new TimelineDatabaseStub(new[] { expiredOpen, expiredReleased, active }, Array.Empty<WorkflowRequest>()),
+                new TimelineDatabaseStub(new[] { expiredOpen, expiredClosed, expiredReleased, active }, Array.Empty<WorkflowRequest>()),
                 new ContextActionService());
 
             GuaranteeWorkspaceSnapshot snapshot = service.BuildSnapshot(
@@ -58,8 +63,21 @@ namespace GuaranteeManager.Tests
                 10,
                 1);
 
-            Assert.Equal("2", snapshot.ExpiredCount);
-            Assert.Equal("1", snapshot.ExpiredFollowUpCount);
+            Assert.Equal("1", snapshot.ExpiredCount);
+            Assert.Equal("2", snapshot.ExpiredFollowUpCount);
+
+            GuaranteeWorkspaceSnapshot expiredFilterSnapshot = service.BuildSnapshot(
+                string.Empty,
+                "كل البنوك",
+                "كل البنوك",
+                "كل الأنواع",
+                "كل الأنواع",
+                GuaranteeStatusFilter.Expired,
+                10,
+                1);
+
+            GuaranteeRow row = Assert.Single(expiredFilterSnapshot.Rows);
+            Assert.Equal(expiredClosed.GuaranteeNo, row.GuaranteeNo);
         }
 
         [Fact]
@@ -409,6 +427,12 @@ namespace GuaranteeManager.Tests
                 if (options.LifecycleStatus.HasValue)
                 {
                     query = query.Where(guarantee => guarantee.LifecycleStatus == options.LifecycleStatus.Value);
+                }
+
+                if (options.LifecycleStatuses is { Count: > 0 })
+                {
+                    HashSet<GuaranteeLifecycleStatus> statuses = options.LifecycleStatuses.ToHashSet();
+                    query = query.Where(guarantee => statuses.Contains(guarantee.LifecycleStatus));
                 }
 
                 if (options.NeedsExpiryFollowUpOnly)

@@ -82,13 +82,13 @@ namespace GuaranteeManager.Tests
                     && card.ExpiryFilter == DashboardExpiryFollowUpFilters.ExpiringSoon);
             Assert.Contains(
                 result.Metrics.Cards,
-                card => card.Label == "تحتاج متابعة"
+                card => card.Label == "منتهيه تحتاج اغلاق"
                     && card.ScopeFilter == DashboardScopeFilters.ExpiryFollowUps
                     && card.ExpiryFilter == DashboardExpiryFollowUpFilters.Expired);
         }
 
         [Fact]
-        public void BuildFilteredItems_LabelsExpiredFollowUpMetricByFollowUpNeed()
+        public void BuildFilteredItems_LabelsExpiredFollowUpMetricAsNeedsClosure()
         {
             var service = new DashboardWorkspaceDataService();
             var expiredOpen = CreateGuarantee(
@@ -121,7 +121,7 @@ namespace GuaranteeManager.Tests
                 Array.Empty<WorkflowRequestListItem>());
 
             Assert.DoesNotContain(items, item => item.Reference == expiredReleased.GuaranteeNo);
-            DashboardMetricCard followUpCard = Assert.Single(result.Metrics.Cards, card => card.Label == "تحتاج متابعة");
+            DashboardMetricCard followUpCard = Assert.Single(result.Metrics.Cards, card => card.Label == "منتهيه تحتاج اغلاق");
             Assert.Equal("1", followUpCard.Value);
             Assert.DoesNotContain(result.Metrics.Cards, card => card.Label == "ضمانات منتهية");
         }

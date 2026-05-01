@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using GuaranteeManager.Models;
 
 namespace GuaranteeManager.Services
@@ -28,6 +29,8 @@ namespace GuaranteeManager.Services
         public GuaranteeTimeStatus? TimeStatus { get; set; }
 
         public GuaranteeLifecycleStatus? LifecycleStatus { get; set; }
+
+        public IReadOnlyCollection<GuaranteeLifecycleStatus>? LifecycleStatuses { get; set; }
 
         public GuaranteeReferenceType? ReferenceType { get; set; }
 
