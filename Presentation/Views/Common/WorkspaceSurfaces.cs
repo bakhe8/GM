@@ -74,7 +74,7 @@ namespace GuaranteeManager
             root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             if (detailPanel != null)
             {
-                root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(400) });
+                root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(420) });
             }
 
             var main = new Grid

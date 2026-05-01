@@ -222,7 +222,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="ما الذي حدث ومتى؟" FontSize="13" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" VerticalAlignment="Center" />
+                                <TextBlock Text="السجل الزمني" FontSize="13" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" VerticalAlignment="Center" />
                                 <Border Grid.Column="1"
                                         CornerRadius="9"
                                         Padding="7,2"
@@ -281,23 +281,19 @@
                                                     BorderBrush="Transparent"
                                                     automation:AutomationProperties.ItemStatus="{Binding ContextAutomationStatus}">
                                                 <StackPanel FlowDirection="RightToLeft">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="{Binding Title}" FontSize="11.2" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" />
-                                                        <Border CornerRadius="9" Padding="7,2" Margin="6,0,0,0"
-                                                                Background="{Binding StatusBackground}" BorderBrush="{Binding StatusBorder}" BorderThickness="1">
-                                                            <TextBlock Text="{Binding Status}" FontSize="9" FontWeight="SemiBold" Foreground="{Binding Brush}" />
-                                                        </Border>
-                                                        <Border x:Name="ContextBadge"
-                                                                CornerRadius="9"
-                                                                Padding="7,2"
-                                                                Margin="6,0,0,0"
-                                                                Background="#EFF6FF"
-                                                                BorderBrush="#BFDBFE"
-                                                                BorderThickness="1"
-                                                                Visibility="Collapsed">
-                                                            <TextBlock Text="{Binding ContextLabel}" FontSize="9" FontWeight="SemiBold" Foreground="#1D4ED8" />
-                                                        </Border>
+                                                    <Grid FlowDirection="RightToLeft">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="{Binding Title}"
+                                                                   FontSize="11.2"
+                                                                   FontWeight="Bold"
+                                                                   Foreground="{StaticResource Brush.Text}"
+                                                                   TextWrapping="Wrap"
+                                                                   VerticalAlignment="Center" />
                                                         <Button Style="{StaticResource IconOnlyButton}"
+                                                                Grid.Column="1"
                                                                 Width="{Binding EvidenceActionWidth}"
                                                                 Height="{Binding EvidenceActionHeight}"
                                                                 MinWidth="{Binding EvidenceActionWidth}"
@@ -333,7 +329,23 @@
                                                                 </Border>
                                                             </Grid>
                                                         </Button>
-                                                    </StackPanel>
+                                                    </Grid>
+                                                    <WrapPanel FlowDirection="RightToLeft" Margin="0,4,0,0">
+                                                        <Border CornerRadius="9" Padding="7,2" Margin="0,0,6,0"
+                                                                Background="{Binding StatusBackground}" BorderBrush="{Binding StatusBorder}" BorderThickness="1">
+                                                            <TextBlock Text="{Binding Status}" FontSize="9" FontWeight="SemiBold" Foreground="{Binding Brush}" />
+                                                        </Border>
+                                                        <Border x:Name="ContextBadge"
+                                                                CornerRadius="9"
+                                                                Padding="7,2"
+                                                                Margin="0,0,6,0"
+                                                                Background="#EFF6FF"
+                                                                BorderBrush="#BFDBFE"
+                                                                BorderThickness="1"
+                                                                Visibility="Collapsed">
+                                                            <TextBlock Text="{Binding ContextLabel}" FontSize="9" FontWeight="SemiBold" Foreground="#1D4ED8" />
+                                                        </Border>
+                                                    </WrapPanel>
                                                     <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{StaticResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap" />
                                                 </StackPanel>
                                             </Border>
@@ -384,18 +396,17 @@
                     automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Section.Actions"
                     automation:AutomationProperties.Name="قسم الإجراءات السريعة">
                 <StackPanel>
-                    <TextBlock Text="القرار والعمل الآن" FontSize="12" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" Margin="0,0,0,9" />
-                    <WrapPanel FlowDirection="RightToLeft">
-                        <WrapPanel.Resources>
+                    <TextBlock Text="إجراءات سريعة" FontSize="12" FontWeight="Bold" Foreground="{StaticResource Brush.Text}" Margin="0,0,0,9" />
+                    <UniformGrid Columns="4" FlowDirection="RightToLeft">
+                        <UniformGrid.Resources>
                             <Style x:Key="ActionStripButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
                                 <Setter Property="Height" Value="31" />
-                                <Setter Property="MinWidth" Value="78" />
-                                <Setter Property="Width" Value="84" />
+                                <Setter Property="MinWidth" Value="0" />
                                 <Setter Property="FontSize" Value="9" />
-                                <Setter Property="Margin" Value="0,0,6,6" />
+                                <Setter Property="Margin" Value="3,0,3,6" />
                                 <Setter Property="Padding" Value="2,0" />
                             </Style>
-                        </WrapPanel.Resources>
+                        </UniformGrid.Resources>
                         <Button Style="{StaticResource ActionStripButton}"
                                 BorderBrush="#93C5FD"
                                 Background="#EFF6FF"
@@ -480,7 +491,7 @@
                                 CommandParameter="{Binding SelectedGuarantee}"
                                 automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Replacement"
                                 automation:AutomationProperties.Name="إنشاء طلب استبدال" />
-                    </WrapPanel>
+                    </UniformGrid>
                 </StackPanel>
             </Border>
         </Grid>
