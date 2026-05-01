@@ -182,15 +182,15 @@
                             <Border Style="{StaticResource ReferenceTableHeaderDivider}" />
                             <Grid Margin="9,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="1.18*" />
-                                    <ColumnDefinition Width="1.15*" />
+                                    <ColumnDefinition Width="1.05*" />
+                                    <ColumnDefinition Width="0.95*" />
                                     <ColumnDefinition Width="1.00*" />
                                     <ColumnDefinition Width="1.00*" />
                                     <ColumnDefinition Width="1.15*" />
-                                    <ColumnDefinition Width="1.34*" />
-                                    <ColumnDefinition Width="1.70*" />
-                                    <ColumnDefinition Width="0.74*" />
-                                    <ColumnDefinition Width="1.30*" />
+                                    <ColumnDefinition Width="1.55*" />
+                                    <ColumnDefinition Width="2.15*" />
+                                    <ColumnDefinition Width="0.62*" />
+                                    <ColumnDefinition Width="1.35*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="الحالة التشغيلية" Style="{StaticResource TableHeaderText}" />
                                 <TextBlock Grid.Column="1" Text="حالة الوقت" Style="{StaticResource TableHeaderText}" />
@@ -230,15 +230,15 @@
                                                           CommandParameter="{Binding}" />
                                         </Grid.InputBindings>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="1.18*" />
-                                            <ColumnDefinition Width="1.15*" />
+                                            <ColumnDefinition Width="1.05*" />
+                                            <ColumnDefinition Width="0.95*" />
                                             <ColumnDefinition Width="1.00*" />
                                             <ColumnDefinition Width="1.00*" />
                                             <ColumnDefinition Width="1.15*" />
-                                            <ColumnDefinition Width="1.34*" />
-                                            <ColumnDefinition Width="1.70*" />
-                                            <ColumnDefinition Width="0.74*" />
-                                            <ColumnDefinition Width="1.30*" />
+                                            <ColumnDefinition Width="1.55*" />
+                                            <ColumnDefinition Width="2.15*" />
+                                            <ColumnDefinition Width="0.62*" />
+                                            <ColumnDefinition Width="1.35*" />
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0"
                                                    Text="{Binding WorkStatus}"
@@ -253,11 +253,26 @@
                                         <TextBlock Grid.Column="2" Text="{Binding ExpiryDate}" Style="{StaticResource TableCellCenter}" />
                                         <TextBlock Grid.Column="3" Text="{Binding IssueDate}" Style="{StaticResource TableCellCenter}" />
                                         <TextBlock Grid.Column="4" Text="{Binding Amount}" Style="{StaticResource TableCellCenter}" />
-                                        <StackPanel Grid.Column="5" Orientation="Horizontal" FlowDirection="RightToLeft" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
-                                            <Image Source="{Binding BankLogo}" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality" />
-                                            <Border Width="8" />
-                                            <TextBlock Text="{Binding Bank}" Style="{StaticResource TableCellText}" TextAlignment="Right" VerticalAlignment="Center" />
-                                        </StackPanel>
+                                        <Grid Grid.Column="5"
+                                              FlowDirection="LeftToRight"
+                                              HorizontalAlignment="Stretch"
+                                              VerticalAlignment="Center">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding Bank}"
+                                                       Style="{StaticResource TableCellRight}"
+                                                       HorizontalAlignment="Stretch"
+                                                       TextAlignment="Right" />
+                                            <Image Grid.Column="1"
+                                                   Source="{Binding BankLogo}"
+                                                   Width="16"
+                                                   Height="16"
+                                                   Margin="8,0,0,0"
+                                                   RenderOptions.BitmapScalingMode="HighQuality" />
+                                        </Grid>
                                         <TextBlock Grid.Column="6" Text="{Binding Supplier}" Style="{StaticResource TableCellRight}" />
                                         <TextBlock Grid.Column="7" Text="{Binding VersionLabel}" Style="{StaticResource TableCellCenter}" />
                                         <TextBlock Grid.Column="8" Text="{Binding GuaranteeNo}" Style="{StaticResource TableCellRight}" />

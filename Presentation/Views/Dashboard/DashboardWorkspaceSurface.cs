@@ -549,13 +549,13 @@ namespace GuaranteeManager
                 Margin = new Thickness(9, 0, 9, 0),
                 FlowDirection = FlowDirection.LeftToRight
             };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.6, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.25, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.15, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.25, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.25, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.65, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.6, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.75, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.22, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.95, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.08, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.2, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.7, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.88, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.45, GridUnitType.Star) });
             return grid;
         }
@@ -668,7 +668,7 @@ namespace GuaranteeManager
             {
                 Orientation = Orientation.Horizontal,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(10, 0, 0, 0)
+                Margin = new Thickness(6, 0, 0, 0)
             };
             actions.Children.Add(CreateRowButton("عرض", "Icon.View", item, OpenRow_Click));
             Grid.SetColumn(actions, 0);
@@ -762,26 +762,35 @@ namespace GuaranteeManager
 
         private static UIElement BuildBankCell(DashboardWorkItem item, int column)
         {
-            var bankCell = new StackPanel
+            var bankCell = new Grid
             {
-                Orientation = Orientation.Horizontal,
-                FlowDirection = FlowDirection.RightToLeft,
-                HorizontalAlignment = HorizontalAlignment.Right,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 8, 0)
+                FlowDirection = FlowDirection.LeftToRight,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Center
             };
-            bankCell.Children.Add(new Image
+            bankCell.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            bankCell.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var bankName = new TextBlock
+            {
+                Text = item.Bank,
+                Style = WorkspaceSurfaceChrome.Style("TableCellRight"),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                TextAlignment = TextAlignment.Right
+            };
+            Grid.SetColumn(bankName, 0);
+            bankCell.Children.Add(bankName);
+
+            var logo = new Image
             {
                 Source = item.BankLogo,
                 Width = 16,
-                Height = 16
-            });
-            bankCell.Children.Add(new Border { Width = 8 });
-            bankCell.Children.Add(new TextBlock
-            {
-                Text = item.Bank,
-                Style = WorkspaceSurfaceChrome.Style("TableCellRight")
-            });
+                Height = 16,
+                Margin = new Thickness(8, 0, 0, 0)
+            };
+            Grid.SetColumn(logo, 1);
+            bankCell.Children.Add(logo);
+
             Grid.SetColumn(bankCell, column);
             return bankCell;
         }
