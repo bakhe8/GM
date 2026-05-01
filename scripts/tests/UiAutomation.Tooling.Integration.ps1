@@ -1013,26 +1013,15 @@ try {
         return $payload
     } | Out-Null
 
-    Invoke-RegressionStep -Name "open-settings-tools-menu" -ScriptBlock {
+    Invoke-RegressionStep -Name "refresh-settings-paths" -ScriptBlock {
         $payload = Invoke-UiExploreJson -Arguments @{
             Action = "Click"
             WindowAutomationId = "Shell.MainWindow"
-            AutomationId = "Settings.Toolbar.ToolsMenu"
+            AutomationId = "Settings.Toolbar.Refresh"
             ReuseRunningSession = $true
         }
 
-        Assert-RegressionCondition ($payload.Target.AutomationId -eq "Settings.Toolbar.ToolsMenu") "Failed to target Settings tools menu button."
-        return $payload
-    } | Out-Null
-
-    Invoke-RegressionStep -Name "popup-click-copy-path-summary" -ScriptBlock {
-        $payload = Invoke-UiExploreJson -Arguments @{
-            Action = "Click"
-            Name = "نسخ ملخص المسارات"
-            ReuseRunningSession = $true
-        }
-
-        Assert-RegressionCondition ($payload.Target.ControlType -eq "ControlType.MenuItem") "Popup targeting did not resolve the Settings menu item."
+        Assert-RegressionCondition ($payload.Target.AutomationId -eq "Settings.Toolbar.Refresh") "Failed to target Settings refresh button."
         return $payload
     } | Out-Null
 

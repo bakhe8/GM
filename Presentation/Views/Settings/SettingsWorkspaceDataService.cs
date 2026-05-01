@@ -32,7 +32,6 @@ namespace GuaranteeManager
             {
                 SettingsPathFilters.Data => query.Where(item => item.Category == SettingsPathFilters.Data),
                 SettingsPathFilters.Workflow => query.Where(item => item.Category == SettingsPathFilters.Workflow),
-                SettingsPathFilters.Attention => query.Where(item => !item.IsReady),
                 _ => query
             };
 
@@ -55,13 +54,11 @@ namespace GuaranteeManager
             int dataReady = allItems.Count(item => item.Category == SettingsPathFilters.Data && item.IsReady);
             int workflowTotal = allItems.Count(item => item.Category == SettingsPathFilters.Workflow);
             int workflowReady = allItems.Count(item => item.Category == SettingsPathFilters.Workflow && item.IsReady);
-            int attentionCount = allItems.Count(item => !item.IsReady);
 
             return new SettingsWorkspaceMetrics(
                 allItems.Count.ToString("N0", CultureInfo.InvariantCulture),
                 $"{dataReady.ToString("N0", CultureInfo.InvariantCulture)}/{dataTotal.ToString("N0", CultureInfo.InvariantCulture)}",
-                $"{workflowReady.ToString("N0", CultureInfo.InvariantCulture)}/{workflowTotal.ToString("N0", CultureInfo.InvariantCulture)}",
-                attentionCount.ToString("N0", CultureInfo.InvariantCulture));
+                $"{workflowReady.ToString("N0", CultureInfo.InvariantCulture)}/{workflowTotal.ToString("N0", CultureInfo.InvariantCulture)}");
         }
 
         public SettingsWorkspaceDetailState BuildDetailState(SettingPathItem? selectedItem)
@@ -100,8 +97,7 @@ namespace GuaranteeManager
     public sealed record SettingsWorkspaceMetrics(
         string Total,
         string Data,
-        string Workflow,
-        string Attention);
+        string Workflow);
 
     public sealed record SettingsWorkspaceFilterResult(
         IReadOnlyList<SettingPathItem> Items,
@@ -135,7 +131,6 @@ namespace GuaranteeManager
         public const string All = "كل المسارات";
         public const string Data = "بيانات";
         public const string Workflow = "سير العمل";
-        public const string Attention = "تحتاج مراجعة";
 
         public static string Normalize(string? filter)
         {
@@ -143,7 +138,6 @@ namespace GuaranteeManager
             {
                 Data => Data,
                 Workflow => Workflow,
-                Attention => Attention,
                 _ => All
             };
         }

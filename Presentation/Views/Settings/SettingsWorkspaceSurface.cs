@@ -18,12 +18,10 @@ namespace GuaranteeManager
         private readonly Border _allMetricCard = new();
         private readonly Border _dataMetricCard = new();
         private readonly Border _workflowMetricCard = new();
-        private readonly Border _attentionMetricCard = new();
         private readonly TextBlock _summary = BuildMutedText(12, FontWeights.SemiBold);
         private readonly TextBlock _allValue = BuildMetricValue();
         private readonly TextBlock _dataValue = BuildMetricValue();
         private readonly TextBlock _workflowValue = BuildMetricValue();
-        private readonly TextBlock _attentionValue = BuildMetricValue();
         private readonly TextBlock _detailTitle = BuildDetailValue(16, FontWeights.Bold);
         private readonly TextBlock _detailSubtitle = BuildMutedText(11, FontWeights.SemiBold);
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
@@ -48,7 +46,6 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(_allMetricCard, "Settings.Filter.All", SettingsPathFilters.All);
             UiInstrumentation.Identify(_dataMetricCard, "Settings.Filter.Data", SettingsPathFilters.Data);
             UiInstrumentation.Identify(_workflowMetricCard, "Settings.Filter.Workflow", SettingsPathFilters.Workflow);
-            UiInstrumentation.Identify(_attentionMetricCard, "Settings.Filter.Attention", SettingsPathFilters.Attention);
             UiInstrumentation.Identify(_list, "Settings.Table.List", "قائمة الإعدادات");
 
             FlowDirection = FlowDirection.RightToLeft;
@@ -86,7 +83,14 @@ namespace GuaranteeManager
         private Grid BuildToolbar()
         {
             var toolbar = new Grid { FlowDirection = FlowDirection.LeftToRight };
+            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            Button refreshButton = WorkspaceSurfaceChrome.ToolbarButton("إعادة فحص", primary: true, automationId: "Settings.Toolbar.Refresh");
+            refreshButton.Click += (_, _) => ApplyFilters();
+            Grid.SetColumn(refreshButton, 0);
+            toolbar.Children.Add(refreshButton);
 
             _searchInput.TextChanged += (_, _) =>
             {
@@ -94,7 +98,7 @@ namespace GuaranteeManager
                 ApplyFilters();
             };
             var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث باسم العنصر أو المسار...");
-            Grid.SetColumn(searchBox, 0);
+            Grid.SetColumn(searchBox, 2);
             toolbar.Children.Add(searchBox);
             return toolbar;
         }
@@ -103,17 +107,15 @@ namespace GuaranteeManager
         {
             var metrics = new System.Windows.Controls.Primitives.UniformGrid
             {
-                Columns = 4
+                Columns = 3
             };
             ConfigureMetricFilterCard(_allMetricCard, SettingsPathFilters.All, _allValue, "#0F172A");
             ConfigureMetricFilterCard(_dataMetricCard, SettingsPathFilters.Data, _dataValue, "#2563EB");
             ConfigureMetricFilterCard(_workflowMetricCard, SettingsPathFilters.Workflow, _workflowValue, "#E09408");
-            ConfigureMetricFilterCard(_attentionMetricCard, SettingsPathFilters.Attention, _attentionValue, "#EF4444");
 
             metrics.Children.Add(_allMetricCard);
             metrics.Children.Add(_dataMetricCard);
             metrics.Children.Add(_workflowMetricCard);
-            metrics.Children.Add(_attentionMetricCard);
             WorkspaceSurfaceChrome.ApplyMetricCardSpacing(metrics);
             UpdateMetricCardStates();
             return metrics;
@@ -183,7 +185,6 @@ namespace GuaranteeManager
             ApplyMetricCardState(_allMetricCard);
             ApplyMetricCardState(_dataMetricCard);
             ApplyMetricCardState(_workflowMetricCard);
-            ApplyMetricCardState(_attentionMetricCard);
         }
 
         private void ApplyMetricCardState(Border card)
@@ -260,7 +261,7 @@ namespace GuaranteeManager
                     BuildSettingsTitleRow(),
                     _detailSubtitle,
                     new Border { Height = 1, Background = WorkspaceSurfaceChrome.BrushFrom("#EDF2F7"), Margin = new Thickness(0, 13, 0, 12) },
-                    WorkspaceSurfaceChrome.DetailFactLine("الحالة التشغيلية", _detailState, "Icon.Check"),
+                    BuildReadOnlyDetailLine("الحالة التشغيلية", _detailState, "Icon.Check"),
                     WorkspaceSurfaceChrome.DetailFactLine("الإجراء التالي", _detailAction, "Icon.Extend"),
                     WorkspaceSurfaceChrome.DetailFactBlock("المسار", _detailPath, "Icon.Document", (_, _) => _coordinator.CopyPath(SelectedItem), "Settings.Detail.CopyPath", "نسخ المسار"),
                     WorkspaceSurfaceChrome.DetailFactBlock("مسار الفتح", _detailOpenPath, "Icon.Logout", (_, _) => _coordinator.CopyOpenPath(SelectedItem), "Settings.Detail.CopyOpenPath", "نسخ مسار الفتح")
@@ -303,39 +304,25 @@ namespace GuaranteeManager
 
         private Border BuildDetailActions()
         {
-            Button openButton = WorkspaceSurfaceChrome.ToolbarButton("فتح المجلد", automationId: "Settings.QuickAction.OpenPath");
-            openButton.FontSize = 9.5;
-            openButton.Click += (_, _) => _coordinator.OpenPath(SelectedItem);
+            Button createBackupButton = WorkspaceSurfaceChrome.ToolbarButton("نسخ احتياطي", automationId: "Settings.QuickAction.CreateBackup");
+            createBackupButton.Click += (_, _) => _coordinator.CreateManualBackup();
 
-            Button refreshButton = WorkspaceSurfaceChrome.ToolbarButton("إعادة فحص", primary: true, automationId: "Settings.QuickAction.Refresh");
-            refreshButton.FontSize = 9.5;
-            refreshButton.Click += (_, _) => ApplyFilters();
+            Button restoreBackupButton = WorkspaceSurfaceChrome.ToolbarButton("استرجاع نسخة", automationId: "Settings.QuickAction.RestoreBackup");
+            restoreBackupButton.Click += (_, _) => _coordinator.RestoreManualBackup(RefreshAfterDataReset);
 
-            Button backupMenuButton = CreateMenuButton("النسخ والاسترجاع", "Settings.QuickAction.BackupMenu");
-            backupMenuButton.FontSize = 9.5;
-            backupMenuButton.ContextMenu = BuildMenu(
-                new MenuItemSpec("إنشاء نسخة احتياطية", (_, _) => _coordinator.CreateManualBackup()),
-                new MenuItemSpec("استرجاع نسخة احتياطية", (_, _) => _coordinator.RestoreManualBackup(RefreshAfterDataReset)),
-                new MenuItemSpec("إنشاء حزمة محمولة", (_, _) => _coordinator.CreatePortableBackup()),
-                new MenuItemSpec("استرجاع حزمة محمولة", (_, _) => _coordinator.RestorePortableBackup(RefreshAfterDataReset)));
+            Button createPortableButton = WorkspaceSurfaceChrome.ToolbarButton("حزمة محمولة", automationId: "Settings.QuickAction.CreatePortable");
+            createPortableButton.Click += (_, _) => _coordinator.CreatePortableBackup();
 
-            Button toolsMenuButton = CreateMenuButton("أدوات", "Settings.QuickAction.ToolsMenu");
-            toolsMenuButton.FontSize = 9.5;
-            var toolItems = new List<MenuItemSpec>
-            {
-                new("نسخ ملخص المسارات", (_, _) => _coordinator.CopyOperationalPathsSummary())
-            };
-#if DEBUG
-            toolItems.Add(new MenuItemSpec("إضافة بيانات تجريبية", (_, _) => _coordinator.SeedDevelopmentData(RefreshAfterDataReset)));
-#endif
-            toolsMenuButton.ContextMenu = BuildMenu(toolItems.ToArray());
+            Button restorePortableButton = WorkspaceSurfaceChrome.ToolbarButton("استرجاع حزمة", automationId: "Settings.QuickAction.RestorePortable");
+            restorePortableButton.Click += (_, _) => _coordinator.RestorePortableBackup(RefreshAfterDataReset);
 
-            foreach (Button button in new[] { openButton, refreshButton, backupMenuButton, toolsMenuButton })
+            foreach (Button button in new[] { createBackupButton, restoreBackupButton, createPortableButton, restorePortableButton })
             {
                 button.Height = 31;
                 button.MinWidth = 0;
                 button.Margin = new Thickness(3, 0, 3, 6);
                 button.Padding = new Thickness(4, 0, 4, 0);
+                button.FontSize = 9.5;
             }
 
             var border = new Border
@@ -363,10 +350,10 @@ namespace GuaranteeManager
                 FlowDirection = FlowDirection.RightToLeft,
                 Margin = new Thickness(0, 9, 0, 0)
             };
-            actions.Children.Add(openButton);
-            actions.Children.Add(refreshButton);
-            actions.Children.Add(backupMenuButton);
-            actions.Children.Add(toolsMenuButton);
+            actions.Children.Add(createBackupButton);
+            actions.Children.Add(restoreBackupButton);
+            actions.Children.Add(createPortableButton);
+            actions.Children.Add(restorePortableButton);
             Grid.SetRow(actions, 1);
             grid.Children.Add(actions);
             border.Child = grid;
@@ -523,80 +510,6 @@ namespace GuaranteeManager
             return stack;
         }
 
-        private static Button CreateMenuButton(string text, string automationId)
-        {
-            var button = WorkspaceSurfaceChrome.ToolbarButton(text, automationId: automationId);
-            UiInstrumentation.Identify(button, automationId, text);
-            button.Padding = new Thickness(12, 0, 12, 0);
-            button.Content = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Children =
-                {
-                    new TextBlock
-                    {
-                        Text = text,
-                        VerticalAlignment = VerticalAlignment.Center
-                    },
-                    new TextBlock
-                    {
-                        Text = "⌄",
-                        FontSize = 12,
-                        Margin = new Thickness(6, -2, 0, 0),
-                        VerticalAlignment = VerticalAlignment.Center
-                    }
-                }
-            };
-            button.Click += (_, e) =>
-            {
-                if (button.ContextMenu == null)
-                {
-                    return;
-                }
-
-                button.ContextMenu.PlacementTarget = button;
-                button.ContextMenu.IsOpen = true;
-                e.Handled = true;
-            };
-            return button;
-        }
-
-        private static ContextMenu BuildMenu(params MenuItemSpec[] items)
-        {
-            var menu = new ContextMenu
-            {
-                MinWidth = 196,
-                FlowDirection = FlowDirection.RightToLeft,
-                Background = Brushes.White,
-                BorderBrush = WorkspaceSurfaceChrome.BrushFrom("#D8E1EE"),
-                BorderThickness = new Thickness(1)
-            };
-
-            menu.Resources.Add(typeof(MenuItem), new Style(typeof(MenuItem))
-            {
-                Setters =
-                {
-                    new Setter(MenuItem.FontSizeProperty, 11d),
-                    new Setter(MenuItem.FontWeightProperty, FontWeights.SemiBold),
-                    new Setter(MenuItem.ForegroundProperty, WorkspaceSurfaceChrome.BrushFrom("#1F2937")),
-                    new Setter(MenuItem.PaddingProperty, new Thickness(10, 5, 10, 5))
-                }
-            });
-
-            foreach (MenuItemSpec item in items)
-            {
-                var menuItem = new MenuItem
-                {
-                    Header = item.Header,
-                    IsEnabled = item.IsEnabled
-                };
-                menuItem.Click += item.ClickHandler;
-                menu.Items.Add(menuItem);
-            }
-
-            return menu;
-        }
-
         private void OpenPath_Click(object sender, RoutedEventArgs e)
         {
             SelectRowFromSender(sender);
@@ -631,7 +544,6 @@ namespace GuaranteeManager
             _allValue.Text = metrics.Total;
             _dataValue.Text = metrics.Data;
             _workflowValue.Text = metrics.Workflow;
-            _attentionValue.Text = metrics.Attention;
             UpdateMetricCardStates();
         }
 
@@ -701,6 +613,43 @@ namespace GuaranteeManager
             };
         }
 
+        private static Grid BuildReadOnlyDetailLine(string label, TextBlock value, string iconKey)
+        {
+            var grid = new Grid
+            {
+                MinHeight = 28,
+                FlowDirection = FlowDirection.RightToLeft
+            };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(118) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var labelPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            labelPanel.Children.Add(CreateIcon(iconKey, "#94A3B8", 12));
+            labelPanel.Children.Add(new Border { Width = 7 });
+            labelPanel.Children.Add(new TextBlock
+            {
+                Text = label,
+                FontSize = 10,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#94A3C8"),
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            grid.Children.Add(labelPanel);
+
+            value.VerticalAlignment = VerticalAlignment.Center;
+            value.TextAlignment = TextAlignment.Right;
+            value.TextWrapping = TextWrapping.NoWrap;
+            value.TextTrimming = TextTrimming.CharacterEllipsis;
+            Grid.SetColumn(value, 2);
+            grid.Children.Add(value);
+            return grid;
+        }
+
         private static UIElement CreateIcon(string resourceKey, string strokeColor, double size)
         {
             if (Application.Current.TryFindResource(resourceKey) is not Geometry geometry)
@@ -726,7 +675,5 @@ namespace GuaranteeManager
         }
 
         private sealed record SettingsMetricFilter(string CategoryFilter, string AccentHex);
-
-        private readonly record struct MenuItemSpec(string Header, RoutedEventHandler ClickHandler, bool IsEnabled = true);
     }
 }
