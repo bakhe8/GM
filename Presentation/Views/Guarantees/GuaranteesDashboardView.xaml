@@ -187,10 +187,9 @@
                                     <ColumnDefinition Width="1.00*" />
                                     <ColumnDefinition Width="1.00*" />
                                     <ColumnDefinition Width="1.15*" />
-                                    <ColumnDefinition Width="1.55*" />
-                                    <ColumnDefinition Width="2.15*" />
-                                    <ColumnDefinition Width="0.62*" />
-                                    <ColumnDefinition Width="1.35*" />
+                                    <ColumnDefinition Width="1.65*" />
+                                    <ColumnDefinition Width="2.55*" />
+                                    <ColumnDefinition Width="1.47*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="الحالة التشغيلية" Style="{StaticResource TableHeaderText}" />
                                 <TextBlock Grid.Column="1" Text="حالة الوقت" Style="{StaticResource TableHeaderText}" />
@@ -199,8 +198,7 @@
                                 <TextBlock Grid.Column="4" Text="المبلغ" Style="{StaticResource TableHeaderText}" />
                                 <TextBlock Grid.Column="5" Text="البنك" Style="{StaticResource TableHeaderRight}" />
                                 <TextBlock Grid.Column="6" Text="المورد" Style="{StaticResource TableHeaderRight}" />
-                                <TextBlock Grid.Column="7" Text="الإصدار" Style="{StaticResource TableHeaderText}" />
-                                <TextBlock Grid.Column="8" Text="رقم الضمان" Style="{StaticResource TableHeaderRight}" />
+                                <TextBlock Grid.Column="7" Text="رقم الضمان" Style="{StaticResource TableHeaderRight}" />
                             </Grid>
                         </Grid>
 
@@ -235,10 +233,9 @@
                                             <ColumnDefinition Width="1.00*" />
                                             <ColumnDefinition Width="1.00*" />
                                             <ColumnDefinition Width="1.15*" />
-                                            <ColumnDefinition Width="1.55*" />
-                                            <ColumnDefinition Width="2.15*" />
-                                            <ColumnDefinition Width="0.62*" />
-                                            <ColumnDefinition Width="1.35*" />
+                                            <ColumnDefinition Width="1.65*" />
+                                            <ColumnDefinition Width="2.55*" />
+                                            <ColumnDefinition Width="1.47*" />
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0"
                                                    Text="{Binding WorkStatus}"
@@ -274,8 +271,7 @@
                                                    RenderOptions.BitmapScalingMode="HighQuality" />
                                         </Grid>
                                         <TextBlock Grid.Column="6" Text="{Binding Supplier}" Style="{StaticResource TableCellRight}" />
-                                        <TextBlock Grid.Column="7" Text="{Binding VersionLabel}" Style="{StaticResource TableCellCenter}" />
-                                        <TextBlock Grid.Column="8" Text="{Binding GuaranteeNo}" Style="{StaticResource TableCellRight}" />
+                                        <TextBlock Grid.Column="7" Text="{Binding GuaranteeNo}" Style="{StaticResource TableCellRight}" />
                                     </Grid>
                                     </StackPanel>
                                 </DataTemplate>
