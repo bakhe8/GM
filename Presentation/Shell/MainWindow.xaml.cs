@@ -24,6 +24,7 @@ namespace GuaranteeManager
     public partial class MainWindow : Window
     {
         private readonly IShellStatusService _shellStatus;
+        private IntPtr _hwnd;
 
         public MainWindow()
         {
@@ -32,6 +33,8 @@ namespace GuaranteeManager
             _shellStatus = App.CurrentApp.GetRequiredService<IShellStatusService>();
             SourceInitialized += MainWindow_SourceInitialized;
             Loaded += (_, _) => WindowStateService.Restore(this, nameof(MainWindow));
+            StateChanged += (_, _) => UpdateRoundedWindowRegion();
+            SizeChanged += (_, _) => UpdateRoundedWindowRegion();
             Closing += (_, _) => WindowStateService.Save(this, nameof(MainWindow));
             DataContext = ShellViewModel.Create(
                 App.CurrentApp.GetRequiredService<IDatabaseService>(),
@@ -88,8 +91,10 @@ namespace GuaranteeManager
 
         private void MainWindow_SourceInitialized(object? sender, EventArgs e)
         {
-            IntPtr hwnd = new WindowInteropHelper(this).Handle;
-            HwndSource.FromHwnd(hwnd)?.AddHook(WindowProc);
+            _hwnd = new WindowInteropHelper(this).Handle;
+            ApplySystemCornerPreference(_hwnd);
+            UpdateRoundedWindowRegion();
+            HwndSource.FromHwnd(_hwnd)?.AddHook(WindowProc);
         }
 
         private IntPtr WindowProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -133,8 +138,73 @@ namespace GuaranteeManager
             Marshal.StructureToPtr(minMaxInfo, lParam, true);
         }
 
+        private static void ApplySystemCornerPreference(IntPtr hwnd)
+        {
+            if (hwnd == IntPtr.Zero || !OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000))
+            {
+                return;
+            }
+
+            int preference = DwmWindowCornerPreferenceRound;
+            try
+            {
+                _ = DwmSetWindowAttribute(
+                    hwnd,
+                    DwmwaWindowCornerPreference,
+                    ref preference,
+                    sizeof(int));
+            }
+            catch (DllNotFoundException)
+            {
+            }
+            catch (EntryPointNotFoundException)
+            {
+            }
+        }
+
+        private void UpdateRoundedWindowRegion()
+        {
+            if (_hwnd == IntPtr.Zero)
+            {
+                return;
+            }
+
+            if (WindowState != WindowState.Normal)
+            {
+                _ = SetWindowRgn(_hwnd, IntPtr.Zero, true);
+                return;
+            }
+
+            if (!GetWindowRect(_hwnd, out RECT rect))
+            {
+                return;
+            }
+
+            int width = rect.right - rect.left;
+            int height = rect.bottom - rect.top;
+            if (width <= 0 || height <= 0)
+            {
+                return;
+            }
+
+            double dpiScale = HwndSource.FromHwnd(_hwnd)?.CompositionTarget?.TransformToDevice.M11 ?? 1.0;
+            int cornerDiameter = Math.Max(2, (int)Math.Round(16 * dpiScale));
+            IntPtr region = CreateRoundRectRgn(0, 0, width + 1, height + 1, cornerDiameter, cornerDiameter);
+            if (region == IntPtr.Zero)
+            {
+                return;
+            }
+
+            if (SetWindowRgn(_hwnd, region, true) == 0)
+            {
+                _ = DeleteObject(region);
+            }
+        }
+
         private const int WmGetMinMaxInfo = 0x0024;
         private const int MonitorDefaultToNearest = 0x00000002;
+        private const int DwmwaWindowCornerPreference = 33;
+        private const int DwmWindowCornerPreferenceRound = 2;
 
         [DllImport("user32.dll")]
         private static extern IntPtr MonitorFromWindow(IntPtr hwnd, int dwFlags);
@@ -142,6 +212,29 @@ namespace GuaranteeManager
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern int SetWindowRgn(IntPtr hWnd, IntPtr hRgn, bool bRedraw);
+
+        [DllImport("gdi32.dll", SetLastError = true)]
+        private static extern IntPtr CreateRoundRectRgn(
+            int nLeftRect,
+            int nTopRect,
+            int nRightRect,
+            int nBottomRect,
+            int nWidthEllipse,
+            int nHeightEllipse);
+
+        [DllImport("gdi32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool DeleteObject(IntPtr hObject);
+
+        [DllImport("dwmapi.dll", PreserveSig = true)]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int dwAttribute, ref int pvAttribute, int cbAttribute);
 
         [StructLayout(LayoutKind.Sequential)]
         private struct POINT

@@ -17,7 +17,7 @@
 
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="0"
-                            CornerRadius="0"
+                            CornerRadius="8"
                             GlassFrameThickness="0"
                             ResizeBorderThickness="6"
                             UseAeroCaptionButtons="False" />
@@ -361,6 +361,7 @@
         <Border x:Name="WindowFocusFrame"
                 Grid.RowSpan="3"
                 BorderThickness="1"
+                CornerRadius="8"
                 IsHitTestVisible="False"
                 Panel.ZIndex="1000"
                 SnapsToDevicePixels="True">
@@ -390,6 +391,7 @@
                         <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized">
                             <Setter Property="BorderBrush" Value="#24466F" />
                             <Setter Property="Opacity" Value="0.55" />
+                            <Setter Property="CornerRadius" Value="0" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
