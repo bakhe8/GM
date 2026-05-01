@@ -345,16 +345,28 @@ namespace GuaranteeManager
             Grid.SetColumn(iconFrame, 0);
             grid.Children.Add(iconFrame);
 
-            var content = new StackPanel
+            var content = new Grid
             {
-                FlowDirection = FlowDirection.RightToLeft,
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                FlowDirection = FlowDirection.LeftToRight,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(54, 0, 0, 0)
             };
+            content.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            content.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            content.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            content.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            Grid.SetRow(title, 0);
             content.Children.Add(title);
+            Grid.SetRow(primary, 1);
             content.Children.Add(primary);
+            Grid.SetRow(secondary, 2);
             content.Children.Add(secondary);
+            Grid.SetRow(actionButton, 3);
             content.Children.Add(actionButton);
-            Grid.SetColumn(content, 1);
+            Grid.SetColumn(content, 0);
+            Grid.SetColumnSpan(content, 2);
             grid.Children.Add(content);
 
             card.Child = grid;
@@ -989,6 +1001,8 @@ namespace GuaranteeManager
                 FontSize = 12.5,
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text"),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                FlowDirection = FlowDirection.RightToLeft,
                 TextAlignment = TextAlignment.Right
             };
         }
@@ -1001,6 +1015,8 @@ namespace GuaranteeManager
                 FontWeight = FontWeights.SemiBold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#1F2937"),
                 Margin = new Thickness(0, 5, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                FlowDirection = FlowDirection.RightToLeft,
                 TextAlignment = TextAlignment.Right,
                 TextWrapping = TextWrapping.Wrap
             };
@@ -1013,6 +1029,8 @@ namespace GuaranteeManager
                 FontSize = 10.3,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
                 Margin = new Thickness(0, 3, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                FlowDirection = FlowDirection.RightToLeft,
                 TextAlignment = TextAlignment.Right,
                 TextWrapping = TextWrapping.Wrap
             };
@@ -1027,7 +1045,9 @@ namespace GuaranteeManager
                 FontWeight = FontWeights.SemiBold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#2563EB"),
                 Margin = new Thickness(0, 7, 0, 0),
-                HorizontalAlignment = HorizontalAlignment.Right
+                HorizontalAlignment = HorizontalAlignment.Right,
+                HorizontalContentAlignment = HorizontalAlignment.Right,
+                FlowDirection = FlowDirection.RightToLeft
             };
         }
 
