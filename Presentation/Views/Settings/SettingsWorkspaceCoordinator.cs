@@ -329,36 +329,67 @@ namespace GuaranteeManager
             }
         }
 
-        public void SeedDevelopmentData(Action refresh)
-        {
 #if DEBUG
+        public void GenerateGoodDevelopmentData(Action refresh)
+        {
+            SeedDevelopmentData(
+                refresh,
+                clearExistingData: true,
+                confirmationTitle: "تأكيد توليد بيانات جيدة",
+                confirmationMessage: "سيتم حذف الضمانات والطلبات الحالية ثم توليد بيانات تشغيلية جديدة. هل تريد المتابعة؟",
+                operationName: "replace-development-data",
+                successMessage: "تم توليد بيانات جيدة بعد حذف القديم.",
+                successSecondaryText: "الإعدادات • بيانات جديدة");
+        }
+
+        public void GenerateAdditionalDevelopmentData(Action refresh)
+        {
+            SeedDevelopmentData(
+                refresh,
+                clearExistingData: false,
+                confirmationTitle: "تأكيد توليد بيانات إضافية",
+                confirmationMessage: "سيضيف هذا الإجراء بيانات تشغيلية جديدة فوق البيانات الحالية دون حذفها. هل تريد المتابعة؟",
+                operationName: "append-development-data",
+                successMessage: "تم توليد بيانات إضافية دون حذف السابق.",
+                successSecondaryText: "الإعدادات • بيانات إضافية");
+        }
+
+        private void SeedDevelopmentData(
+            Action refresh,
+            bool clearExistingData,
+            string confirmationTitle,
+            string confirmationMessage,
+            string operationName,
+            string successMessage,
+            string successSecondaryText)
+        {
             if (_seedingService == null)
             {
                 return;
             }
 
             if (MessageBox.Show(
-                    "سيضيف هذا الإجراء بيانات تجريبية جديدة فوق البيانات الحالية دون حذفها. هل تريد المتابعة؟",
-                    "تأكيد إضافة بيانات تجريبية",
+                    confirmationMessage,
+                    confirmationTitle,
                     MessageBoxButton.YesNo,
-                    MessageBoxImage.Question) != MessageBoxResult.Yes)
+                    clearExistingData ? MessageBoxImage.Warning : MessageBoxImage.Question) != MessageBoxResult.Yes)
             {
                 return;
             }
 
             try
             {
-                _seedingService.Seed(clearExistingData: false);
+                _seedingService.Seed(clearExistingData);
                 refresh();
-                _diagnostics.RecordEvent("settings.operation", "append-development-data", new { Status = "Succeeded" });
-                _shellStatus.ShowSuccess("تمت إضافة البيانات التجريبية دون حذف السابق.", "الإعدادات • بيئة التطوير");
+                _diagnostics.RecordEvent("settings.operation", operationName, new { Status = "Succeeded", ClearExistingData = clearExistingData });
+                _shellStatus.ShowSuccess(successMessage, successSecondaryText);
             }
             catch (Exception ex)
             {
-                _diagnostics.RecordEvent("settings.operation", "append-development-data-failed", new { ex.Message });
-                MessageBox.Show(ex.Message, "بيئة التطوير", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _diagnostics.RecordEvent("settings.operation", $"{operationName}-failed", new { ex.Message, ClearExistingData = clearExistingData });
+                MessageBox.Show(ex.Message, confirmationTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
             }
-#endif
         }
+#endif
     }
 }

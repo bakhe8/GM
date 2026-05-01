@@ -49,6 +49,38 @@ namespace GuaranteeManager.Tests
                 DatabaseService.InitializeRuntime();
             }
         }
+
+        [Fact]
+        public void DataSeedingService_ClearMode_ReplacesTimelineEvents()
+        {
+            string originalStorageRoot = AppPaths.StorageRootDirectory;
+            string seedStorageRoot = _fixture.CreateStorageRoot($"seed-clear-{_fixture.NextToken("ROOT")}");
+
+            try
+            {
+                _fixture.SwitchStorageRoot(seedStorageRoot);
+                DatabaseService.InitializeRuntime();
+
+                DatabaseService database = _fixture.CreateDatabaseService();
+                WorkflowService workflow = _fixture.CreateWorkflowService(database);
+                var seeding = new DataSeedingService(database, workflow);
+
+                seeding.Seed(clearExistingData: true);
+                Assert.NotEmpty(database.GetGuaranteeTimelineEvents(QueryFirstGuaranteeId()));
+                long initialEvents = CountRows("GuaranteeEvents");
+
+                seeding.Seed(clearExistingData: true);
+                Assert.NotEmpty(database.GetGuaranteeTimelineEvents(QueryFirstGuaranteeId()));
+
+                Assert.True(initialEvents > 0);
+                Assert.Equal(initialEvents, CountRows("GuaranteeEvents"));
+            }
+            finally
+            {
+                _fixture.SwitchStorageRoot(originalStorageRoot);
+                DatabaseService.InitializeRuntime();
+            }
+        }
     }
 }
 #endif

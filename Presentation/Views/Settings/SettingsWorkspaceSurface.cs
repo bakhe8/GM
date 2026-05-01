@@ -240,10 +240,15 @@ namespace GuaranteeManager
 
         private Border BuildDetailPanel()
         {
+#if DEBUG
+            const double quickActionsHeight = 176;
+#else
+            const double quickActionsHeight = 134;
+#endif
             return WorkspaceSurfaceChrome.BuildReferenceDetailPanel(
                 BuildDetailContent(),
                 BuildDetailActions(),
-                134);
+                quickActionsHeight);
         }
 
         private UIElement BuildDetailContent()
@@ -316,7 +321,26 @@ namespace GuaranteeManager
             Button restorePortableButton = WorkspaceSurfaceChrome.ToolbarButton("استرجاع حزمة", automationId: "Settings.QuickAction.RestorePortable");
             restorePortableButton.Click += (_, _) => _coordinator.RestorePortableBackup(RefreshAfterDataReset);
 
-            foreach (Button button in new[] { createBackupButton, restoreBackupButton, createPortableButton, restorePortableButton })
+            var actionButtons = new List<Button>
+            {
+                createBackupButton,
+                restoreBackupButton,
+                createPortableButton,
+                restorePortableButton
+            };
+
+#if DEBUG
+            Button generateGoodDataButton = WorkspaceSurfaceChrome.ToolbarButton("توليد بيانات جيدة", automationId: "Settings.QuickAction.GenerateGoodData");
+            generateGoodDataButton.Click += (_, _) => _coordinator.GenerateGoodDevelopmentData(RefreshAfterDataReset);
+
+            Button generateAdditionalDataButton = WorkspaceSurfaceChrome.ToolbarButton("توليد بيانات إضافية", automationId: "Settings.QuickAction.GenerateAdditionalData");
+            generateAdditionalDataButton.Click += (_, _) => _coordinator.GenerateAdditionalDevelopmentData(RefreshAfterDataReset);
+
+            actionButtons.Add(generateGoodDataButton);
+            actionButtons.Add(generateAdditionalDataButton);
+#endif
+
+            foreach (Button button in actionButtons)
             {
                 button.Height = 31;
                 button.MinWidth = 0;
@@ -354,6 +378,10 @@ namespace GuaranteeManager
             actions.Children.Add(restoreBackupButton);
             actions.Children.Add(createPortableButton);
             actions.Children.Add(restorePortableButton);
+#if DEBUG
+            actions.Children.Add(generateGoodDataButton);
+            actions.Children.Add(generateAdditionalDataButton);
+#endif
             Grid.SetRow(actions, 1);
             grid.Children.Add(actions);
             border.Child = grid;

@@ -511,14 +511,22 @@ namespace GuaranteeManager.Development
         private void ClearExistingData()
         {
             using var connection = SqliteConnectionFactory.Open(_connectionString);
+            GuaranteeEventStore.EnsureSchema(connection);
             using var transaction = connection.BeginTransaction();
             try
             {
                 var cmd = connection.CreateCommand();
                 cmd.Transaction = transaction;
-                cmd.CommandText = "DELETE FROM Attachments; DELETE FROM WorkflowRequests; DELETE FROM Guarantees;";
+                cmd.CommandText = @"
+                    DROP TRIGGER IF EXISTS trg_guarantee_events_no_update;
+                    DROP TRIGGER IF EXISTS trg_guarantee_events_no_delete;
+                    DELETE FROM GuaranteeEvents;
+                    DELETE FROM Attachments;
+                    DELETE FROM WorkflowRequests;
+                    DELETE FROM Guarantees;";
                 cmd.ExecuteNonQuery();
                 transaction.Commit();
+                GuaranteeEventStore.EnsureSchema(connection);
             }
             catch
             {

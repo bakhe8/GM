@@ -21,6 +21,7 @@ namespace GuaranteeManager.Tests
                 "Guarantees" => "Guarantees",
                 "WorkflowRequests" => "WorkflowRequests",
                 "Attachments" => "Attachments",
+                "GuaranteeEvents" => "GuaranteeEvents",
                 _ => throw new ArgumentOutOfRangeException(nameof(tableName), tableName, "Unsupported table.")
             };
 
@@ -37,6 +38,14 @@ namespace GuaranteeManager.Tests
             command.CommandText = "SELECT GuaranteeNo FROM Guarantees ORDER BY Id LIMIT 1";
             return Convert.ToString(command.ExecuteScalar())
                 ?? throw new InvalidOperationException("No seeded guarantee was found.");
+        }
+
+        protected static int QueryFirstGuaranteeId()
+        {
+            using SqliteConnection connection = SqliteConnectionFactory.OpenForPath(AppPaths.DatabasePath);
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT Id FROM Guarantees ORDER BY Id LIMIT 1";
+            return Convert.ToInt32(command.ExecuteScalar());
         }
 
         protected static long GetSchemaObjectCount(SqliteConnection connection)
