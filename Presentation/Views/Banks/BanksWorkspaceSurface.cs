@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -17,7 +18,9 @@ namespace GuaranteeManager
         private readonly List<BankWorkspaceItem> _allBanks;
         private readonly ListBox _list = new();
         private readonly TextBox _searchInput = new();
-        private readonly ComboBox _sortFilter = new();
+        private readonly Button _highestValueSortButton = new();
+        private readonly Button _mostCountSortButton = new();
+        private readonly Button _mostActiveSortButton = new();
         private readonly TextBlock _summary = BuildMutedText(12, FontWeights.SemiBold);
         private readonly TextBlock _bankCountValue = BuildMetricValue();
         private readonly TextBlock _guaranteeCountValue = BuildMetricValue();
@@ -37,6 +40,7 @@ namespace GuaranteeManager
         private readonly Action<string?> _showGuaranteesForBank;
         private readonly Action<string> _addBankReference;
         private readonly ReferenceTablePagerController _pager;
+        private string _selectedSortFilter = BankSortFilters.HighestValue;
 
         public BanksWorkspaceSurface(
             IReadOnlyList<Guarantee> guarantees,
@@ -52,7 +56,9 @@ namespace GuaranteeManager
             _pager = new ReferenceTablePagerController("Banks", "بنك", 10, ApplyFilters);
             UiInstrumentation.Identify(this, "Banks.Workspace", "البنوك");
             UiInstrumentation.Identify(_searchInput, "Banks.SearchBox", "بحث البنوك");
-            UiInstrumentation.Identify(_sortFilter, "Banks.Filter.Sort", "ترتيب البنوك");
+            UiInstrumentation.Identify(_highestValueSortButton, "Banks.Filter.Sort.HighestValue", BankSortFilters.HighestValue);
+            UiInstrumentation.Identify(_mostCountSortButton, "Banks.Filter.Sort.MostCount", BankSortFilters.MostCount);
+            UiInstrumentation.Identify(_mostActiveSortButton, "Banks.Filter.Sort.MostActive", BankSortFilters.MostActive);
             UiInstrumentation.Identify(_list, "Banks.Table.List", "قائمة البنوك");
 
             FlowDirection = FlowDirection.RightToLeft;
@@ -90,22 +96,13 @@ namespace GuaranteeManager
         private Grid BuildToolbar()
         {
             var toolbar = new Grid { FlowDirection = FlowDirection.LeftToRight };
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
+            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            _sortFilter.Style = WorkspaceSurfaceChrome.Style("FilterComboBox");
-            _sortFilter.Items.Add("الأعلى قيمة");
-            _sortFilter.Items.Add("الأكثر عدداً");
-            _sortFilter.Items.Add("الأعلى نشاطاً");
-            _sortFilter.SelectedIndex = 0;
-            _sortFilter.SelectionChanged += (_, _) =>
-            {
-                _pager.ResetToFirstPage();
-                ApplyFilters();
-            };
-            Grid.SetColumn(_sortFilter, 0);
-            toolbar.Children.Add(_sortFilter);
+            UIElement sortButtons = BuildSortButtons();
+            Grid.SetColumn(sortButtons, 0);
+            toolbar.Children.Add(sortButtons);
 
             _searchInput.TextChanged += (_, _) =>
             {
@@ -117,6 +114,68 @@ namespace GuaranteeManager
             toolbar.Children.Add(searchBox);
 
             return toolbar;
+        }
+
+        private UIElement BuildSortButtons()
+        {
+            var panel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                FlowDirection = FlowDirection.RightToLeft
+            };
+
+            ConfigureSortButton(_highestValueSortButton, BankSortFilters.HighestValue);
+            ConfigureSortButton(_mostCountSortButton, BankSortFilters.MostCount);
+            ConfigureSortButton(_mostActiveSortButton, BankSortFilters.MostActive);
+
+            panel.Children.Add(_highestValueSortButton);
+            panel.Children.Add(_mostCountSortButton);
+            panel.Children.Add(_mostActiveSortButton);
+            UpdateSortButtons();
+            return panel;
+        }
+
+        private void ConfigureSortButton(Button button, string sortFilter)
+        {
+            button.Content = sortFilter;
+            button.Tag = sortFilter;
+            button.Height = 36;
+            button.MinWidth = 112;
+            button.FontSize = 11;
+            button.Margin = new Thickness(0, 0, 8, 0);
+            button.Click += (_, _) => SelectSortFilter(sortFilter);
+            AutomationProperties.SetName(button, sortFilter);
+        }
+
+        private void SelectSortFilter(string sortFilter, bool resetPage = true, bool apply = true)
+        {
+            string normalizedSort = BankSortFilters.Normalize(sortFilter);
+            bool changed = !string.Equals(_selectedSortFilter, normalizedSort, StringComparison.Ordinal);
+            _selectedSortFilter = normalizedSort;
+            UpdateSortButtons();
+
+            if (resetPage)
+            {
+                _pager.ResetToFirstPage();
+            }
+
+            if (apply && (changed || resetPage))
+            {
+                ApplyFilters();
+            }
+        }
+
+        private void UpdateSortButtons()
+        {
+            ApplySortButtonState(_highestValueSortButton, BankSortFilters.HighestValue);
+            ApplySortButtonState(_mostCountSortButton, BankSortFilters.MostCount);
+            ApplySortButtonState(_mostActiveSortButton, BankSortFilters.MostActive);
+        }
+
+        private void ApplySortButtonState(Button button, string sortFilter)
+        {
+            bool selected = string.Equals(_selectedSortFilter, sortFilter, StringComparison.Ordinal);
+            button.Style = WorkspaceSurfaceChrome.Style(selected ? "PrimaryButton" : "BaseButton");
         }
 
         private System.Windows.Controls.Primitives.UniformGrid BuildMetrics()
@@ -183,6 +242,8 @@ namespace GuaranteeManager
             _detailStatusBadgeBorder.HorizontalAlignment = HorizontalAlignment.Left;
             _detailStatusBadgeBorder.Margin = new Thickness(0, 0, 0, 12);
             _detailStatusBadgeBorder.Child = _detailStatusBadge;
+            _detailAmountCaption.HorizontalAlignment = HorizontalAlignment.Right;
+            _detailAmountCaption.FlowDirection = FlowDirection.RightToLeft;
 
             return new StackPanel
             {
@@ -314,7 +375,8 @@ namespace GuaranteeManager
         private void ApplyFilters()
         {
             _list.Items.Clear();
-            string selectedSort = _sortFilter.SelectedItem as string ?? "الأعلى قيمة";
+            string selectedSort = BankSortFilters.Normalize(_selectedSortFilter);
+            UpdateSortButtons();
             BanksWorkspaceFilterResult filtered = _dataService.BuildFilteredItems(
                 _allBanks,
                 _searchInput.Text,
@@ -613,6 +675,23 @@ namespace GuaranteeManager
                 FontSize = 10,
                 FontWeight = FontWeights.SemiBold
             };
+        }
+
+        private static class BankSortFilters
+        {
+            public const string HighestValue = "الأعلى قيمة";
+            public const string MostCount = "الأكثر عدداً";
+            public const string MostActive = "الأعلى نشاطاً";
+
+            public static string Normalize(string? sortFilter)
+            {
+                return sortFilter switch
+                {
+                    MostCount => MostCount,
+                    MostActive => MostActive,
+                    _ => HighestValue
+                };
+            }
         }
 
     }
