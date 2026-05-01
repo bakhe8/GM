@@ -190,7 +190,7 @@ namespace GuaranteeManager
             });
 
             var inner = CreateTableGrid();
-            AddHeader(inner, "الإجراءات", 0, false);
+            AddHeader(inner, "فتح", 0, false);
             AddHeader(inner, "الحالة", 1, false);
             AddHeader(inner, "الفئة", 2, false);
             AddHeader(inner, "المسار", 3, true);
@@ -312,7 +312,7 @@ namespace GuaranteeManager
                 Margin = new Thickness(9, 0, 9, 0),
                 FlowDirection = FlowDirection.LeftToRight
             };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.5, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.25, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.15, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3.5, GridUnitType.Star) });
@@ -371,7 +371,6 @@ namespace GuaranteeManager
                 Margin = new Thickness(10, 0, 0, 0)
             };
             actions.Children.Add(CreateRowButton("فتح", "Icon.View", item, OpenPath_Click));
-            actions.Children.Add(CreateRowButton("عرض", "Icon.Settings", item, SelectRow_Click));
             Grid.SetColumn(actions, 0);
             row.Children.Add(actions);
 
@@ -527,11 +526,6 @@ namespace GuaranteeManager
             }
 
             return menu;
-        }
-
-        private void SelectRow_Click(object sender, RoutedEventArgs e)
-        {
-            SelectRowFromSender(sender);
         }
 
         private void OpenPath_Click(object sender, RoutedEventArgs e)

@@ -183,11 +183,10 @@ namespace GuaranteeManager
             });
 
             var inner = CreateTableGrid();
-            AddHeader(inner, "الإجراءات", 0, false);
-            AddHeader(inner, "الفئة", 1, false);
-            AddHeader(inner, "الحالة", 2, false);
-            AddHeader(inner, "المفتاح", 3, true);
-            AddHeader(inner, "عنوان التقرير", 4, true);
+            AddHeader(inner, "الفئة", 0, false);
+            AddHeader(inner, "الحالة", 1, false);
+            AddHeader(inner, "المفتاح", 2, true);
+            AddHeader(inner, "عنوان التقرير", 3, true);
             header.Children.Add(inner);
             return header;
         }
@@ -303,7 +302,6 @@ namespace GuaranteeManager
                 Margin = new Thickness(9, 0, 9, 0),
                 FlowDirection = FlowDirection.LeftToRight
             };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.9, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.15, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.55, GridUnitType.Star) });
@@ -357,20 +355,10 @@ namespace GuaranteeManager
             row.Height = 40;
 
             ReportWorkspaceRowState rowState = _dataService.BuildRowState(item, _coordinator.Results, _coordinator.HasOutput(item));
-            var actions = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(10, 0, 0, 0)
-            };
-            actions.Children.Add(CreateRowButton("عرض", "Icon.View", item, ShowReport_Click, true));
-            Grid.SetColumn(actions, 0);
-            row.Children.Add(actions);
-
-            row.Children.Add(BuildCell(item.Category, 1, "TableCellCenter", item.CategoryBrush));
-            row.Children.Add(BuildCell(rowState.StatusLabel, 2, "TableCellCenter", rowState.StatusBrush));
-            row.Children.Add(BuildCell(item.Key, 3, "TableCellRight"));
-            row.Children.Add(BuildCell(item.Title, 4, "TableCellRight"));
+            row.Children.Add(BuildCell(item.Category, 0, "TableCellCenter", item.CategoryBrush));
+            row.Children.Add(BuildCell(rowState.StatusLabel, 1, "TableCellCenter", rowState.StatusBrush));
+            row.Children.Add(BuildCell(item.Key, 2, "TableCellRight"));
+            row.Children.Add(BuildCell(item.Title, 3, "TableCellRight"));
             return row;
         }
 
@@ -389,78 +377,6 @@ namespace GuaranteeManager
 
             Grid.SetColumn(cell, column);
             return cell;
-        }
-
-        private Button CreateRowButton(string text, string iconKey, ReportWorkspaceItem item, RoutedEventHandler handler, bool isEnabled)
-        {
-            var button = new Button
-            {
-                Content = BuildRowButtonContent(text, iconKey),
-                Tag = item,
-                Style = WorkspaceSurfaceChrome.Style("RowButton"),
-                IsEnabled = isEnabled,
-                ToolTip = "يعرض تفاصيل التقرير في اللوحة الجانبية"
-            };
-            UiInstrumentation.Identify(
-                button,
-                $"Reports.Row.Show.{item.Key}",
-                $"عرض التقرير {item.Title}");
-            button.Click += handler;
-            return button;
-        }
-
-        private static UIElement BuildRowButtonContent(string text, string iconKey)
-        {
-            var stack = new StackPanel
-            {
-                Orientation = Orientation.Horizontal
-            };
-
-            if (Application.Current.TryFindResource(iconKey) is Geometry geometry)
-            {
-                stack.Children.Add(new Viewbox
-                {
-                    Width = 10,
-                    Height = 10,
-                    Margin = new Thickness(0, 0, 3, 0),
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Child = new System.Windows.Shapes.Path
-                    {
-                        Data = geometry,
-                        Stroke = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
-                        StrokeThickness = 2,
-                        StrokeLineJoin = PenLineJoin.Round,
-                        StrokeStartLineCap = PenLineCap.Round,
-                        StrokeEndLineCap = PenLineCap.Round
-                    }
-                });
-            }
-
-            stack.Children.Add(new TextBlock
-            {
-                Text = text,
-                VerticalAlignment = VerticalAlignment.Center
-            });
-            return stack;
-        }
-
-        private void ShowReport_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is not FrameworkElement element || element.Tag is not ReportWorkspaceItem item)
-            {
-                return;
-            }
-
-            foreach (object row in _list.Items)
-            {
-                if (row is FrameworkElement frameworkElement && ReferenceEquals(frameworkElement.Tag, item))
-                {
-                    _list.SelectedItem = frameworkElement;
-                    frameworkElement.Focus();
-                    UpdateSelection();
-                    return;
-                }
-            }
         }
 
         private void UpdateSelection()
