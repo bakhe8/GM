@@ -2,6 +2,14 @@ using GuaranteeManager.Services;
 
 namespace GuaranteeManager
 {
+    public enum GuaranteeStatusFilter
+    {
+        Active,
+        ExpiringSoon,
+        NeedsFollowUp,
+        Expired
+    }
+
     public sealed class FilterOption
     {
         public static readonly FilterOption AllTimeStatuses = new("كل الحالات", null);

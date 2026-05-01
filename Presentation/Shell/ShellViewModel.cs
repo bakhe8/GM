@@ -47,6 +47,7 @@ namespace GuaranteeManager
             NextGuaranteePageCommand = new RelayCommand(_ => MoveGuaranteePage(1), _ => CanGoToNextGuaranteePage);
             GoToGuaranteePageCommand = new RelayCommand(GoToGuaranteePage, CanGoToGuaranteePage);
             SelectGuaranteeCommand = new RelayCommand(parameter => SelectGuarantee(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow);
+            ApplyGuaranteeStatusFilterCommand = new RelayCommand(ApplyGuaranteeStatusFilter);
             CreateExtensionRequestCommand = new RelayCommand(parameter => CreateExtensionRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             CreateReleaseRequestCommand = new RelayCommand(parameter => CreateReleaseRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
             CreateReductionRequestCommand = new RelayCommand(parameter => CreateReductionRequest(parameter as GuaranteeRow), parameter => parameter is GuaranteeRow || SelectedGuarantee != null);
@@ -116,7 +117,7 @@ namespace GuaranteeManager
                 SelectedGuarantee);
         }
 
-private int? ResolveContextRequestId(GuaranteeRow target)
+        private int? ResolveContextRequestId(GuaranteeRow target)
         {
             return _database.GetWorkflowRequestsByRootId(target.RootId)
                 .OrderBy(request => request.Status == RequestStatus.Pending ? 0 : 1)
@@ -138,9 +139,13 @@ private int? ResolveContextRequestId(GuaranteeRow target)
                 return;
             }
 
-            ResetGuaranteeFilters();
-
             Guarantee? guarantee = _database.GetCurrentGuaranteeByRootId(rootId);
+            SetGuaranteeFilters(
+                string.Empty,
+                AllBanksLabel,
+                AllTypesLabel,
+                FilterOption.AllTimeStatuses,
+                guarantee == null ? GuaranteeStatusFilter.Active : ResolveGuaranteeStatusFilter(guarantee));
             if (guarantee == null)
             {
                 ShowGuaranteesWorkspace();

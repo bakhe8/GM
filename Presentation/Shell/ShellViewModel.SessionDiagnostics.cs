@@ -53,7 +53,7 @@ namespace GuaranteeManager
                 SearchText,
                 SelectedBank,
                 SelectedGuaranteeType,
-                SelectedTimeStatus?.Value.ToString() ?? string.Empty,
+                SelectedGuaranteeStatusFilter.ToString(),
                 Guarantees.Count,
                 FooterSummary,
                 PendingRequestCount,

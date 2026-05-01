@@ -49,6 +49,7 @@ namespace GuaranteeManager
         private string _globalSearchText = string.Empty;
         private int _currentGuaranteePage = 1;
         private int _totalGuaranteePages = 1;
+        private GuaranteeStatusFilter _selectedGuaranteeStatusFilter = GuaranteeStatusFilter.Active;
         private FilterOption _selectedTimeStatus = FilterOption.AllTimeStatuses;
         private string _selectedBank = AllBanksLabel;
         private string _selectedGuaranteeType = AllTypesLabel;
@@ -120,6 +121,7 @@ namespace GuaranteeManager
         public ICommand NextGuaranteePageCommand { get; }
         public ICommand GoToGuaranteePageCommand { get; }
         public ICommand SelectGuaranteeCommand { get; }
+        public ICommand ApplyGuaranteeStatusFilterCommand { get; }
         public ICommand CreateExtensionRequestCommand { get; }
         public ICommand CreateReleaseRequestCommand { get; }
         public ICommand CreateReductionRequestCommand { get; }
@@ -459,6 +461,28 @@ namespace GuaranteeManager
                 }
             }
         }
+
+        public GuaranteeStatusFilter SelectedGuaranteeStatusFilter
+        {
+            get => _selectedGuaranteeStatusFilter;
+            set
+            {
+                if (SetProperty(ref _selectedGuaranteeStatusFilter, value))
+                {
+                    RaiseGuaranteeStatusFilterProperties();
+                    ResetGuaranteePagination();
+                    Refresh();
+                }
+            }
+        }
+
+        public bool IsActiveGuaranteeFilterSelected => SelectedGuaranteeStatusFilter == GuaranteeStatusFilter.Active;
+
+        public bool IsExpiringSoonGuaranteeFilterSelected => SelectedGuaranteeStatusFilter == GuaranteeStatusFilter.ExpiringSoon;
+
+        public bool IsNeedsFollowUpGuaranteeFilterSelected => SelectedGuaranteeStatusFilter == GuaranteeStatusFilter.NeedsFollowUp;
+
+        public bool IsExpiredGuaranteeFilterSelected => SelectedGuaranteeStatusFilter == GuaranteeStatusFilter.Expired;
 
         public string SelectedBank
         {

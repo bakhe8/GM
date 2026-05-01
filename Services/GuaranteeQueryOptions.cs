@@ -37,6 +37,8 @@ namespace GuaranteeManager.Services
 
         public bool NotExpiredOnly { get; set; }
 
+        public bool NeedsExpiryFollowUpOnly { get; set; }
+
         public bool IncludeAttachments { get; set; } = true;
 
         public int? Limit { get; set; }

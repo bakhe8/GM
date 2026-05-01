@@ -832,7 +832,13 @@ namespace GuaranteeManager.Services
                 sql.Append(" AND ExpiryDate >= $todayDate");
             }
 
-            if (options.UrgentOnly)
+            if (options.NeedsExpiryFollowUpOnly)
+            {
+                sql.Append(" AND ExpiryDate < $todayDate AND LifecycleStatus IN ($expiryActiveStatus, $expiryExpiredStatus)");
+                command.Parameters.AddWithValue("$expiryActiveStatus", GuaranteeLifecycleStatus.Active.ToString());
+                command.Parameters.AddWithValue("$expiryExpiredStatus", GuaranteeLifecycleStatus.Expired.ToString());
+            }
+            else if (options.UrgentOnly)
             {
                 sql.Append(" AND (ExpiryDate < $todayDate OR (ExpiryDate >= $todayDate AND ExpiryDate <= $expiringSoonCutoff))");
             }

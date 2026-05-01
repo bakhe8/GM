@@ -22,8 +22,6 @@
                         <ColumnDefinition Width="10" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="10" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="10" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
@@ -43,13 +41,6 @@
                         </StackPanel>
                     </Button>
                     <ComboBox Grid.Column="2"
-                              Style="{StaticResource FilterComboBox}"
-                              ItemsSource="{Binding TimeStatusOptions}"
-                              SelectedItem="{Binding SelectedTimeStatus, Mode=TwoWay}"
-                              DisplayMemberPath="Label"
-                              automation:AutomationProperties.AutomationId="Guarantees.Filter.TimeStatus"
-                              automation:AutomationProperties.Name="فلتر الحالة الزمنية" />
-                    <ComboBox Grid.Column="4"
                               Style="{StaticResource FilterComboBox}"
                               ItemsSource="{Binding BankOptions}"
                               SelectedItem="{Binding SelectedBank, Mode=TwoWay}"
@@ -84,7 +75,7 @@
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
-                    <ComboBox Grid.Column="6"
+                    <ComboBox Grid.Column="4"
                               Style="{StaticResource FilterComboBox}"
                               ItemsSource="{Binding GuaranteeTypeOptions}"
                               SelectedItem="{Binding SelectedGuaranteeType, Mode=TwoWay}"
@@ -92,7 +83,7 @@
                               Tag="{StaticResource Icon.Guarantees}"
                               automation:AutomationProperties.AutomationId="Guarantees.Filter.Type"
                               automation:AutomationProperties.Name="فلتر نوع الضمان" />
-                    <Border Grid.Column="8"
+                    <Border Grid.Column="6"
                             Background="White"
                             BorderBrush="#D8E1EE"
                             BorderThickness="1"
@@ -137,15 +128,59 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Style="{StaticResource Card}" Padding="16,12" MinHeight="84">
+                    <Border Grid.Column="0"
+                            Padding="16,12"
+                            MinHeight="84"
+                            Cursor="Hand"
+                            ToolTip="عرض الضمانات المنتهية"
+                            automation:AutomationProperties.AutomationId="Guarantees.FilterCard.Expired"
+                            automation:AutomationProperties.Name="فلتر الضمانات المنتهية">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource Card}">
+                                <Setter Property="BorderThickness" Value="2" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsExpiredGuaranteeFilterSelected}" Value="True">
+                                        <Setter Property="BorderBrush" Value="#2563EB" />
+                                        <Setter Property="Background" Value="#F8FBFF" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Border.InputBindings>
+                            <MouseBinding MouseAction="LeftClick"
+                                          Command="{Binding ApplyGuaranteeStatusFilterCommand}"
+                                          CommandParameter="Expired" />
+                        </Border.InputBindings>
                         <StackPanel FlowDirection="RightToLeft" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="طلبات معلقة" Style="{StaticResource KpiTitle}" Foreground="{StaticResource Brush.Orange}" />
-                            <TextBlock Text="{Binding PendingRequestCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
-                            <TextBlock Text="{Binding PendingRequestMeta}" Style="{StaticResource KpiMeta}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="منتهية" Style="{StaticResource KpiTitle}" Foreground="#EF4444" />
+                            <TextBlock Text="{Binding ExpiredCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
+                            <TextBlock Text="{Binding ExpiredMeta}" Style="{StaticResource KpiMeta}" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                     </Border>
 
-                    <Border Grid.Column="2" Style="{StaticResource Card}" Padding="16,12" MinHeight="84">
+                    <Border Grid.Column="2"
+                            Padding="16,12"
+                            MinHeight="84"
+                            Cursor="Hand"
+                            ToolTip="عرض الضمانات التي تحتاج متابعة"
+                            automation:AutomationProperties.AutomationId="Guarantees.FilterCard.NeedsFollowUp"
+                            automation:AutomationProperties.Name="فلتر الضمانات التي تحتاج متابعة">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource Card}">
+                                <Setter Property="BorderThickness" Value="2" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsNeedsFollowUpGuaranteeFilterSelected}" Value="True">
+                                        <Setter Property="BorderBrush" Value="#2563EB" />
+                                        <Setter Property="Background" Value="#F8FBFF" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Border.InputBindings>
+                            <MouseBinding MouseAction="LeftClick"
+                                          Command="{Binding ApplyGuaranteeStatusFilterCommand}"
+                                          CommandParameter="NeedsFollowUp" />
+                        </Border.InputBindings>
                         <StackPanel FlowDirection="RightToLeft" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock Text="تحتاج متابعة" Style="{StaticResource KpiTitle}" Foreground="#C2410C" />
                             <TextBlock Text="{Binding ExpiredFollowUpCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
@@ -153,7 +188,29 @@
                         </StackPanel>
                     </Border>
 
-                    <Border Grid.Column="4" Style="{StaticResource Card}" Padding="16,12" MinHeight="84">
+                    <Border Grid.Column="4"
+                            Padding="16,12"
+                            MinHeight="84"
+                            Cursor="Hand"
+                            ToolTip="عرض الضمانات قريبة الانتهاء"
+                            automation:AutomationProperties.AutomationId="Guarantees.FilterCard.ExpiringSoon"
+                            automation:AutomationProperties.Name="فلتر الضمانات قريبة الانتهاء">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource Card}">
+                                <Setter Property="BorderThickness" Value="2" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsExpiringSoonGuaranteeFilterSelected}" Value="True">
+                                        <Setter Property="BorderBrush" Value="#2563EB" />
+                                        <Setter Property="Background" Value="#F8FBFF" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Border.InputBindings>
+                            <MouseBinding MouseAction="LeftClick"
+                                          Command="{Binding ApplyGuaranteeStatusFilterCommand}"
+                                          CommandParameter="ExpiringSoon" />
+                        </Border.InputBindings>
                         <StackPanel FlowDirection="RightToLeft" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock Text="قريب الانتهاء" Style="{StaticResource KpiTitle}" Foreground="{StaticResource Brush.Orange}" />
                             <TextBlock Text="{Binding ExpiringSoonCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
@@ -161,7 +218,29 @@
                         </StackPanel>
                     </Border>
 
-                    <Border Grid.Column="6" Style="{StaticResource Card}" Padding="16,12" MinHeight="84">
+                    <Border Grid.Column="6"
+                            Padding="16,12"
+                            MinHeight="84"
+                            Cursor="Hand"
+                            ToolTip="عرض الضمانات النشطة"
+                            automation:AutomationProperties.AutomationId="Guarantees.FilterCard.Active"
+                            automation:AutomationProperties.Name="فلتر الضمانات النشطة">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource Card}">
+                                <Setter Property="BorderThickness" Value="2" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsActiveGuaranteeFilterSelected}" Value="True">
+                                        <Setter Property="BorderBrush" Value="#2563EB" />
+                                        <Setter Property="Background" Value="#F8FBFF" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Border.InputBindings>
+                            <MouseBinding MouseAction="LeftClick"
+                                          Command="{Binding ApplyGuaranteeStatusFilterCommand}"
+                                          CommandParameter="Active" />
+                        </Border.InputBindings>
                         <StackPanel FlowDirection="RightToLeft" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock Text="نشط" Style="{StaticResource KpiTitle}" Foreground="{StaticResource Brush.Green}" />
                             <TextBlock Text="{Binding ActiveCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />

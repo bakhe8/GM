@@ -132,7 +132,8 @@ namespace GuaranteeManager
                 string.Empty,
                 selectedBank,
                 AllTypesLabel,
-                FilterOption.AllTimeStatuses);
+                FilterOption.AllTimeStatuses,
+                GuaranteeStatusFilter.Active);
             _shellStatus.ShowInfo("تم عرض ضمانات البنك.", $"الضمانات • {selectedBank}");
         }
 
@@ -157,10 +158,12 @@ namespace GuaranteeManager
 
             CloseActiveWorkspace();
 
-            SearchText = string.Empty;
-            SelectedBank = AllBanksLabel;
-            SelectedGuaranteeType = AllTypesLabel;
-            SelectedTimeStatus = FilterOption.AllTimeStatuses;
+            SetGuaranteeFilters(
+                string.Empty,
+                AllBanksLabel,
+                AllTypesLabel,
+                FilterOption.AllTimeStatuses,
+                ResolveGuaranteeStatusFilter(guarantee));
 
             GuaranteeRow? row = Guarantees.FirstOrDefault(item => item.RootId == _lastFileState.RootId)
                 ?? Guarantees.FirstOrDefault(item => item.Id == guarantee.Id);

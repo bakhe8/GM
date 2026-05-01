@@ -97,7 +97,7 @@ namespace GuaranteeManager
             string allBanksLabel,
             string selectedGuaranteeType,
             string allTypesLabel,
-            GuaranteeTimeStatus? selectedTimeStatus,
+            GuaranteeStatusFilter selectedStatusFilter,
             int pageSize,
             int pageNumber)
         {
@@ -107,13 +107,23 @@ namespace GuaranteeManager
                 SortMode = WorkflowRequestQuerySortMode.RequestDateDescending
             });
 
+            List<Guarantee> basePortfolio = QueryGuarantees(
+                searchText,
+                selectedBank,
+                allBanksLabel,
+                selectedGuaranteeType,
+                allTypesLabel,
+                selectedTimeStatus: null,
+                includeAttachments: false,
+                limit: null);
+
             List<Guarantee> portfolio = QueryGuarantees(
                 searchText,
                 selectedBank,
                 allBanksLabel,
                 selectedGuaranteeType,
                 allTypesLabel,
-                selectedTimeStatus,
+                selectedStatusFilter,
                 includeAttachments: false,
                 limit: null);
 
@@ -128,12 +138,12 @@ namespace GuaranteeManager
                 allBanksLabel,
                 selectedGuaranteeType,
                 allTypesLabel,
-                selectedTimeStatus,
+                selectedStatusFilter,
                 includeAttachments: true,
                 limit: pageSize,
                 offset: offset);
 
-            HashSet<int> visibleRootIds = portfolio
+            HashSet<int> visibleRootIds = basePortfolio
                 .Select(guarantee => guarantee.RootId ?? guarantee.Id)
                 .ToHashSet();
 
@@ -173,12 +183,12 @@ namespace GuaranteeManager
                 })
                 .ToList();
 
-            List<Guarantee> active = portfolio
+            List<Guarantee> active = basePortfolio
                 .Where(guarantee => guarantee.LifecycleStatus == GuaranteeLifecycleStatus.Active && !guarantee.IsExpired && !guarantee.IsExpiringSoon)
                 .ToList();
-            List<Guarantee> expiringSoon = portfolio.Where(guarantee => guarantee.IsExpiringSoon).ToList();
-            List<Guarantee> expired = portfolio.Where(guarantee => guarantee.IsExpired).ToList();
-            List<Guarantee> expiredFollowUp = portfolio.Where(guarantee => guarantee.NeedsExpiryFollowUp).ToList();
+            List<Guarantee> expiringSoon = basePortfolio.Where(guarantee => guarantee.IsExpiringSoon).ToList();
+            List<Guarantee> expired = basePortfolio.Where(guarantee => guarantee.IsExpired).ToList();
+            List<Guarantee> expiredFollowUp = basePortfolio.Where(guarantee => guarantee.NeedsExpiryFollowUp).ToList();
             decimal pendingAmount = visiblePendingRequests
                 .GroupBy(request => request.RootGuaranteeId)
                 .Select(group => group.First().CurrentAmount)
@@ -286,6 +296,31 @@ namespace GuaranteeManager
                 offset));
         }
 
+        private List<Guarantee> QueryGuarantees(
+            string searchText,
+            string selectedBank,
+            string allBanksLabel,
+            string selectedGuaranteeType,
+            string allTypesLabel,
+            GuaranteeStatusFilter selectedStatusFilter,
+            bool includeAttachments,
+            int? limit,
+            int? offset = null)
+        {
+            return _database.QueryGuarantees(BuildGuaranteeQueryOptions(
+                searchText,
+                selectedBank,
+                allBanksLabel,
+                selectedGuaranteeType,
+                allTypesLabel,
+                ResolveTimeStatus(selectedStatusFilter),
+                includeAttachments,
+                limit,
+                offset,
+                ResolveLifecycleStatus(selectedStatusFilter),
+                selectedStatusFilter == GuaranteeStatusFilter.NeedsFollowUp));
+        }
+
         private static GuaranteeQueryOptions BuildGuaranteeQueryOptions(
             string searchText,
             string selectedBank,
@@ -295,7 +330,9 @@ namespace GuaranteeManager
             GuaranteeTimeStatus? selectedTimeStatus,
             bool includeAttachments,
             int? limit,
-            int? offset)
+            int? offset,
+            GuaranteeLifecycleStatus? lifecycleStatus = null,
+            bool needsExpiryFollowUpOnly = false)
         {
             return new GuaranteeQueryOptions
             {
@@ -303,12 +340,28 @@ namespace GuaranteeManager
                 Bank = selectedBank == allBanksLabel ? null : selectedBank,
                 GuaranteeType = selectedGuaranteeType == allTypesLabel ? null : selectedGuaranteeType,
                 TimeStatus = selectedTimeStatus,
+                LifecycleStatus = lifecycleStatus,
+                NeedsExpiryFollowUpOnly = needsExpiryFollowUpOnly,
                 IncludeAttachments = includeAttachments,
                 Limit = limit,
                 Offset = offset,
                 SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
             };
         }
+
+        private static GuaranteeTimeStatus? ResolveTimeStatus(GuaranteeStatusFilter selectedStatusFilter) => selectedStatusFilter switch
+        {
+            GuaranteeStatusFilter.Active => GuaranteeTimeStatus.Active,
+            GuaranteeStatusFilter.ExpiringSoon => GuaranteeTimeStatus.ExpiringSoon,
+            GuaranteeStatusFilter.Expired => GuaranteeTimeStatus.Expired,
+            _ => null
+        };
+
+        private static GuaranteeLifecycleStatus? ResolveLifecycleStatus(GuaranteeStatusFilter selectedStatusFilter) => selectedStatusFilter switch
+        {
+            GuaranteeStatusFilter.Active => GuaranteeLifecycleStatus.Active,
+            _ => null
+        };
 
         private static string FormatMeta(decimal amount)
         {

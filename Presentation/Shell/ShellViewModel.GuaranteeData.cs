@@ -19,7 +19,7 @@ namespace GuaranteeManager
                 AllBanksLabel,
                 SelectedGuaranteeType,
                 AllTypesLabel,
-                SelectedTimeStatus.Value,
+                SelectedGuaranteeStatusFilter,
                 PageSize,
                 CurrentGuaranteePage);
 
@@ -124,6 +124,63 @@ namespace GuaranteeManager
             return parameter is int pageNumber
                    && pageNumber >= 1
                    && pageNumber <= TotalGuaranteePages;
+        }
+
+        private void ApplyGuaranteeStatusFilter(object? parameter)
+        {
+            if (!TryResolveGuaranteeStatusFilter(parameter, out GuaranteeStatusFilter statusFilter))
+            {
+                return;
+            }
+
+            SelectedGuaranteeStatusFilter = statusFilter;
+        }
+
+        private static bool TryResolveGuaranteeStatusFilter(object? parameter, out GuaranteeStatusFilter statusFilter)
+        {
+            if (parameter is GuaranteeStatusFilter typedStatusFilter)
+            {
+                statusFilter = typedStatusFilter;
+                return true;
+            }
+
+            if (parameter is string rawValue
+                && Enum.TryParse(rawValue, ignoreCase: true, out GuaranteeStatusFilter parsedStatusFilter))
+            {
+                statusFilter = parsedStatusFilter;
+                return true;
+            }
+
+            statusFilter = GuaranteeStatusFilter.Active;
+            return false;
+        }
+
+        private static GuaranteeStatusFilter ResolveGuaranteeStatusFilter(Guarantee guarantee)
+        {
+            if (guarantee.NeedsExpiryFollowUp)
+            {
+                return GuaranteeStatusFilter.NeedsFollowUp;
+            }
+
+            if (guarantee.IsExpired)
+            {
+                return GuaranteeStatusFilter.Expired;
+            }
+
+            if (guarantee.IsExpiringSoon)
+            {
+                return GuaranteeStatusFilter.ExpiringSoon;
+            }
+
+            return GuaranteeStatusFilter.Active;
+        }
+
+        private void RaiseGuaranteeStatusFilterProperties()
+        {
+            OnPropertyChanged(nameof(IsActiveGuaranteeFilterSelected));
+            OnPropertyChanged(nameof(IsExpiringSoonGuaranteeFilterSelected));
+            OnPropertyChanged(nameof(IsNeedsFollowUpGuaranteeFilterSelected));
+            OnPropertyChanged(nameof(IsExpiredGuaranteeFilterSelected));
         }
 
         private void RefreshGuaranteePagerButtons()
@@ -360,20 +417,28 @@ namespace GuaranteeManager
                 string.Empty,
                 AllBanksLabel,
                 AllTypesLabel,
-                FilterOption.AllTimeStatuses);
+                FilterOption.AllTimeStatuses,
+                GuaranteeStatusFilter.Active);
         }
 
         private void SetGuaranteeFilters(
             string searchText,
             string selectedBank,
             string selectedGuaranteeType,
-            FilterOption selectedTimeStatus)
+            FilterOption selectedTimeStatus,
+            GuaranteeStatusFilter selectedStatusFilter)
         {
             bool changed = false;
             changed |= SetProperty(ref _searchText, searchText ?? string.Empty, nameof(SearchText));
             changed |= SetProperty(ref _selectedBank, string.IsNullOrWhiteSpace(selectedBank) ? AllBanksLabel : selectedBank, nameof(SelectedBank));
             changed |= SetProperty(ref _selectedGuaranteeType, string.IsNullOrWhiteSpace(selectedGuaranteeType) ? AllTypesLabel : selectedGuaranteeType, nameof(SelectedGuaranteeType));
             changed |= SetProperty(ref _selectedTimeStatus, selectedTimeStatus, nameof(SelectedTimeStatus));
+            bool statusFilterChanged = SetProperty(ref _selectedGuaranteeStatusFilter, selectedStatusFilter, nameof(SelectedGuaranteeStatusFilter));
+            changed |= statusFilterChanged;
+            if (statusFilterChanged)
+            {
+                RaiseGuaranteeStatusFilterProperties();
+            }
 
             if (changed)
             {
