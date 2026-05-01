@@ -114,6 +114,8 @@ namespace GuaranteeManager
             if (!string.IsNullOrWhiteSpace(normalizedSearch))
             {
                 query = query.Where(item =>
+                    item.RequiredLabel.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) ||
+                    item.Supplier.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) ||
                     item.Title.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) ||
                     item.Subtitle.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) ||
                     item.Reference.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) ||
@@ -332,6 +334,8 @@ namespace GuaranteeManager
                 label,
                 rank,
                 $"{item.Request.TypeLabel} - {item.Supplier}",
+                item.Request.TypeLabel,
+                item.Supplier,
                 item.Bank,
                 GuaranteeRow.ResolveBankLogo(item.Bank),
                 item.GuaranteeNo,
@@ -389,6 +393,8 @@ namespace GuaranteeManager
                 label,
                 rank,
                 item.Supplier,
+                hasPendingRequest ? pendingRequest!.Request.TypeLabel : "متابعة انتهاء",
+                item.Supplier,
                 item.Bank,
                 GuaranteeRow.ResolveBankLogo(item.Bank),
                 item.GuaranteeNo,
@@ -439,6 +445,8 @@ namespace GuaranteeManager
                 label,
                 rank,
                 item.Supplier,
+                hasPendingRequest ? pendingRequest!.Request.TypeLabel : "مراجعة تمديد",
+                item.Supplier,
                 item.Bank,
                 GuaranteeRow.ResolveBankLogo(item.Bank),
                 item.GuaranteeNo,
@@ -469,39 +477,79 @@ namespace GuaranteeManager
         {
             if (string.Equals(normalizedScope, DashboardScopeFilters.ExpiryFollowUps, StringComparison.Ordinal))
             {
-                int expiringCount = filteredItems.Count(item => item.Scope == DashboardScope.ExpiringSoon);
-                int expiredCount = filteredItems.Count(item => item.Scope == DashboardScope.ExpiredFollowUp);
-                decimal totalAmount = filteredItems.Sum(item => item.Amount);
-                string closestDate = filteredItems
-                    .OrderBy(item => item.SortDate)
-                    .FirstOrDefault()?
-                    .DueLabel ?? "---";
+                int expiringCount = guarantees.Count(item => item.IsExpiringSoon);
+                int expiredCount = guarantees.Count(item => item.NeedsExpiryFollowUp);
 
-                return new DashboardWorkspaceMetrics(
-                    new DashboardMetricCard("قريب الانتهاء", expiringCount.ToString("N0", CultureInfo.InvariantCulture), "#E09408"),
-                    new DashboardMetricCard("منتهي", expiredCount.ToString("N0", CultureInfo.InvariantCulture), "#EF4444"),
-                    new DashboardMetricCard("إجمالي القيمة", $"{totalAmount.ToString("N0", CultureInfo.InvariantCulture)} ريال", "#2563EB"),
-                    new DashboardMetricCard("أقرب تاريخ", closestDate, "#0F172A"));
+                return new DashboardWorkspaceMetrics(new[]
+                {
+                    new DashboardMetricCard(
+                        DashboardScopeFilters.AllWork,
+                        allItems.Count.ToString("N0", CultureInfo.InvariantCulture),
+                        "#2563EB",
+                        DashboardScopeFilters.AllWork,
+                        DashboardExpiryFollowUpFilters.All),
+                    new DashboardMetricCard(
+                        DashboardScopeFilters.PendingRequests,
+                        pendingRequests.Count.ToString("N0", CultureInfo.InvariantCulture),
+                        "#E09408",
+                        DashboardScopeFilters.PendingRequests,
+                        DashboardExpiryFollowUpFilters.All),
+                    new DashboardMetricCard(
+                        "قريبة الانتهاء",
+                        expiringCount.ToString("N0", CultureInfo.InvariantCulture),
+                        "#E09408",
+                        DashboardScopeFilters.ExpiryFollowUps,
+                        DashboardExpiryFollowUpFilters.ExpiringSoon),
+                    new DashboardMetricCard(
+                        "منتهية",
+                        expiredCount.ToString("N0", CultureInfo.InvariantCulture),
+                        "#EF4444",
+                        DashboardScopeFilters.ExpiryFollowUps,
+                        DashboardExpiryFollowUpFilters.Expired)
+                });
             }
 
-            return new DashboardWorkspaceMetrics(
-                new DashboardMetricCard("آخر ضمان", hasLastFile ? lastFileGuaranteeNo : "لا يوجد", "#2563EB"),
-                new DashboardMetricCard("أعمال حرجة", allItems.Count(item => item.PriorityRank <= 1).ToString("N0", CultureInfo.InvariantCulture), "#EF4444"),
-                new DashboardMetricCard(DashboardScopeFilters.PendingRequests, pendingRequests.Count.ToString("N0", CultureInfo.InvariantCulture), "#E09408"),
-                new DashboardMetricCard("ضمانات تحتاج متابعة", guarantees.Count(item => item.NeedsExpiryFollowUp || item.IsExpiringSoon).ToString("N0", CultureInfo.InvariantCulture), "#0F172A"));
+            int expiringSoonCount = guarantees.Count(item => item.IsExpiringSoon);
+            int expiredFollowUpCount = guarantees.Count(item => item.NeedsExpiryFollowUp);
+            return new DashboardWorkspaceMetrics(new[]
+            {
+                new DashboardMetricCard(
+                    DashboardScopeFilters.AllWork,
+                    allItems.Count.ToString("N0", CultureInfo.InvariantCulture),
+                    "#2563EB",
+                    DashboardScopeFilters.AllWork,
+                    DashboardExpiryFollowUpFilters.All),
+                new DashboardMetricCard(
+                    DashboardScopeFilters.PendingRequests,
+                    pendingRequests.Count.ToString("N0", CultureInfo.InvariantCulture),
+                    "#E09408",
+                    DashboardScopeFilters.PendingRequests,
+                    DashboardExpiryFollowUpFilters.All),
+                new DashboardMetricCard(
+                    "قريبة الانتهاء",
+                    expiringSoonCount.ToString("N0", CultureInfo.InvariantCulture),
+                    "#E09408",
+                    DashboardScopeFilters.ExpiryFollowUps,
+                    DashboardExpiryFollowUpFilters.ExpiringSoon),
+                new DashboardMetricCard(
+                    "منتهية",
+                    expiredFollowUpCount.ToString("N0", CultureInfo.InvariantCulture),
+                    "#EF4444",
+                    DashboardScopeFilters.ExpiryFollowUps,
+                    DashboardExpiryFollowUpFilters.Expired)
+            });
         }
     }
 
     public sealed record DashboardWorkspaceMetrics(
-        DashboardMetricCard First,
-        DashboardMetricCard Second,
-        DashboardMetricCard Third,
-        DashboardMetricCard Fourth);
+        IReadOnlyList<DashboardMetricCard> Cards);
 
     public sealed record DashboardMetricCard(
         string Label,
         string Value,
-        string AccentHex);
+        string AccentHex,
+        string ScopeFilter = "",
+        string ExpiryFilter = "");
 
     public sealed record DashboardWorkspaceFilterResult(
         IReadOnlyList<DashboardWorkItem> Items,
@@ -571,6 +619,8 @@ namespace GuaranteeManager
         string PriorityLabel,
         int PriorityRank,
         string Title,
+        string RequiredLabel,
+        string Supplier,
         string Bank,
         ImageSource BankLogo,
         string Reference,

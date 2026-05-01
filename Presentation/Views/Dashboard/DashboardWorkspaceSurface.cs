@@ -26,10 +26,6 @@ namespace GuaranteeManager
 
         private readonly ListBox _list = new();
         private readonly TextBox _searchInput = new();
-        private readonly Button _allWorkScopeButton = new();
-        private readonly Button _pendingRequestsScopeButton = new();
-        private readonly Button _expiryFollowUpsScopeButton = new();
-        private readonly ComboBox _expiryFollowUpFilter = new();
         private readonly TextBlock _summary = BuildMutedText(12, FontWeights.SemiBold);
         private readonly Grid _tableHeaderInner = new();
         private readonly System.Windows.Controls.Primitives.UniformGrid _metricsGrid = new();
@@ -66,7 +62,7 @@ namespace GuaranteeManager
         private DashboardGuidanceState? _guidanceState;
         private FrameworkElement? _detailExpiryLine;
         private string _selectedScopeFilter = DashboardScopeFilters.AllWork;
-        private bool _isUpdatingFilters;
+        private string _selectedExpiryFollowUpFilter = DashboardExpiryFollowUpFilters.All;
 
         public DashboardWorkspaceSurface(
             Func<IReadOnlyList<Guarantee>> loadGuarantees,
@@ -92,10 +88,6 @@ namespace GuaranteeManager
 
             UiInstrumentation.Identify(this, "Dashboard.Workspace", "اليوم");
             UiInstrumentation.Identify(_searchInput, "Dashboard.SearchBox", "بحث اليوم");
-            UiInstrumentation.Identify(_allWorkScopeButton, "Dashboard.Filter.Scope.AllWork", DashboardScopeFilters.AllWork);
-            UiInstrumentation.Identify(_pendingRequestsScopeButton, "Dashboard.Filter.Scope.PendingRequests", DashboardScopeFilters.PendingRequests);
-            UiInstrumentation.Identify(_expiryFollowUpsScopeButton, "Dashboard.Filter.Scope.ExpiryFollowUps", DashboardScopeFilters.ExpiryFollowUps);
-            UiInstrumentation.Identify(_expiryFollowUpFilter, "Dashboard.Filter.ExpiryFollowUpKind", "نوع متابعة الانتهاء");
             UiInstrumentation.Identify(_list, "Dashboard.Table.List", "قائمة أعمال اليوم");
 
             FlowDirection = FlowDirection.RightToLeft;
@@ -152,35 +144,7 @@ namespace GuaranteeManager
         private Grid BuildToolbar()
         {
             var toolbar = new Grid { FlowDirection = FlowDirection.LeftToRight };
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
             toolbar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-            UIElement scopeButtons = BuildScopeButtons();
-            Grid.SetColumn(scopeButtons, 0);
-            toolbar.Children.Add(scopeButtons);
-
-            _expiryFollowUpFilter.Style = WorkspaceSurfaceChrome.Style("FilterComboBox");
-            _expiryFollowUpFilter.Width = 150;
-            _expiryFollowUpFilter.Items.Add(DashboardExpiryFollowUpFilters.All);
-            _expiryFollowUpFilter.Items.Add(DashboardExpiryFollowUpFilters.Expired);
-            _expiryFollowUpFilter.Items.Add(DashboardExpiryFollowUpFilters.ExpiringSoon);
-            _expiryFollowUpFilter.SelectedIndex = 0;
-            _expiryFollowUpFilter.Visibility = Visibility.Collapsed;
-            _expiryFollowUpFilter.SelectionChanged += (_, _) =>
-            {
-                if (_isUpdatingFilters)
-                {
-                    return;
-                }
-
-                _pager.ResetToFirstPage();
-                ApplyFilters();
-            };
-            Grid.SetColumn(_expiryFollowUpFilter, 2);
-            toolbar.Children.Add(_expiryFollowUpFilter);
 
             _searchInput.TextChanged += (_, _) =>
             {
@@ -188,44 +152,9 @@ namespace GuaranteeManager
                 ApplyFilters();
             };
             var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث باسم المورد أو البنك أو رقم الضمان...");
-            Grid.SetColumn(searchBox, 4);
+            Grid.SetColumn(searchBox, 0);
             toolbar.Children.Add(searchBox);
             return toolbar;
-        }
-
-        private UIElement BuildScopeButtons()
-        {
-            var panel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                FlowDirection = FlowDirection.LeftToRight
-            };
-
-            ConfigureScopeButton(_allWorkScopeButton, DashboardScopeFilters.AllWork);
-            ConfigureScopeButton(_pendingRequestsScopeButton, DashboardScopeFilters.PendingRequests);
-            ConfigureScopeButton(_expiryFollowUpsScopeButton, DashboardScopeFilters.ExpiryFollowUps);
-
-            panel.Children.Add(_expiryFollowUpsScopeButton);
-            panel.Children.Add(_pendingRequestsScopeButton);
-            panel.Children.Add(_allWorkScopeButton);
-            WorkspaceSurfaceChrome.ApplyToolbarGroupSpacing(
-                _expiryFollowUpsScopeButton,
-                _pendingRequestsScopeButton,
-                _allWorkScopeButton);
-            UpdateScopeButtons();
-            return panel;
-        }
-
-        private void ConfigureScopeButton(Button button, string scope)
-        {
-            button.Content = scope;
-            button.Tag = scope;
-            button.Height = 36;
-            button.MinWidth = 138;
-            button.FontSize = 11;
-            button.FlowDirection = FlowDirection.RightToLeft;
-            button.Click += (_, _) => SelectScopeFilter(scope);
-            AutomationProperties.SetName(button, scope);
         }
 
         private void SelectScopeFilter(string scopeFilter, bool resetPage = true, bool apply = true)
@@ -233,8 +162,6 @@ namespace GuaranteeManager
             string normalizedScope = DashboardScopeFilters.Normalize(scopeFilter);
             bool changed = !string.Equals(_selectedScopeFilter, normalizedScope, StringComparison.Ordinal);
             _selectedScopeFilter = normalizedScope;
-            UpdateScopeButtons();
-            UpdateExpiryFollowUpFilterVisibility(_selectedScopeFilter);
 
             if (resetPage)
             {
@@ -245,19 +172,6 @@ namespace GuaranteeManager
             {
                 ApplyFilters();
             }
-        }
-
-        private void UpdateScopeButtons()
-        {
-            ApplyScopeButtonState(_allWorkScopeButton, DashboardScopeFilters.AllWork);
-            ApplyScopeButtonState(_pendingRequestsScopeButton, DashboardScopeFilters.PendingRequests);
-            ApplyScopeButtonState(_expiryFollowUpsScopeButton, DashboardScopeFilters.ExpiryFollowUps);
-        }
-
-        private void ApplyScopeButtonState(Button button, string scope)
-        {
-            bool selected = string.Equals(_selectedScopeFilter, scope, StringComparison.Ordinal);
-            button.Style = WorkspaceSurfaceChrome.Style(selected ? "PrimaryButton" : "BaseButton");
         }
 
         private System.Windows.Controls.Primitives.UniformGrid BuildMetrics()
@@ -549,14 +463,14 @@ namespace GuaranteeManager
                 Margin = new Thickness(9, 0, 9, 0),
                 FlowDirection = FlowDirection.LeftToRight
             };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.35, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.75, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.22, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.95, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.08, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.2, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.7, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.88, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.45, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.05, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.18, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.55, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.35, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.35, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.35, GridUnitType.Star) });
             return grid;
         }
 
@@ -586,9 +500,7 @@ namespace GuaranteeManager
         {
             _list.Items.Clear();
             string selectedScope = _selectedScopeFilter;
-            string expiryFollowUpFilter = _expiryFollowUpFilter.SelectedItem as string ?? DashboardExpiryFollowUpFilters.All;
-            UpdateScopeButtons();
-            UpdateExpiryFollowUpFilterVisibility(selectedScope);
+            string expiryFollowUpFilter = _selectedExpiryFollowUpFilter;
             RefreshTableHeader(selectedScope);
             DashboardWorkspaceFilterResult filtered = _dataService.BuildFilteredItems(
                 _allItems,
@@ -620,29 +532,7 @@ namespace GuaranteeManager
         private void SelectExpiryFollowUpFilter(string filter, bool apply = true)
         {
             string normalizedFilter = DashboardExpiryFollowUpFilters.Normalize(filter);
-            _isUpdatingFilters = true;
-            try
-            {
-                bool matched = false;
-                foreach (object item in _expiryFollowUpFilter.Items)
-                {
-                    if (string.Equals(item as string, normalizedFilter, StringComparison.Ordinal))
-                    {
-                        _expiryFollowUpFilter.SelectedItem = item;
-                        matched = true;
-                        break;
-                    }
-                }
-
-                if (!matched)
-                {
-                    _expiryFollowUpFilter.SelectedItem = DashboardExpiryFollowUpFilters.All;
-                }
-            }
-            finally
-            {
-                _isUpdatingFilters = false;
-            }
+            _selectedExpiryFollowUpFilter = normalizedFilter;
 
             if (apply)
             {
@@ -651,45 +541,29 @@ namespace GuaranteeManager
             }
         }
 
-        private void UpdateExpiryFollowUpFilterVisibility(string selectedScope)
-        {
-            bool isExpiryFollowUpScope = IsExpiryFollowUpScope(selectedScope);
-            _expiryFollowUpFilter.Visibility = isExpiryFollowUpScope ? Visibility.Visible : Visibility.Collapsed;
-            _expiryFollowUpFilter.IsEnabled = isExpiryFollowUpScope;
-        }
-
         private FrameworkElement BuildRow(DashboardWorkItem item, string selectedScope)
         {
             var row = CreateTableGrid();
             row.Tag = item;
             row.Height = 40;
 
-            var actions = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(6, 0, 0, 0)
-            };
-            actions.Children.Add(CreateRowButton("عرض", "Icon.View", item, OpenRow_Click));
-            Grid.SetColumn(actions, 0);
-            row.Children.Add(actions);
-
             if (IsExpiryFollowUpScope(selectedScope))
             {
-                row.Children.Add(BuildCell(item.PriorityLabel, 1, "TableCellCenter", item.PriorityBrush));
-                row.Children.Add(BuildCell(item.DueDetail, 2, "TableCellCenter", item.PriorityBrush));
-                row.Children.Add(BuildCell(item.DueLabel, 3, "TableCellCenter"));
+                row.Children.Add(BuildCell(item.PriorityLabel, 0, "TableCellCenter", item.PriorityBrush));
+                row.Children.Add(BuildCell(item.DueDetail, 1, "TableCellCenter", item.PriorityBrush));
+                row.Children.Add(BuildCell(item.DueLabel, 2, "TableCellCenter"));
             }
             else
             {
-                row.Children.Add(BuildCell(item.CategoryLabel, 1, "TableCellCenter", item.CategoryBrush));
-                row.Children.Add(BuildCell(item.PriorityLabel, 2, "TableCellCenter", item.PriorityBrush));
-                row.Children.Add(BuildCell(item.DueLabel, 3, "TableCellCenter"));
+                row.Children.Add(BuildCell(item.CategoryLabel, 0, "TableCellCenter", item.CategoryBrush));
+                row.Children.Add(BuildCell(item.PriorityLabel, 1, "TableCellCenter", item.PriorityBrush));
+                row.Children.Add(BuildCell(item.DueLabel, 2, "TableCellCenter"));
             }
 
-            row.Children.Add(BuildAmountCell(item.AmountDisplay, 4));
-            row.Children.Add(BuildBankCell(item, 5));
-            row.Children.Add(BuildCell(item.Title, 6, "TableCellRight"));
+            row.Children.Add(BuildAmountCell(item.AmountDisplay, 3));
+            row.Children.Add(BuildBankCell(item, 4));
+            row.Children.Add(BuildCell(item.RequiredLabel, 5, "TableCellRight"));
+            row.Children.Add(BuildCell(item.Supplier, 6, "TableCellRight"));
             row.Children.Add(BuildCell(item.Reference, 7, "TableCellRight"));
             return row;
         }
@@ -705,23 +579,23 @@ namespace GuaranteeManager
                 _tableHeaderInner.ColumnDefinitions.Add(new ColumnDefinition { Width = definition.Width });
             }
 
-            AddHeader(_tableHeaderInner, "الإجراءات", 0, false);
             if (IsExpiryFollowUpScope(selectedScope))
             {
-                AddHeader(_tableHeaderInner, "المستوى", 1, false);
-                AddHeader(_tableHeaderInner, "الأيام", 2, false);
-                AddHeader(_tableHeaderInner, "تاريخ الانتهاء", 3, false);
+                AddHeader(_tableHeaderInner, "المستوى", 0, false);
+                AddHeader(_tableHeaderInner, "الأيام", 1, false);
+                AddHeader(_tableHeaderInner, "تاريخ الانتهاء", 2, false);
             }
             else
             {
-                AddHeader(_tableHeaderInner, "الفئة", 1, false);
-                AddHeader(_tableHeaderInner, "الأولوية", 2, false);
-                AddHeader(_tableHeaderInner, "الموعد", 3, false);
+                AddHeader(_tableHeaderInner, "الفئة", 0, false);
+                AddHeader(_tableHeaderInner, "الأولوية", 1, false);
+                AddHeader(_tableHeaderInner, "الموعد", 2, false);
             }
 
-            AddHeader(_tableHeaderInner, "القيمة", 4, false);
-            AddHeader(_tableHeaderInner, "البنك", 5, true);
-            AddHeader(_tableHeaderInner, "العنصر", 6, true);
+            AddHeader(_tableHeaderInner, "القيمة", 3, false);
+            AddHeader(_tableHeaderInner, "البنك", 4, true);
+            AddHeader(_tableHeaderInner, "المطلوب", 5, true);
+            AddHeader(_tableHeaderInner, "المورد", 6, true);
             AddHeader(_tableHeaderInner, "رقم الضمان", 7, true);
         }
 
@@ -795,81 +669,6 @@ namespace GuaranteeManager
             return bankCell;
         }
 
-        private static Button CreateRowButton(string text, string iconKey, DashboardWorkItem item, RoutedEventHandler handler)
-        {
-            var button = new Button
-            {
-                Content = BuildRowButtonContent(text, iconKey),
-                Tag = item,
-                Style = WorkspaceSurfaceChrome.Style("RowButton")
-            };
-            UiInstrumentation.Identify(
-                button,
-                UiInstrumentation.SanitizeAutomationKey($"Dashboard.RowAction.{text}", item.Reference),
-                $"{text} | {item.Reference}");
-            button.Click += handler;
-            return button;
-        }
-
-        private static UIElement BuildRowButtonContent(string text, string iconKey)
-        {
-            var stack = new StackPanel
-            {
-                Orientation = Orientation.Horizontal
-            };
-
-            if (Application.Current.TryFindResource(iconKey) is Geometry geometry)
-            {
-                stack.Children.Add(new Viewbox
-                {
-                    Width = 10,
-                    Height = 10,
-                    Margin = new Thickness(0, 0, 3, 0),
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Child = new Path
-                    {
-                        Data = geometry,
-                        Stroke = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
-                        StrokeThickness = 2,
-                        StrokeLineJoin = PenLineJoin.Round,
-                        StrokeStartLineCap = PenLineCap.Round,
-                        StrokeEndLineCap = PenLineCap.Round
-                    }
-                });
-            }
-
-            stack.Children.Add(new TextBlock
-            {
-                Text = text,
-                VerticalAlignment = VerticalAlignment.Center
-            });
-            return stack;
-        }
-
-        private void OpenRow_Click(object sender, RoutedEventArgs e)
-        {
-            SelectRowFromSender(sender);
-            OpenSelectedPrimaryAction();
-        }
-
-        private void SelectRowFromSender(object sender)
-        {
-            if (sender is not FrameworkElement element || element.Tag is not DashboardWorkItem item)
-            {
-                return;
-            }
-
-            foreach (object row in _list.Items)
-            {
-                if (row is FrameworkElement frameworkElement && ReferenceEquals(frameworkElement.Tag, item))
-                {
-                    _list.SelectedItem = frameworkElement;
-                    frameworkElement.Focus();
-                    return;
-                }
-            }
-        }
-
         private void OpenSelectedPrimaryAction()
         {
             _coordinator.RunPrimaryAction(
@@ -934,16 +733,44 @@ namespace GuaranteeManager
 
         private void ApplyMetrics(DashboardWorkspaceMetrics metrics)
         {
-            IReadOnlyList<DashboardMetricCard> cards = GetVisibleMetricCards(metrics);
+            IReadOnlyList<DashboardMetricCard> cards = metrics.Cards;
             _metricsGrid.Columns = cards.Count;
             _metricsGrid.Children.Clear();
 
             foreach (DashboardMetricCard card in cards)
             {
-                _metricsGrid.Children.Add(WorkspaceSurfaceChrome.MetricCard(card.Label, card.Value, card.AccentHex));
+                _metricsGrid.Children.Add(BuildMetricFilterCard(card));
             }
 
             WorkspaceSurfaceChrome.ApplyMetricCardSpacing(_metricsGrid);
+        }
+
+        private Border BuildMetricFilterCard(DashboardMetricCard card)
+        {
+            Border border = WorkspaceSurfaceChrome.MetricCard(card.Label, card.Value, card.AccentHex);
+            bool hasFilterTarget = !string.IsNullOrWhiteSpace(card.ScopeFilter);
+            if (!hasFilterTarget)
+            {
+                return border;
+            }
+
+            string targetScope = DashboardScopeFilters.Normalize(card.ScopeFilter);
+            string targetExpiry = DashboardExpiryFollowUpFilters.Normalize(card.ExpiryFilter);
+            bool selected = string.Equals(_selectedScopeFilter, targetScope, StringComparison.Ordinal)
+                && (!string.Equals(targetScope, DashboardScopeFilters.ExpiryFollowUps, StringComparison.Ordinal)
+                    || string.Equals(_selectedExpiryFollowUpFilter, targetExpiry, StringComparison.Ordinal)
+                    || string.Equals(targetExpiry, DashboardExpiryFollowUpFilters.All, StringComparison.Ordinal));
+
+            border.Cursor = Cursors.Hand;
+            border.Background = WorkspaceSurfaceChrome.BrushFrom(selected ? "#F8FBFF" : "#FFFFFF");
+            border.BorderBrush = WorkspaceSurfaceChrome.BrushFrom(selected ? card.AccentHex : "#E3E9F2");
+            border.BorderThickness = new Thickness(selected ? 2 : 1);
+            border.MouseLeftButtonUp += (_, _) => ApplyGuidanceFilter(targetScope, targetExpiry);
+            UiInstrumentation.Identify(
+                border,
+                UiInstrumentation.SanitizeAutomationKey("Dashboard.MetricFilter", card.Label),
+                selected ? $"{card.Label} محدد" : $"فلتر {card.Label}");
+            return border;
         }
 
         private void ApplyGuidanceState(DashboardGuidanceState state)
@@ -1053,16 +880,6 @@ namespace GuaranteeManager
                 HorizontalContentAlignment = HorizontalAlignment.Right,
                 FlowDirection = FlowDirection.RightToLeft
             };
-        }
-
-        private static IReadOnlyList<DashboardMetricCard> GetVisibleMetricCards(DashboardWorkspaceMetrics metrics)
-        {
-            if (string.Equals(metrics.First.Label, "آخر ضمان", StringComparison.Ordinal))
-            {
-                return new[] { metrics.Second, metrics.Third, metrics.Fourth };
-            }
-
-            return new[] { metrics.First, metrics.Second, metrics.Third, metrics.Fourth };
         }
 
         private void ApplyDetailLabels(DashboardDetailProfile detailProfile)

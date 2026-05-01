@@ -75,8 +75,16 @@ namespace GuaranteeManager.Tests
 
             DashboardWorkItem item = Assert.Single(result.Items);
             Assert.Equal(DashboardScope.ExpiredFollowUp, item.Scope);
-            Assert.Equal("0", result.Metrics.First.Value);
-            Assert.Equal("1", result.Metrics.Second.Value);
+            Assert.Contains(
+                result.Metrics.Cards,
+                card => card.Label == "قريبة الانتهاء"
+                    && card.ScopeFilter == DashboardScopeFilters.ExpiryFollowUps
+                    && card.ExpiryFilter == DashboardExpiryFollowUpFilters.ExpiringSoon);
+            Assert.Contains(
+                result.Metrics.Cards,
+                card => card.Label == "منتهية"
+                    && card.ScopeFilter == DashboardScopeFilters.ExpiryFollowUps
+                    && card.ExpiryFilter == DashboardExpiryFollowUpFilters.Expired);
         }
 
         [Fact]
@@ -161,6 +169,8 @@ namespace GuaranteeManager.Tests
                 category,
                 priority,
                 rank,
+                "مورد اختبار",
+                "مراجعة تمديد",
                 "مورد اختبار",
                 "بنك اختبار",
                 new DrawingImage(),
