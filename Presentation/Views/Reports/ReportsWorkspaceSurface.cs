@@ -337,10 +337,6 @@ namespace GuaranteeManager
             row.Children.Add(CreateIcon("Icon.Reports", "#64748B", 14));
             _detailTitle.Margin = new Thickness(8, 0, 0, 0);
             row.Children.Add(_detailTitle);
-            row.Children.Add(WorkspaceSurfaceChrome.DetailHeaderCopyButton(
-                "نسخ اسم التقرير",
-                "Reports.Detail.Header.CopyTitle",
-                (_, _) => WorkspaceSurfaceChrome.CopyDetailFactValue("اسم التقرير", _detailTitle.Text, "التقارير")));
             Grid.SetColumn(row, 1);
             grid.Children.Add(row);
             return grid;

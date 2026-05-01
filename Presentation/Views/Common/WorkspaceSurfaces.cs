@@ -17,7 +17,6 @@ using System.Windows.Automation;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using GuaranteeManager.Models;
-using GuaranteeManager.Services;
 using GuaranteeManager.Utils;
 using Microsoft.Win32;
 
@@ -512,12 +511,14 @@ namespace GuaranteeManager
             Grid.SetColumn(value, 2);
             grid.Children.Add(value);
 
-            UIElement copyElement = BuildDetailFactCopyButton(
-                copyClicked ?? ((_, _) => CopyDetailFactValue(label.Text, value.Text)),
-                automationId,
-                copyName ?? $"نسخ {label.Text}");
-            Grid.SetColumn(copyElement, 3);
-            grid.Children.Add(copyElement);
+            UIElement affordance = copyClicked == null
+                ? BuildDetailFactInfoGlyph(label.Text)
+                : BuildDetailFactCopyButton(
+                    copyClicked,
+                    automationId,
+                    copyName ?? $"نسخ {label.Text}");
+            Grid.SetColumn(affordance, 3);
+            grid.Children.Add(affordance);
 
             return grid;
         }
@@ -558,41 +559,20 @@ namespace GuaranteeManager
             return button;
         }
 
-        public static Button DetailHeaderCopyButton(string name, string automationId, RoutedEventHandler handler)
+        private static UIElement BuildDetailFactInfoGlyph(string label)
         {
-            var button = new Button
+            string name = string.IsNullOrWhiteSpace(label) ? "معلومة" : $"معلومة: {label}";
+            var glyph = new Border
             {
-                Style = Style("IconOnlyButton"),
-                Content = CreateDetailFactIcon("Icon.Copy", "#64748B", 12),
-                ToolTip = name,
-                Margin = new Thickness(8, 0, 0, 0),
-                VerticalAlignment = VerticalAlignment.Center
+                Width = 28,
+                Height = 28,
+                Child = CreateDetailFactIcon("Icon.Info", "#94A3B8", 12),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                ToolTip = name
             };
-            button.Click += handler;
-            AutomationProperties.SetAutomationId(button, automationId);
-            AutomationProperties.SetName(button, name);
-            return button;
-        }
-
-        public static void CopyDetailFactValue(string label, string? value, string secondaryText = "لوحة التفاصيل")
-        {
-            if (string.IsNullOrWhiteSpace(value) || value.Trim() == "---")
-            {
-                AppMessageBox.Show($"لا توجد قيمة متاحة لنسخ {label}.", $"نسخ {label}", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            try
-            {
-                Clipboard.SetText(value);
-                App.CurrentApp.GetRequiredService<IShellStatusService>().ShowInfo(
-                    $"تم نسخ {label}.",
-                    secondaryText);
-            }
-            catch (Exception ex)
-            {
-                AppMessageBox.Show(ex.Message, $"نسخ {label}", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
+            AutomationProperties.SetName(glyph, name);
+            return glyph;
         }
 
         private static UIElement CreateDetailFactIcon(string iconKey, string strokeColor, double size)

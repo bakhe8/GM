@@ -482,11 +482,6 @@ namespace GuaranteeManager
             };
 
             row.Children.Add(_detailPanelHeading);
-            row.Children.Add(new Border { Width = 3 });
-            row.Children.Add(WorkspaceSurfaceChrome.DetailHeaderCopyButton(
-                "نسخ رقم الضمان",
-                "Dashboard.Detail.Header.CopyGuaranteeNo",
-                (_, _) => _coordinator.CopyGuaranteeNo(SelectedItem)));
             Grid.SetColumn(row, 1);
             grid.Children.Add(row);
             return grid;
@@ -505,10 +500,6 @@ namespace GuaranteeManager
             row.Children.Add(CreateIcon("Icon.User", "#94A3B8", 14));
             _detailTitle.Margin = new Thickness(8, 0, 0, 0);
             row.Children.Add(_detailTitle);
-            row.Children.Add(WorkspaceSurfaceChrome.DetailHeaderCopyButton(
-                "نسخ عنوان عنصر اليوم",
-                "Dashboard.Detail.Header.CopyTitle",
-                (_, _) => WorkspaceSurfaceChrome.CopyDetailFactValue("عنوان عنصر اليوم", _detailTitle.Text, "اليوم")));
             return row;
         }
 
