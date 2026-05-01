@@ -82,9 +82,48 @@ namespace GuaranteeManager.Tests
                     && card.ExpiryFilter == DashboardExpiryFollowUpFilters.ExpiringSoon);
             Assert.Contains(
                 result.Metrics.Cards,
-                card => card.Label == "ضمانات منتهية"
+                card => card.Label == "تحتاج متابعة"
                     && card.ScopeFilter == DashboardScopeFilters.ExpiryFollowUps
                     && card.ExpiryFilter == DashboardExpiryFollowUpFilters.Expired);
+        }
+
+        [Fact]
+        public void BuildFilteredItems_LabelsExpiredFollowUpMetricByFollowUpNeed()
+        {
+            var service = new DashboardWorkspaceDataService();
+            var expiredOpen = CreateGuarantee(
+                "BG-OPEN",
+                DateTime.Today.AddDays(-3),
+                GuaranteeLifecycleStatus.Active,
+                2_000m);
+            var expiredReleased = CreateGuarantee(
+                "BG-RELEASED",
+                DateTime.Today.AddDays(-5),
+                GuaranteeLifecycleStatus.Released,
+                1_000m);
+            var expiringSoon = CreateGuarantee(
+                "BG-SOON",
+                DateTime.Today.AddDays(5),
+                GuaranteeLifecycleStatus.Active,
+                3_000m);
+            var guarantees = new[] { expiredOpen, expiredReleased, expiringSoon };
+            List<DashboardWorkItem> items = service.BuildItems(
+                guarantees,
+                Array.Empty<WorkflowRequestListItem>());
+
+            DashboardWorkspaceFilterResult result = service.BuildFilteredItems(
+                items,
+                string.Empty,
+                DashboardScopeFilters.AllWork,
+                false,
+                string.Empty,
+                guarantees,
+                Array.Empty<WorkflowRequestListItem>());
+
+            Assert.DoesNotContain(items, item => item.Reference == expiredReleased.GuaranteeNo);
+            DashboardMetricCard followUpCard = Assert.Single(result.Metrics.Cards, card => card.Label == "تحتاج متابعة");
+            Assert.Equal("1", followUpCard.Value);
+            Assert.DoesNotContain(result.Metrics.Cards, card => card.Label == "ضمانات منتهية");
         }
 
         [Fact]
@@ -189,6 +228,37 @@ namespace GuaranteeManager.Tests
                 Brushes.White,
                 Brushes.Orange,
                 Brushes.DarkOrange);
+        }
+
+        private static Guarantee CreateGuarantee(
+            string guaranteeNo,
+            DateTime expiryDate,
+            GuaranteeLifecycleStatus lifecycleStatus,
+            decimal amount)
+        {
+            int id = guaranteeNo switch
+            {
+                "BG-OPEN" => 101,
+                "BG-RELEASED" => 102,
+                "BG-SOON" => 103,
+                _ => 199
+            };
+
+            return new Guarantee
+            {
+                Id = id,
+                RootId = id,
+                IsCurrent = true,
+                VersionNumber = 1,
+                GuaranteeNo = guaranteeNo,
+                Supplier = "مورد اختبار",
+                Bank = "بنك اختبار",
+                Amount = amount,
+                ExpiryDate = expiryDate.Date,
+                GuaranteeType = "ابتدائي",
+                Beneficiary = "مستفيد اختبار",
+                LifecycleStatus = lifecycleStatus
+            };
         }
     }
 }

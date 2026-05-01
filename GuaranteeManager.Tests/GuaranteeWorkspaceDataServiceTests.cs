@@ -27,6 +27,42 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void BuildSnapshot_SeparatesExpiredTotalFromExpiredFollowUp()
+        {
+            DateTime start = new(2026, 4, 28, 8, 0, 0);
+            Guarantee expiredOpen = CreateGuarantee(10, null, 1, true, start, 2_000m);
+            expiredOpen.GuaranteeNo = "BG-EXPIRED-OPEN";
+            expiredOpen.ExpiryDate = DateTime.Today.AddDays(-3);
+            expiredOpen.LifecycleStatus = GuaranteeLifecycleStatus.Active;
+
+            Guarantee expiredReleased = CreateGuarantee(11, null, 1, true, start, 1_000m);
+            expiredReleased.GuaranteeNo = "BG-EXPIRED-RELEASED";
+            expiredReleased.ExpiryDate = DateTime.Today.AddDays(-5);
+            expiredReleased.LifecycleStatus = GuaranteeLifecycleStatus.Released;
+
+            Guarantee active = CreateGuarantee(12, null, 1, true, start, 3_000m);
+            active.GuaranteeNo = "BG-ACTIVE";
+            active.ExpiryDate = DateTime.Today.AddDays(90);
+
+            var service = new GuaranteeWorkspaceDataService(
+                new TimelineDatabaseStub(new[] { expiredOpen, expiredReleased, active }, Array.Empty<WorkflowRequest>()),
+                new ContextActionService());
+
+            GuaranteeWorkspaceSnapshot snapshot = service.BuildSnapshot(
+                string.Empty,
+                "كل البنوك",
+                "كل البنوك",
+                "كل الأنواع",
+                "كل الأنواع",
+                GuaranteeStatusFilter.Active,
+                10,
+                1);
+
+            Assert.Equal("2", snapshot.ExpiredCount);
+            Assert.Equal("1", snapshot.ExpiredFollowUpCount);
+        }
+
+        [Fact]
         public void BuildSelectionArtifacts_ForCurrentGuarantee_BuildsNewestFirstTimeline()
         {
             DateTime start = new(2026, 4, 28, 8, 0, 0);
@@ -345,7 +381,67 @@ namespace GuaranteeManager.Tests
             public void AddGuaranteeAttachments(int guaranteeId, List<AttachmentInput> attachments) => throw new NotSupportedException();
             public int UpdateGuarantee(Guarantee g, List<string> newTempFiles, List<AttachmentRecord> removedAttachments) => throw new NotSupportedException();
             public int UpdateGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> newAttachments, List<AttachmentRecord> removedAttachments) => throw new NotSupportedException();
-            public List<Guarantee> QueryGuarantees(GuaranteeQueryOptions options) => throw new NotSupportedException();
+            public List<Guarantee> QueryGuarantees(GuaranteeQueryOptions options)
+            {
+                IEnumerable<Guarantee> query = _history.Where(guarantee => guarantee.IsCurrent);
+                string search = options.SearchText?.Trim() ?? string.Empty;
+
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    query = query.Where(guarantee =>
+                        guarantee.GuaranteeNo.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                        guarantee.Supplier.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                        guarantee.Bank.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                        guarantee.GuaranteeType.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                        guarantee.ReferenceNumber.Contains(search, StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (!string.IsNullOrWhiteSpace(options.Bank))
+                {
+                    query = query.Where(guarantee => string.Equals(guarantee.Bank, options.Bank, StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (!string.IsNullOrWhiteSpace(options.GuaranteeType))
+                {
+                    query = query.Where(guarantee => string.Equals(guarantee.GuaranteeType, options.GuaranteeType, StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (options.LifecycleStatus.HasValue)
+                {
+                    query = query.Where(guarantee => guarantee.LifecycleStatus == options.LifecycleStatus.Value);
+                }
+
+                if (options.NeedsExpiryFollowUpOnly)
+                {
+                    query = query.Where(guarantee => guarantee.NeedsExpiryFollowUp);
+                }
+                else if (options.TimeStatus.HasValue)
+                {
+                    query = options.TimeStatus.Value switch
+                    {
+                        GuaranteeTimeStatus.Active => query.Where(guarantee => !guarantee.IsExpired && !guarantee.IsExpiringSoon),
+                        GuaranteeTimeStatus.ExpiringSoon => query.Where(guarantee => guarantee.IsExpiringSoon),
+                        GuaranteeTimeStatus.Expired => query.Where(guarantee => guarantee.IsExpired),
+                        _ => query
+                    };
+                }
+
+                query = options.SortMode == GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
+                    ? query.OrderBy(guarantee => guarantee.ExpiryDate).ThenBy(guarantee => guarantee.GuaranteeNo)
+                    : query.OrderByDescending(guarantee => guarantee.CreatedAt).ThenBy(guarantee => guarantee.GuaranteeNo);
+
+                if (options.Offset.HasValue)
+                {
+                    query = query.Skip(options.Offset.Value);
+                }
+
+                if (options.Limit.HasValue)
+                {
+                    query = query.Take(options.Limit.Value);
+                }
+
+                return query.ToList();
+            }
             public int CountGuarantees(GuaranteeQueryOptions? options = null) => throw new NotSupportedException();
             public int CountAttachments() => throw new NotSupportedException();
             public List<Guarantee> SearchGuarantees(string query) => throw new NotSupportedException();
@@ -353,7 +449,7 @@ namespace GuaranteeManager.Tests
             public bool HasPendingWorkflowRequest(int rootId, RequestType requestType) => throw new NotSupportedException();
             public int GetPendingWorkflowRequestCount() => throw new NotSupportedException();
             public WorkflowRequest? GetWorkflowRequestById(int requestId) => throw new NotSupportedException();
-            public List<WorkflowRequestListItem> QueryWorkflowRequests(WorkflowRequestQueryOptions options) => throw new NotSupportedException();
+            public List<WorkflowRequestListItem> QueryWorkflowRequests(WorkflowRequestQueryOptions options) => new();
             public int CountWorkflowRequests(WorkflowRequestQueryOptions? options = null) => throw new NotSupportedException();
             public List<WorkflowRequestListItem> SearchWorkflowRequests(string query) => throw new NotSupportedException();
             public void RecordWorkflowResponse(int requestId, RequestStatus newStatus, string responseNotes, string responseOriginalFileName, string responseSavedFileName, int? resultVersionId = null) => throw new NotSupportedException();

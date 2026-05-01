@@ -63,6 +63,8 @@ namespace GuaranteeManager
 
     public sealed class DashboardWorkspaceDataService
     {
+        private const string ExpiredFollowUpMetricLabel = "تحتاج متابعة";
+
         public List<DashboardWorkItem> BuildItems(
             IReadOnlyList<Guarantee> guarantees,
             IReadOnlyList<WorkflowRequestListItem> pendingRequests)
@@ -275,9 +277,9 @@ namespace GuaranteeManager
             {
                 recommendation = new DashboardGuidanceCard(
                     "توصيات تشغيلية",
-                    $"يوجد {expiredCount.ToString("N0", CultureInfo.InvariantCulture)} ضمان منتهي يحتاج قرارًا.",
+                    $"يوجد {expiredCount.ToString("N0", CultureInfo.InvariantCulture)} ضمان منتهي يحتاج متابعة.",
                     "المنتهية لا تقبل تمديدًا أو تسييلًا؛ الإجراء المتاح هو الإفراج/إعادة الضمان وتوثيق الرد.",
-                    "عرض الضمانات المنتهية",
+                    "عرض التي تحتاج متابعة",
                     DashboardGuidanceActionKind.FilterExpiredFollowUps,
                     null);
             }
@@ -501,7 +503,7 @@ namespace GuaranteeManager
                         DashboardScopeFilters.ExpiryFollowUps,
                         DashboardExpiryFollowUpFilters.ExpiringSoon),
                     new DashboardMetricCard(
-                        "ضمانات منتهية",
+                        ExpiredFollowUpMetricLabel,
                         expiredCount.ToString("N0", CultureInfo.InvariantCulture),
                         "#EF4444",
                         DashboardScopeFilters.ExpiryFollowUps,
@@ -532,7 +534,7 @@ namespace GuaranteeManager
                     DashboardScopeFilters.ExpiryFollowUps,
                     DashboardExpiryFollowUpFilters.ExpiringSoon),
                 new DashboardMetricCard(
-                    "ضمانات منتهية",
+                    ExpiredFollowUpMetricLabel,
                     expiredFollowUpCount.ToString("N0", CultureInfo.InvariantCulture),
                     "#EF4444",
                     DashboardScopeFilters.ExpiryFollowUps,
