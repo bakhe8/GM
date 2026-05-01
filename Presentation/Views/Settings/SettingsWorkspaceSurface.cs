@@ -298,10 +298,6 @@ namespace GuaranteeManager
             row.Children.Add(CreateIcon("Icon.Settings", "#64748B", 14));
             _detailTitle.Margin = new Thickness(8, 0, 0, 0);
             row.Children.Add(_detailTitle);
-            row.Children.Add(WorkspaceSurfaceChrome.DetailHeaderCopyButton(
-                "نسخ اسم المسار",
-                "Settings.Detail.Header.CopyTitle",
-                (_, _) => WorkspaceSurfaceChrome.CopyDetailFactValue("اسم المسار", _detailTitle.Text, "الإعدادات")));
             Grid.SetColumn(row, 1);
             grid.Children.Add(row);
             return grid;
