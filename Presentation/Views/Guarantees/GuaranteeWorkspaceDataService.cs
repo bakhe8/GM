@@ -385,7 +385,7 @@ namespace GuaranteeManager
 
         private static string FormatMeta(decimal amount)
         {
-            return $"إجمالي القيمة {amount.ToString("N0", CultureInfo.InvariantCulture)} ريال";
+            return $"إجمالي المبلغ {ArabicAmountFormatter.FormatSaudiRiyals(amount)}";
         }
 
         private static List<TimelineItem> BuildTimeline(

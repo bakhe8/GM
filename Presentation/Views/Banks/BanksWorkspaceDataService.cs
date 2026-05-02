@@ -90,7 +90,7 @@ namespace GuaranteeManager
                 new BanksWorkspaceMetrics(
                     allBanks.Count.ToString("N0", CultureInfo.InvariantCulture),
                     allBanks.Sum(item => item.Count).ToString("N0", CultureInfo.InvariantCulture),
-                    $"{allBanks.Sum(item => item.Amount).ToString("N0", CultureInfo.InvariantCulture)} ريال"));
+                    ArabicAmountFormatter.FormatSaudiRiyals(allBanks.Sum(item => item.Amount))));
         }
 
         public BanksWorkspaceDetailState BuildDetailState(BankWorkspaceItem? selectedItem)
@@ -127,7 +127,7 @@ namespace GuaranteeManager
                 selectedItem.PortfolioStatusBrush,
                 selectedItem.PortfolioStatusBackground,
                 selectedItem.PortfolioStatusBorder,
-                ArabicAmountFormatter.FormatNumber(selectedItem.Amount),
+                ArabicAmountFormatter.FormatSaudiRiyals(selectedItem.Amount),
                 selectedItem.AmountInWords,
                 selectedItem.CountDisplay,
                 WorkspaceSurfaceChrome.BrushFrom("#16A34A"),

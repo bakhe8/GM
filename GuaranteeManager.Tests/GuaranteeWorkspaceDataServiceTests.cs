@@ -23,6 +23,8 @@ namespace GuaranteeManager.Tests
 
             Assert.Equal("شركة التشغيل الطبي", row.Supplier);
             Assert.Equal(BusinessPartyDefaults.DefaultBeneficiaryName, row.Beneficiary);
+            Assert.Equal("1,500,000 ريال", row.Amount);
+            Assert.Equal("مليون وخمسمئة ألف ريال سعودي", row.AmountDescription);
             Assert.Equal("BG-TEST-0001 | شركة التشغيل الطبي", row.RowAutomationName);
         }
 

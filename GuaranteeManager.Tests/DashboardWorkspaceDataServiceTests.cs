@@ -32,6 +32,7 @@ namespace GuaranteeManager.Tests
                 string.Empty);
 
             Assert.Equal(DashboardDetailProfile.FollowUp, state.DetailProfile);
+            Assert.Equal("1,000 ريال", state.AmountHeadline);
             Assert.Equal("خلال 5 أيام", state.Due);
             Assert.Equal(expiryDate.ToString("yyyy/MM/dd"), state.Expiry);
         }

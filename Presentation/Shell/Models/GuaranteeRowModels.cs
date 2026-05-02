@@ -155,7 +155,7 @@ namespace GuaranteeManager
                 guarantee,
                 supplier,
                 beneficiary,
-                ArabicAmountFormatter.FormatNumber(guarantee.Amount),
+                ArabicAmountFormatter.FormatSaudiRiyals(guarantee.Amount),
                 ArabicAmountFormatter.FormatSaudiRiyalsInWords(guarantee.Amount),
                 FormatDate(guarantee.CreatedAt),
                 FormatDate(guarantee.ExpiryDate),

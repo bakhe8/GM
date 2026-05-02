@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using GuaranteeManager.Models;
+using GuaranteeManager.Utils;
 
 namespace GuaranteeManager.Services
 {
@@ -141,12 +142,12 @@ namespace GuaranteeManager.Services
             };
 
             result.Answer = matchingGuarantees.Any()
-                ? $"يوجد {matchingGuarantees.Count} ضمانًا/ضمانات سارية تخص أوامر الشراء فقط، بإجمالي مبالغ {totalAmount:N2}."
+                ? $"يوجد {matchingGuarantees.Count} ضمانًا/ضمانات سارية تخص أوامر الشراء فقط، بإجمالي مبالغ {ArabicAmountFormatter.FormatSaudiRiyals(totalAmount)}."
                 : "لا توجد حاليًا ضمانات سارية تخص أوامر الشراء فقط.";
             result.Explanation = "تم اعتماد الضمانات غير المنتهية زمنيًا وذات الحالة التشغيلية النشطة، بشرط أن يكون نوع المرجع أمر شراء.";
 
             result.Facts.Add(new OperationalInquiryFact { Label = "العدد", Value = matchingGuarantees.Count.ToString("N0") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "إجمالي المبالغ", Value = totalAmount.ToString("N2") });
+            result.Facts.Add(new OperationalInquiryFact { Label = "إجمالي المبالغ", Value = ArabicAmountFormatter.FormatSaudiRiyals(totalAmount) });
             result.Facts.Add(new OperationalInquiryFact { Label = "قريب الانتهاء", Value = matchingGuarantees.Count(g => g.IsExpiringSoon).ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "أول انتهاء قادم", Value = matchingGuarantees.FirstOrDefault()?.ExpiryDate.ToString("yyyy-MM-dd") ?? "---" });
 
@@ -156,7 +157,7 @@ namespace GuaranteeManager.Services
                 {
                     Timestamp = guarantee.ExpiryDate,
                     Title = guarantee.GuaranteeNo,
-                    Details = $"{guarantee.Supplier} | {guarantee.ReferenceTypeLabel}: {guarantee.ReferenceNumber} | {guarantee.Amount:N2}"
+                    Details = $"{guarantee.Supplier} | {guarantee.ReferenceTypeLabel}: {guarantee.ReferenceNumber} | {ArabicAmountFormatter.FormatSaudiRiyals(guarantee.Amount)}"
                 });
             }
 
@@ -334,12 +335,12 @@ namespace GuaranteeManager.Services
             };
 
             result.Answer = matchingGuarantees.Any()
-                ? $"إجمالي مبالغ ضمانات أوامر الشراء فقط المنتهية التي تحتاج إفراجًا أو إعادة للبنك هو {totalAmount:N2}، موزعة على {matchingGuarantees.Count} ضمانًا/ضمانات."
+                ? $"إجمالي مبالغ ضمانات أوامر الشراء فقط المنتهية التي تحتاج إفراجًا أو إعادة للبنك هو {ArabicAmountFormatter.FormatSaudiRiyals(totalAmount)}، موزعة على {matchingGuarantees.Count} ضمانًا/ضمانات."
                 : "لا توجد حاليًا ضمانات أوامر شراء فقط منتهية وتحتاج إفراجًا.";
             result.Explanation = "تم احتساب الضمانات المنتهية زمنيًا والتي لم تغلق دورة حياتها بعد. بعد الانتهاء لا يُطلب تمديد أو تسييل؛ الإجراء المتاح هو الإفراج/إعادة الضمان للبنك.";
 
             result.Facts.Add(new OperationalInquiryFact { Label = "عدد الضمانات", Value = matchingGuarantees.Count.ToString("N0") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "إجمالي المبالغ", Value = totalAmount.ToString("N2") });
+            result.Facts.Add(new OperationalInquiryFact { Label = "إجمالي المبالغ", Value = ArabicAmountFormatter.FormatSaudiRiyals(totalAmount) });
             result.Facts.Add(new OperationalInquiryFact { Label = "بطلب إفراج معلق", Value = withPendingReleaseCount.ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "بدون طلب إفراج معلق", Value = withoutPendingReleaseCount.ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "لها محاولة إفراج مغلقة", Value = withClosedReleaseAttemptCount.ToString("N0") });
@@ -358,7 +359,7 @@ namespace GuaranteeManager.Services
                 {
                     Timestamp = guarantee.ExpiryDate,
                     Title = guarantee.GuaranteeNo,
-                    Details = $"{guarantee.Supplier} | {guarantee.ReferenceTypeLabel}: {guarantee.ReferenceNumber} | {guarantee.Amount:N2} | {releaseState}"
+                    Details = $"{guarantee.Supplier} | {guarantee.ReferenceTypeLabel}: {guarantee.ReferenceNumber} | {ArabicAmountFormatter.FormatSaudiRiyals(guarantee.Amount)} | {releaseState}"
                 });
             }
 

@@ -182,7 +182,7 @@ namespace GuaranteeManager
             };
             metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("عدد البنوك", _bankCountValue, "#2563EB"));
             metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("إجمالي الضمانات", _guaranteeCountValue, "#0F172A"));
-            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("إجمالي القيمة", _amountValue, "#E09408"));
+            metrics.Children.Add(WorkspaceSurfaceChrome.MetricCard("إجمالي المبلغ", _amountValue, "#E09408"));
             WorkspaceSurfaceChrome.ApplyMetricCardSpacing(metrics);
             return metrics;
         }
@@ -213,7 +213,7 @@ namespace GuaranteeManager
             AddHeader(inner, "نشط", 2, false);
             AddHeader(inner, "قريب الانتهاء", 3, false);
             AddHeader(inner, "منتهي", 4, false);
-            AddHeader(inner, "إجمالي القيمة", 5, false);
+            AddHeader(inner, "إجمالي المبلغ", 5, false);
             AddHeader(inner, "المورد الأعلى", 6, true);
             AddHeader(inner, "البنك", 7, true);
             header.Children.Add(inner);

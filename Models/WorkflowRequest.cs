@@ -95,7 +95,7 @@ namespace GuaranteeManager.Models
         public string RequestedValueLabel => Type switch
         {
             RequestType.Extension => RequestedExpiryDate?.ToString("yyyy-MM-dd") ?? "---",
-            RequestType.Reduction => RequestedAmount?.ToString("N2") ?? "---",
+            RequestType.Reduction => RequestedAmount.HasValue ? ArabicAmountFormatter.FormatSaudiRiyals(RequestedAmount.Value) : "---",
             RequestType.Release => "إفراج",
             RequestType.Liquidation => "تسييل",
             RequestType.Verification => "تحقق",

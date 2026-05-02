@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using GuaranteeManager.Models;
+using GuaranteeManager.Utils;
 
 namespace GuaranteeManager.Services
 {
@@ -479,7 +480,7 @@ namespace GuaranteeManager.Services
             bool matchesCurrentAmount = afterAmount == currentGuarantee.Amount;
 
             result.Answer = matchesCurrentAmount
-                ? $"الأثر المالي الحالي يعود إلى طلب تخفيض منفذ رقم {matchingReduction.SequenceNumber} سُجل بتاريخ {responseDate}، وخفّض المبلغ من {beforeAmount:N2} إلى {afterAmount:N2}."
+                ? $"الأثر المالي الحالي يعود إلى طلب تخفيض منفذ رقم {matchingReduction.SequenceNumber} سُجل بتاريخ {responseDate}، وخفّض المبلغ من {ArabicAmountFormatter.FormatSaudiRiyals(beforeAmount)} إلى {ArabicAmountFormatter.FormatSaudiRiyals(afterAmount)}."
                 : $"يوجد طلب تخفيض منفذ رقم {matchingReduction.SequenceNumber} سُجل بتاريخ {responseDate}، لكنه لا يبدو المصدر المباشر للمبلغ الحالي المعروض، ويجب مراجعة تاريخ الإصدارات اللاحق.";
             result.Explanation = matchingReduction.HasResponseDocument
                 ? "يمكن الوصول إلى طلب التخفيض نفسه، وخطابه، ومستند رد البنك من نافذة نتيجة الاستعلام."
@@ -487,9 +488,9 @@ namespace GuaranteeManager.Services
 
             AddFacts(result, currentGuarantee, context.Requests, context.History, matchingReduction, matchingReduction);
             result.Facts.Add(new OperationalInquiryFact { Label = "رقم طلب التخفيض", Value = matchingReduction.SequenceNumber.ToString("N0") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "المبلغ قبل التخفيض", Value = beforeAmount.ToString("N2") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "المبلغ المطلوب", Value = matchingReduction.RequestedAmount?.ToString("N2") ?? "---" });
-            result.Facts.Add(new OperationalInquiryFact { Label = "المبلغ بعد التخفيض", Value = afterAmount.ToString("N2") });
+            result.Facts.Add(new OperationalInquiryFact { Label = "المبلغ قبل التخفيض", Value = ArabicAmountFormatter.FormatSaudiRiyals(beforeAmount) });
+            result.Facts.Add(new OperationalInquiryFact { Label = "المبلغ المطلوب", Value = matchingReduction.RequestedAmount.HasValue ? ArabicAmountFormatter.FormatSaudiRiyals(matchingReduction.RequestedAmount.Value) : "---" });
+            result.Facts.Add(new OperationalInquiryFact { Label = "المبلغ بعد التخفيض", Value = ArabicAmountFormatter.FormatSaudiRiyals(afterAmount) });
             result.Facts.Add(new OperationalInquiryFact { Label = "هل يطابق المبلغ الحالي؟", Value = matchesCurrentAmount ? "نعم" : "لا" });
 
             AddTimeline(result, context.History, context.Requests);
@@ -664,7 +665,7 @@ namespace GuaranteeManager.Services
                     RequestType.Extension when resultGuarantee != null =>
                         $"آخر ما حدث هو تنفيذ طلب تمديد بتاريخ {dateText}، ونتج عنه تحديث تاريخ الانتهاء إلى {resultGuarantee.ExpiryDate:yyyy-MM-dd} في الإصدار {resultGuarantee.VersionLabel}.",
                     RequestType.Reduction when resultGuarantee != null =>
-                        $"آخر ما حدث هو تنفيذ طلب تخفيض بتاريخ {dateText}، ونتج عنه تحديث مبلغ الضمان إلى {resultGuarantee.Amount:N2} في الإصدار {resultGuarantee.VersionLabel}.",
+                        $"آخر ما حدث هو تنفيذ طلب تخفيض بتاريخ {dateText}، ونتج عنه تحديث مبلغ الضمان إلى {ArabicAmountFormatter.FormatSaudiRiyals(resultGuarantee.Amount)} في الإصدار {resultGuarantee.VersionLabel}.",
                     RequestType.Release =>
                         $"آخر ما حدث هو تنفيذ طلب إفراج بتاريخ {dateText}، وأصبحت الحالة التشغيلية الحالية للضمان {currentGuarantee.LifecycleStatusLabel}.",
                     RequestType.Liquidation =>
@@ -755,7 +756,7 @@ namespace GuaranteeManager.Services
 
         private static string BuildVersionTimelineDetails(Guarantee version)
         {
-            string financialSummary = $"الانتهاء: {version.ExpiryDate:yyyy-MM-dd} | المبلغ: {version.Amount:N2}";
+            string financialSummary = $"الانتهاء: {version.ExpiryDate:yyyy-MM-dd} | المبلغ: {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)}";
             return $"الشروط المحفوظة لهذا الإصدار | {financialSummary}";
         }
 

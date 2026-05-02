@@ -1,4 +1,5 @@
 using System;
+using GuaranteeManager.Utils;
 
 namespace GuaranteeManager.Models
 {
@@ -58,7 +59,7 @@ namespace GuaranteeManager.Models
         public string CurrentValueLabel => Request.Type switch
         {
             RequestType.Extension => CurrentExpiryDate.ToString("yyyy-MM-dd"),
-            RequestType.Reduction => CurrentAmount.ToString("N2"),
+            RequestType.Reduction => ArabicAmountFormatter.FormatSaudiRiyals(CurrentAmount),
             RequestType.Release => LifecycleStatusLabel,
             RequestType.Liquidation => LifecycleStatusLabel,
             RequestType.Verification => LifecycleStatusLabel,
