@@ -369,7 +369,8 @@ namespace GuaranteeManager
         private static int GetRootId(Guarantee guarantee) => guarantee.RootId ?? guarantee.Id;
 
         private static bool IsClosedExpiredGuarantee(Guarantee guarantee)
-            => guarantee.LifecycleStatus is GuaranteeLifecycleStatus.Expired or GuaranteeLifecycleStatus.Closed;
+            => guarantee.IsExpired &&
+               (guarantee.LifecycleStatus is GuaranteeLifecycleStatus.Expired or GuaranteeLifecycleStatus.Closed);
 
         private static string FormatMeta(decimal amount)
         {

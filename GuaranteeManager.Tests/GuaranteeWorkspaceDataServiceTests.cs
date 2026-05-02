@@ -45,12 +45,19 @@ namespace GuaranteeManager.Tests
             expiredReleased.ExpiryDate = DateTime.Today.AddDays(-7);
             expiredReleased.LifecycleStatus = GuaranteeLifecycleStatus.Released;
 
+            Guarantee closedBeforeExpiry = CreateGuarantee(14, null, 1, true, start, 5_000m);
+            closedBeforeExpiry.GuaranteeNo = "BG-CLOSED-BEFORE-EXPIRY";
+            closedBeforeExpiry.ExpiryDate = DateTime.Today.AddDays(20);
+            closedBeforeExpiry.LifecycleStatus = GuaranteeLifecycleStatus.Expired;
+
             Guarantee active = CreateGuarantee(13, null, 1, true, start, 3_000m);
             active.GuaranteeNo = "BG-ACTIVE";
             active.ExpiryDate = DateTime.Today.AddDays(90);
 
             var service = new GuaranteeWorkspaceDataService(
-                new TimelineDatabaseStub(new[] { expiredOpen, expiredClosed, expiredReleased, active }, Array.Empty<WorkflowRequest>()),
+                new TimelineDatabaseStub(
+                    new[] { expiredOpen, expiredClosed, expiredReleased, closedBeforeExpiry, active },
+                    Array.Empty<WorkflowRequest>()),
                 new ContextActionService());
 
             GuaranteeWorkspaceSnapshot snapshot = service.BuildSnapshot(
@@ -78,6 +85,9 @@ namespace GuaranteeManager.Tests
 
             GuaranteeRow row = Assert.Single(expiredFilterSnapshot.Rows);
             Assert.Equal(expiredClosed.GuaranteeNo, row.GuaranteeNo);
+            Assert.DoesNotContain(
+                expiredFilterSnapshot.Rows,
+                row => row.GuaranteeNo == closedBeforeExpiry.GuaranteeNo);
         }
 
         [Fact]
