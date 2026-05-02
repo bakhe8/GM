@@ -45,7 +45,7 @@ namespace GuaranteeManager
             {
                 Margin = new Thickness(20),
                 FlowDirection = FlowDirection.RightToLeft,
-                Background = BrushFrom("#F7F9FC")
+                Background = BrushResource("Brush.Canvas")
             };
         }
 
@@ -130,7 +130,7 @@ namespace GuaranteeManager
             var border = new Border
             {
                 Background = Brushes.White,
-                BorderBrush = BrushFrom("#E3E9F2"),
+                BorderBrush = BrushResource("Brush.Border"),
                 BorderThickness = new Thickness(1, 0, 0, 0),
                 FlowDirection = FlowDirection.RightToLeft
             };
@@ -332,7 +332,7 @@ namespace GuaranteeManager
             var border = new Border
             {
                 Background = Brushes.White,
-                BorderBrush = BrushFrom("#D8E1EE"),
+                BorderBrush = BrushResource("Brush.Border.Control"),
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(6),
                 Height = 36,
@@ -350,7 +350,7 @@ namespace GuaranteeManager
             {
                 Text = placeholder,
                 FontSize = 11,
-                Foreground = BrushFrom("#94A3B8"),
+                Foreground = BrushResource("Brush.Text.Muted"),
                 VerticalAlignment = VerticalAlignment.Center,
                 IsHitTestVisible = false
             };
@@ -371,7 +371,7 @@ namespace GuaranteeManager
             {
                 Text = "⌕",
                 FontSize = 13,
-                Foreground = BrushFrom("#64748B"),
+                Foreground = BrushResource("Brush.Text.Secondary"),
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(8, 0, 0, 0)
             };
@@ -443,7 +443,7 @@ namespace GuaranteeManager
         public static void ConfigureMetricValue(TextBlock value)
         {
             value.FontWeight = FontWeights.Bold;
-            value.Foreground = BrushFrom("#0F172A");
+            value.Foreground = BrushResource("Brush.Text.Primary");
             value.Margin = new Thickness(0, 2, 0, 0);
             value.HorizontalAlignment = HorizontalAlignment.Center;
             value.TextAlignment = TextAlignment.Center;
@@ -568,7 +568,7 @@ namespace GuaranteeManager
                 VerticalAlignment = allowWrapping ? VerticalAlignment.Top : VerticalAlignment.Center,
                 Margin = new Thickness(0, allowWrapping ? 3 : 0, 0, 0)
             };
-            labelPanel.Children.Add(CreateDetailFactIcon(iconKey, "#94A3B8", 12));
+            labelPanel.Children.Add(CreateDetailFactIcon(iconKey, "Brush.Text.Muted", 12));
             labelPanel.Children.Add(new Border { Width = 7 });
             labelPanel.Children.Add(label);
             grid.Children.Add(labelPanel);
@@ -608,7 +608,7 @@ namespace GuaranteeManager
                 Text = label,
                 FontSize = 10,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = BrushFrom("#94A3B8"),
+                Foreground = BrushResource("Brush.Text.Muted"),
                 VerticalAlignment = VerticalAlignment.Center
             };
         }
@@ -623,7 +623,7 @@ namespace GuaranteeManager
             {
                 Style = Style("IconOnlyButton"),
                 ToolTip = name,
-                Content = CreateDetailFactIcon("Icon.Copy", "#64748B", 12),
+                Content = CreateDetailFactIcon("Icon.Copy", "Brush.Text.Secondary", 12),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center
             };
@@ -644,7 +644,7 @@ namespace GuaranteeManager
             {
                 Width = 28,
                 Height = 28,
-                Child = CreateDetailFactIcon("Icon.Info", "#94A3B8", 12),
+                Child = CreateDetailFactIcon("Icon.Info", "Brush.Text.Muted", 12),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 ToolTip = name
@@ -668,7 +668,7 @@ namespace GuaranteeManager
                 Child = new System.Windows.Shapes.Path
                 {
                     Data = geometry,
-                    Stroke = BrushFrom(strokeColor),
+                    Stroke = ResolveBrush(strokeColor),
                     StrokeThickness = 2,
                     StrokeLineJoin = PenLineJoin.Round,
                     StrokeStartLineCap = PenLineCap.Round,
@@ -682,7 +682,7 @@ namespace GuaranteeManager
             return new Border
             {
                 Height = 1,
-                Background = BrushFrom("#EDF2F7"),
+                Background = BrushResource("Brush.Border.Divider"),
                 Margin = new Thickness(0, 16, 0, 16)
             };
         }
@@ -709,9 +709,9 @@ namespace GuaranteeManager
                 Padding = new Thickness(12, 0, 12, 0),
                 FontSize = 12,
                 FontWeight = FontWeights.SemiBold,
-                Background = BrushFrom(background),
-                BorderBrush = BrushFrom(border),
-                Foreground = BrushFrom(foreground),
+                Background = ResolveBrush(background),
+                BorderBrush = ResolveBrush(border),
+                Foreground = ResolveBrush(foreground),
                 BorderThickness = new Thickness(1)
             };
         }
@@ -721,6 +721,18 @@ namespace GuaranteeManager
             var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));
             brush.Freeze();
             return brush;
+        }
+
+        public static Brush ResolveBrush(string colorOrResourceKey)
+        {
+            if (colorOrResourceKey.StartsWith("#", StringComparison.Ordinal) ||
+                string.Equals(colorOrResourceKey, "White", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(colorOrResourceKey, "Transparent", StringComparison.OrdinalIgnoreCase))
+            {
+                return BrushFrom(colorOrResourceKey);
+            }
+
+            return BrushResource(colorOrResourceKey);
         }
     }
 

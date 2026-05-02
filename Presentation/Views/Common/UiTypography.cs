@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Media;
 
 namespace GuaranteeManager
@@ -16,5 +17,9 @@ namespace GuaranteeManager
         public const double HeroNumber = 34d;
 
         public static FontFamily DefaultFontFamily { get; } = new(DefaultFontFamilyName);
+
+        public static FontWeight RegularWeight => FontWeights.Normal;
+        public static FontWeight EmphasisWeight => FontWeights.SemiBold;
+        public static FontWeight StrongWeight => FontWeights.Bold;
     }
 }

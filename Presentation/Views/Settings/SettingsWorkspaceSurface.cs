@@ -281,7 +281,7 @@ namespace GuaranteeManager
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Center
             };
-            row.Children.Add(CreateIcon("Icon.Settings", "#64748B", 14));
+            row.Children.Add(CreateIcon("Icon.Settings", "Brush.Text.Secondary", 14));
             _detailTitle.Margin = new Thickness(8, 0, 0, 0);
             row.Children.Add(_detailTitle);
             Grid.SetColumn(row, 1);
@@ -502,7 +502,7 @@ namespace GuaranteeManager
                     Child = new System.Windows.Shapes.Path
                     {
                         Data = geometry,
-                        Stroke = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
+                        Stroke = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Secondary"),
                         StrokeThickness = 2,
                         StrokeLineJoin = PenLineJoin.Round,
                         StrokeStartLineCap = PenLineCap.Round,
@@ -582,7 +582,7 @@ namespace GuaranteeManager
             {
                 FontSize = fontSize,
                 FontWeight = fontWeight,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Primary"),
                 TextAlignment = TextAlignment.Right,
                 TextWrapping = TextWrapping.Wrap
             };
@@ -594,7 +594,7 @@ namespace GuaranteeManager
             {
                 FontSize = fontSize,
                 FontWeight = fontWeight,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Secondary"),
                 TextAlignment = TextAlignment.Right,
                 TextWrapping = TextWrapping.Wrap
             };
@@ -606,7 +606,7 @@ namespace GuaranteeManager
             {
                 FontSize = 11,
                 FontWeight = FontWeights.Normal,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Secondary"),
                 TextAlignment = TextAlignment.Left,
                 FlowDirection = FlowDirection.LeftToRight,
                 TextWrapping = TextWrapping.Wrap
@@ -638,14 +638,14 @@ namespace GuaranteeManager
                 Orientation = Orientation.Horizontal,
                 VerticalAlignment = VerticalAlignment.Center
             };
-            labelPanel.Children.Add(CreateIcon(iconKey, "#94A3B8", 12));
+            labelPanel.Children.Add(CreateIcon(iconKey, "Brush.Text.Muted", 12));
             labelPanel.Children.Add(new Border { Width = 7 });
             labelPanel.Children.Add(new TextBlock
             {
                 Text = label,
                 FontSize = 10,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#94A3B8"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Muted"),
                 VerticalAlignment = VerticalAlignment.Center
             });
             grid.Children.Add(labelPanel);
@@ -674,7 +674,7 @@ namespace GuaranteeManager
                 Child = new System.Windows.Shapes.Path
                 {
                     Data = geometry,
-                    Stroke = WorkspaceSurfaceChrome.BrushFrom(strokeColor),
+                    Stroke = WorkspaceSurfaceChrome.ResolveBrush(strokeColor),
                     StrokeThickness = 2,
                     StrokeLineJoin = PenLineJoin.Round,
                     StrokeStartLineCap = PenLineCap.Round,

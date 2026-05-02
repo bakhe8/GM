@@ -24,7 +24,7 @@
         <Setter Property="Width" Value="57" />
         <Setter Property="FontSize" Value="7.4" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="#94A3B8" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Muted}" />
         <Setter Property="TextAlignment" Value="Center" />
         <Setter Property="TextWrapping" Value="Wrap" />
         <Setter Property="HorizontalAlignment" Value="Center" />
@@ -35,7 +35,7 @@
     <Style x:Key="NavSectionHint" TargetType="TextBlock">
         <Setter Property="Width" Value="57" />
         <Setter Property="FontSize" Value="6.8" />
-        <Setter Property="Foreground" Value="#94A3B8" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Muted}" />
         <Setter Property="TextAlignment" Value="Center" />
         <Setter Property="TextWrapping" Value="Wrap" />
         <Setter Property="HorizontalAlignment" Value="Center" />

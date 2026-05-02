@@ -326,7 +326,7 @@ namespace GuaranteeManager
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Center
             };
-            row.Children.Add(CreateIcon("Icon.Reports", "#64748B", 14));
+            row.Children.Add(CreateIcon("Icon.Reports", "Brush.Text.Secondary", 14));
             _detailTitle.Margin = new Thickness(8, 0, 0, 0);
             row.Children.Add(_detailTitle);
             Grid.SetColumn(row, 1);
@@ -546,7 +546,7 @@ namespace GuaranteeManager
             {
                 FontSize = fontSize,
                 FontWeight = fontWeight,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Primary"),
                 TextAlignment = TextAlignment.Right,
                 TextWrapping = TextWrapping.Wrap
             };
@@ -558,7 +558,7 @@ namespace GuaranteeManager
             {
                 FontSize = fontSize,
                 FontWeight = fontWeight,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Secondary"),
                 TextAlignment = TextAlignment.Right,
                 TextWrapping = TextWrapping.Wrap
             };
@@ -588,7 +588,7 @@ namespace GuaranteeManager
                     Child = new System.Windows.Shapes.Path
                 {
                     Data = geometry,
-                    Stroke = WorkspaceSurfaceChrome.BrushFrom(strokeColor),
+                    Stroke = WorkspaceSurfaceChrome.ResolveBrush(strokeColor),
                     StrokeThickness = 2,
                     StrokeLineJoin = PenLineJoin.Round,
                     StrokeStartLineCap = PenLineCap.Round,

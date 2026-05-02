@@ -321,7 +321,7 @@
                     <Border Width="1" Height="12" Background="#24466F" Margin="10,0" />
                     <TextBlock x:Name="ShellStatusSecondaryBlock"
                                Text="{Binding ShellStatusSecondaryText}"
-                               Foreground="#94A3B8"
+                               Foreground="{StaticResource Brush.Text.Muted}"
                                FontSize="11"
                                VerticalAlignment="Center"
                                automation:AutomationProperties.AutomationId="Shell.Status.Secondary"
@@ -329,7 +329,7 @@
                                automation:AutomationProperties.ItemStatus="{Binding ShellStatusSecondaryText}" />
                     <Border Width="1" Height="12" Background="#24466F" Margin="10,0" />
                     <TextBlock Text="{Binding CurrentWorkspaceDisplayTitle}"
-                               Foreground="#94A3B8"
+                               Foreground="{StaticResource Brush.Text.Muted}"
                                FontSize="11"
                                VerticalAlignment="Center" />
                 </StackPanel>
@@ -338,12 +338,12 @@
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
                     <TextBlock Text="{x:Static local:AppReleaseInfo.VersionTag}"
-                                Foreground="#94A3B8"
+                                Foreground="{StaticResource Brush.Text.Muted}"
                                 FontSize="11"
                                 VerticalAlignment="Center" />
                     <Border Width="1" Height="12" Background="#24466F" Margin="10,0" />
                     <TextBlock Text="{x:Static local:AppReleaseInfo.RuntimeTag}"
-                                Foreground="#94A3B8"
+                                Foreground="{StaticResource Brush.Text.Muted}"
                                 FontSize="11"
                                 VerticalAlignment="Center" />
                 </StackPanel>
@@ -376,7 +376,7 @@
                                 <Condition Binding="{Binding IsActive, RelativeSource={RelativeSource AncestorType=Window}}" Value="False" />
                                 <Condition Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Normal" />
                             </MultiDataTrigger.Conditions>
-                            <Setter Property="BorderBrush" Value="#64748B" />
+                            <Setter Property="BorderBrush" Value="{StaticResource Brush.Text.Secondary}" />
                             <Setter Property="Opacity" Value="0.7" />
                         </MultiDataTrigger>
 

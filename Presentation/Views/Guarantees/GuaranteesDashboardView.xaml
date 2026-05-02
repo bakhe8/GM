@@ -106,12 +106,12 @@
                             <TextBlock Grid.Column="0"
                                       Text="ابحث برقم الضمان، اسم المورد، رقم العقد..."
                                        FontSize="11"
-                                       Foreground="#94A3B8"
+                                       Foreground="{StaticResource Brush.Text.Muted}"
                                        VerticalAlignment="Center"
                                        IsHitTestVisible="False"
                                        Visibility="{Binding Text, ElementName=GuaranteeSearchBox, Converter={StaticResource EmptyStringToVisibilityConverter}}" />
                             <Viewbox Grid.Column="1" Width="14" Height="14" Margin="8,0,0,0" VerticalAlignment="Center">
-                                <Path Data="{StaticResource Icon.Search}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                <Path Data="{StaticResource Icon.Search}" Stroke="{StaticResource Brush.Text.Secondary}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                             </Viewbox>
                         </Grid>
                     </Border>
@@ -152,7 +152,7 @@
                                           CommandParameter="Expired" />
                         </Border.InputBindings>
                         <StackPanel FlowDirection="RightToLeft" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="ضمانات منتهية" Style="{StaticResource KpiTitle}" Foreground="#EF4444" />
+                            <TextBlock Text="ضمانات منتهية" Style="{StaticResource KpiTitle}" Foreground="{StaticResource Brush.Danger}" />
                             <TextBlock Text="{Binding ExpiredCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
                             <TextBlock Text="{Binding ExpiredMeta}" Style="{StaticResource KpiMeta}" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
@@ -182,7 +182,7 @@
                                           CommandParameter="NeedsFollowUp" />
                         </Border.InputBindings>
                         <StackPanel FlowDirection="RightToLeft" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="تحتاج متابعة" Style="{StaticResource KpiTitle}" Foreground="#E09408" />
+                            <TextBlock Text="تحتاج متابعة" Style="{StaticResource KpiTitle}" Foreground="{StaticResource Brush.Warning}" />
                             <TextBlock Text="{Binding ExpiredFollowUpCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
                             <TextBlock Text="{Binding ExpiredFollowUpMeta}" Style="{StaticResource KpiMeta}" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
@@ -387,8 +387,8 @@
                                                       <Style TargetType="Button" BasedOn="{StaticResource ReferenceTablePagerButton}">
                                                           <Style.Triggers>
                                                               <DataTrigger Binding="{Binding IsCurrent}" Value="True">
-                                                                  <Setter Property="Background" Value="#2563EB" />
-                                                                  <Setter Property="Foreground" Value="White" />
+                                                                  <Setter Property="Background" Value="{StaticResource Brush.Primary}" />
+                                                                  <Setter Property="Foreground" Value="{StaticResource Brush.Text.OnPrimary}" />
                                                                   <Setter Property="BorderThickness" Value="0" />
                                                               </DataTrigger>
                                                           </Style.Triggers>

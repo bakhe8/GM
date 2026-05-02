@@ -405,7 +405,7 @@ namespace GuaranteeManager
                 Orientation = Orientation.Horizontal,
                 FlowDirection = FlowDirection.RightToLeft
             };
-            row.Children.Add(CreateIcon("Icon.User", "#94A3B8", 14));
+            row.Children.Add(CreateIcon("Icon.User", "Brush.Text.Muted", 14));
             row.Children.Add(_detailTitle);
             row.Children.Add(new Border { Width = 3 });
             row.Children.Add(BuildInlineCopyButton(
@@ -812,7 +812,7 @@ namespace GuaranteeManager
             {
                 FontSize = 11,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Primary"),
                 Margin = new Thickness(0, 5, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Right,
                 FlowDirection = FlowDirection.RightToLeft,
@@ -826,7 +826,7 @@ namespace GuaranteeManager
             return new TextBlock
             {
                 FontSize = 10,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Secondary"),
                 Margin = new Thickness(0, 3, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Right,
                 FlowDirection = FlowDirection.RightToLeft,
@@ -842,7 +842,7 @@ namespace GuaranteeManager
                 Style = WorkspaceSurfaceChrome.Style("PlainLinkButton"),
                 FontSize = 11,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#2563EB"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Link"),
                 Margin = new Thickness(0, 7, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Right,
                 HorizontalContentAlignment = HorizontalAlignment.Right,
@@ -894,7 +894,7 @@ namespace GuaranteeManager
                 Text = text,
                 FontSize = 11,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#94A3B8"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Muted"),
                 VerticalAlignment = VerticalAlignment.Center
             };
         }
@@ -905,7 +905,7 @@ namespace GuaranteeManager
             {
                 FontSize = size,
                 FontWeight = weight,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Primary"),
                 TextAlignment = TextAlignment.Right,
                 TextWrapping = TextWrapping.Wrap
             };
@@ -954,7 +954,7 @@ namespace GuaranteeManager
                 Style = WorkspaceSurfaceChrome.Style("IconOnlyButton"),
                 Margin = new Thickness(0),
                 ToolTip = tooltip,
-                Content = CreateIcon("Icon.Copy", "#64748B", 12)
+                Content = CreateIcon("Icon.Copy", "Brush.Text.Secondary", 12)
             };
             button.Click += (_, e) =>
             {
@@ -976,7 +976,7 @@ namespace GuaranteeManager
             {
                 FontSize = size,
                 FontWeight = weight,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Secondary"),
                 TextAlignment = TextAlignment.Right,
                 TextWrapping = TextWrapping.Wrap
             };
@@ -997,7 +997,7 @@ namespace GuaranteeManager
             {
                 FontSize = 34,
                 FontWeight = FontWeights.Bold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Primary"),
                 Margin = new Thickness(0, 12, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Left,
                 TextAlignment = TextAlignment.Right
@@ -1013,7 +1013,7 @@ namespace GuaranteeManager
                 Child = new Path
                 {
                     Data = (Geometry)Application.Current.FindResource(iconKey),
-                    Stroke = WorkspaceSurfaceChrome.BrushFrom(color),
+                    Stroke = WorkspaceSurfaceChrome.ResolveBrush(color),
                     StrokeThickness = 2,
                     StrokeLineJoin = PenLineJoin.Round,
                     StrokeStartLineCap = PenLineCap.Round,

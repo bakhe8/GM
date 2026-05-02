@@ -181,7 +181,7 @@ namespace GuaranteeManager
             {
                 Text = "لكل صفحة",
                 FontSize = 11,
-                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Muted"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Secondary"),
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(8, 0, 0, 0)
             });

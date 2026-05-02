@@ -49,7 +49,7 @@
                                     automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Header.CopyGuaranteeNo"
                                     automation:AutomationProperties.Name="نسخ رقم الضمان">
                                 <Viewbox Width="12" Height="12">
-                                    <Path Data="{StaticResource Icon.Copy}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                    <Path Data="{StaticResource Icon.Copy}" Stroke="{StaticResource Brush.Text.Secondary}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                 </Viewbox>
                             </Button>
                         </StackPanel>
@@ -69,7 +69,7 @@
                                 automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Header.CopySupplier"
                                 automation:AutomationProperties.Name="نسخ اسم المورد">
                             <Viewbox Width="12" Height="12">
-                                <Path Data="{StaticResource Icon.Copy}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                <Path Data="{StaticResource Icon.Copy}" Stroke="{StaticResource Brush.Text.Secondary}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                             </Viewbox>
                         </Button>
                     </StackPanel>
@@ -77,7 +77,7 @@
                         <Image Source="{Binding SelectedGuarantee.BankLogo}" Width="17" Height="17" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
                         <TextBlock Text="{Binding SelectedGuarantee.Bank}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" Margin="7,0,0,0" />
                     </StackPanel>
-                    <TextBlock Text="{Binding SelectedGuarantee.Amount}" FontSize="34" FontWeight="Bold" Foreground="#0F172A" Margin="0,12,0,0" HorizontalAlignment="Left" TextAlignment="Right" />
+                    <TextBlock Text="{Binding SelectedGuarantee.Amount}" FontSize="34" FontWeight="Bold" Foreground="{StaticResource Brush.Text.Primary}" Margin="0,12,0,0" HorizontalAlignment="Left" TextAlignment="Right" />
                     <TextBlock Text="{Binding SelectedGuarantee.AmountDescription}" FontSize="11" Foreground="{StaticResource Brush.Muted}" HorizontalAlignment="Left" TextAlignment="Right" />
                     <Border Height="1" Background="#EDF2F7" Margin="0,13,0,12" />
 
@@ -117,7 +117,7 @@
                                 automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.ReferenceFacts.CopyGuaranteeType"
                                 automation:AutomationProperties.Name="نسخ نوع الضمان">
                             <Viewbox Width="12" Height="12">
-                                <Path Data="{StaticResource Icon.Copy}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                <Path Data="{StaticResource Icon.Copy}" Stroke="{StaticResource Brush.Text.Secondary}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                             </Viewbox>
                         </Button>
 
@@ -141,7 +141,7 @@
                                 automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.ReferenceFacts.CopyReferenceNumber"
                                 automation:AutomationProperties.Name="نسخ رقم المرجع">
                             <Viewbox Width="12" Height="12">
-                                <Path Data="{StaticResource Icon.Copy}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                <Path Data="{StaticResource Icon.Copy}" Stroke="{StaticResource Brush.Text.Secondary}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                             </Viewbox>
                         </Button>
 
@@ -165,7 +165,7 @@
                                 automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.ReferenceFacts.CopyIssueDate"
                                 automation:AutomationProperties.Name="نسخ تاريخ الإصدار">
                             <Viewbox Width="12" Height="12">
-                                <Path Data="{StaticResource Icon.Copy}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                <Path Data="{StaticResource Icon.Copy}" Stroke="{StaticResource Brush.Text.Secondary}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                             </Viewbox>
                         </Button>
 
@@ -193,7 +193,7 @@
                                 automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.ReferenceFacts.CopyExpiryDate"
                                 automation:AutomationProperties.Name="نسخ تاريخ الانتهاء">
                             <Viewbox Width="12" Height="12">
-                                <Path Data="{StaticResource Icon.Copy}" Stroke="#64748B" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                <Path Data="{StaticResource Icon.Copy}" Stroke="{StaticResource Brush.Text.Secondary}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                             </Viewbox>
                         </Button>
                     </Grid>
@@ -303,7 +303,7 @@
                                                                         BorderThickness="1"
                                                                         Visibility="{Binding IsOpenEvidenceAction, Converter={StaticResource TrueToVisibleCollapsedConverter}}">
                                                                     <Viewbox Width="10.5" Height="10.5">
-                                                                        <Path Data="{StaticResource Icon.Paperclip}" Stroke="#2563EB" StrokeThickness="2.1" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                                        <Path Data="{StaticResource Icon.Paperclip}" Stroke="{StaticResource Brush.Link}" StrokeThickness="2.1" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                                                     </Viewbox>
                                                                 </Border>
                                                                 <Border Height="18"
@@ -314,7 +314,7 @@
                                                                         BorderThickness="1"
                                                                         Visibility="{Binding IsAttachEvidenceAction, Converter={StaticResource TrueToVisibleCollapsedConverter}}">
                                                                     <Viewbox Width="10.5" Height="10.5">
-                                                                        <Path Data="{StaticResource Icon.NewTransaction}" Stroke="#2563EB" StrokeThickness="2.1" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                                        <Path Data="{StaticResource Icon.NewTransaction}" Stroke="{StaticResource Brush.Link}" StrokeThickness="2.1" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                                                     </Viewbox>
                                                                 </Border>
                                                             </Grid>
@@ -333,7 +333,7 @@
                                                                 BorderBrush="#BFDBFE"
                                                                 BorderThickness="1"
                                                                 Visibility="Collapsed">
-                                                            <TextBlock Text="{Binding ContextLabel}" FontSize="9" FontWeight="SemiBold" Foreground="#2563EB" />
+                                                            <TextBlock Text="{Binding ContextLabel}" FontSize="9" FontWeight="SemiBold" Foreground="{StaticResource Brush.Link}" />
                                                         </Border>
                                                     </WrapPanel>
                                                     <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{StaticResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap" />
@@ -369,7 +369,7 @@
                                     ToolTipService.ShowOnDisabled="True"
                                     automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Timeline.ShowAllAttachments"
                                     automation:AutomationProperties.Name="فتح جميع المرفقات من السجل الزمني">
-                                <TextBlock Text="فتح جميع المرفقات" FontSize="11" Foreground="{StaticResource Brush.Blue}" />
+                                <TextBlock Text="فتح جميع المرفقات" FontSize="11" Foreground="{StaticResource Brush.Link}" />
                             </Button>
                         </StackPanel>
                     </Border>
@@ -395,12 +395,12 @@
                                 <Setter Property="FontSize" Value="9" />
                                 <Setter Property="Margin" Value="3,0,3,6" />
                                 <Setter Property="Padding" Value="2,0" />
-                                <Setter Property="Foreground" Value="#0F172A" />
+                                <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
                                 <Style.Triggers>
                                     <Trigger Property="IsEnabled" Value="False">
                                         <Setter Property="Background" Value="#F8FAFC" />
                                         <Setter Property="BorderBrush" Value="#E3E9F2" />
-                                        <Setter Property="Foreground" Value="#94A3B8" />
+                                        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Disabled}" />
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -420,12 +420,12 @@
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter TargetName="Root" Property="Background" Value="#EFF6FF" />
-                                                    <Setter TargetName="Root" Property="BorderBrush" Value="#2563EB" />
+                                                    <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource Brush.Primary}" />
                                                 </Trigger>
                                                 <Trigger Property="IsEnabled" Value="False">
                                                     <Setter TargetName="Root" Property="Background" Value="#F8FAFC" />
                                                     <Setter TargetName="Root" Property="BorderBrush" Value="#E3E9F2" />
-                                                    <Setter Property="Foreground" Value="#94A3B8" />
+                                                    <Setter Property="Foreground" Value="{StaticResource Brush.Text.Disabled}" />
                                                     <Setter Property="Cursor" Value="Arrow" />
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
@@ -454,7 +454,7 @@
                                                 <Trigger Property="IsEnabled" Value="False">
                                                     <Setter TargetName="Root" Property="Background" Value="#F8FAFC" />
                                                     <Setter TargetName="Root" Property="BorderBrush" Value="#E3E9F2" />
-                                                    <Setter Property="Foreground" Value="#94A3B8" />
+                                                    <Setter Property="Foreground" Value="{StaticResource Brush.Text.Disabled}" />
                                                     <Setter Property="Cursor" Value="Arrow" />
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
@@ -483,7 +483,7 @@
                                                 <Trigger Property="IsEnabled" Value="False">
                                                     <Setter TargetName="Root" Property="Background" Value="#F8FAFC" />
                                                     <Setter TargetName="Root" Property="BorderBrush" Value="#E3E9F2" />
-                                                    <Setter Property="Foreground" Value="#94A3B8" />
+                                                    <Setter Property="Foreground" Value="{StaticResource Brush.Text.Disabled}" />
                                                     <Setter Property="Cursor" Value="Arrow" />
                                                 </Trigger>
                                             </ControlTemplate.Triggers>

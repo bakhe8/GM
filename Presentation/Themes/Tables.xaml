@@ -13,18 +13,18 @@
     <Style x:Key="ReferenceTableHeaderBand" TargetType="Grid">
         <Setter Property="Margin" Value="0" />
         <Setter Property="FlowDirection" Value="LeftToRight" />
-        <Setter Property="Background" Value="#F8FAFC" />
+        <Setter Property="Background" Value="{StaticResource Brush.Surface.Subtle}" />
     </Style>
 
     <Style x:Key="ReferenceTableHeaderDivider" TargetType="Border">
-        <Setter Property="BorderBrush" Value="#E3E9F2" />
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}" />
         <Setter Property="BorderThickness" Value="0,0,0,1" />
     </Style>
 
     <Style x:Key="TableHeaderText" TargetType="TextBlock">
         <Setter Property="FontSize" Value="11" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="#64748B" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Secondary}" />
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="TextAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Center" />
@@ -39,7 +39,7 @@
     <Style x:Key="TableCellText" TargetType="TextBlock">
         <Setter Property="FontSize" Value="11" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="#0F172A" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
@@ -83,18 +83,18 @@
                             <Rectangle x:Name="SelectionBar"
                                        Width="3"
                                        HorizontalAlignment="Right"
-                                       Fill="#2563EB"
+                                       Fill="{StaticResource Brush.Primary}"
                                        Visibility="Collapsed" />
                             <ContentPresenter VerticalAlignment="Stretch" />
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Root" Property="Background" Value="#EEF4FC" />
+                            <Setter TargetName="Root" Property="Background" Value="{StaticResource Brush.Surface.RowSelected}" />
                             <Setter TargetName="SelectionBar" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Root" Property="Background" Value="#F8FBFF" />
+                            <Setter TargetName="Root" Property="Background" Value="{StaticResource Brush.Surface.Selected}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -119,20 +119,20 @@
         <Setter Property="MinWidth" Value="28" />
         <Setter Property="Height" Value="28" />
         <Setter Property="Padding" Value="0" />
-        <Setter Property="BorderBrush" Value="#E3E9F2" />
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}" />
     </Style>
 
     <Style x:Key="ReferenceTablePagerActiveButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
         <Setter Property="MinWidth" Value="28" />
         <Setter Property="Height" Value="28" />
         <Setter Property="Padding" Value="0" />
-        <Setter Property="Background" Value="#2563EB" />
+        <Setter Property="Background" Value="{StaticResource Brush.Primary}" />
         <Setter Property="BorderThickness" Value="0" />
     </Style>
 
     <Style x:Key="ReferenceTableFooterSummary" TargetType="TextBlock">
         <Setter Property="FontSize" Value="11" />
-        <Setter Property="Foreground" Value="{StaticResource Brush.Muted}" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Secondary}" />
         <Setter Property="HorizontalAlignment" Value="Right" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>

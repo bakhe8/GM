@@ -471,7 +471,7 @@ namespace GuaranteeManager
                     Child = new System.Windows.Shapes.Path
                     {
                         Data = geometry,
-                        Stroke = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
+                        Stroke = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Secondary"),
                         StrokeThickness = 2,
                         StrokeLineJoin = PenLineJoin.Round,
                         StrokeStartLineCap = PenLineCap.Round,
@@ -589,7 +589,7 @@ namespace GuaranteeManager
             _detailStatusBadgeBorder.Background = state.BadgeBackground;
             _detailStatusBadgeBorder.BorderBrush = state.BadgeBorder;
             _detailAmountHeadline.Text = state.AmountHeadline;
-            _detailAmountHeadline.Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A");
+            _detailAmountHeadline.Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Primary");
             _detailAmountCaption.Text = state.AmountCaption;
             _detailCount.Text = state.Count;
             _detailActive.Text = state.Active;
@@ -612,7 +612,7 @@ namespace GuaranteeManager
             {
                 FontSize = 34,
                 FontWeight = FontWeights.Bold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Primary"),
                 Margin = new Thickness(0, 12, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Left,
                 TextAlignment = TextAlignment.Right
@@ -625,7 +625,7 @@ namespace GuaranteeManager
             {
                 FontSize = fontSize,
                 FontWeight = fontWeight,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Primary"),
                 TextAlignment = TextAlignment.Right,
                 TextWrapping = TextWrapping.Wrap
             };
@@ -637,7 +637,7 @@ namespace GuaranteeManager
             {
                 FontSize = fontSize,
                 FontWeight = fontWeight,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Secondary"),
                 TextAlignment = TextAlignment.Right,
                 TextWrapping = TextWrapping.Wrap
             };
