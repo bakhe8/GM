@@ -266,6 +266,7 @@ namespace GuaranteeManager
                 VerticalAlignment = VerticalAlignment.Center
             };
             content.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            content.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(7) });
             content.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
             var logo = new Image
@@ -288,7 +289,7 @@ namespace GuaranteeManager
                 HorizontalAlignment = HorizontalAlignment.Right,
                 TextAlignment = TextAlignment.Right
             };
-            Grid.SetColumn(name, 1);
+            Grid.SetColumn(name, 2);
             content.Children.Add(name);
 
             cell.Children.Add(content);

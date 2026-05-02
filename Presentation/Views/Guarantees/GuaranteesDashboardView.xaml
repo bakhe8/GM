@@ -338,6 +338,7 @@
                                                   VerticalAlignment="Center">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="7" />
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
                                                 <Image Grid.Column="0"
@@ -345,7 +346,7 @@
                                                        Width="16"
                                                        Height="16"
                                                        RenderOptions.BitmapScalingMode="HighQuality" />
-                                                <TextBlock Grid.Column="1"
+                                                <TextBlock Grid.Column="2"
                                                            Text="{Binding Bank}"
                                                            Style="{StaticResource TableCellRight}"
                                                            MaxWidth="118"
