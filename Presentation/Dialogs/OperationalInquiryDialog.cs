@@ -22,7 +22,7 @@ namespace GuaranteeManager
         private readonly IExcelService _excel;
         private readonly Border _nextStepCard = new();
         private readonly TextBlock _nextStepSummary = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#0F172A");
-        private readonly TextBlock _nextStepHint = WorkspaceSurfaceChrome.Text(10.8, FontWeights.Normal, "#64748B");
+        private readonly TextBlock _nextStepHint = WorkspaceSurfaceChrome.Text(11, FontWeights.Normal, "#64748B");
         private readonly Button _nextStepActionButton = new();
         private Action? _nextStepAction;
 
@@ -327,7 +327,7 @@ namespace GuaranteeManager
                 : $"{_result.RelatedRequest.TypeLabel} #{_result.RelatedRequest.SequenceNumber.ToString("N0", CultureInfo.InvariantCulture)}";
             string resultContextLabel = BuildResultContextLabel(_result);
             string resultContextValue = BuildResultContextValue(_result);
-            TextBlock detailGuaranteeNo = WorkspaceSurfaceChrome.Text(17, FontWeights.Bold, "#0F172A");
+            TextBlock detailGuaranteeNo = WorkspaceSurfaceChrome.Text(18, FontWeights.Bold, "#0F172A");
             detailGuaranteeNo.Text = guarantee?.GuaranteeNo ?? _result.Title;
             detailGuaranteeNo.Margin = new Thickness(0, 8, 0, 0);
 
@@ -335,7 +335,7 @@ namespace GuaranteeManager
             detailSubject.Text = _result.Subject;
             detailSubject.Margin = new Thickness(0, 4, 0, 0);
 
-            TextBlock detailHeadline = WorkspaceSurfaceChrome.Text(27, FontWeights.Bold, "#0F172A");
+            TextBlock detailHeadline = WorkspaceSurfaceChrome.Text(32, FontWeights.Bold, "#0F172A");
             detailHeadline.Text = headline;
             detailHeadline.Margin = new Thickness(0, 10, 0, 0);
 

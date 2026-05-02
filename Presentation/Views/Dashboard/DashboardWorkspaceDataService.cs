@@ -219,7 +219,7 @@ namespace GuaranteeManager
                 selected.PriorityBorder,
                 selected.BankLogo,
                 selected.Bank,
-                selected.AmountDisplay,
+                ArabicAmountFormatter.FormatNumber(selected.Amount),
                 selected.AmountCaption,
                 selected.Reference,
                 selected.DueDetail,

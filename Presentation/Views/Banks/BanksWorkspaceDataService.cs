@@ -127,7 +127,7 @@ namespace GuaranteeManager
                 selectedItem.PortfolioStatusBrush,
                 selectedItem.PortfolioStatusBackground,
                 selectedItem.PortfolioStatusBorder,
-                selectedItem.AmountDisplay,
+                ArabicAmountFormatter.FormatNumber(selectedItem.Amount),
                 selectedItem.AmountInWords,
                 selectedItem.CountDisplay,
                 WorkspaceSurfaceChrome.BrushFrom("#16A34A"),

@@ -31,7 +31,7 @@ namespace GuaranteeManager
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
         private readonly Border _detailStatusBadgeBorder = new();
         private readonly TextBlock _detailAmountHeadline = BuildAmountHeadline();
-        private readonly TextBlock _detailAmountCaption = BuildMutedText(11.5, FontWeights.Normal);
+        private readonly TextBlock _detailAmountCaption = BuildMutedText(11, FontWeights.Normal);
         private readonly TextBlock _detailCount = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailActive = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailExpiring = BuildDetailValue(12, FontWeights.SemiBold);

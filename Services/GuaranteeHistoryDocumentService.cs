@@ -420,8 +420,8 @@ namespace GuaranteeManager.Services
             var document = new FlowDocument
             {
                 FlowDirection = FlowDirection.RightToLeft,
-                FontFamily = new FontFamily("Segoe UI"),
-                FontSize = 11.5,
+                FontFamily = UiTypography.DefaultFontFamily,
+                FontSize = 11,
                 PagePadding = new Thickness(34),
                 PageWidth = 793,
                 PageHeight = 1122,

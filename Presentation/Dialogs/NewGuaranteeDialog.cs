@@ -496,7 +496,7 @@ namespace GuaranteeManager
 
             ConfigureConsequenceText(_consequenceSummary, 12, FontWeights.SemiBold, "#0F172A");
             ConfigureConsequenceText(_consequencePrimary, 11, FontWeights.Normal, "#64748B");
-            ConfigureConsequenceText(_consequenceSecondary, 10.8, FontWeights.Normal, "#64748B");
+            ConfigureConsequenceText(_consequenceSecondary, 11, FontWeights.Normal, "#64748B");
             _consequencePrimary.Margin = new Thickness(0, 4, 0, 0);
             _consequenceSecondary.Margin = new Thickness(0, 4, 0, 0);
 

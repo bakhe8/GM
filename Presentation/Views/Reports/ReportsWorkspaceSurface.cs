@@ -30,7 +30,7 @@ namespace GuaranteeManager
         private readonly TextBlock _detailSubtitle = BuildMutedText(11, FontWeights.SemiBold);
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
         private readonly Border _detailStatusBadgeBorder = new();
-        private readonly TextBlock _detailKey = BuildDetailValue(11.5, FontWeights.SemiBold);
+        private readonly TextBlock _detailKey = BuildDetailValue(11, FontWeights.SemiBold);
         private readonly TextBlock _detailCategory = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailStatus = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailAction = BuildDetailValue(12, FontWeights.SemiBold);

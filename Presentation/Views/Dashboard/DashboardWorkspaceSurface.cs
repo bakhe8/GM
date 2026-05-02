@@ -36,7 +36,7 @@ namespace GuaranteeManager
         private readonly TextBlock _recommendationPrimary = BuildInsightPrimary();
         private readonly TextBlock _recommendationSecondary = BuildInsightSecondary();
         private readonly Button _recommendationActionButton = BuildInsightActionButton();
-        private readonly TextBlock _detailPanelHeading = BuildSectionHeading(18);
+        private readonly TextBlock _detailPanelHeading = BuildPrimaryHeaderTitle();
         private readonly TextBlock _detailActionsHeading = BuildSectionHeading(12);
         private readonly TextBlock _detailTitle = BuildDashboardSupplierText();
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
@@ -44,7 +44,7 @@ namespace GuaranteeManager
         private readonly Image _detailBankLogo = new() { Width = 17, Height = 17 };
         private readonly TextBlock _detailBankText = BuildMutedText(12, FontWeights.SemiBold);
         private readonly TextBlock _detailAmountHeadline = BuildAmountHeadline();
-        private readonly TextBlock _detailAmountCaption = BuildMutedText(11.5, FontWeights.Normal);
+        private readonly TextBlock _detailAmountCaption = BuildMutedText(11, FontWeights.Normal);
         private readonly TextBlock _detailDue = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailExpiry = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailAction = BuildDetailValue(12, FontWeights.SemiBold);
@@ -424,8 +424,11 @@ namespace GuaranteeManager
                 Margin = new Thickness(0, 5, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Right
             };
+            _detailBankLogo.VerticalAlignment = VerticalAlignment.Center;
+            RenderOptions.SetBitmapScalingMode(_detailBankLogo, BitmapScalingMode.HighQuality);
             row.Children.Add(_detailBankLogo);
             _detailBankText.Margin = new Thickness(7, 0, 0, 0);
+            _detailBankText.VerticalAlignment = VerticalAlignment.Center;
             row.Children.Add(_detailBankText);
             return row;
         }
@@ -918,6 +921,17 @@ namespace GuaranteeManager
             };
         }
 
+        private static TextBlock BuildPrimaryHeaderTitle()
+        {
+            return new TextBlock
+            {
+                FontSize = 18,
+                FontWeight = FontWeights.Bold,
+                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text"),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+        }
+
         private static TextBlock BuildDashboardSupplierText()
         {
             return new TextBlock
@@ -925,7 +939,8 @@ namespace GuaranteeManager
                 FontSize = 16,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text"),
-                Margin = new Thickness(8, 0, 0, 0)
+                Margin = new Thickness(8, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center
             };
         }
 
