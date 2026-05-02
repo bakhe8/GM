@@ -140,7 +140,7 @@
                                 <Setter Property="BorderThickness" Value="2" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsExpiredGuaranteeFilterSelected}" Value="True">
-                                        <Setter Property="BorderBrush" Value="#2563EB" />
+                                        <Setter Property="BorderBrush" Value="#EF4444" />
                                         <Setter Property="Background" Value="#F8FBFF" />
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -170,7 +170,7 @@
                                 <Setter Property="BorderThickness" Value="2" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsNeedsFollowUpGuaranteeFilterSelected}" Value="True">
-                                        <Setter Property="BorderBrush" Value="#2563EB" />
+                                        <Setter Property="BorderBrush" Value="#E09408" />
                                         <Setter Property="Background" Value="#F8FBFF" />
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -200,7 +200,7 @@
                                 <Setter Property="BorderThickness" Value="2" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsExpiringSoonGuaranteeFilterSelected}" Value="True">
-                                        <Setter Property="BorderBrush" Value="#2563EB" />
+                                        <Setter Property="BorderBrush" Value="#E09408" />
                                         <Setter Property="Background" Value="#F8FBFF" />
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -230,7 +230,7 @@
                                 <Setter Property="BorderThickness" Value="2" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsActiveGuaranteeFilterSelected}" Value="True">
-                                        <Setter Property="BorderBrush" Value="#2563EB" />
+                                        <Setter Property="BorderBrush" Value="#16A34A" />
                                         <Setter Property="Background" Value="#F8FBFF" />
                                     </DataTrigger>
                                 </Style.Triggers>
