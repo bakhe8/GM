@@ -33,6 +33,7 @@ namespace GuaranteeManager
             FlowDirection = FlowDirection.RightToLeft;
             FontFamily = UiTypography.DefaultFontFamily;
             Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
+            DialogWindowSupport.Attach(this, nameof(BanksSummaryDialog));
 
             var list = new ListBox { Margin = new Thickness(16) };
             foreach (var group in guarantees.GroupBy(item => item.Bank).OrderByDescending(group => group.Sum(item => item.Amount)))
@@ -67,6 +68,7 @@ namespace GuaranteeManager
             FlowDirection = FlowDirection.RightToLeft;
             FontFamily = UiTypography.DefaultFontFamily;
             Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
+            DialogWindowSupport.Attach(this, nameof(ReportPickerDialog));
 
             var root = new DockPanel { Margin = new Thickness(16) };
             foreach (var action in WorkspaceReportCatalog.PortfolioActions.Concat(WorkspaceReportCatalog.OperationalActions))
@@ -134,6 +136,7 @@ namespace GuaranteeManager
             FlowDirection = FlowDirection.RightToLeft;
             FontFamily = UiTypography.DefaultFontFamily;
             Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
+            DialogWindowSupport.Attach(this, nameof(SettingsDialog));
 
             var text = new TextBox
             {
