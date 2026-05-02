@@ -33,7 +33,7 @@ namespace GuaranteeManager.Tests
             BanksWorkspaceDetailState state = service.BuildDetailState(item);
 
             Assert.Equal("\u20C1 23,900,000", state.AmountHeadline);
-            Assert.Equal("ثلاثة وعشرون مليون وتسعمئة ألف ريال سعودي", state.AmountCaption);
+            Assert.Equal("ثلاثة وعشرون مليون وتسعمئة ألف ريال سعودي \u20C1", state.AmountCaption);
             Assert.Equal("\u20C1 23,900,000", item.AmountDisplay);
         }
 
