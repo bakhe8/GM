@@ -17,7 +17,33 @@ namespace GuaranteeManager.Tests
         [Fact]
         public void FormatSaudiRiyals_PutsSymbolLeftOfNumberAndNegativeSign()
         {
-            Assert.Equal("\u20C1 -1,250", ArabicAmountFormatter.FormatSaudiRiyals(-1250m));
+            Assert.Equal("\u20C1 -1,250.00", ArabicAmountFormatter.FormatSaudiRiyals(-1250m));
+        }
+
+        [Fact]
+        public void FormatSaudiRiyals_AlwaysShowsHalalas()
+        {
+            Assert.Equal("\u20C1 1,250.00", ArabicAmountFormatter.FormatSaudiRiyals(1250m));
+            Assert.Equal("\u20C1 1,250.50", ArabicAmountFormatter.FormatSaudiRiyals(1250.5m));
+        }
+
+        [Theory]
+        [InlineData("1,250.50", true, 1250.50)]
+        [InlineData("1,250.500", false, 0)]
+        [InlineData("1,250.555", false, 0)]
+        [InlineData("0", false, 0)]
+        public void TryParsePositiveSaudiRiyalAmount_RequiresPositiveAmountWithTwoHalalaDigits(
+            string value,
+            bool expectedResult,
+            decimal expectedAmount)
+        {
+            bool result = ArabicAmountFormatter.TryParsePositiveSaudiRiyalAmount(value, out decimal amount);
+
+            Assert.Equal(expectedResult, result);
+            if (expectedResult)
+            {
+                Assert.Equal(expectedAmount, amount);
+            }
         }
 
         [Fact]

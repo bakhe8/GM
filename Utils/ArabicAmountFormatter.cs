@@ -8,15 +8,49 @@ namespace GuaranteeManager.Utils
     {
         public const string SaudiRiyalSymbol = "\u20C1";
 
-        public static string FormatNumber(decimal amount, int decimals = 0)
+        public static string FormatNumber(decimal amount, int decimals = 2)
         {
             string format = decimals <= 0 ? "N0" : $"N{decimals.ToString(CultureInfo.InvariantCulture)}";
             return amount.ToString(format, CultureInfo.InvariantCulture);
         }
 
-        public static string FormatSaudiRiyals(decimal amount, int decimals = 0)
+        public static string FormatSaudiRiyals(decimal amount, int decimals = 2)
         {
             return $"{SaudiRiyalSymbol} {FormatNumber(amount, decimals)}";
+        }
+
+        public static bool TryParsePositiveSaudiRiyalAmount(string? value, out decimal amount)
+        {
+            amount = 0m;
+            string normalized = NormalizeAmountInput(value);
+            if (!HasValidHalalaInputPrecision(normalized)
+                || !decimal.TryParse(normalized, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal parsed)
+                || parsed <= 0
+                || !HasValidHalalaPrecision(parsed))
+            {
+                return false;
+            }
+
+            amount = NormalizeSaudiRiyalAmount(parsed);
+            return true;
+        }
+
+        public static decimal NormalizeSaudiRiyalAmount(decimal amount)
+        {
+            return Math.Round(amount, 2, MidpointRounding.AwayFromZero);
+        }
+
+        public static bool HasValidHalalaPrecision(decimal amount)
+        {
+            return CountSignificantDecimalPlaces(amount) <= 2;
+        }
+
+        public static void EnsureValidSaudiRiyalAmount(decimal amount, string fieldName = "المبلغ")
+        {
+            if (!HasValidHalalaPrecision(amount))
+            {
+                throw new InvalidOperationException($"{fieldName} لا يمكن أن يحتوي على أكثر من خانتين للهلل.");
+            }
         }
 
         public static string FormatSaudiRiyalsInWords(decimal amount)
@@ -162,5 +196,27 @@ namespace GuaranteeManager.Utils
             9 => "تسعمئة",
             _ => string.Empty
         };
+
+        private static string NormalizeAmountInput(string? value)
+        {
+            return (value ?? string.Empty)
+                .Replace(SaudiRiyalSymbol, string.Empty, StringComparison.Ordinal)
+                .Replace("ريال", string.Empty, StringComparison.Ordinal)
+                .Replace(",", string.Empty, StringComparison.Ordinal)
+                .Trim();
+        }
+
+        private static bool HasValidHalalaInputPrecision(string value)
+        {
+            int separatorIndex = value.IndexOf('.', StringComparison.Ordinal);
+            return separatorIndex < 0 || value.Length - separatorIndex - 1 <= 2;
+        }
+
+        private static int CountSignificantDecimalPlaces(decimal amount)
+        {
+            string text = Math.Abs(amount).ToString("0.#############################", CultureInfo.InvariantCulture);
+            int separatorIndex = text.IndexOf('.', StringComparison.Ordinal);
+            return separatorIndex < 0 ? 0 : text.Length - separatorIndex - 1;
+        }
     }
 }

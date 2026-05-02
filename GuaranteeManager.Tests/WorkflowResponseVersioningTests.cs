@@ -77,6 +77,26 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void CreateReductionRequest_RejectsAmountWithMoreThanTwoHalalaDigits()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                () => workflow.CreateReductionRequest(
+                    current.Id,
+                    current.Amount - 100.123m,
+                    "invalid reduction amount",
+                    "tester"));
+
+            Assert.Contains("خانتين للهلل", exception.Message);
+        }
+
+        [Fact]
         public void CreateExtensionRequest_AfterExecutedExtension_IsAllowedOnCurrentVersion()
         {
             DatabaseService database = _fixture.CreateDatabaseService();

@@ -68,6 +68,9 @@ namespace GuaranteeManager.Services
                 throw new InvalidOperationException("المبلغ المطلوب بعد التخفيض يجب أن يكون أكبر من صفر وأقل من المبلغ الحالي.");
             }
 
+            ArabicAmountFormatter.EnsureValidSaudiRiyalAmount(requestedAmount, "المبلغ المطلوب بعد التخفيض");
+            requestedAmount = ArabicAmountFormatter.NormalizeSaudiRiyalAmount(requestedAmount);
+
             if (_databaseService.HasPendingWorkflowRequest(rootId, RequestType.Reduction))
             {
                 throw new InvalidOperationException("يوجد بالفعل طلب تخفيض معلق لهذا الضمان. يمكنك إعادة طباعة الخطاب الحالي بدل إنشاء طلب جديد.");
@@ -210,6 +213,9 @@ namespace GuaranteeManager.Services
             {
                 throw new InvalidOperationException("مبلغ الضمان البديل يجب أن يكون أكبر من صفر.");
             }
+
+            ArabicAmountFormatter.EnsureValidSaudiRiyalAmount(replacementAmount, "مبلغ الضمان البديل");
+            replacementAmount = ArabicAmountFormatter.NormalizeSaudiRiyalAmount(replacementAmount);
 
             if (replacementExpiryDate.Date == DateTime.MinValue.Date)
             {

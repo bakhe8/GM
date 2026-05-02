@@ -37,6 +37,19 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void SaveGuarantee_RejectsAmountWithMoreThanTwoHalalaDigits()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            Guarantee input = _fixture.CreateGuarantee();
+            input.Amount = 1000.123m;
+
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                () => database.SaveGuarantee(input, new List<string>()));
+
+            Assert.Contains("خانتين للهلل", exception.Message);
+        }
+
+        [Fact]
         public void AddBankReference_PersistsStandaloneBankAndExposesItAsUniqueBank()
         {
             DatabaseService database = _fixture.CreateDatabaseService();

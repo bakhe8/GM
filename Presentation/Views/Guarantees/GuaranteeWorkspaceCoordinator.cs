@@ -246,16 +246,16 @@ namespace GuaranteeManager
             if (!PromptDialog.TryShow(
                     "طلب تخفيض",
                     "المبلغ المطلوب بعد التخفيض",
-                    target.AmountValue.ToString("N0", CultureInfo.InvariantCulture),
+                    target.AmountValue.ToString("N2", CultureInfo.InvariantCulture),
                     out string requestedAmountText))
             {
                 return;
             }
 
             string normalizedAmount = requestedAmountText.Replace(",", string.Empty, StringComparison.Ordinal).Trim();
-            if (!decimal.TryParse(normalizedAmount, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal requestedAmount))
+            if (!ArabicAmountFormatter.TryParsePositiveSaudiRiyalAmount(normalizedAmount, out decimal requestedAmount))
             {
-                MessageBox.Show("صيغة المبلغ غير صحيحة.", "طلب تخفيض", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("صيغة المبلغ غير صحيحة أو تحتوي على أكثر من خانتين للهلل.", "طلب تخفيض", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 

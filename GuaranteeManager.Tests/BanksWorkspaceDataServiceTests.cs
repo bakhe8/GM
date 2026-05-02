@@ -32,9 +32,9 @@ namespace GuaranteeManager.Tests
 
             BanksWorkspaceDetailState state = service.BuildDetailState(item);
 
-            Assert.Equal("\u20C1 23,900,000", state.AmountHeadline);
+            Assert.Equal("\u20C1 23,900,000.00", state.AmountHeadline);
             Assert.Equal("ثلاثة وعشرون مليون وتسعمئة ألف ريال سعودي", state.AmountCaption);
-            Assert.Equal("\u20C1 23,900,000", item.AmountDisplay);
+            Assert.Equal("\u20C1 23,900,000.00", item.AmountDisplay);
         }
 
         [Fact]
@@ -80,7 +80,7 @@ namespace GuaranteeManager.Tests
                 string.Empty,
                 "الأعلى قيمة");
 
-            Assert.Equal("\u20C1 3,500", result.Metrics.Amount);
+            Assert.Equal("\u20C1 3,500.00", result.Metrics.Amount);
         }
     }
 }

@@ -30,6 +30,12 @@ namespace GuaranteeManager.Services
             bool cancelOtherPendingRequests,
             string? cancelOtherPendingRequestsNote = null)
         {
+            if (newAmount.HasValue)
+            {
+                ArabicAmountFormatter.EnsureValidSaudiRiyalAmount(newAmount.Value, "المبلغ الناتج");
+                newAmount = ArabicAmountFormatter.NormalizeSaudiRiyalAmount(newAmount.Value);
+            }
+
             List<StagedAttachmentFile> stagedResponseAttachments = _attachmentStorage.StageCopies(
                 string.IsNullOrWhiteSpace(responseAttachmentSourcePath)
                     ? Array.Empty<string>()

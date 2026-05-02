@@ -192,9 +192,9 @@ namespace GuaranteeManager
                 return;
             }
 
-            if (!decimal.TryParse(amountText, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal replacementAmount) || replacementAmount <= 0)
+            if (!ArabicAmountFormatter.TryParsePositiveSaudiRiyalAmount(amountText, out decimal replacementAmount))
             {
-                MessageBox.Show("أدخل مبلغًا صحيحًا أكبر من صفر.", "طلب استبدال", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("أدخل مبلغًا صحيحًا أكبر من صفر، وبحد أقصى خانتين للهلل.", "طلب استبدال", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 

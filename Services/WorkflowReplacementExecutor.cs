@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Data.Sqlite;
 using GuaranteeManager.Models;
+using GuaranteeManager.Utils;
 
 namespace GuaranteeManager.Services
 {
@@ -64,6 +65,9 @@ namespace GuaranteeManager.Services
                     {
                         throw new InvalidOperationException("مبلغ الضمان البديل يجب أن يكون أكبر من صفر.");
                     }
+
+                    ArabicAmountFormatter.EnsureValidSaudiRiyalAmount(replacementAmount, "مبلغ الضمان البديل");
+                    replacementAmount = ArabicAmountFormatter.NormalizeSaudiRiyalAmount(replacementAmount);
 
                     if (replacementExpiryDate == DateTime.MinValue)
                     {

@@ -292,9 +292,9 @@ namespace GuaranteeManager
                 return;
             }
 
-            if (!decimal.TryParse(amountText, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal amount) || amount <= 0)
+            if (!ArabicAmountFormatter.TryParsePositiveSaudiRiyalAmount(amountText, out decimal amount))
             {
-                MessageBox.Show("أدخل مبلغاً صحيحاً أكبر من صفر.", "تعديل الضمان", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("أدخل مبلغاً صحيحاً أكبر من صفر، وبحد أقصى خانتين للهلل.", "تعديل الضمان", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -700,7 +700,7 @@ namespace GuaranteeManager
                 missing.Add("نوع الضمان");
             }
 
-            bool amountValid = decimal.TryParse(amountText, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal amount) && amount > 0;
+            bool amountValid = ArabicAmountFormatter.TryParsePositiveSaudiRiyalAmount(amountText, out decimal amount);
             bool expiryValid = DateTime.TryParse(expiryText, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime expiryDate);
 
             if (missing.Count > 0 || !amountValid || !expiryValid)
@@ -713,7 +713,7 @@ namespace GuaranteeManager
 
                 if (!amountValid)
                 {
-                    blockers.Add("المبلغ يجب أن يكون أكبر من صفر.");
+                    blockers.Add("المبلغ يجب أن يكون أكبر من صفر وبحد أقصى خانتين للهلل.");
                 }
 
                 if (!expiryValid)
