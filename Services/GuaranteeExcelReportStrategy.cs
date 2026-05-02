@@ -109,10 +109,10 @@ namespace GuaranteeManager.Services
                 ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "رقم الضمان", guarantee.GuaranteeNo, "الإصدار", guarantee.VersionLabel);
                 ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "المورد", guarantee.Supplier, "البنك", guarantee.Bank);
                 ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "المبلغ", ExcelReportSupport.FormatPlainAmount(guarantee.Amount), "النوع", ExcelReportSupport.ValueOrDash(guarantee.GuaranteeType));
-                ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "تاريخ الانتهاء", DualCalendarDateService.FormatDualDate(guarantee.ExpiryDate), "الحالة الزمنية", guarantee.StatusLabel);
+                ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "تاريخ الانتهاء", DualCalendarDateService.FormatDate(guarantee.ExpiryDate, guarantee.DateCalendar), "الحالة الزمنية", guarantee.StatusLabel);
                 ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "الحالة التشغيلية", guarantee.LifecycleStatusLabel, "المرفقات", guarantee.AttachmentCount.ToString());
                 ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "نوع المرجع", guarantee.ReferenceTypeLabel, "رقم المرجع", ExcelReportSupport.ValueOrDash(guarantee.ReferenceNumber));
-                ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "تاريخ الإدخال", DualCalendarDateService.FormatDateTime(guarantee.CreatedAt), "اكتمال المرجع", guarantee.HasReference ? "مكتمل" : "غير مكتمل");
+                ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "تاريخ الإدخال", DualCalendarDateService.FormatDateTime(guarantee.CreatedAt, guarantee.DateCalendar), "اكتمال المرجع", guarantee.HasReference ? "مكتمل" : "غير مكتمل");
 
                 detailsSheet.Cell(row, 1).Value = "الملاحظات";
                 ExcelReportSupport.ApplySummaryLabelStyle(detailsSheet.Cell(row, 1));

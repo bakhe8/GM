@@ -17,6 +17,7 @@ namespace GuaranteeManager
         string ReplacementBank,
         decimal ReplacementAmount,
         DateTime ReplacementExpiryDate,
+        GuaranteeDateCalendar ReplacementDateCalendar,
         string ReplacementGuaranteeType,
         string ReplacementBeneficiary,
         GuaranteeReferenceType ReplacementReferenceType,
@@ -72,7 +73,7 @@ namespace GuaranteeManager
             _supplierInput.Text = string.IsNullOrWhiteSpace(currentGuarantee.Supplier) ? string.Empty : currentGuarantee.Supplier;
             _bankInput.Text = currentGuarantee.Bank;
             _amountInput.Text = currentGuarantee.Amount.ToString("N2", CultureInfo.InvariantCulture);
-            _expiryInput.Text = DualCalendarDateService.FormatGregorianDate(currentGuarantee.ExpiryDate);
+            _expiryInput.Text = DualCalendarDateService.FormatDate(currentGuarantee.ExpiryDate, currentGuarantee.DateCalendar);
             _typeInput.Text = currentGuarantee.GuaranteeType;
             _beneficiaryInput.Text = BusinessPartyDefaults.NormalizeBeneficiary(currentGuarantee.Beneficiary);
             _beneficiaryInput.IsReadOnly = true;
@@ -152,6 +153,7 @@ namespace GuaranteeManager
                 string.Empty,
                 0,
                 DateTime.Today,
+                currentGuarantee.DateCalendar,
                 string.Empty,
                 string.Empty,
                 GuaranteeReferenceType.None,
@@ -198,7 +200,7 @@ namespace GuaranteeManager
                 return;
             }
 
-            if (!DualCalendarDateService.TryParseDate(expiryText, out DateTime replacementExpiryDate))
+            if (!DualCalendarDateService.TryParseDate(expiryText, out DateTime replacementExpiryDate, out GuaranteeDateCalendar replacementDateCalendar))
             {
                 MessageBox.Show($"صيغة تاريخ انتهاء الضمان البديل غير صحيحة. استخدم مثلاً {DualCalendarDateService.InputExamples}.", "طلب استبدال", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -217,6 +219,7 @@ namespace GuaranteeManager
                 replacementBank,
                 replacementAmount,
                 replacementExpiryDate.Date,
+                replacementDateCalendar,
                 replacementGuaranteeType,
                 BusinessPartyDefaults.NormalizeBeneficiary(replacementBeneficiary),
                 replacementReferenceType,

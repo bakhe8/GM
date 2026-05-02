@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using GuaranteeManager.Models;
 using GuaranteeManager.Utils;
 using Xunit;
 
@@ -22,10 +23,34 @@ namespace GuaranteeManager.Tests
             var calendar = new UmAlQuraCalendar();
             DateTime expected = calendar.ToDateTime(1447, 9, 15, 0, 0, 0, 0).Date;
 
-            bool parsed = DualCalendarDateService.TryParseDate("1447/09/15", out DateTime actual);
+            bool parsed = DualCalendarDateService.TryParseDate("1447/09/15", out DateTime actual, out GuaranteeDateCalendar dateCalendar);
 
             Assert.True(parsed);
             Assert.Equal(expected, actual);
+            Assert.Equal(GuaranteeDateCalendar.Hijri, dateCalendar);
+        }
+
+        [Fact]
+        public void TryParseDate_ReturnsGregorianCalendarForGregorianInput()
+        {
+            bool parsed = DualCalendarDateService.TryParseDate("2026/03/04", out DateTime actual, out GuaranteeDateCalendar dateCalendar);
+
+            Assert.True(parsed);
+            Assert.Equal(new DateTime(2026, 3, 4), actual);
+            Assert.Equal(GuaranteeDateCalendar.Gregorian, dateCalendar);
+        }
+
+        [Fact]
+        public void FormatDate_UsesStoredCalendarPreference()
+        {
+            DateTime date = new DateTime(2026, 3, 4);
+
+            string gregorian = DualCalendarDateService.FormatDate(date, GuaranteeDateCalendar.Gregorian);
+            string hijri = DualCalendarDateService.FormatDate(date, GuaranteeDateCalendar.Hijri);
+
+            Assert.Equal("2026/03/04", gregorian);
+            Assert.Contains("هـ", hijri);
+            Assert.DoesNotContain("2026/03/04", hijri);
         }
 
         [Fact]

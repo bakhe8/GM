@@ -37,6 +37,22 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void SaveGuarantee_PersistsDateCalendarPreference()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            Guarantee input = _fixture.CreateGuarantee();
+            input.DateCalendar = GuaranteeDateCalendar.Hijri;
+
+            database.SaveGuarantee(input, new List<string>());
+
+            Guarantee persisted = database.GetCurrentGuaranteeByNo(input.GuaranteeNo)!;
+
+            Assert.Equal(GuaranteeDateCalendar.Hijri, persisted.DateCalendar);
+            Assert.Contains("هـ", persisted.WorkflowDisplayLabel);
+            Assert.DoesNotContain(" م |", persisted.WorkflowDisplayLabel);
+        }
+
+        [Fact]
         public void SaveGuarantee_RejectsAmountWithMoreThanTwoHalalaDigits()
         {
             DatabaseService database = _fixture.CreateDatabaseService();

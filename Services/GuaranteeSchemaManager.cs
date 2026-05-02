@@ -43,7 +43,8 @@ namespace GuaranteeManager.Services
                     ReferenceNumber TEXT,
                     LifecycleStatus TEXT NOT NULL DEFAULT 'Active',
                     ReplacesRootId INTEGER,
-                    ReplacedByRootId INTEGER
+                    ReplacedByRootId INTEGER,
+                    DateCalendar TEXT NOT NULL DEFAULT 'Gregorian'
                 );
                 CREATE TABLE IF NOT EXISTS Attachments (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,6 +84,7 @@ namespace GuaranteeManager.Services
             EnsureReferenceColumns(connection, guaranteeColumns);
             EnsureLifecycleStatusColumn(connection, guaranteeColumns);
             EnsureReplacementRelationColumns(connection, guaranteeColumns);
+            EnsureDateCalendarColumn(connection, guaranteeColumns);
         }
 
         public static void EnsureCurrentGuaranteeIntegrity(SqliteConnection connection)
@@ -155,13 +157,14 @@ namespace GuaranteeManager.Services
                             ReferenceNumber TEXT,
                             LifecycleStatus TEXT NOT NULL DEFAULT 'Active',
                             ReplacesRootId INTEGER,
-                            ReplacedByRootId INTEGER
+                            ReplacedByRootId INTEGER,
+                            DateCalendar TEXT NOT NULL DEFAULT 'Gregorian'
                         );";
                     cmd.ExecuteNonQuery();
 
                     cmd.CommandText = @"
-                        INSERT INTO Guarantees (Id, Supplier, Bank, GuaranteeNo, Amount, ExpiryDate, GuaranteeType, Notes, CreatedAt, RootId, VersionNumber, IsCurrent, ReferenceType, ReferenceNumber, LifecycleStatus)
-                        SELECT Id, Supplier, Bank, GuaranteeNo, Amount, ExpiryDate, GuaranteeType, Notes, CreatedAt, Id, 1, 1, 'None', '', 'Active'
+                        INSERT INTO Guarantees (Id, Supplier, Bank, GuaranteeNo, Amount, ExpiryDate, GuaranteeType, Notes, CreatedAt, RootId, VersionNumber, IsCurrent, ReferenceType, ReferenceNumber, LifecycleStatus, DateCalendar)
+                        SELECT Id, Supplier, Bank, GuaranteeNo, Amount, ExpiryDate, GuaranteeType, Notes, CreatedAt, Id, 1, 1, 'None', '', 'Active', 'Gregorian'
                         FROM Guarantees_PreVersioning;";
                     cmd.ExecuteNonQuery();
 
@@ -419,6 +422,20 @@ namespace GuaranteeManager.Services
             {
                 SimpleLogger.Log("Added replacement relation columns (ReplacesRootId, ReplacedByRootId) to Guarantees table.");
             }
+        }
+
+        private static void EnsureDateCalendarColumn(SqliteConnection connection, HashSet<string> columns)
+        {
+            if (columns.Contains("DateCalendar"))
+            {
+                return;
+            }
+
+            var alter = connection.CreateCommand();
+            alter.CommandText = "ALTER TABLE Guarantees ADD COLUMN DateCalendar TEXT NOT NULL DEFAULT 'Gregorian'";
+            alter.ExecuteNonQuery();
+            columns.Add("DateCalendar");
+            SimpleLogger.Log("Added DateCalendar column to Guarantees table.");
         }
     }
 }

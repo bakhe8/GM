@@ -77,11 +77,11 @@ namespace GuaranteeManager.Services
             insertGuaranteeCommand.CommandText = @"
                 INSERT INTO Guarantees (
                     Supplier, Bank, GuaranteeNo, Amount, ExpiryDate, GuaranteeType, Beneficiary, Notes,
-                    CreatedAt, RootId, VersionNumber, IsCurrent, ReferenceType, ReferenceNumber, LifecycleStatus, ReplacesRootId, ReplacedByRootId
+                    CreatedAt, RootId, VersionNumber, IsCurrent, ReferenceType, ReferenceNumber, LifecycleStatus, ReplacesRootId, ReplacedByRootId, DateCalendar
                 )
                 VALUES (
                     $supplier, $bank, $guaranteeNo, $amount, $expiryDate, $guaranteeType, $beneficiary, $notes,
-                    $createdAt, $rootId, $versionNumber, 1, $referenceType, $referenceNumber, $lifecycleStatus, $replacesRootId, $replacedByRootId
+                    $createdAt, $rootId, $versionNumber, 1, $referenceType, $referenceNumber, $lifecycleStatus, $replacesRootId, $replacedByRootId, $dateCalendar
                 );
                 SELECT last_insert_rowid();";
             insertGuaranteeCommand.Parameters.AddWithValue("$supplier", sourceGuarantee.Supplier);
@@ -100,6 +100,7 @@ namespace GuaranteeManager.Services
             insertGuaranteeCommand.Parameters.AddWithValue("$lifecycleStatus", lifecycleStatus.ToString());
             insertGuaranteeCommand.Parameters.AddWithValue("$replacesRootId", (object?)replacesRootId ?? DBNull.Value);
             insertGuaranteeCommand.Parameters.AddWithValue("$replacedByRootId", (object?)replacedByRootId ?? DBNull.Value);
+            insertGuaranteeCommand.Parameters.AddWithValue("$dateCalendar", sourceGuarantee.DateCalendar.ToString());
             return Convert.ToInt32(insertGuaranteeCommand.ExecuteScalar());
         }
 
@@ -115,6 +116,7 @@ namespace GuaranteeManager.Services
             GuaranteeReferenceType referenceType,
             string referenceNumber,
             GuaranteeLifecycleStatus lifecycleStatus,
+            GuaranteeDateCalendar dateCalendar,
             int? replacesRootId,
             DateTime createdAt,
             SqliteConnection connection,
@@ -125,11 +127,11 @@ namespace GuaranteeManager.Services
             insertNewGuaranteeCommand.CommandText = @"
                 INSERT INTO Guarantees (
                     Supplier, Bank, GuaranteeNo, Amount, ExpiryDate, GuaranteeType, Beneficiary, Notes,
-                    CreatedAt, RootId, VersionNumber, IsCurrent, ReferenceType, ReferenceNumber, LifecycleStatus, ReplacesRootId, ReplacedByRootId
+                    CreatedAt, RootId, VersionNumber, IsCurrent, ReferenceType, ReferenceNumber, LifecycleStatus, ReplacesRootId, ReplacedByRootId, DateCalendar
                 )
                 VALUES (
                     $supplier, $bank, $guaranteeNo, $amount, $expiryDate, $guaranteeType, $beneficiary, $notes,
-                    $createdAt, NULL, 1, 1, $referenceType, $referenceNumber, $lifecycleStatus, $replacesRootId, NULL
+                    $createdAt, NULL, 1, 1, $referenceType, $referenceNumber, $lifecycleStatus, $replacesRootId, NULL, $dateCalendar
                 );
                 SELECT last_insert_rowid();";
             insertNewGuaranteeCommand.Parameters.AddWithValue("$supplier", supplier);
@@ -145,6 +147,7 @@ namespace GuaranteeManager.Services
             insertNewGuaranteeCommand.Parameters.AddWithValue("$referenceNumber", referenceNumber ?? string.Empty);
             insertNewGuaranteeCommand.Parameters.AddWithValue("$lifecycleStatus", lifecycleStatus.ToString());
             insertNewGuaranteeCommand.Parameters.AddWithValue("$replacesRootId", (object?)replacesRootId ?? DBNull.Value);
+            insertNewGuaranteeCommand.Parameters.AddWithValue("$dateCalendar", dateCalendar.ToString());
             return Convert.ToInt32(insertNewGuaranteeCommand.ExecuteScalar());
         }
 

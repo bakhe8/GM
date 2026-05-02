@@ -41,7 +41,7 @@ namespace GuaranteeManager.Services
                     "إجراء مطلوب",
                     "انتهاء الضمان",
                     "الضمان منتهي زمنيًا وما زال مفتوحًا تشغيليًا.",
-                    $"تاريخ الانتهاء: {DualCalendarDateService.FormatDualDate(current.ExpiryDate)} | الحالة التشغيلية: {current.LifecycleStatusLabel}",
+                    $"تاريخ الانتهاء: {DualCalendarDateService.FormatDate(current.ExpiryDate, current.DateCalendar)} | الحالة التشغيلية: {current.LifecycleStatusLabel}",
                     "إنشاء أو متابعة طلب إفراج/إعادة للبنك وتوثيق رد البنك."));
             }
 

@@ -41,8 +41,8 @@ namespace GuaranteeManager.Services
                     var cmd = connection.CreateCommand();
                     cmd.Transaction = transaction;
                     cmd.CommandText = @"
-                        INSERT INTO Guarantees (Supplier, Bank, GuaranteeNo, Amount, ExpiryDate, GuaranteeType, Beneficiary, Notes, CreatedAt, RootId, VersionNumber, IsCurrent, ReferenceType, ReferenceNumber, LifecycleStatus, ReplacesRootId, ReplacedByRootId)
-                        VALUES ($sup, $bank, $no, $amt, $exp, $type, $ben, $notes, $now, $pid, $ver, $curr, $referenceType, $referenceNumber, $lifecycle, $replacesRootId, $replacedByRootId);
+                        INSERT INTO Guarantees (Supplier, Bank, GuaranteeNo, Amount, ExpiryDate, GuaranteeType, Beneficiary, Notes, CreatedAt, RootId, VersionNumber, IsCurrent, ReferenceType, ReferenceNumber, LifecycleStatus, ReplacesRootId, ReplacedByRootId, DateCalendar)
+                        VALUES ($sup, $bank, $no, $amt, $exp, $type, $ben, $notes, $now, $pid, $ver, $curr, $referenceType, $referenceNumber, $lifecycle, $replacesRootId, $replacedByRootId, $dateCalendar);
                         SELECT last_insert_rowid();";
 
                     cmd.Parameters.AddWithValue("$referenceType", g.ReferenceType.ToString());
@@ -62,6 +62,7 @@ namespace GuaranteeManager.Services
                     cmd.Parameters.AddWithValue("$lifecycle", g.LifecycleStatus.ToString());
                     cmd.Parameters.AddWithValue("$replacesRootId", (object?)g.ReplacesRootId ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("$replacedByRootId", (object?)g.ReplacedByRootId ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("$dateCalendar", g.DateCalendar.ToString());
 
                     long guaranteeId = Convert.ToInt64(cmd.ExecuteScalar());
 
@@ -558,8 +559,8 @@ namespace GuaranteeManager.Services
                     var cmd = connection.CreateCommand();
                     cmd.Transaction = transaction;
                     cmd.CommandText = @"
-                        INSERT INTO Guarantees (Supplier, Bank, GuaranteeNo, Amount, ExpiryDate, GuaranteeType, Beneficiary, Notes, CreatedAt, RootId, VersionNumber, IsCurrent, ReferenceType, ReferenceNumber, LifecycleStatus, ReplacesRootId, ReplacedByRootId)
-                        VALUES ($sup, $bank, $no, $amt, $exp, $type, $ben, $notes, $now, $pid, $ver, 1, $referenceType, $referenceNumber, $lifecycle, $replacesRootId, $replacedByRootId);
+                        INSERT INTO Guarantees (Supplier, Bank, GuaranteeNo, Amount, ExpiryDate, GuaranteeType, Beneficiary, Notes, CreatedAt, RootId, VersionNumber, IsCurrent, ReferenceType, ReferenceNumber, LifecycleStatus, ReplacesRootId, ReplacedByRootId, DateCalendar)
+                        VALUES ($sup, $bank, $no, $amt, $exp, $type, $ben, $notes, $now, $pid, $ver, 1, $referenceType, $referenceNumber, $lifecycle, $replacesRootId, $replacedByRootId, $dateCalendar);
                         SELECT last_insert_rowid();";
 
                     cmd.Parameters.AddWithValue("$ben", BusinessPartyDefaults.NormalizeBeneficiary(newG.Beneficiary));
@@ -578,6 +579,7 @@ namespace GuaranteeManager.Services
                     cmd.Parameters.AddWithValue("$now", PersistedDateTime.FormatDateTime(DateTime.Now));
                     cmd.Parameters.AddWithValue("$pid", rootId);
                     cmd.Parameters.AddWithValue("$ver", nextVer);
+                    cmd.Parameters.AddWithValue("$dateCalendar", newG.DateCalendar.ToString());
 
                     newGuaranteeId = Convert.ToInt32(cmd.ExecuteScalar());
 

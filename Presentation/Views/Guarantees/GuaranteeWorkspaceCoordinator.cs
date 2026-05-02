@@ -62,6 +62,7 @@ namespace GuaranteeManager
                     GuaranteeNo = input.GuaranteeNo,
                     Amount = input.Amount,
                     ExpiryDate = input.ExpiryDate,
+                    DateCalendar = input.DateCalendar,
                     GuaranteeType = input.GuaranteeType,
                     Beneficiary = input.Beneficiary,
                     ReferenceType = input.ReferenceType,
@@ -117,6 +118,7 @@ namespace GuaranteeManager
                 current.GuaranteeNo = input.GuaranteeNo;
                 current.Amount = input.Amount;
                 current.ExpiryDate = input.ExpiryDate;
+                current.DateCalendar = input.DateCalendar;
                 current.GuaranteeType = input.GuaranteeType;
                 current.ReferenceType = input.ReferenceType;
                 current.ReferenceNumber = input.ReferenceNumber;
@@ -196,7 +198,7 @@ namespace GuaranteeManager
             if (!PromptDialog.TryShow(
                     "طلب تمديد",
                     "تاريخ الانتهاء المطلوب",
-                    DualCalendarDateService.FormatGregorianDate(suggestedDate),
+                    DualCalendarDateService.FormatDate(suggestedDate, current.DateCalendar),
                     out string requestedDateText))
             {
                 return;
@@ -349,6 +351,7 @@ namespace GuaranteeManager
                     input.ReplacementBank,
                     input.ReplacementAmount,
                     input.ReplacementExpiryDate,
+                    input.ReplacementDateCalendar,
                     input.ReplacementGuaranteeType,
                     input.ReplacementBeneficiary,
                     input.ReplacementReferenceType,

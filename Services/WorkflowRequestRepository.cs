@@ -164,11 +164,14 @@ namespace GuaranteeManager.Services
                     WHERE RootId = $rid
                     ORDER BY SequenceNumber DESC, RequestDate DESC";
                 cmd.Parameters.AddWithValue("$rid", rootId);
+                GuaranteeDateCalendar dateCalendar = GetCurrentDateCalendarByRootId(rootId, connection);
 
                 using var reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    list.Add(WorkflowRequestDataAccess.MapWorkflowRequest(reader));
+                    WorkflowRequest request = WorkflowRequestDataAccess.MapWorkflowRequest(reader);
+                    request.DateCalendar = dateCalendar;
+                    list.Add(request);
                 }
 
                 return list;
@@ -331,13 +334,19 @@ namespace GuaranteeManager.Services
             cmd.CommandText = $"SELECT {WorkflowRequestDataAccess.SelectColumns} FROM WorkflowRequests WHERE Id = $id LIMIT 1";
             cmd.Parameters.AddWithValue("$id", requestId);
 
-            using var reader = cmd.ExecuteReader();
-            if (!reader.Read())
+            WorkflowRequest request;
+            using (var reader = cmd.ExecuteReader())
             {
-                return null;
+                if (!reader.Read())
+                {
+                    return null;
+                }
+
+                request = WorkflowRequestDataAccess.MapWorkflowRequest(reader);
             }
 
-            return WorkflowRequestDataAccess.MapWorkflowRequest(reader);
+            request.DateCalendar = GetCurrentDateCalendarByRootId(request.RootGuaranteeId, connection, transaction);
+            return request;
         }
 
         private static SqliteCommand BuildWorkflowRequestQueryCommand(SqliteConnection connection, WorkflowRequestQueryOptions options, bool countOnly)
@@ -385,7 +394,8 @@ namespace GuaranteeManager.Services
                         currentG.VersionNumber,
                         currentG.LifecycleStatus,
                         baseG.VersionNumber,
-                        resultG.VersionNumber
+                        resultG.VersionNumber,
+                        currentG.DateCalendar
                     FROM WorkflowRequests wr
                     INNER JOIN Guarantees currentG
                         ON currentG.RootId = wr.RootId AND currentG.IsCurrent = 1
@@ -581,6 +591,10 @@ namespace GuaranteeManager.Services
             GuaranteeReferenceType rawReferenceType = reader.IsDBNull(23) ? GuaranteeReferenceType.None : GuaranteeDataAccess.ParseReferenceType(reader.GetString(23));
             string rawReferenceNumber = reader.IsDBNull(24) ? string.Empty : reader.GetString(24);
             (GuaranteeReferenceType referenceType, string referenceNumber) = GuaranteeDataAccess.NormalizeReference(rawReferenceType, rawReferenceNumber);
+            GuaranteeDateCalendar dateCalendar = reader.IsDBNull(31)
+                ? GuaranteeDateCalendar.Gregorian
+                : DualCalendarDateService.ParseDateCalendar(reader.GetString(31));
+            request.DateCalendar = dateCalendar;
 
             return new WorkflowRequestListItem
             {
@@ -594,11 +608,31 @@ namespace GuaranteeManager.Services
                 ReferenceNumber = referenceNumber,
                 CurrentAmount = reader.IsDBNull(25) ? 0m : reader.GetDecimal(25),
                 CurrentExpiryDate = reader.IsDBNull(26) ? DateTime.MinValue : PersistedDateTime.Parse(reader.GetString(26)),
+                CurrentDateCalendar = dateCalendar,
                 CurrentVersionNumber = reader.IsDBNull(27) ? 1 : reader.GetInt32(27),
                 LifecycleStatus = reader.IsDBNull(28) ? GuaranteeLifecycleStatus.Active : GuaranteeDataAccess.ParseLifecycleStatus(reader.GetString(28)),
                 BaseVersionNumber = reader.IsDBNull(29) ? 1 : reader.GetInt32(29),
                 ResultVersionNumber = reader.IsDBNull(30) ? null : reader.GetInt32(30)
             };
+        }
+
+        private static GuaranteeDateCalendar GetCurrentDateCalendarByRootId(
+            int rootId,
+            SqliteConnection connection,
+            SqliteTransaction? transaction = null)
+        {
+            var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = @"
+                SELECT DateCalendar
+                FROM Guarantees
+                WHERE COALESCE(RootId, Id) = $rootId AND IsCurrent = 1
+                LIMIT 1";
+            command.Parameters.AddWithValue("$rootId", rootId);
+            object? value = command.ExecuteScalar();
+            return value == null || value == DBNull.Value
+                ? GuaranteeDateCalendar.Gregorian
+                : DualCalendarDateService.ParseDateCalendar(Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture));
         }
 
         private static string GetTypeLabel(RequestType requestType)

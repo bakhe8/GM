@@ -95,7 +95,7 @@ namespace GuaranteeManager.Services
                 result.Explanation = "لم يتم العثور على أي طلب من نوع تمديد ضمن سلسلة هذا الضمان، لذلك لا يمكن إثبات أن طلب التمديد أُرسل قبل الانتهاء أو بعده.";
                 result.EventDate = currentGuarantee.ExpiryDate;
                 AddFacts(result, currentGuarantee, context.Requests, context.History, null, null);
-                result.Facts.Add(new OperationalInquiryFact { Label = "تاريخ الانتهاء الحالي", Value = DualCalendarDateService.FormatDualDate(currentGuarantee.ExpiryDate) });
+                result.Facts.Add(new OperationalInquiryFact { Label = "تاريخ الانتهاء الحالي", Value = FormatGuaranteeDate(currentGuarantee, currentGuarantee.ExpiryDate) });
                 AddTimeline(result, context.History, context.Requests);
                 return result;
             }
@@ -107,15 +107,15 @@ namespace GuaranteeManager.Services
             result.EventDate = latestExtensionRequest.RequestDate;
 
             result.Answer = requestedBeforeExpiry
-                ? $"نعم، تم إنشاء طلب التمديد بتاريخ {DualCalendarDateService.FormatGregorianDate(latestExtensionRequest.RequestDate)}، أي قبل {daysBefore} يوم/أيام من تاريخ الانتهاء {DualCalendarDateService.FormatDualDate(currentGuarantee.ExpiryDate)}."
-                : $"لا، تم إنشاء طلب التمديد بتاريخ {DualCalendarDateService.FormatGregorianDate(latestExtensionRequest.RequestDate)}، وهو بعد أو في نفس يوم تاريخ الانتهاء {DualCalendarDateService.FormatDualDate(currentGuarantee.ExpiryDate)}.";
+                ? $"نعم، تم إنشاء طلب التمديد بتاريخ {FormatRequestDate(latestExtensionRequest, latestExtensionRequest.RequestDate)}، أي قبل {daysBefore} يوم/أيام من تاريخ الانتهاء {FormatGuaranteeDate(currentGuarantee, currentGuarantee.ExpiryDate)}."
+                : $"لا، تم إنشاء طلب التمديد بتاريخ {FormatRequestDate(latestExtensionRequest, latestExtensionRequest.RequestDate)}، وهو بعد أو في نفس يوم تاريخ الانتهاء {FormatGuaranteeDate(currentGuarantee, currentGuarantee.ExpiryDate)}.";
             result.Explanation = requestedBeforeExpiry
                 ? "هذا يعني أن المتابعة كانت استباقية وأن الطلب أُرسل للبنك قبل انقضاء صلاحية الضمان."
                 : "هذا يعني أن طلب التمديد جاء متأخرًا بعد أن انتهت صلاحية الضمان الرسمية.";
 
             AddFacts(result, currentGuarantee, context.Requests, context.History, latestExtensionRequest, null);
-            result.Facts.Add(new OperationalInquiryFact { Label = "تاريخ الانتهاء الحالي", Value = DualCalendarDateService.FormatDualDate(currentGuarantee.ExpiryDate) });
-            result.Facts.Add(new OperationalInquiryFact { Label = "تاريخ آخر طلب تمديد", Value = DualCalendarDateService.FormatGregorianDate(latestExtensionRequest.RequestDate) });
+            result.Facts.Add(new OperationalInquiryFact { Label = "تاريخ الانتهاء الحالي", Value = FormatGuaranteeDate(currentGuarantee, currentGuarantee.ExpiryDate) });
+            result.Facts.Add(new OperationalInquiryFact { Label = "تاريخ آخر طلب تمديد", Value = FormatRequestDate(latestExtensionRequest, latestExtensionRequest.RequestDate) });
             result.Facts.Add(new OperationalInquiryFact { Label = "مقدم قبل الانتهاء؟", Value = requestedBeforeExpiry ? "نعم" : "لا" });
             result.Facts.Add(new OperationalInquiryFact
             {
@@ -162,11 +162,11 @@ namespace GuaranteeManager.Services
             result.Answer = latestMatchingRequest.Status switch
             {
                 RequestStatus.Pending =>
-                    $"طلب {latestMatchingRequest.TypeLabel} ما زال قيد الانتظار منذ {DualCalendarDateService.FormatGregorianDate(latestMatchingRequest.RequestDate)}، ولم تُسجل استجابة بنك عليه حتى الآن.",
+                    $"طلب {latestMatchingRequest.TypeLabel} ما زال قيد الانتظار منذ {FormatRequestDate(latestMatchingRequest, latestMatchingRequest.RequestDate)}، ولم تُسجل استجابة بنك عليه حتى الآن.",
                 RequestStatus.Executed =>
-                    $"آخر طلب {latestMatchingRequest.TypeLabel} لهذا الضمان لم يعد قيد الانتظار؛ تم تنفيذه وتسجيل استجابة البنك بتاريخ {FormatOptionalDate(latestMatchingRequest.ResponseRecordedAt)}.",
+                    $"آخر طلب {latestMatchingRequest.TypeLabel} لهذا الضمان لم يعد قيد الانتظار؛ تم تنفيذه وتسجيل استجابة البنك بتاريخ {FormatOptionalDate(latestMatchingRequest.ResponseRecordedAt, latestMatchingRequest.DateCalendar)}.",
                 RequestStatus.Rejected =>
-                    $"آخر طلب {latestMatchingRequest.TypeLabel} رُفض عند تسجيل استجابة البنك بتاريخ {FormatOptionalDate(latestMatchingRequest.ResponseRecordedAt)}.",
+                    $"آخر طلب {latestMatchingRequest.TypeLabel} رُفض عند تسجيل استجابة البنك بتاريخ {FormatOptionalDate(latestMatchingRequest.ResponseRecordedAt, latestMatchingRequest.DateCalendar)}.",
                 RequestStatus.Cancelled =>
                     $"آخر طلب {latestMatchingRequest.TypeLabel} أُلغي ولن يُسجل له رد من البنك.",
                 RequestStatus.Superseded =>
@@ -187,13 +187,13 @@ namespace GuaranteeManager.Services
 
             AddFacts(result, currentGuarantee, context.Requests, context.History,
                 latestMatchingRequest, latestMatchingRequest.Status != RequestStatus.Pending ? latestMatchingRequest : null);
-            result.Facts.Add(new OperationalInquiryFact { Label = "تاريخ الطلب", Value = DualCalendarDateService.FormatGregorianDate(latestMatchingRequest.RequestDate) });
+            result.Facts.Add(new OperationalInquiryFact { Label = "تاريخ الطلب", Value = FormatRequestDate(latestMatchingRequest, latestMatchingRequest.RequestDate) });
             result.Facts.Add(new OperationalInquiryFact
             {
                 Label = "مدة الانتظار/الإغلاق",
                 Value = latestMatchingRequest.Status == RequestStatus.Pending
                     ? $"{Math.Max(0, (DateTime.Now.Date - latestMatchingRequest.RequestDate.Date).Days)} يوم/أيام"
-                    : FormatOptionalDate(latestMatchingRequest.ResponseRecordedAt)
+                    : FormatOptionalDate(latestMatchingRequest.ResponseRecordedAt, latestMatchingRequest.DateCalendar)
             });
             AddTimeline(result, context.History, context.Requests);
             return result;
@@ -216,7 +216,7 @@ namespace GuaranteeManager.Services
             if (!currentGuarantee.IsExpired)
             {
                 result.EventDate = currentGuarantee.ExpiryDate;
-                result.Answer = $"الضمان غير منتهٍ زمنيًا حاليًا، فتاريخ الانتهاء الحالي هو {DualCalendarDateService.FormatDualDate(currentGuarantee.ExpiryDate)}.";
+                result.Answer = $"الضمان غير منتهٍ زمنيًا حاليًا، فتاريخ الانتهاء الحالي هو {FormatGuaranteeDate(currentGuarantee, currentGuarantee.ExpiryDate)}.";
                 result.Explanation = "لذلك لا ينطبق عليه سيناريو ما بعد انتهاء الصلاحية.";
                 AddFacts(result, currentGuarantee, context.Requests, context.History, null, null);
                 AddTimeline(result, context.History, context.Requests);
@@ -244,7 +244,7 @@ namespace GuaranteeManager.Services
 
             if (latestRelease == null)
             {
-                result.Answer = $"الضمان منتهٍ زمنيًا منذ {DualCalendarDateService.FormatDualDate(currentGuarantee.ExpiryDate)} ولا يوجد طلب إفراج/إعادة مسجل له.";
+                result.Answer = $"الضمان منتهٍ زمنيًا منذ {FormatGuaranteeDate(currentGuarantee, currentGuarantee.ExpiryDate)} ولا يوجد طلب إفراج/إعادة مسجل له.";
                 result.Explanation = "بعد انتهاء الصلاحية لا يُنشأ تمديد أو تسييل؛ المسار العملي هو توثيق الإفراج أو إعادة الضمان للبنك.";
             }
             else
@@ -252,9 +252,9 @@ namespace GuaranteeManager.Services
                 result.Answer = latestRelease.Status switch
                 {
                     RequestStatus.Pending =>
-                        $"الضمان منتهٍ زمنيًا، وطلب الإفراج/الإعادة ما زال قيد الانتظار منذ {DualCalendarDateService.FormatGregorianDate(latestRelease.RequestDate)} بدون تسجيل رد بنك.",
+                        $"الضمان منتهٍ زمنيًا، وطلب الإفراج/الإعادة ما زال قيد الانتظار منذ {FormatRequestDate(latestRelease, latestRelease.RequestDate)} بدون تسجيل رد بنك.",
                     RequestStatus.Rejected =>
-                        $"الضمان منتهٍ زمنيًا، وآخر طلب إفراج رُفض عند تسجيل استجابة البنك بتاريخ {FormatOptionalDate(latestRelease.ResponseRecordedAt)}.",
+                        $"الضمان منتهٍ زمنيًا، وآخر طلب إفراج رُفض عند تسجيل استجابة البنك بتاريخ {FormatOptionalDate(latestRelease.ResponseRecordedAt, latestRelease.DateCalendar)}.",
                     RequestStatus.Cancelled =>
                         "الضمان منتهٍ زمنيًا، وآخر طلب إفراج أُلغي قبل التنفيذ.",
                     RequestStatus.Superseded =>
@@ -277,7 +277,7 @@ namespace GuaranteeManager.Services
             }
 
             AddFacts(result, currentGuarantee, context.Requests, context.History, latestRelease, latestRelease?.Status == RequestStatus.Pending ? null : latestRelease);
-            result.Facts.Add(new OperationalInquiryFact { Label = "تاريخ الانتهاء الحالي", Value = DualCalendarDateService.FormatDualDate(currentGuarantee.ExpiryDate) });
+            result.Facts.Add(new OperationalInquiryFact { Label = "تاريخ الانتهاء الحالي", Value = FormatGuaranteeDate(currentGuarantee, currentGuarantee.ExpiryDate) });
             result.Facts.Add(new OperationalInquiryFact { Label = "أيام منذ الانتهاء", Value = Math.Max(0, (DateTime.Now.Date - currentGuarantee.ExpiryDate.Date).Days).ToString("N0") });
             AddTimeline(result, context.History, context.Requests);
             return result;
@@ -577,6 +577,7 @@ namespace GuaranteeManager.Services
                 result.Timeline.Add(new OperationalInquiryTimelineEntry
                 {
                     Timestamp = request.ResponseRecordedAt ?? request.RequestDate,
+                    DateCalendar = request.DateCalendar,
                     Title = $"{request.TypeLabel} رقم {request.SequenceNumber}",
                     Details = request.Type == RequestType.Verification && request.Status == RequestStatus.Executed && !request.ResultVersionId.HasValue
                         ? "مستند رد محفوظ على الطلب فقط حسب سياسة التحقق"
@@ -655,7 +656,7 @@ namespace GuaranteeManager.Services
             result.ResultGuarantee = resultGuarantee;
             result.EventDate = request.ResponseRecordedAt;
 
-            string dateText = FormatOptionalDate(request.ResponseRecordedAt);
+            string dateText = FormatOptionalDate(request.ResponseRecordedAt, request.DateCalendar);
             result.Explanation = "تم الاعتماد على أحدث استجابة بنك محفوظة لهذا الضمان باعتبارها آخر حدث تشغيلي مؤثر.";
 
             if (request.Status == RequestStatus.Executed)
@@ -663,7 +664,7 @@ namespace GuaranteeManager.Services
                 result.Answer = request.Type switch
                 {
                     RequestType.Extension when resultGuarantee != null =>
-                        $"آخر ما حدث هو تنفيذ طلب تمديد بتاريخ {dateText}، ونتج عنه تحديث تاريخ الانتهاء إلى {DualCalendarDateService.FormatDualDate(resultGuarantee.ExpiryDate)} في الإصدار {resultGuarantee.VersionLabel}.",
+                        $"آخر ما حدث هو تنفيذ طلب تمديد بتاريخ {dateText}، ونتج عنه تحديث تاريخ الانتهاء إلى {FormatGuaranteeDate(resultGuarantee, resultGuarantee.ExpiryDate)} في الإصدار {resultGuarantee.VersionLabel}.",
                     RequestType.Reduction when resultGuarantee != null =>
                         $"آخر ما حدث هو تنفيذ طلب تخفيض بتاريخ {dateText}، ونتج عنه تحديث مبلغ الضمان إلى {ArabicAmountFormatter.FormatSaudiRiyals(resultGuarantee.Amount)} في الإصدار {resultGuarantee.VersionLabel}.",
                     RequestType.Release =>
@@ -694,7 +695,7 @@ namespace GuaranteeManager.Services
             result.RelatedRequest = request;
             result.EventDate = request.RequestDate;
             result.Answer =
-                $"آخر ما حدث هو إنشاء {request.TypeLabel} بتاريخ {DualCalendarDateService.FormatGregorianDate(request.RequestDate)}، وما زالت حالته الحالية {request.StatusLabel}.";
+                $"آخر ما حدث هو إنشاء {request.TypeLabel} بتاريخ {FormatRequestDate(request, request.RequestDate)}، وما زالت حالته الحالية {request.StatusLabel}.";
             result.Explanation =
                 $"الحالة التشغيلية الحالية للضمان هي {currentGuarantee.LifecycleStatusLabel}، ولم تُسجل استجابة بنك أحدث من هذا الطلب بعد.";
         }
@@ -711,7 +712,7 @@ namespace GuaranteeManager.Services
             if (latestVersion.VersionNumber <= 1 && !hasRequests)
             {
                 result.Answer =
-                    $"آخر ما حدث هو تسجيل الضمان لأول مرة بتاريخ {DualCalendarDateService.FormatGregorianDate(latestVersion.CreatedAt)}، وما زال السجل الحالي في الإصدار {latestVersion.VersionLabel}.";
+                    $"آخر ما حدث هو تسجيل الضمان لأول مرة بتاريخ {FormatGuaranteeDate(latestVersion, latestVersion.CreatedAt)}، وما زال السجل الحالي في الإصدار {latestVersion.VersionLabel}.";
                 result.Explanation = "لا توجد طلبات محفوظة مرتبطة بهذا الضمان بعد.";
                 return;
             }
@@ -719,14 +720,14 @@ namespace GuaranteeManager.Services
             if (IsTerminalLifecycle(latestVersion.LifecycleStatus))
             {
                 result.Answer =
-                    $"آخر ما حدث هو {GetTerminalLifecycleEventName(latestVersion.LifecycleStatus)} بتاريخ {DualCalendarDateService.FormatDateTime(latestVersion.CreatedAt)}.";
+                    $"آخر ما حدث هو {GetTerminalLifecycleEventName(latestVersion.LifecycleStatus)} بتاريخ {DualCalendarDateService.FormatDateTime(latestVersion.CreatedAt, latestVersion.DateCalendar)}.";
                 result.Explanation =
                     $"الحالة التشغيلية الحالية هي {currentGuarantee.LifecycleStatusLabel}، وهذا حدث دورة حياة وليس إصدار ضمان جديدًا.";
                 return;
             }
 
             result.Answer =
-                $"آخر ما حدث هو تحديث السجل الرسمي إلى الإصدار {latestVersion.VersionLabel} بتاريخ {DualCalendarDateService.FormatDateTime(latestVersion.CreatedAt)}.";
+                $"آخر ما حدث هو تحديث السجل الرسمي إلى الإصدار {latestVersion.VersionLabel} بتاريخ {DualCalendarDateService.FormatDateTime(latestVersion.CreatedAt, latestVersion.DateCalendar)}.";
             result.Explanation =
                 $"الحالة الزمنية الحالية هي {currentGuarantee.StatusLabel}، والحالة التشغيلية الحالية هي {currentGuarantee.LifecycleStatusLabel}.";
         }
@@ -756,13 +757,23 @@ namespace GuaranteeManager.Services
 
         private static string BuildVersionTimelineDetails(Guarantee version)
         {
-            string financialSummary = $"الانتهاء: {DualCalendarDateService.FormatDualDate(version.ExpiryDate)} | المبلغ: {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)}";
+            string financialSummary = $"الانتهاء: {FormatGuaranteeDate(version, version.ExpiryDate)} | المبلغ: {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)}";
             return $"الشروط المحفوظة لهذا الإصدار | {financialSummary}";
         }
 
-        private static string FormatOptionalDate(DateTime? date)
+        private static string FormatOptionalDate(DateTime? date, GuaranteeDateCalendar dateCalendar = GuaranteeDateCalendar.Gregorian)
         {
-            return date.HasValue ? DualCalendarDateService.FormatGregorianDate(date.Value) : "---";
+            return date.HasValue ? DualCalendarDateService.FormatDate(date.Value, dateCalendar) : "---";
+        }
+
+        private static string FormatGuaranteeDate(Guarantee guarantee, DateTime date)
+        {
+            return DualCalendarDateService.FormatDate(date, guarantee.DateCalendar);
+        }
+
+        private static string FormatRequestDate(WorkflowRequest request, DateTime date)
+        {
+            return DualCalendarDateService.FormatDate(date, request.DateCalendar);
         }
 
         private static string BuildResponseTimelineDetails(WorkflowRequest request)
@@ -812,14 +823,14 @@ namespace GuaranteeManager.Services
                 Label = "آخر طلب",
                 Value = latestCreatedRequest == null
                     ? "---"
-                    : $"{latestCreatedRequest.TypeLabel} - {latestCreatedRequest.StatusLabel} - {DualCalendarDateService.FormatGregorianDate(latestCreatedRequest.RequestDate)}"
+                    : $"{latestCreatedRequest.TypeLabel} - {latestCreatedRequest.StatusLabel} - {FormatRequestDate(latestCreatedRequest, latestCreatedRequest.RequestDate)}"
             });
             result.Facts.Add(new OperationalInquiryFact
             {
                 Label = "آخر استجابة بنك",
                 Value = latestResponse == null
                     ? "---"
-                    : $"{latestResponse.TypeLabel} - {latestResponse.StatusLabel} - {FormatOptionalDate(latestResponse.ResponseRecordedAt)}"
+                    : $"{latestResponse.TypeLabel} - {latestResponse.StatusLabel} - {FormatOptionalDate(latestResponse.ResponseRecordedAt, latestResponse.DateCalendar)}"
             });
             result.Facts.Add(new OperationalInquiryFact
             {
@@ -841,6 +852,7 @@ namespace GuaranteeManager.Services
             IEnumerable<OperationalInquiryTimelineEntry> versionEntries = history.Select(version => new OperationalInquiryTimelineEntry
             {
                 Timestamp = version.CreatedAt,
+                DateCalendar = version.DateCalendar,
                 Title = BuildVersionTimelineTitle(version),
                 Details = BuildVersionTimelineDetails(version)
             });
@@ -848,6 +860,7 @@ namespace GuaranteeManager.Services
             IEnumerable<OperationalInquiryTimelineEntry> requestCreatedEntries = requests.Select(request => new OperationalInquiryTimelineEntry
             {
                 Timestamp = request.RequestDate,
+                DateCalendar = request.DateCalendar,
                 Title = $"إنشاء {request.TypeLabel}",
                 Details = $"الحالة عند الإنشاء: {request.StatusLabel} | القيمة المطلوبة: {request.RequestedValueLabel}"
             });
@@ -857,6 +870,7 @@ namespace GuaranteeManager.Services
                 .Select(request => new OperationalInquiryTimelineEntry
                 {
                     Timestamp = request.ResponseRecordedAt!.Value,
+                    DateCalendar = request.DateCalendar,
                     Title = $"تسجيل استجابة البنك على {request.TypeLabel}",
                     Details = BuildResponseTimelineDetails(request)
                 });

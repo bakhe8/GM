@@ -88,13 +88,16 @@ namespace GuaranteeManager.Models
         public string ReplacementBank => GetRequestedData()?.ReplacementBank?.Trim() ?? string.Empty;
         public decimal? ReplacementAmount => GetRequestedData()?.ReplacementAmount;
         public DateTime? ReplacementExpiryDate => GetRequestedData()?.ReplacementExpiryDate;
+        public GuaranteeDateCalendar ReplacementDateCalendar => GetRequestedData()?.ReplacementDateCalendar ?? DateCalendar;
+        public GuaranteeDateCalendar RequestedDateCalendar => GetRequestedData()?.RequestedDateCalendar ?? DateCalendar;
+        public GuaranteeDateCalendar DateCalendar { get; set; } = GuaranteeDateCalendar.Gregorian;
         public string ReplacementGuaranteeType => GetRequestedData()?.ReplacementGuaranteeType?.Trim() ?? string.Empty;
         public string ReplacementBeneficiary => GetRequestedData()?.ReplacementBeneficiary?.Trim() ?? string.Empty;
         public GuaranteeReferenceType ReplacementReferenceType => GetRequestedData()?.ReplacementReferenceType ?? GuaranteeReferenceType.None;
         public string ReplacementReferenceNumber => GetRequestedData()?.ReplacementReferenceNumber?.Trim() ?? string.Empty;
         public string RequestedValueLabel => Type switch
         {
-            RequestType.Extension => RequestedExpiryDate.HasValue ? DualCalendarDateService.FormatGregorianDate(RequestedExpiryDate.Value) : "---",
+            RequestType.Extension => RequestedExpiryDate.HasValue ? DualCalendarDateService.FormatDate(RequestedExpiryDate.Value, RequestedDateCalendar) : "---",
             RequestType.Reduction => RequestedAmount.HasValue ? ArabicAmountFormatter.FormatSaudiRiyals(RequestedAmount.Value) : "---",
             RequestType.Release => "إفراج",
             RequestType.Liquidation => "تسييل",
@@ -129,12 +132,14 @@ namespace GuaranteeManager.Models
     public class WorkflowRequestedData
     {
         public DateTime? RequestedExpiryDate { get; set; }
+        public GuaranteeDateCalendar RequestedDateCalendar { get; set; } = GuaranteeDateCalendar.Gregorian;
         public decimal? RequestedAmount { get; set; }
         public string ReplacementGuaranteeNo { get; set; } = string.Empty;
         public string ReplacementSupplier { get; set; } = string.Empty;
         public string ReplacementBank { get; set; } = string.Empty;
         public decimal? ReplacementAmount { get; set; }
         public DateTime? ReplacementExpiryDate { get; set; }
+        public GuaranteeDateCalendar ReplacementDateCalendar { get; set; } = GuaranteeDateCalendar.Gregorian;
         public string ReplacementGuaranteeType { get; set; } = string.Empty;
         public string ReplacementBeneficiary { get; set; } = string.Empty;
         public GuaranteeReferenceType? ReplacementReferenceType { get; set; }

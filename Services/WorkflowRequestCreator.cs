@@ -45,8 +45,10 @@ namespace GuaranteeManager.Services
                 RequestType.Extension,
                 new WorkflowRequestedData
                 {
-                    RequestedExpiryDate = requestedExpiryDate.Date
+                    RequestedExpiryDate = requestedExpiryDate.Date,
+                    RequestedDateCalendar = guarantee.DateCalendar
                 },
+                guarantee.DateCalendar,
                 generatedLetter,
                 notes,
                 normalizedCreatedBy);
@@ -85,6 +87,7 @@ namespace GuaranteeManager.Services
                 {
                     RequestedAmount = requestedAmount
                 },
+                guarantee.DateCalendar,
                 generatedLetter,
                 notes,
                 normalizedCreatedBy);
@@ -112,6 +115,7 @@ namespace GuaranteeManager.Services
                 guarantee.Id,
                 RequestType.Release,
                 new WorkflowRequestedData(),
+                guarantee.DateCalendar,
                 generatedLetter,
                 notes,
                 normalizedCreatedBy);
@@ -139,6 +143,7 @@ namespace GuaranteeManager.Services
                 guarantee.Id,
                 RequestType.Liquidation,
                 new WorkflowRequestedData(),
+                guarantee.DateCalendar,
                 generatedLetter,
                 notes,
                 normalizedCreatedBy);
@@ -166,6 +171,7 @@ namespace GuaranteeManager.Services
                 guarantee.Id,
                 RequestType.Verification,
                 new WorkflowRequestedData(),
+                guarantee.DateCalendar,
                 generatedLetter,
                 notes,
                 normalizedCreatedBy);
@@ -178,6 +184,7 @@ namespace GuaranteeManager.Services
             string replacementBank,
             decimal replacementAmount,
             DateTime replacementExpiryDate,
+            GuaranteeDateCalendar replacementDateCalendar,
             string replacementGuaranteeType,
             string replacementBeneficiary,
             GuaranteeReferenceType replacementReferenceType,
@@ -234,6 +241,7 @@ namespace GuaranteeManager.Services
                 replacementGuaranteeNo.Trim(),
                 replacementAmount,
                 replacementExpiryDate.Date,
+                replacementDateCalendar,
                 notes,
                 normalizedCreatedBy);
 
@@ -248,12 +256,14 @@ namespace GuaranteeManager.Services
                     ReplacementBank = string.IsNullOrWhiteSpace(replacementBank) ? guarantee.Bank : replacementBank.Trim(),
                     ReplacementAmount = replacementAmount,
                     ReplacementExpiryDate = replacementExpiryDate.Date,
+                    ReplacementDateCalendar = replacementDateCalendar,
                     ReplacementGuaranteeType = string.IsNullOrWhiteSpace(replacementGuaranteeType) ? guarantee.GuaranteeType : replacementGuaranteeType.Trim(),
                     ReplacementBeneficiary = BusinessPartyDefaults.NormalizeBeneficiary(
                         string.IsNullOrWhiteSpace(replacementBeneficiary) ? guarantee.Beneficiary : replacementBeneficiary),
                     ReplacementReferenceType = normalizedReferenceType,
                     ReplacementReferenceNumber = normalizedReferenceNumber
                 },
+                guarantee.DateCalendar,
                 generatedLetter,
                 notes,
                 normalizedCreatedBy);
@@ -264,6 +274,7 @@ namespace GuaranteeManager.Services
             int baseVersionId,
             RequestType requestType,
             WorkflowRequestedData requestedData,
+            GuaranteeDateCalendar dateCalendar,
             GeneratedWorkflowFile generatedLetter,
             string notes,
             string normalizedCreatedBy)
@@ -275,6 +286,7 @@ namespace GuaranteeManager.Services
                     baseVersionId,
                     requestType,
                     requestedData,
+                    dateCalendar,
                     notes,
                     normalizedCreatedBy);
                 request.LetterOriginalFileName = generatedLetter.OriginalFileName;
@@ -297,6 +309,7 @@ namespace GuaranteeManager.Services
             int baseVersionId,
             RequestType requestType,
             WorkflowRequestedData requestedData,
+            GuaranteeDateCalendar dateCalendar,
             string notes,
             string createdBy)
         {
@@ -311,6 +324,7 @@ namespace GuaranteeManager.Services
                 CreatedAt = now,
                 UpdatedAt = now,
                 RequestedDataJson = JsonSerializer.Serialize(requestedData),
+                DateCalendar = dateCalendar,
                 Notes = notes?.Trim() ?? string.Empty,
                 CreatedBy = createdBy
             };

@@ -15,6 +15,7 @@ namespace GuaranteeManager.Models
         public string ReferenceNumber { get; set; } = string.Empty;
         public decimal CurrentAmount { get; set; }
         public DateTime CurrentExpiryDate { get; set; }
+        public GuaranteeDateCalendar CurrentDateCalendar { get; set; } = GuaranteeDateCalendar.Gregorian;
         public int CurrentVersionNumber { get; set; }
         public int BaseVersionNumber { get; set; }
         public int? ResultVersionNumber { get; set; }
@@ -25,8 +26,8 @@ namespace GuaranteeManager.Models
         public string CurrentVersionLabel => GuaranteeVersionDisplay.GetLabel(CurrentVersionNumber);
         public int RelatedVersionNumber => ResultVersionNumber ?? (BaseVersionNumber > 0 ? BaseVersionNumber : CurrentVersionNumber);
         public string RelatedVersionLabel => GuaranteeVersionDisplay.GetLabel(RelatedVersionNumber);
-        public string RequestDateLabel => DualCalendarDateService.FormatGregorianDate(Request.RequestDate);
-        public string ResponseDateLabel => Request.ResponseRecordedAt.HasValue ? DualCalendarDateService.FormatGregorianDate(Request.ResponseRecordedAt.Value) : "---";
+        public string RequestDateLabel => DualCalendarDateService.FormatDate(Request.RequestDate, CurrentDateCalendar);
+        public string ResponseDateLabel => Request.ResponseRecordedAt.HasValue ? DualCalendarDateService.FormatDate(Request.ResponseRecordedAt.Value, CurrentDateCalendar) : "---";
         public bool IsPending => Request.Status == RequestStatus.Pending;
         public bool IsPurchaseOrderOnly => ReferenceType == GuaranteeReferenceType.PurchaseOrder && !string.IsNullOrWhiteSpace(ReferenceNumber);
         public bool IsContractRelated => ReferenceType == GuaranteeReferenceType.Contract && !string.IsNullOrWhiteSpace(ReferenceNumber);
@@ -58,7 +59,7 @@ namespace GuaranteeManager.Models
         };
         public string CurrentValueLabel => Request.Type switch
         {
-            RequestType.Extension => DualCalendarDateService.FormatGregorianDate(CurrentExpiryDate),
+            RequestType.Extension => DualCalendarDateService.FormatDate(CurrentExpiryDate, CurrentDateCalendar),
             RequestType.Reduction => ArabicAmountFormatter.FormatSaudiRiyals(CurrentAmount),
             RequestType.Release => LifecycleStatusLabel,
             RequestType.Liquidation => LifecycleStatusLabel,

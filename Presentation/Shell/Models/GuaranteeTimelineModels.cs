@@ -30,9 +30,10 @@ namespace GuaranteeManager
             WorkflowRequest? evidenceRequest = null,
             int? evidenceGuaranteeId = null,
             string evidenceKey = "",
-            bool isContextTarget = false)
+            bool isContextTarget = false,
+            GuaranteeDateCalendar dateCalendar = GuaranteeDateCalendar.Gregorian)
             : this(
-                DualCalendarDateService.FormatGregorianDate(timestamp),
+                DualCalendarDateService.FormatDate(timestamp, dateCalendar),
                 timestamp.ToString("HH:mm:ss", CultureInfo.InvariantCulture),
                 title,
                 detail,
@@ -143,7 +144,8 @@ namespace GuaranteeManager
             IReadOnlyDictionary<int, WorkflowRequest>? requestsById = null,
             IReadOnlyDictionary<int, AttachmentRecord>? attachmentsById = null,
             IReadOnlyDictionary<string, AttachmentRecord>? attachmentsByEventKey = null,
-            int? focusedRequestId = null)
+            int? focusedRequestId = null,
+            GuaranteeDateCalendar dateCalendar = GuaranteeDateCalendar.Gregorian)
         {
             ResolveEvidence(
                 timelineEvent,
@@ -174,7 +176,8 @@ namespace GuaranteeManager
                 timelineEvent.EventKey,
                 timelineEvent.WorkflowRequestId.HasValue
                     && focusedRequestId.HasValue
-                    && timelineEvent.WorkflowRequestId.Value == focusedRequestId.Value);
+                    && timelineEvent.WorkflowRequestId.Value == focusedRequestId.Value,
+                dateCalendar);
         }
 
         public static TimelineItem RequestCreated(WorkflowRequest request, bool isContextTarget = false)
@@ -196,7 +199,8 @@ namespace GuaranteeManager
                 TimelineEvidenceActionKind.RequestLetter,
                 evidenceRequest: request,
                 evidenceKey: $"workflow-request-created:{request.Id.ToString(CultureInfo.InvariantCulture)}",
-                isContextTarget: isContextTarget);
+                isContextTarget: isContextTarget,
+                dateCalendar: request.DateCalendar);
         }
 
         public static TimelineItem BankResponse(WorkflowRequest request, string resultVersionLabel, bool isContextTarget = false)
@@ -222,7 +226,8 @@ namespace GuaranteeManager
                 TimelineEvidenceActionKind.ResponseDocument,
                 evidenceRequest: request,
                 evidenceKey: $"workflow-response:{request.Id.ToString(CultureInfo.InvariantCulture)}",
-                isContextTarget: isContextTarget);
+                isContextTarget: isContextTarget,
+                dateCalendar: request.DateCalendar);
         }
 
         public static TimelineItem FromVersion(Guarantee version)
@@ -232,26 +237,28 @@ namespace GuaranteeManager
                 return new TimelineItem(
                     version.CreatedAt,
                     "إنشاء الضمان",
-                    $"تم إنشاء الضمان بقيمة {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} وانتهاء {DualCalendarDateService.FormatDualDate(version.ExpiryDate)}.",
+                    $"تم إنشاء الضمان بقيمة {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} وانتهاء {DualCalendarDateService.FormatDate(version.ExpiryDate, version.DateCalendar)}.",
                     "مكتمل",
                     Tone.Success,
                     TimelineEvidenceActionKind.OfficialAttachment,
                     evidenceGuaranteeId: version.Id,
-                    evidenceKey: $"guarantee-created:{version.Id.ToString(CultureInfo.InvariantCulture)}");
+                    evidenceKey: $"guarantee-created:{version.Id.ToString(CultureInfo.InvariantCulture)}",
+                    dateCalendar: version.DateCalendar);
             }
 
             return new TimelineItem(
                 version.CreatedAt,
                 $"الإصدار {version.VersionLabel}",
-                $"تم حفظ شروط هذا الإصدار: المبلغ {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} | الانتهاء {DualCalendarDateService.FormatDualDate(version.ExpiryDate)}.",
+                $"تم حفظ شروط هذا الإصدار: المبلغ {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} | الانتهاء {DualCalendarDateService.FormatDate(version.ExpiryDate, version.DateCalendar)}.",
                 "موثق",
                 Tone.Info,
                 TimelineEvidenceActionKind.OfficialAttachment,
                 evidenceGuaranteeId: version.Id,
-                evidenceKey: $"guarantee-version:{version.Id.ToString(CultureInfo.InvariantCulture)}");
+                evidenceKey: $"guarantee-version:{version.Id.ToString(CultureInfo.InvariantCulture)}",
+                dateCalendar: version.DateCalendar);
         }
 
-        public static TimelineItem AttachmentAdded(AttachmentRecord attachment)
+        public static TimelineItem AttachmentAdded(AttachmentRecord attachment, GuaranteeDateCalendar dateCalendar = GuaranteeDateCalendar.Gregorian)
         {
             string documentType = attachment.DocumentTypeLabel;
             string name = string.IsNullOrWhiteSpace(attachment.OriginalFileName)
@@ -268,7 +275,8 @@ namespace GuaranteeManager
                 evidenceAttachment: attachment,
                 evidenceKey: string.IsNullOrWhiteSpace(attachment.SavedFileName)
                     ? $"attachment-added:{attachment.Id.ToString(CultureInfo.InvariantCulture)}"
-                    : $"attachment-added:{attachment.GuaranteeId.ToString(CultureInfo.InvariantCulture)}:{attachment.SavedFileName}");
+                    : $"attachment-added:{attachment.GuaranteeId.ToString(CultureInfo.InvariantCulture)}:{attachment.SavedFileName}",
+                dateCalendar: dateCalendar);
         }
 
         public static TimelineItem StatusChanged(Guarantee version)
@@ -285,7 +293,8 @@ namespace GuaranteeManager
                 GetLifecycleTone(version.LifecycleStatus),
                 TimelineEvidenceActionKind.OfficialAttachment,
                 evidenceGuaranteeId: version.Id,
-                evidenceKey: $"guarantee-status:{version.Id.ToString(CultureInfo.InvariantCulture)}:{version.LifecycleStatus}");
+                evidenceKey: $"guarantee-status:{version.Id.ToString(CultureInfo.InvariantCulture)}:{version.LifecycleStatus}",
+                dateCalendar: version.DateCalendar);
         }
 
         public static TimelineItem Created(string date)

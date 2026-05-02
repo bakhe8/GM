@@ -132,8 +132,8 @@ namespace GuaranteeManager.Services
                     sortOrder: isFirstVersion ? 10 : 50,
                     title: isFirstVersion ? "إنشاء الضمان" : $"الإصدار {version.VersionLabel}",
                     details: isFirstVersion
-                        ? $"تم إنشاء الضمان بقيمة {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} وانتهاء {DualCalendarDateService.FormatDualDate(version.ExpiryDate)}."
-                        : $"تم حفظ شروط هذا الإصدار: المبلغ {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} | الانتهاء {DualCalendarDateService.FormatDualDate(version.ExpiryDate)}.",
+                        ? $"تم إنشاء الضمان بقيمة {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} وانتهاء {DualCalendarDateService.FormatDate(version.ExpiryDate, version.DateCalendar)}."
+                        : $"تم حفظ شروط هذا الإصدار: المبلغ {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} | الانتهاء {DualCalendarDateService.FormatDate(version.ExpiryDate, version.DateCalendar)}.",
                     status: isFirstVersion ? "مكتمل" : "موثق",
                     toneKey: isFirstVersion ? "Success" : "Info");
             }
@@ -298,7 +298,27 @@ namespace GuaranteeManager.Services
                 requests.Add(WorkflowRequestDataAccess.MapWorkflowRequest(reader));
             }
 
+            foreach (WorkflowRequest request in requests)
+            {
+                request.DateCalendar = GetCurrentDateCalendarByRootId(connection, request.RootGuaranteeId);
+            }
+
             return requests;
+        }
+
+        private static GuaranteeDateCalendar GetCurrentDateCalendarByRootId(SqliteConnection connection, int rootId)
+        {
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+                SELECT DateCalendar
+                FROM Guarantees
+                WHERE COALESCE(RootId, Id) = $rootId AND IsCurrent = 1
+                LIMIT 1";
+            command.Parameters.AddWithValue("$rootId", rootId);
+            object? value = command.ExecuteScalar();
+            return value == null || value == DBNull.Value
+                ? GuaranteeDateCalendar.Gregorian
+                : DualCalendarDateService.ParseDateCalendar(Convert.ToString(value, CultureInfo.InvariantCulture));
         }
 
         private static void InsertEventIfMissing(

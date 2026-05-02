@@ -48,7 +48,7 @@ namespace GuaranteeManager.Services
             result.Explanation = "الترتيب تم تصاعديًا حسب تاريخ الطلب مع استبعاد كل الطلبات غير المعلقة.";
 
             result.Facts.Add(new OperationalInquiryFact { Label = "عدد العناصر في القائمة", Value = oldestPending.Count.ToString("N0") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "أقدم تاريخ طلب", Value = DualCalendarDateService.FormatGregorianDate(oldest.Request.RequestDate) });
+            result.Facts.Add(new OperationalInquiryFact { Label = "أقدم تاريخ طلب", Value = DualCalendarDateService.FormatDate(oldest.Request.RequestDate, oldest.CurrentDateCalendar) });
             result.Facts.Add(new OperationalInquiryFact { Label = "أقدم بنك", Value = oldest.Bank });
             result.Facts.Add(new OperationalInquiryFact { Label = "تمديدات ضمن القائمة", Value = oldestPending.Count(item => item.Request.Type == RequestType.Extension).ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "إفراجات ضمن القائمة", Value = oldestPending.Count(item => item.Request.Type == RequestType.Release).ToString("N0") });
@@ -60,6 +60,7 @@ namespace GuaranteeManager.Services
                 result.Timeline.Add(new OperationalInquiryTimelineEntry
                 {
                     Timestamp = item.Request.RequestDate,
+                    DateCalendar = item.CurrentDateCalendar,
                     Title = $"{item.Request.TypeLabel} - {item.GuaranteeNo}",
                     Details = $"{item.Bank} | {item.Supplier} | مفتوح منذ {(DateTime.Now.Date - item.Request.RequestDate.Date).Days} يوم/أيام"
                 });
@@ -111,8 +112,9 @@ namespace GuaranteeManager.Services
                 result.Timeline.Add(new OperationalInquiryTimelineEntry
                 {
                     Timestamp = item.Request.ResponseRecordedAt ?? item.Request.RequestDate,
+                    DateCalendar = item.CurrentDateCalendar,
                     Title = $"تمديد منفذ - {item.GuaranteeNo}",
-                    Details = $"{item.Supplier} | الانتهاء الحالي {DualCalendarDateService.FormatDualDate(item.CurrentExpiryDate)}"
+                    Details = $"{item.Supplier} | الانتهاء الحالي {DualCalendarDateService.FormatDate(item.CurrentExpiryDate, item.CurrentDateCalendar)}"
                 });
             }
 
@@ -149,13 +151,14 @@ namespace GuaranteeManager.Services
             result.Facts.Add(new OperationalInquiryFact { Label = "العدد", Value = matchingGuarantees.Count.ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "إجمالي المبالغ", Value = ArabicAmountFormatter.FormatSaudiRiyals(totalAmount) });
             result.Facts.Add(new OperationalInquiryFact { Label = "قريب الانتهاء", Value = matchingGuarantees.Count(g => g.IsExpiringSoon).ToString("N0") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "أول انتهاء قادم", Value = matchingGuarantees.FirstOrDefault() is { } firstExpiry ? DualCalendarDateService.FormatDualDate(firstExpiry.ExpiryDate) : "---" });
+            result.Facts.Add(new OperationalInquiryFact { Label = "أول انتهاء قادم", Value = matchingGuarantees.FirstOrDefault() is { } firstExpiry ? DualCalendarDateService.FormatDate(firstExpiry.ExpiryDate, firstExpiry.DateCalendar) : "---" });
 
             foreach (Guarantee guarantee in matchingGuarantees.Take(10))
             {
                 result.Timeline.Add(new OperationalInquiryTimelineEntry
                 {
                     Timestamp = guarantee.ExpiryDate,
+                    DateCalendar = guarantee.DateCalendar,
                     Title = guarantee.GuaranteeNo,
                     Details = $"{guarantee.Supplier} | {guarantee.ReferenceTypeLabel}: {guarantee.ReferenceNumber} | {ArabicAmountFormatter.FormatSaudiRiyals(guarantee.Amount)}"
                 });
@@ -210,6 +213,7 @@ namespace GuaranteeManager.Services
                 result.Timeline.Add(new OperationalInquiryTimelineEntry
                 {
                     Timestamp = item.Request.ResponseRecordedAt ?? item.Request.RequestDate,
+                    DateCalendar = item.CurrentDateCalendar,
                     Title = $"إفراج منفذ - {item.GuaranteeNo}",
                     Details = $"{item.Supplier} | {item.ReferenceTypeLabel}: {item.ReferenceNumber}"
                 });
@@ -286,6 +290,7 @@ namespace GuaranteeManager.Services
                 result.Timeline.Add(new OperationalInquiryTimelineEntry
                 {
                     Timestamp = item.Request.RequestDate,
+                    DateCalendar = item.CurrentDateCalendar,
                     Title = $"{item.Request.TypeLabel} - {item.GuaranteeNo}",
                     Details = $"{item.Supplier} | {item.ReferenceTypeLabel}: {item.ReferenceNumber} | {item.Request.StatusLabel}"
                 });
@@ -344,7 +349,7 @@ namespace GuaranteeManager.Services
             result.Facts.Add(new OperationalInquiryFact { Label = "بطلب إفراج معلق", Value = withPendingReleaseCount.ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "بدون طلب إفراج معلق", Value = withoutPendingReleaseCount.ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "لها محاولة إفراج مغلقة", Value = withClosedReleaseAttemptCount.ToString("N0") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "أقدم تاريخ انتهاء", Value = matchingGuarantees.FirstOrDefault() is { } firstExpired ? DualCalendarDateService.FormatDualDate(firstExpired.ExpiryDate) : "---" });
+            result.Facts.Add(new OperationalInquiryFact { Label = "أقدم تاريخ انتهاء", Value = matchingGuarantees.FirstOrDefault() is { } firstExpired ? DualCalendarDateService.FormatDate(firstExpired.ExpiryDate, firstExpired.DateCalendar) : "---" });
 
             foreach (Guarantee guarantee in matchingGuarantees.Take(10))
             {
@@ -358,6 +363,7 @@ namespace GuaranteeManager.Services
                 result.Timeline.Add(new OperationalInquiryTimelineEntry
                 {
                     Timestamp = guarantee.ExpiryDate,
+                    DateCalendar = guarantee.DateCalendar,
                     Title = guarantee.GuaranteeNo,
                     Details = $"{guarantee.Supplier} | {guarantee.ReferenceTypeLabel}: {guarantee.ReferenceNumber} | {ArabicAmountFormatter.FormatSaudiRiyals(guarantee.Amount)} | {releaseState}"
                 });

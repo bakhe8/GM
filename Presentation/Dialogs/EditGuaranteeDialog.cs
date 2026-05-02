@@ -23,6 +23,7 @@ namespace GuaranteeManager
         string GuaranteeType,
         decimal Amount,
         DateTime ExpiryDate,
+        GuaranteeDateCalendar DateCalendar,
         GuaranteeReferenceType ReferenceType,
         string ReferenceNumber,
         string Notes,
@@ -113,7 +114,7 @@ namespace GuaranteeManager
             _bankInput.Text = currentGuarantee.Bank;
             _typeInput.Text = currentGuarantee.GuaranteeType;
             _amountInput.Text = currentGuarantee.Amount.ToString("N2", CultureInfo.InvariantCulture);
-            _expiryInput.Text = DualCalendarDateService.FormatGregorianDate(currentGuarantee.ExpiryDate);
+            _expiryInput.Text = DualCalendarDateService.FormatDate(currentGuarantee.ExpiryDate, currentGuarantee.DateCalendar);
             _referenceNumberInput.Text = currentGuarantee.ReferenceNumber;
             _notesInput.Text = currentGuarantee.Notes;
             _notesInput.Height = 58;
@@ -220,6 +221,7 @@ namespace GuaranteeManager
                 string.Empty,
                 0,
                 DateTime.Today,
+                GuaranteeDateCalendar.Gregorian,
                 GuaranteeReferenceType.None,
                 string.Empty,
                 string.Empty,
@@ -298,7 +300,7 @@ namespace GuaranteeManager
                 return;
             }
 
-            if (!DualCalendarDateService.TryParseDate(expiryText, out DateTime expiryDate))
+            if (!DualCalendarDateService.TryParseDate(expiryText, out DateTime expiryDate, out GuaranteeDateCalendar dateCalendar))
             {
                 MessageBox.Show($"صيغة تاريخ الانتهاء غير صحيحة. استخدم مثلاً {DualCalendarDateService.InputExamples}.", "تعديل الضمان", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -317,6 +319,7 @@ namespace GuaranteeManager
                 guaranteeType,
                 amount,
                 expiryDate,
+                dateCalendar,
                 referenceType,
                 referenceNumber,
                 notes,
@@ -568,7 +571,7 @@ namespace GuaranteeManager
             string amountText = _amountInput.Text.Replace(",", string.Empty, StringComparison.Ordinal).Trim();
             string currentAmountText = _currentGuarantee.Amount.ToString("N2", CultureInfo.InvariantCulture).Replace(",", string.Empty, StringComparison.Ordinal).Trim();
             string expiryText = _expiryInput.Text.Trim();
-            string currentExpiryText = DualCalendarDateService.FormatGregorianDate(_currentGuarantee.ExpiryDate);
+            string currentExpiryText = DualCalendarDateService.FormatDate(_currentGuarantee.ExpiryDate, _currentGuarantee.DateCalendar);
             string referenceNumber = _referenceNumberInput.Text.Trim();
             string notes = _notesInput.Text.Trim();
             GuaranteeReferenceType referenceType = (_referenceTypeInput.SelectedItem as ReferenceTypeOption)?.Value ?? GuaranteeReferenceType.None;
@@ -701,7 +704,7 @@ namespace GuaranteeManager
             }
 
             bool amountValid = ArabicAmountFormatter.TryParsePositiveSaudiRiyalAmount(amountText, out decimal amount);
-            bool expiryValid = DualCalendarDateService.TryParseDate(expiryText, out DateTime expiryDate);
+            bool expiryValid = DualCalendarDateService.TryParseDate(expiryText, out DateTime expiryDate, out GuaranteeDateCalendar dateCalendar);
 
             if (missing.Count > 0 || !amountValid || !expiryValid)
             {
@@ -766,6 +769,10 @@ namespace GuaranteeManager
             if (expiryDate.Date != _currentGuarantee.ExpiryDate.Date)
             {
                 changeLabels.Add("تاريخ الانتهاء");
+            }
+            else if (dateCalendar != _currentGuarantee.DateCalendar)
+            {
+                changeLabels.Add("تقويم التاريخ");
             }
 
             if (referenceType != _currentGuarantee.ReferenceType || !string.Equals(referenceNumber, _currentGuarantee.ReferenceNumber, StringComparison.Ordinal))

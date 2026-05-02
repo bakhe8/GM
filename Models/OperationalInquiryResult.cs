@@ -20,7 +20,8 @@ namespace GuaranteeManager.Models
         public List<OperationalInquiryFact> Facts { get; } = new List<OperationalInquiryFact>();
         public List<OperationalInquiryTimelineEntry> Timeline { get; } = new List<OperationalInquiryTimelineEntry>();
 
-        public string EventDateLabel => EventDate.HasValue ? DualCalendarDateService.FormatDateTime(EventDate.Value) : "---";
+        public GuaranteeDateCalendar DisplayDateCalendar => RelatedRequest?.DateCalendar ?? CurrentGuarantee?.DateCalendar ?? SelectedGuarantee?.DateCalendar ?? GuaranteeDateCalendar.Gregorian;
+        public string EventDateLabel => EventDate.HasValue ? DualCalendarDateService.FormatDateTime(EventDate.Value, DisplayDateCalendar) : "---";
         public bool HasTimeline => Timeline.Count > 0;
         public bool CanOpenRequestLetter => RelatedRequest?.HasLetter == true;
         public bool CanOpenResponseDocument => RelatedRequest?.HasResponseDocument == true;
@@ -35,8 +36,9 @@ namespace GuaranteeManager.Models
     public sealed class OperationalInquiryTimelineEntry
     {
         public DateTime Timestamp { get; set; }
+        public GuaranteeDateCalendar DateCalendar { get; set; } = GuaranteeDateCalendar.Gregorian;
         public string Title { get; set; } = string.Empty;
         public string Details { get; set; } = string.Empty;
-        public string TimestampLabel => DualCalendarDateService.FormatDateTime(Timestamp);
+        public string TimestampLabel => DualCalendarDateService.FormatDateTime(Timestamp, DateCalendar);
     }
 }

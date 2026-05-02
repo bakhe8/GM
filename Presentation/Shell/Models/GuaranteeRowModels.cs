@@ -46,6 +46,7 @@ namespace GuaranteeManager
             IssueDate = issueDate;
             ExpiryDate = expiryDate;
             ExpiryDateValue = guarantee.ExpiryDate;
+            DateCalendar = guarantee.DateCalendar;
             ExpiryRemainingLabel = expiryRemainingLabel;
             GuaranteeType = string.IsNullOrWhiteSpace(guarantee.GuaranteeType) ? "---" : guarantee.GuaranteeType;
             ReferenceFieldLabel = GetReferenceFieldLabel(guarantee.ReferenceType);
@@ -79,6 +80,7 @@ namespace GuaranteeManager
         public string IssueDate { get; }
         public string ExpiryDate { get; }
         public DateTime ExpiryDateValue { get; }
+        public GuaranteeDateCalendar DateCalendar { get; }
         public string ExpiryRemainingLabel { get; }
         public string GuaranteeType { get; }
         public string ReferenceFieldLabel { get; }
@@ -157,8 +159,8 @@ namespace GuaranteeManager
                 beneficiary,
                 ArabicAmountFormatter.FormatSaudiRiyals(guarantee.Amount),
                 ArabicAmountFormatter.FormatSaudiRiyalsInWords(guarantee.Amount),
-                FormatDate(guarantee.CreatedAt),
-                FormatDate(guarantee.ExpiryDate),
+                FormatDate(guarantee.CreatedAt, guarantee.DateCalendar),
+                FormatDate(guarantee.ExpiryDate, guarantee.DateCalendar),
                 GetExpiryRemainingLabel(guarantee.ExpiryDate),
                 timeStatus,
                 timeTone,
@@ -223,7 +225,7 @@ namespace GuaranteeManager
             _ => "رقم المرجع"
         };
 
-        private static string FormatDate(DateTime date) => DualCalendarDateService.FormatGregorianDate(date);
+        private static string FormatDate(DateTime date, GuaranteeDateCalendar dateCalendar) => DualCalendarDateService.FormatDate(date, dateCalendar);
 
         private static ImageSource GetBankLogo(string bankName)
         {
@@ -456,7 +458,7 @@ namespace GuaranteeManager
                 summaryTitle = $"يوجد {pendingCount.ToString("N0", CultureInfo.InvariantCulture)} طلب قيد التنفيذ على هذا الملف";
                 summaryDetail = latestPending == null
                     ? "المتابعة الأقرب الآن هي مراجعة السجل الزمني وتسجيل رد البنك عند وصوله."
-                    : $"أقرب نقطة متابعة الآن: {latestPending.TypeLabel} بتاريخ {DualCalendarDateService.FormatGregorianDate(latestPending.RequestDate)}.";
+                    : $"أقرب نقطة متابعة الآن: {latestPending.TypeLabel} بتاريخ {DualCalendarDateService.FormatDate(latestPending.RequestDate, guarantee.DateCalendar)}.";
                 suggestedArea = GuaranteeFocusArea.Requests;
                 suggestedLabel = "راجع السجل";
             }

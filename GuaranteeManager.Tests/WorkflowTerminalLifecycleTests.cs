@@ -24,6 +24,7 @@ namespace GuaranteeManager.Tests
             DatabaseService database = _fixture.CreateDatabaseService();
             WorkflowService workflow = _fixture.CreateWorkflowService(database);
             Guarantee seed = _fixture.CreateGuarantee();
+            seed.DateCalendar = GuaranteeDateCalendar.Hijri;
 
             database.SaveGuarantee(seed, new List<string>());
             Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
@@ -213,6 +214,7 @@ namespace GuaranteeManager.Tests
                     current.Bank,
                     current.Amount,
                     DateTime.Today.AddDays(90),
+                    GuaranteeDateCalendar.Gregorian,
                     current.GuaranteeType,
                     current.Beneficiary,
                     current.ReferenceType,
@@ -273,6 +275,7 @@ namespace GuaranteeManager.Tests
                 "Replacement Bank",
                 current.Amount,
                 current.ExpiryDate.AddDays(90),
+                GuaranteeDateCalendar.Hijri,
                 current.GuaranteeType,
                 current.Beneficiary,
                 current.ReferenceType,
@@ -288,6 +291,8 @@ namespace GuaranteeManager.Tests
 
             Assert.Equal(current.Id, originalAfterReplacement.Id);
             Assert.Equal(GuaranteeLifecycleStatus.Replaced, originalAfterReplacement.LifecycleStatus);
+            Assert.Equal(GuaranteeDateCalendar.Hijri, replacementGuarantee.DateCalendar);
+            Assert.Contains("هـ", replacementGuarantee.WorkflowDisplayLabel);
             Assert.Equal(1, originalAfterReplacement.VersionNumber);
             Assert.Equal(replacementGuarantee.RootId, originalAfterReplacement.ReplacedByRootId);
             Assert.Equal(originalRootId, replacementGuarantee.ReplacesRootId);

@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using GuaranteeManager.Models;
 
 namespace GuaranteeManager.Utils
 {
@@ -34,14 +35,20 @@ namespace GuaranteeManager.Utils
 
         public static bool TryParseDate(string? input, out DateTime gregorianDate)
         {
+            return TryParseDate(input, out gregorianDate, out _);
+        }
+
+        public static bool TryParseDate(string? input, out DateTime gregorianDate, out GuaranteeDateCalendar dateCalendar)
+        {
             gregorianDate = default;
+            dateCalendar = GuaranteeDateCalendar.Gregorian;
             string normalized = NormalizeInput(input);
             if (string.IsNullOrWhiteSpace(normalized))
             {
                 return false;
             }
 
-            if (TryParseNumericDate(normalized, out gregorianDate))
+            if (TryParseNumericDate(normalized, out gregorianDate, out dateCalendar))
             {
                 return true;
             }
@@ -54,6 +61,7 @@ namespace GuaranteeManager.Utils
                     out DateTime exactGregorian))
             {
                 gregorianDate = exactGregorian.Date;
+                dateCalendar = GuaranteeDateCalendar.Gregorian;
                 return IsSupportedGregorianBusinessDate(gregorianDate);
             }
 
@@ -61,6 +69,7 @@ namespace GuaranteeManager.Utils
                 && IsSupportedGregorianBusinessDate(invariantParsed))
             {
                 gregorianDate = invariantParsed.Date;
+                dateCalendar = GuaranteeDateCalendar.Gregorian;
                 return true;
             }
 
@@ -68,6 +77,7 @@ namespace GuaranteeManager.Utils
                 && IsSupportedGregorianBusinessDate(cultureParsed))
             {
                 gregorianDate = cultureParsed.Date;
+                dateCalendar = GuaranteeDateCalendar.Gregorian;
                 return true;
             }
 
@@ -116,9 +126,31 @@ namespace GuaranteeManager.Utils
             return $"{FormatGregorianDate(value)} {value.ToString("HH:mm", InvariantCulture)}";
         }
 
-        private static bool TryParseNumericDate(string normalized, out DateTime gregorianDate)
+        public static string FormatDate(DateTime gregorianDate, GuaranteeDateCalendar dateCalendar)
+        {
+            return dateCalendar == GuaranteeDateCalendar.Hijri
+                ? FormatHijriDate(gregorianDate)
+                : FormatGregorianDate(gregorianDate);
+        }
+
+        public static string FormatDateTime(DateTime value, GuaranteeDateCalendar dateCalendar)
+        {
+            return dateCalendar == GuaranteeDateCalendar.Hijri
+                ? $"{FormatHijriDate(value)} {value.ToString("HH:mm", InvariantCulture)}"
+                : FormatDateTime(value);
+        }
+
+        public static GuaranteeDateCalendar ParseDateCalendar(string? value)
+        {
+            return Enum.TryParse(value, ignoreCase: true, out GuaranteeDateCalendar parsed)
+                ? parsed
+                : GuaranteeDateCalendar.Gregorian;
+        }
+
+        private static bool TryParseNumericDate(string normalized, out DateTime gregorianDate, out GuaranteeDateCalendar dateCalendar)
         {
             gregorianDate = default;
+            dateCalendar = GuaranteeDateCalendar.Gregorian;
             string[] parts = normalized
                 .Split(DateSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (parts.Length != 3 || !parts.All(part => int.TryParse(part, NumberStyles.None, InvariantCulture, out _)))
@@ -152,11 +184,13 @@ namespace GuaranteeManager.Utils
 
             if (IsLikelyHijriYear(year))
             {
+                dateCalendar = GuaranteeDateCalendar.Hijri;
                 return TryCreateHijriDate(year, month, day, out gregorianDate);
             }
 
             if (IsLikelyGregorianYear(year))
             {
+                dateCalendar = GuaranteeDateCalendar.Gregorian;
                 return TryCreateGregorianDate(year, month, day, out gregorianDate);
             }
 

@@ -22,6 +22,7 @@ namespace GuaranteeManager
         string GuaranteeType,
         decimal Amount,
         DateTime ExpiryDate,
+        GuaranteeDateCalendar DateCalendar,
         GuaranteeReferenceType ReferenceType,
         string ReferenceNumber,
         string Notes,
@@ -213,6 +214,7 @@ namespace GuaranteeManager
                 string.Empty,
                 0,
                 DateTime.Today,
+                GuaranteeDateCalendar.Gregorian,
                 GuaranteeReferenceType.None,
                 string.Empty,
                 string.Empty,
@@ -253,7 +255,7 @@ namespace GuaranteeManager
                 return;
             }
 
-            if (!DualCalendarDateService.TryParseDate(expiryText, out DateTime expiryDate))
+            if (!DualCalendarDateService.TryParseDate(expiryText, out DateTime expiryDate, out GuaranteeDateCalendar dateCalendar))
             {
                 MessageBox.Show($"صيغة تاريخ الانتهاء غير صحيحة. استخدم مثلاً {DualCalendarDateService.InputExamples}.", "إجراء جديد", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -268,6 +270,7 @@ namespace GuaranteeManager
                 guaranteeType,
                 amount,
                 expiryDate,
+                dateCalendar,
                 referenceType,
                 referenceNumber,
                 notes,
@@ -552,7 +555,7 @@ namespace GuaranteeManager
             }
 
             bool amountValid = ArabicAmountFormatter.TryParsePositiveSaudiRiyalAmount(amountText, out decimal amount);
-            bool expiryValid = DualCalendarDateService.TryParseDate(expiryText, out DateTime expiryDate);
+            bool expiryValid = DualCalendarDateService.TryParseDate(expiryText, out DateTime expiryDate, out GuaranteeDateCalendar dateCalendar);
 
             if (missing.Count > 0 || !amountValid || !expiryValid)
             {
@@ -591,7 +594,7 @@ namespace GuaranteeManager
 
             SetConsequenceState(
                 "سيُنشأ ضمان جديد كالإصدار الأول.",
-                $"{guaranteeNo} • {bank} • {guaranteeType} • {ArabicAmountFormatter.FormatSaudiRiyals(amount, 2)} • {DualCalendarDateService.FormatDualDate(expiryDate)}",
+                $"{guaranteeNo} • {bank} • {guaranteeType} • {ArabicAmountFormatter.FormatSaudiRiyals(amount, 2)} • {DualCalendarDateService.FormatDate(expiryDate, dateCalendar)}",
                 $"{beneficiarySummary} • {referenceSummary} • {attachmentSummary}",
                 warningState: false);
         }

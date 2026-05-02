@@ -84,7 +84,7 @@ namespace GuaranteeManager.Services
                     }
 
                     string replacementExecutionNote =
-                        $"نتيجة تنفيذ طلب استبدال رقم {context.Request.SequenceNumber} للضمان {context.CurrentGuarantee.GuaranteeNo} بتاريخ {DualCalendarDateService.FormatGregorianDate(executedAt)}.";
+                        $"نتيجة تنفيذ طلب استبدال رقم {context.Request.SequenceNumber} للضمان {context.CurrentGuarantee.GuaranteeNo} بتاريخ {DualCalendarDateService.FormatDate(executedAt, context.Request.ReplacementDateCalendar)}.";
                     newGuaranteeId = WorkflowExecutionDataAccess.InsertStandaloneGuarantee(
                         replacementSupplier,
                         replacementBank,
@@ -97,6 +97,7 @@ namespace GuaranteeManager.Services
                         normalizedReferenceType,
                         normalizedReferenceNumber,
                         GuaranteeLifecycleStatus.Active,
+                        context.Request.ReplacementDateCalendar,
                         context.Request.RootGuaranteeId,
                         executedAt,
                         connection,
@@ -120,7 +121,7 @@ namespace GuaranteeManager.Services
                     string replacedGuaranteeNote =
                         WorkflowExecutionDataAccess.AppendNote(
                             context.CurrentGuarantee.Notes,
-                            $"تم استبداله بالضمان رقم {replacementGuaranteeNo.Trim()} بتاريخ {DualCalendarDateService.FormatGregorianDate(executedAt)}.");
+                            $"تم استبداله بالضمان رقم {replacementGuaranteeNo.Trim()} بتاريخ {DualCalendarDateService.FormatDate(executedAt, context.CurrentGuarantee.DateCalendar)}.");
                     WorkflowExecutionDataAccess.UpdateGuaranteeLifecycleStatus(
                         context.CurrentGuarantee.Id,
                         GuaranteeLifecycleStatus.Replaced,

@@ -238,7 +238,7 @@ namespace GuaranteeManager
             public BankResponseRequestOption(WorkflowRequest request)
             {
                 Request = request;
-                Display = $"{request.TypeLabel} - {DualCalendarDateService.FormatGregorianDate(request.RequestDate)} - {request.RequestedValueLabel}";
+                Display = $"{request.TypeLabel} - {DualCalendarDateService.FormatDate(request.RequestDate, request.DateCalendar)} - {request.RequestedValueLabel}";
             }
 
             public WorkflowRequest Request { get; }

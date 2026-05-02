@@ -54,13 +54,13 @@ namespace GuaranteeManager.Utils
         public static string BuildEffectPreview(Guarantee guarantee, DateTime? requestedExpiryDate)
         {
             string requestedDateLabel = requestedExpiryDate.HasValue
-                ? DualCalendarDateService.FormatDualDate(requestedExpiryDate.Value)
+                ? DualCalendarDateService.FormatDate(requestedExpiryDate.Value, guarantee.DateCalendar)
                 : "---";
 
             return
                 "بعد الحفظ:\n" +
                 "• سيُنشأ طلب تمديد جديد بحالة قيد الانتظار\n" +
-                $"• سيبقى تاريخ انتهاء الضمان الحالي كما هو حتى يرد البنك ({DualCalendarDateService.FormatDualDate(guarantee.ExpiryDate)})\n" +
+                $"• سيبقى تاريخ انتهاء الضمان الحالي كما هو حتى يرد البنك ({DualCalendarDateService.FormatDate(guarantee.ExpiryDate, guarantee.DateCalendar)})\n" +
                 $"• سيُسجل التاريخ المطلوب في الطلب كقيمة مستهدفة ({requestedDateLabel})\n" +
                 "• سيظهر الطلب مباشرة في قائمة الطلبات المرتبطة والسجل الزمني";
         }

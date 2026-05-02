@@ -97,6 +97,38 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void RecordBankResponse_ExecutedExtension_PreservesHijriCalendarPreference()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee seed = _fixture.CreateGuarantee();
+            seed.DateCalendar = GuaranteeDateCalendar.Hijri;
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+
+            WorkflowRequest extensionRequest = workflow.CreateExtensionRequest(
+                current.Id,
+                current.ExpiryDate.AddDays(60),
+                "hijri extension",
+                "tester");
+
+            Assert.Equal(GuaranteeDateCalendar.Hijri, extensionRequest.RequestedDateCalendar);
+            Assert.Contains("هـ", extensionRequest.RequestedValueLabel);
+            Assert.DoesNotContain(" م |", extensionRequest.RequestedValueLabel);
+
+            workflow.RecordBankResponse(extensionRequest.Id, RequestStatus.Executed, "approved");
+
+            Guarantee latest = database.GetCurrentGuaranteeByRootId(current.RootId ?? current.Id)!;
+            WorkflowRequest executed = database.GetWorkflowRequestById(extensionRequest.Id)!;
+
+            Assert.Equal(GuaranteeDateCalendar.Hijri, latest.DateCalendar);
+            Assert.Equal(GuaranteeDateCalendar.Hijri, executed.RequestedDateCalendar);
+            Assert.Contains("هـ", latest.WorkflowDisplayLabel);
+            Assert.DoesNotContain(" م |", latest.WorkflowDisplayLabel);
+        }
+
+        [Fact]
         public void CreateExtensionRequest_AfterExecutedExtension_IsAllowedOnCurrentVersion()
         {
             DatabaseService database = _fixture.CreateDatabaseService();

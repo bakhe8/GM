@@ -419,7 +419,7 @@ namespace GuaranteeManager
                         StringComparer.OrdinalIgnoreCase);
 
                 return selectedEvents
-                    .Select(item => TimelineItem.FromEvent(item, requestsById, attachmentsById, attachmentsByEventKey, focusedRequestId))
+                    .Select(item => TimelineItem.FromEvent(item, requestsById, attachmentsById, attachmentsByEventKey, focusedRequestId, selectedGuarantee.DateCalendar))
                     .ToList();
             }
 
@@ -446,7 +446,7 @@ namespace GuaranteeManager
 
             foreach (AttachmentRecord attachment in BuildAttachmentEventSource(versionEvents))
             {
-                events.Add(new TimelineEvent(attachment.UploadedAt, 40, TimelineItem.AttachmentAdded(attachment)));
+                events.Add(new TimelineEvent(attachment.UploadedAt, 40, TimelineItem.AttachmentAdded(attachment, selectedGuarantee.DateCalendar)));
             }
 
             foreach (WorkflowRequest request in contextRequests)

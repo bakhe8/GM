@@ -28,7 +28,8 @@ namespace GuaranteeManager.Services
             ReferenceNumber,
             LifecycleStatus,
             ReplacesRootId,
-            ReplacedByRootId";
+            ReplacedByRootId,
+            DateCalendar";
 
         public static void NormalizeGuaranteeRoots(SqliteConnection connection, SqliteTransaction? transaction = null)
         {
@@ -138,7 +139,8 @@ namespace GuaranteeManager.Services
                 ReferenceNumber = referenceNumber,
                 LifecycleStatus = reader.IsDBNull(15) ? GuaranteeLifecycleStatus.Active : ParseLifecycleStatus(reader.GetString(15)),
                 ReplacesRootId = reader.IsDBNull(16) ? (int?)null : reader.GetInt32(16),
-                ReplacedByRootId = reader.IsDBNull(17) ? (int?)null : reader.GetInt32(17)
+                ReplacedByRootId = reader.IsDBNull(17) ? (int?)null : reader.GetInt32(17),
+                DateCalendar = reader.IsDBNull(18) ? GuaranteeDateCalendar.Gregorian : DualCalendarDateService.ParseDateCalendar(reader.GetString(18))
             };
         }
     }

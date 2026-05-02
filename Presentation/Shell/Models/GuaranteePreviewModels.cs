@@ -66,7 +66,7 @@ namespace GuaranteeManager
                 request,
                 $"REQ-{request.Id:0000}",
                 request.TypeLabel,
-                DualCalendarDateService.FormatGregorianDate(request.RequestDate),
+                DualCalendarDateService.FormatDate(request.RequestDate, request.DateCalendar),
                 detail,
                 request.StatusLabel,
                 request.RequestedValueLabel,
@@ -122,7 +122,7 @@ namespace GuaranteeManager
                 request,
                 $"REQ-{request.Id:0000}",
                 request.TypeLabel,
-                DualCalendarDateService.FormatGregorianDate(request.RequestDate),
+                DualCalendarDateService.FormatDate(request.RequestDate, request.DateCalendar),
                 detail,
                 request.StatusLabel,
                 tone);

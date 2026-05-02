@@ -24,6 +24,7 @@ namespace GuaranteeManager.Services
             string replacementBank,
             decimal replacementAmount,
             DateTime replacementExpiryDate,
+            GuaranteeDateCalendar replacementDateCalendar,
             string replacementGuaranteeType,
             string replacementBeneficiary,
             GuaranteeReferenceType replacementReferenceType,

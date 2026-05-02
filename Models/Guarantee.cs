@@ -126,6 +126,7 @@ namespace GuaranteeManager.Models
         public string GuaranteeNo { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public DateTime ExpiryDate { get; set; }
+        public GuaranteeDateCalendar DateCalendar { get; set; } = GuaranteeDateCalendar.Gregorian;
         public string GuaranteeType { get; set; } = string.Empty;
         public string Beneficiary { get; set; } = string.Empty;
         public GuaranteeReferenceType ReferenceType { get; set; } = GuaranteeReferenceType.None;
@@ -163,6 +164,6 @@ namespace GuaranteeManager.Models
             _ => "بدون مرجع"
         };
 
-        public string WorkflowDisplayLabel => $"{GuaranteeNo} - {Supplier} - {DualCalendarDateService.FormatGregorianDate(ExpiryDate)}";
+        public string WorkflowDisplayLabel => $"{GuaranteeNo} - {Supplier} - {DualCalendarDateService.FormatDate(ExpiryDate, DateCalendar)}";
     }
 }
