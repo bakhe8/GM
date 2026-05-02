@@ -106,6 +106,54 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void WorkflowRequestReport_WritesReductionAmountsAsPlainNumbers()
+        {
+            var request = new WorkflowRequest
+            {
+                SequenceNumber = 3,
+                Type = RequestType.Reduction,
+                Status = RequestStatus.Pending,
+                RequestDate = new DateTime(2026, 1, 10),
+                RequestedDataJson = JsonSerializer.Serialize(new WorkflowRequestedData
+                {
+                    RequestedAmount = 850_000m
+                })
+            };
+            var item = new WorkflowRequestListItem
+            {
+                Request = request,
+                GuaranteeNo = "BG-EXCEL-REDUCE",
+                Supplier = "شركة الصيانة",
+                Bank = "بنك ساب",
+                CurrentAmount = 1_250_000m,
+                CurrentExpiryDate = new DateTime(2026, 6, 30),
+                CurrentVersionNumber = 1,
+                BaseVersionNumber = 1,
+                LifecycleStatus = GuaranteeLifecycleStatus.Active
+            };
+
+            string outputPath = _fixture.CreateArtifactPath(".xlsx");
+            var excel = new ExcelService();
+
+            bool exported = excel.ExportWorkflowRequestsReportToPath(
+                new[] { item },
+                "تقرير الطلبات",
+                "اختبار المبالغ",
+                outputPath);
+
+            Assert.True(exported);
+
+            using var workbook = new XLWorkbook(outputPath);
+            IXLWorksheet worksheet = workbook.Worksheet("الطلبات");
+            Assert.Equal(1_250_000m, worksheet.Cell(5, 11).GetValue<decimal>());
+            Assert.Equal(850_000m, worksheet.Cell(5, 13).GetValue<decimal>());
+
+            string usedText = string.Join("|", worksheet.CellsUsed().Select(cell => cell.GetString()));
+            Assert.DoesNotContain(ArabicAmountFormatter.SaudiRiyalSymbol, usedText);
+            Assert.DoesNotContain("ريال", usedText);
+        }
+
+        [Fact]
         public void SingleGuaranteeReport_DoesNotShowBeneficiary()
         {
             Guarantee guarantee = _fixture.CreateGuarantee("BG-EXCEL-SINGLE");
@@ -210,10 +258,17 @@ namespace GuaranteeManager.Tests
             Assert.Contains("سلامة سجل الضمان", health.Cell(1, 1).GetString());
             Assert.Equal("المورد", overview.Cell(10, 1).GetString());
             Assert.Equal("شركة الخدمات الطبية", overview.Cell(10, 2).GetString());
+            Assert.Equal(ExcelReportSupport.FormatPlainAmount(guarantee.Amount), overview.Cell(12, 2).GetString());
             Assert.DoesNotContain("المستفيد", ReadColumn(overview, 1, 9, 15));
             Assert.Contains("المورد", versionHeaders);
             Assert.DoesNotContain("المستفيد", versionHeaders);
             Assert.Equal("شركة الخدمات الطبية", versions.Cell(5, 5).GetString());
+
+            string workbookText = string.Join(
+                "|",
+                workbook.Worksheets.SelectMany(sheet => sheet.CellsUsed()).Select(cell => cell.GetString()));
+            Assert.DoesNotContain(ArabicAmountFormatter.SaudiRiyalSymbol, workbookText);
+            Assert.DoesNotContain("ريال", workbookText);
         }
 
         [Fact]

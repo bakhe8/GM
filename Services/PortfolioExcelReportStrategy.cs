@@ -143,7 +143,7 @@ namespace GuaranteeManager.Services
 
                 int overviewRow = 5;
                 ExcelReportSupport.WriteOverviewRow(overviewSheet, overviewRow++, "عدد الضمانات الحالية", guarantees.Count.ToString("N0"), "إجمالي السجلات الحالية", "---");
-                ExcelReportSupport.WriteOverviewRow(overviewSheet, overviewRow++, "إجمالي المبالغ", guarantees.Sum(g => g.Amount).ToString("N2"), "مجموع مبالغ الضمانات الحالية", "---");
+                ExcelReportSupport.WriteOverviewRow(overviewSheet, overviewRow++, "إجمالي المبالغ", ExcelReportSupport.FormatPlainAmount(guarantees.Sum(g => g.Amount)), "مجموع مبالغ الضمانات الحالية", "---");
                 ExcelReportSupport.WriteOverviewRow(overviewSheet, overviewRow++, "قريب الانتهاء", guarantees.Count(g => g.IsExpiringSoon).ToString("N0"), "ضمانات تقترب من نهاية مدتها الزمنية", "---");
                 ExcelReportSupport.WriteOverviewRow(overviewSheet, overviewRow++, "منتهي زمنيًا", guarantees.Count(g => g.IsExpired).ToString("N0"), "ضمانات منتهية زمنيًا", "---");
                 ExcelReportSupport.WriteOverviewRow(overviewSheet, overviewRow++, "تحتاج إفراج/إعادة", guarantees.Count(g => g.NeedsExpiryFollowUp).ToString("N0"), "ضمانات منتهية زمنيًا وما زالت مفتوحة تشغيليًا", "الإجراء المتاح: إفراج/إعادة للبنك");

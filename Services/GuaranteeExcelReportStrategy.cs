@@ -107,7 +107,7 @@ namespace GuaranteeManager.Services
                 int row = 4;
                 ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "رقم الضمان", guarantee.GuaranteeNo, "الإصدار", guarantee.VersionLabel);
                 ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "المورد", guarantee.Supplier, "البنك", guarantee.Bank);
-                ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "المبلغ", guarantee.Amount.ToString("N2"), "النوع", ExcelReportSupport.ValueOrDash(guarantee.GuaranteeType));
+                ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "المبلغ", ExcelReportSupport.FormatPlainAmount(guarantee.Amount), "النوع", ExcelReportSupport.ValueOrDash(guarantee.GuaranteeType));
                 ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "تاريخ الانتهاء", guarantee.ExpiryDate.ToString("yyyy-MM-dd"), "الحالة الزمنية", guarantee.StatusLabel);
                 ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "الحالة التشغيلية", guarantee.LifecycleStatusLabel, "المرفقات", guarantee.AttachmentCount.ToString());
                 ExcelReportSupport.WriteSummaryPair(detailsSheet, row++, "نوع المرجع", guarantee.ReferenceTypeLabel, "رقم المرجع", ExcelReportSupport.ValueOrDash(guarantee.ReferenceNumber));

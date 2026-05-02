@@ -8,7 +8,6 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using ClosedXML.Excel;
 using GuaranteeManager.Models;
-using GuaranteeManager.Utils;
 using Microsoft.Win32;
 
 namespace GuaranteeManager.Services
@@ -200,7 +199,7 @@ namespace GuaranteeManager.Services
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "رقم الضمان", current.GuaranteeNo, "المرجع الرئيسي", BuildReferenceSummary(current));
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "المورد", supplier, "البنك", current.Bank);
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "نوع الضمان", ExcelReportSupport.ValueOrDash(current.GuaranteeType), "نوع المرجع", current.ReferenceTypeLabel);
-            ExcelReportSupport.WriteOverviewRow(worksheet, row++, "القيمة الحالية", ArabicAmountFormatter.FormatSaudiRiyals(current.Amount), "تاريخ الانتهاء", current.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture));
+            ExcelReportSupport.WriteOverviewRow(worksheet, row++, "القيمة الحالية", ExcelReportSupport.FormatPlainAmount(current.Amount), "تاريخ الانتهاء", current.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture));
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "الطلبات المعلقة", pendingRequests.ToString("N0", CultureInfo.InvariantCulture), "إجمالي المرفقات", totalAttachments.ToString("N0", CultureInfo.InvariantCulture));
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "أول إنشاء", firstCreated, "آخر تحديث", lastUpdated);
             ExcelReportSupport.WriteOverviewRow(worksheet, row, "ملاحظات الإصدار الحالي", ExcelReportSupport.ValueOrDash(current.Notes), "وصف السجل", "يشمل جميع الإصدارات والطلبات المرتبطة بالسلسلة نفسها.");
@@ -458,7 +457,7 @@ namespace GuaranteeManager.Services
                         item.IsCurrent ? "حالي" : "محفوظ",
                         item.CreatedAt.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
                         item.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
-                        ArabicAmountFormatter.FormatSaudiRiyals(item.Amount),
+                        ExcelReportSupport.FormatPlainAmount(item.Amount),
                         item.AttachmentCount.ToString("N0", CultureInfo.InvariantCulture)
                     }),
                     new[] { 1.1, 1.1, 1.35, 1.35, 1.5, 0.8 }));
@@ -625,7 +624,7 @@ namespace GuaranteeManager.Services
             return request.Type switch
             {
                 RequestType.Reduction => request.RequestedAmount.HasValue
-                    ? ArabicAmountFormatter.FormatSaudiRiyals(request.RequestedAmount.Value)
+                    ? ExcelReportSupport.FormatPlainAmount(request.RequestedAmount.Value)
                     : "---",
                 RequestType.Extension => request.RequestedExpiryDate?.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) ?? "---",
                 RequestType.Replacement => string.IsNullOrWhiteSpace(request.ReplacementGuaranteeNo)

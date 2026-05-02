@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using ClosedXML.Excel;
 using GuaranteeManager.Models;
+using GuaranteeManager.Utils;
 using Microsoft.Win32;
 
 namespace GuaranteeManager.Services
@@ -176,9 +177,9 @@ namespace GuaranteeManager.Services
                 lifecycleCell.Value = item.LifecycleStatusLabel;
 
                 worksheet.Cell(row, 10).Value = item.CurrentValueFieldLabel;
-                worksheet.Cell(row, 11).Value = item.CurrentValueDisplay;
+                WriteWorkflowCurrentValueCell(worksheet.Cell(row, 11), item);
                 worksheet.Cell(row, 12).Value = item.RequestedValueFieldLabel;
-                worksheet.Cell(row, 13).Value = item.RequestedValueDisplay;
+                WriteWorkflowRequestedValueCell(worksheet.Cell(row, 13), item);
 
                 IXLCell requestDateCell = worksheet.Cell(row, 14);
                 requestDateCell.Value = item.Request.RequestDate;
@@ -393,6 +394,45 @@ namespace GuaranteeManager.Services
                 RequestType.Replacement => "طلب استبدال",
                 _ => "طلب غير معروف"
             };
+        }
+
+        private static void WriteWorkflowCurrentValueCell(IXLCell cell, WorkflowRequestListItem item)
+        {
+            if (item.Request.Type == RequestType.Reduction)
+            {
+                WritePlainAmountCell(cell, item.CurrentAmount);
+                return;
+            }
+
+            cell.Value = item.CurrentValueDisplay;
+        }
+
+        private static void WriteWorkflowRequestedValueCell(IXLCell cell, WorkflowRequestListItem item)
+        {
+            if (item.Request.Type == RequestType.Reduction)
+            {
+                if (item.Request.RequestedAmount.HasValue)
+                {
+                    WritePlainAmountCell(cell, item.Request.RequestedAmount.Value);
+                    return;
+                }
+
+                cell.Value = "---";
+                return;
+            }
+
+            cell.Value = item.RequestedValueDisplay;
+        }
+
+        internal static void WritePlainAmountCell(IXLCell cell, decimal amount)
+        {
+            cell.Value = amount;
+            cell.Style.NumberFormat.Format = "#,##0.00";
+        }
+
+        internal static string FormatPlainAmount(decimal amount, int decimals = 2)
+        {
+            return ArabicAmountFormatter.FormatNumber(amount, decimals);
         }
 
         private static string BuildWorkflowExecutionEffectSummary(WorkflowRequestListItem item)

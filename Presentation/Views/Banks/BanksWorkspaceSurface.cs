@@ -412,7 +412,9 @@ namespace GuaranteeManager
             row.Children.Add(BuildCell(item.ActiveDisplay, 2, "TableCellCenter", WorkspaceSurfaceChrome.BrushFrom("#16A34A")));
             row.Children.Add(BuildCell(item.ExpiringDisplay, 3, "TableCellCenter", WorkspaceSurfaceChrome.BrushFrom("#E09408")));
             row.Children.Add(BuildCell(item.ExpiredDisplay, 4, "TableCellCenter", WorkspaceSurfaceChrome.BrushFrom("#EF4444")));
-            row.Children.Add(BuildCell(item.AmountDisplay, 5, "TableCellCenter"));
+            TextBlock amountCell = BuildCell(item.AmountDisplay, 5, "TableCellCenter");
+            amountCell.FlowDirection = FlowDirection.LeftToRight;
+            row.Children.Add(amountCell);
             row.Children.Add(BuildCell(item.TopSupplier, 6, "TableCellRight"));
 
             row.Children.Add(WorkspaceSurfaceChrome.BankTableCell(item.Bank, item.Logo, 7, logoSize: 18, textMaxWidth: 178));
@@ -615,7 +617,8 @@ namespace GuaranteeManager
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Primary"),
                 Margin = new Thickness(0, 12, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Left,
-                TextAlignment = TextAlignment.Right
+                TextAlignment = TextAlignment.Right,
+                FlowDirection = FlowDirection.LeftToRight
             };
         }
 

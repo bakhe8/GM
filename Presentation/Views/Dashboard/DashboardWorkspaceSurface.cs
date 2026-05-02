@@ -1000,7 +1000,8 @@ namespace GuaranteeManager
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Primary"),
                 Margin = new Thickness(0, 12, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Left,
-                TextAlignment = TextAlignment.Right
+                TextAlignment = TextAlignment.Right,
+                FlowDirection = FlowDirection.LeftToRight
             };
         }
 

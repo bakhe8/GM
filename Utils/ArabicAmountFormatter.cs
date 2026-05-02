@@ -29,15 +29,15 @@ namespace GuaranteeManager.Utils
             string riyalText = $"{NumberToArabicWords(riyals)} ريال سعودي";
             if (halalas == 0)
             {
-                return $"{prefix}{riyalText} {SaudiRiyalSymbol}";
+                return prefix + riyalText;
             }
 
-            return $"{prefix}{riyalText} و{NumberToArabicWords(halalas)} هللة {SaudiRiyalSymbol}";
+            return $"{prefix}{riyalText} و{NumberToArabicWords(halalas)} هللة";
         }
 
         public static string FormatSaudiRiyalsForLetter(decimal amount)
         {
-            return $"{FormatSaudiRiyals(amount, 2)}{Environment.NewLine}{FormatSaudiRiyalsInWords(amount)}";
+            return $"{FormatNumber(amount, 2)}{Environment.NewLine}{FormatSaudiRiyalsInWords(amount)}";
         }
 
         public static string NumberToArabicWords(decimal amount)

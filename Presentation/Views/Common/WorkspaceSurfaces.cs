@@ -447,6 +447,7 @@ namespace GuaranteeManager
             value.Margin = new Thickness(0, 2, 0, 0);
             value.HorizontalAlignment = HorizontalAlignment.Center;
             value.TextAlignment = TextAlignment.Center;
+            value.FlowDirection = FlowDirection.LeftToRight;
             value.TextTrimming = TextTrimming.CharacterEllipsis;
         }
 
