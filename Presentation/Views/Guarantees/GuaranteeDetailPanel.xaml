@@ -395,12 +395,104 @@
                                 <Setter Property="FontSize" Value="9" />
                                 <Setter Property="Margin" Value="3,0,3,6" />
                                 <Setter Property="Padding" Value="2,0" />
+                                <Setter Property="Foreground" Value="#0F172A" />
+                                <Style.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Background" Value="#F8FAFC" />
+                                        <Setter Property="BorderBrush" Value="#E3E9F2" />
+                                        <Setter Property="Foreground" Value="#94A3B8" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                            <Style x:Key="ActionStripPrimaryButton" TargetType="Button" BasedOn="{StaticResource ActionStripButton}">
+                                <Setter Property="BorderBrush" Value="#BFDBFE" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Root"
+                                                    Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="6"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Root" Property="Background" Value="#EFF6FF" />
+                                                    <Setter TargetName="Root" Property="BorderBrush" Value="#2563EB" />
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter TargetName="Root" Property="Background" Value="#F8FAFC" />
+                                                    <Setter TargetName="Root" Property="BorderBrush" Value="#E3E9F2" />
+                                                    <Setter Property="Foreground" Value="#94A3B8" />
+                                                    <Setter Property="Cursor" Value="Arrow" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                            <Style x:Key="ActionStripSuccessButton" TargetType="Button" BasedOn="{StaticResource ActionStripButton}">
+                                <Setter Property="BorderBrush" Value="#C9EFCF" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Root"
+                                                    Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="6"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Root" Property="Background" Value="#F2FBF4" />
+                                                    <Setter TargetName="Root" Property="BorderBrush" Value="#16A34A" />
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter TargetName="Root" Property="Background" Value="#F8FAFC" />
+                                                    <Setter TargetName="Root" Property="BorderBrush" Value="#E3E9F2" />
+                                                    <Setter Property="Foreground" Value="#94A3B8" />
+                                                    <Setter Property="Cursor" Value="Arrow" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                            <Style x:Key="ActionStripDangerButton" TargetType="Button" BasedOn="{StaticResource ActionStripButton}">
+                                <Setter Property="BorderBrush" Value="#F7C5C5" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Root"
+                                                    Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="6"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Root" Property="Background" Value="#FFF3F3" />
+                                                    <Setter TargetName="Root" Property="BorderBrush" Value="#EF4444" />
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter TargetName="Root" Property="Background" Value="#F8FAFC" />
+                                                    <Setter TargetName="Root" Property="BorderBrush" Value="#E3E9F2" />
+                                                    <Setter Property="Foreground" Value="#94A3B8" />
+                                                    <Setter Property="Cursor" Value="Arrow" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
                             </Style>
                         </UniformGrid.Resources>
-                        <Button Style="{StaticResource ActionStripButton}"
-                                BorderBrush="#BFDBFE"
-                                Background="#EFF6FF"
-                                Foreground="#2563EB"
+                        <Button Style="{StaticResource ActionStripPrimaryButton}"
                                 Content="تسجيل رد"
                                 IsEnabled="{Binding SelectedGuarantee.RegisterResponseAction.IsEnabled}"
                                 ToolTip="{Binding SelectedGuarantee.RegisterResponseAction.Hint}"
@@ -436,10 +528,7 @@
                                 CommandParameter="{Binding SelectedGuarantee}"
                                 automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Reduction"
                                 automation:AutomationProperties.Name="إنشاء طلب تخفيض" />
-                        <Button Style="{StaticResource ActionStripButton}"
-                                BorderBrush="#C9EFCF"
-                                Background="#F2FBF4"
-                                Foreground="#16A34A"
+                        <Button Style="{StaticResource ActionStripSuccessButton}"
                                 Content="إفراج"
                                 IsEnabled="{Binding SelectedGuarantee.ReleaseAction.IsEnabled}"
                                 ToolTip="{Binding SelectedGuarantee.ReleaseAction.Hint}"
@@ -448,10 +537,7 @@
                                 CommandParameter="{Binding SelectedGuarantee}"
                                 automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Release"
                                 automation:AutomationProperties.Name="إنشاء طلب إفراج" />
-                        <Button Style="{StaticResource ActionStripButton}"
-                                BorderBrush="#F7C5C5"
-                                Background="#FFF3F3"
-                                Foreground="#EF4444"
+                        <Button Style="{StaticResource ActionStripDangerButton}"
                                 Content="تسييل"
                                 IsEnabled="{Binding SelectedGuarantee.LiquidationAction.IsEnabled}"
                                 ToolTip="{Binding SelectedGuarantee.LiquidationAction.Hint}"
@@ -461,9 +547,6 @@
                                 automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Action.Liquidation"
                                 automation:AutomationProperties.Name="إنشاء طلب تسييل" />
                         <Button Style="{StaticResource ActionStripButton}"
-                                BorderBrush="#BFDBFE"
-                                Background="#EFF6FF"
-                                Foreground="#2563EB"
                                 Content="تحقق"
                                 IsEnabled="{Binding SelectedGuarantee.VerificationAction.IsEnabled}"
                                 ToolTip="{Binding SelectedGuarantee.VerificationAction.Hint}"
