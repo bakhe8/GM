@@ -5,8 +5,8 @@ namespace GuaranteeManager
 {
     public static class UiTypography
     {
-        public const string DefaultFontFamilyName = "IBM Plex Sans Arabic";
-        public const string EmbeddedFontFamilyPath = "./Assets/Fonts/IBMPlexSansArabic/#IBM Plex Sans Arabic";
+        public const string DefaultFontFamilyName = "DIN Next LT W23";
+        public const string EmbeddedFontFamilyPath = "./Assets/Fonts/DINNextLTArabic/#DIN Next LT W23";
         public const string FallbackFontFamilyName = "Segoe UI Variable Text, Segoe UI, Tahoma";
         public const double Tiny = 9d;
         public const double Small = 10d;
