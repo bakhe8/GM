@@ -106,7 +106,7 @@ namespace GuaranteeManager
             Tone.Success => BrushFrom("#16A34A"),
             Tone.Warning => BrushFrom("#E09408"),
             Tone.Danger => BrushFrom("#EF4444"),
-            _ => BrushFrom("#3B82F6")
+            _ => BrushFrom("#2563EB")
         };
 
         public static Brush Background(Tone tone) => tone switch
@@ -114,7 +114,7 @@ namespace GuaranteeManager
             Tone.Success => BrushFrom("#F2FBF4"),
             Tone.Warning => BrushFrom("#FFF9EC"),
             Tone.Danger => BrushFrom("#FFF3F3"),
-            _ => BrushFrom("#F2F7FF")
+            _ => BrushFrom("#EFF6FF")
         };
 
         public static Brush Border(Tone tone) => tone switch
@@ -122,7 +122,7 @@ namespace GuaranteeManager
             Tone.Success => BrushFrom("#C9EFCF"),
             Tone.Warning => BrushFrom("#F6DE99"),
             Tone.Danger => BrushFrom("#F7C5C5"),
-            _ => BrushFrom("#CADCFF")
+            _ => BrushFrom("#BFDBFE")
         };
 
         private static SolidColorBrush BrushFrom(string color)
