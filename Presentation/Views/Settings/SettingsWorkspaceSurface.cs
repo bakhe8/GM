@@ -328,7 +328,7 @@ namespace GuaranteeManager
                 button.MinWidth = 0;
                 button.Margin = new Thickness(3, 0, 3, 6);
                 button.Padding = new Thickness(4, 0, 4, 0);
-                button.FontSize = 9.5;
+                button.FontSize = 10;
             }
 
             var border = new Border

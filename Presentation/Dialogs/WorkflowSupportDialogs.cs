@@ -70,7 +70,7 @@ namespace GuaranteeManager
             content.Children.Add(new TextBlock
             {
                 Text = prompt,
-                FontSize = 12.5,
+                FontSize = 13,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A")),
                 TextWrapping = TextWrapping.Wrap,
@@ -79,7 +79,7 @@ namespace GuaranteeManager
             content.Children.Add(new TextBlock
             {
                 Text = label,
-                FontSize = 11.5,
+                FontSize = 11,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B")),
                 Margin = new Thickness(0, 0, 0, 6)
@@ -185,7 +185,7 @@ namespace GuaranteeManager
             header.Children.Add(new TextBlock
             {
                 Text = title,
-                FontSize = 17,
+                FontSize = 18,
                 FontWeight = FontWeights.Bold,
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"))
             });
@@ -193,7 +193,7 @@ namespace GuaranteeManager
             {
                 Text = description,
                 Margin = new Thickness(0, 6, 0, 0),
-                FontSize = 11.5,
+                FontSize = 11,
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B")),
                 TextWrapping = TextWrapping.Wrap
             });
@@ -337,7 +337,7 @@ namespace GuaranteeManager
             {
                 Text = "أرفق مستند رد البنك لهذا الطلب المغلق حتى يبقى ملفه مكتملًا داخل النظام.",
                 Margin = new Thickness(0, 6, 0, 12),
-                FontSize = 11.5,
+                FontSize = 11,
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B")),
                 TextWrapping = TextWrapping.Wrap
             });
@@ -369,7 +369,7 @@ namespace GuaranteeManager
             content.Children.Add(new TextBlock
             {
                 Text = "ملاحظات إضافية",
-                FontSize = 11.5,
+                FontSize = 11,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B")),
                 Margin = new Thickness(0, 0, 0, 6)

@@ -115,7 +115,7 @@ namespace GuaranteeManager
             titleStack.Children.Add(new TextBlock
             {
                 Text = _result.Title,
-                FontSize = 20,
+                FontSize = 18,
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A")
             });
@@ -248,7 +248,7 @@ namespace GuaranteeManager
                 stack.Children.Add(new TextBlock
                 {
                     Text = "لا توجد حقائق إضافية مرتبطة بهذا الاستعلام.",
-                    FontSize = 11.5,
+                    FontSize = 11,
                     Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B")
                 });
             }
@@ -291,7 +291,7 @@ namespace GuaranteeManager
                 stack.Children.Add(new TextBlock
                 {
                     Text = "لا يوجد خط زمني إضافي لهذا الاستعلام.",
-                    FontSize = 11.5,
+                    FontSize = 11,
                     Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B")
                 });
             }
@@ -659,7 +659,7 @@ namespace GuaranteeManager
             stack.Children.Add(new TextBlock
             {
                 Text = entry.Title,
-                FontSize = 12.2,
+                FontSize = 12,
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                 TextWrapping = TextWrapping.Wrap

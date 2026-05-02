@@ -323,7 +323,7 @@ namespace GuaranteeManager
                 var name = new TextBlock
                 {
                     Text = Path.GetFileName(attachment.FilePath),
-                    FontSize = 10.8,
+                    FontSize = 11,
                     FontWeight = FontWeights.SemiBold,
                     Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A")),
                     VerticalAlignment = VerticalAlignment.Center,

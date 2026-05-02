@@ -370,7 +370,7 @@ namespace GuaranteeManager
             var icon = new TextBlock
             {
                 Text = "⌕",
-                FontSize = 14,
+                FontSize = 13,
                 Foreground = BrushFrom("#64748B"),
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(8, 0, 0, 0)

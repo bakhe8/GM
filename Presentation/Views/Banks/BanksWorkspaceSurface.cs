@@ -302,7 +302,7 @@ namespace GuaranteeManager
             {
                 Content = "إضافة بنك",
                 Style = WorkspaceSurfaceChrome.Style("PrimaryButton"),
-                FontSize = 9.5
+                FontSize = 10
             };
             UiInstrumentation.Identify(addBankButton, "Banks.QuickAction.AddBank", "إضافة بنك");
             addBankButton.Click += AddBank_Click;

@@ -86,13 +86,13 @@ namespace GuaranteeManager
         {
             _runButton.Style = WorkspaceSurfaceChrome.Style("PrimaryButton");
             _runButton.Content = "إنشاء التقرير";
-            _runButton.FontSize = 9.5;
+            _runButton.FontSize = 10;
             _runButton.Click += (_, _) => RunSelectedReport();
             UiInstrumentation.Identify(_runButton, "Reports.Detail.RunButton", "إنشاء التقرير");
 
             _openButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             _openButton.Content = "فتح الملف الناتج";
-            _openButton.FontSize = 9.5;
+            _openButton.FontSize = 10;
             _openButton.Click += (_, _) => OpenLastReport();
             UiInstrumentation.Identify(_openButton, "Reports.Detail.OpenButton", "فتح الملف الناتج");
 

@@ -123,7 +123,7 @@ namespace GuaranteeManager
         private void ConfigureActionButtons()
         {
             _primaryActionButton.Style = WorkspaceSurfaceChrome.Style("PrimaryButton");
-            _primaryActionButton.FontSize = 9.5;
+            _primaryActionButton.FontSize = 10;
             _primaryActionButton.Click += (_, _) => OpenSelectedPrimaryAction();
             UiInstrumentation.Identify(_primaryActionButton, "Dashboard.Detail.PrimaryActionButton", "الخطوة التالية");
 
@@ -794,7 +794,7 @@ namespace GuaranteeManager
         {
             return new TextBlock
             {
-                FontSize = 12.5,
+                FontSize = 13,
                 FontWeight = FontWeights.Bold,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text"),
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -807,7 +807,7 @@ namespace GuaranteeManager
         {
             return new TextBlock
             {
-                FontSize = 11.3,
+                FontSize = 11,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                 Margin = new Thickness(0, 5, 0, 0),
@@ -822,7 +822,7 @@ namespace GuaranteeManager
         {
             return new TextBlock
             {
-                FontSize = 10.3,
+                FontSize = 10,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
                 Margin = new Thickness(0, 3, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -837,7 +837,7 @@ namespace GuaranteeManager
             return new Button
             {
                 Style = WorkspaceSurfaceChrome.Style("PlainLinkButton"),
-                FontSize = 10.5,
+                FontSize = 11,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#2563EB"),
                 Margin = new Thickness(0, 7, 0, 0),

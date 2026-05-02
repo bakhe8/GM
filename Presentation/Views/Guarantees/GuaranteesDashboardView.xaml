@@ -319,12 +319,12 @@
                                         <TextBlock Grid.Column="0"
                                                    Text="{Binding WorkStatus}"
                                                    Style="{StaticResource TableCellCenter}"
-                                                   FontSize="9.5"
+                                                   FontSize="10"
                                                    Foreground="{Binding WorkBrush}" />
                                         <TextBlock Grid.Column="1"
                                                    Text="{Binding TimeStatus}"
                                                    Style="{StaticResource TableCellCenter}"
-                                                   FontSize="9.5"
+                                                   FontSize="10"
                                                    Foreground="{Binding TimeBrush}" />
                                         <TextBlock Grid.Column="2" Text="{Binding ExpiryDate}" Style="{StaticResource TableCellCenter}" />
                                         <TextBlock Grid.Column="3" Text="{Binding IssueDate}" Style="{StaticResource TableCellCenter}" />

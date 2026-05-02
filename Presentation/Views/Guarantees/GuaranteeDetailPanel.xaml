@@ -78,7 +78,7 @@
                         <TextBlock Text="{Binding SelectedGuarantee.Bank}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" Margin="7,0,0,0" />
                     </StackPanel>
                     <TextBlock Text="{Binding SelectedGuarantee.Amount}" FontSize="34" FontWeight="Bold" Foreground="#0F172A" Margin="0,12,0,0" HorizontalAlignment="Left" TextAlignment="Right" />
-                    <TextBlock Text="{Binding SelectedGuarantee.AmountDescription}" FontSize="11.5" Foreground="{StaticResource Brush.Muted}" HorizontalAlignment="Left" TextAlignment="Right" />
+                    <TextBlock Text="{Binding SelectedGuarantee.AmountDescription}" FontSize="11" Foreground="{StaticResource Brush.Muted}" HorizontalAlignment="Left" TextAlignment="Right" />
                     <Border Height="1" Background="#EDF2F7" Margin="0,13,0,12" />
 
                     <Grid FlowDirection="RightToLeft"
@@ -104,7 +104,7 @@
                             <Border Width="7" />
                             <TextBlock Text="نوع الضمان" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding SelectedGuarantee.GuaranteeType}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding SelectedGuarantee.GuaranteeType}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
                         <Button Grid.Row="0"
                                 Grid.Column="3"
                                 Padding="0"
@@ -128,7 +128,7 @@
                             <Border Width="7" />
                             <TextBlock Text="{Binding SelectedGuarantee.ReferenceFieldLabel}" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding SelectedGuarantee.ReferenceNumber}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding SelectedGuarantee.ReferenceNumber}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
                         <Button Grid.Row="1"
                                 Grid.Column="3"
                                 Padding="0"
@@ -152,7 +152,7 @@
                             <Border Width="7" />
                             <TextBlock Text="تاريخ الإصدار" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding SelectedGuarantee.IssueDate}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding SelectedGuarantee.IssueDate}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
                         <Button Grid.Row="2"
                                 Grid.Column="3"
                                 Padding="0"
@@ -177,7 +177,7 @@
                             <TextBlock Text="تاريخ الانتهاء" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
                         </StackPanel>
                         <StackPanel Grid.Row="3" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                            <TextBlock Text="{Binding SelectedGuarantee.ExpiryDate}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" />
+                            <TextBlock Text="{Binding SelectedGuarantee.ExpiryDate}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" />
                             <Border Width="7" />
                             <TextBlock Text="{Binding SelectedGuarantee.ExpiryRemainingLabel}" FontSize="10" FontWeight="SemiBold" Foreground="{Binding SelectedGuarantee.TimeBrush}" VerticalAlignment="Center" />
                         </StackPanel>
@@ -227,7 +227,7 @@
                             </Grid>
                             <Border Height="1" Background="{StaticResource Brush.Border}" Margin="0,0,0,12" />
                             <TextBlock Text="{Binding TimelineSummaryText}"
-                                       FontSize="10.4"
+                                       FontSize="10"
                                        Foreground="{StaticResource Brush.Muted}"
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,10" />
@@ -277,7 +277,7 @@
                                                             <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
                                                         <TextBlock Text="{Binding Title}"
-                                                                   FontSize="11.2"
+                                                                   FontSize="11"
                                                                    FontWeight="Bold"
                                                                    Foreground="{StaticResource Brush.Text}"
                                                                    TextWrapping="Wrap"
@@ -369,7 +369,7 @@
                                     ToolTipService.ShowOnDisabled="True"
                                     automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Timeline.ShowAllAttachments"
                                     automation:AutomationProperties.Name="فتح جميع المرفقات من السجل الزمني">
-                                <TextBlock Text="فتح جميع المرفقات" FontSize="10.5" Foreground="{StaticResource Brush.Blue}" />
+                                <TextBlock Text="فتح جميع المرفقات" FontSize="11" Foreground="{StaticResource Brush.Blue}" />
                             </Button>
                         </StackPanel>
                     </Border>
