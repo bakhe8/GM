@@ -27,7 +27,7 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
-        public void BuildSnapshot_SeparatesClosedExpiredFromExpiredNeedsClosure()
+        public void BuildSnapshot_SeparatesTerminalExpiredFromExpiredNeedsClosure()
         {
             DateTime start = new(2026, 4, 28, 8, 0, 0);
             Guarantee expiredOpen = CreateGuarantee(10, null, 1, true, start, 2_000m);
@@ -50,14 +50,27 @@ namespace GuaranteeManager.Tests
             closedBeforeExpiry.ExpiryDate = DateTime.Today.AddDays(20);
             closedBeforeExpiry.LifecycleStatus = GuaranteeLifecycleStatus.Expired;
 
+            Guarantee expiredClosedWithPendingRequest = CreateGuarantee(15, null, 1, true, start, 6_000m);
+            expiredClosedWithPendingRequest.GuaranteeNo = "BG-EXPIRED-CLOSED-WITH-PENDING";
+            expiredClosedWithPendingRequest.ExpiryDate = DateTime.Today.AddDays(-6);
+            expiredClosedWithPendingRequest.LifecycleStatus = GuaranteeLifecycleStatus.Expired;
+
+            Guarantee expiredTerminalWithPendingRequest = CreateGuarantee(16, null, 1, true, start, 7_000m);
+            expiredTerminalWithPendingRequest.GuaranteeNo = "BG-EXPIRED-TERMINAL-WITH-PENDING";
+            expiredTerminalWithPendingRequest.ExpiryDate = DateTime.Today.AddDays(-8);
+            expiredTerminalWithPendingRequest.LifecycleStatus = GuaranteeLifecycleStatus.Liquidated;
+
             Guarantee active = CreateGuarantee(13, null, 1, true, start, 3_000m);
             active.GuaranteeNo = "BG-ACTIVE";
             active.ExpiryDate = DateTime.Today.AddDays(90);
 
+            WorkflowRequestListItem pendingRequest = CreatePendingRequest(expiredClosedWithPendingRequest, 601);
+            WorkflowRequestListItem pendingTerminalRequest = CreatePendingRequest(expiredTerminalWithPendingRequest, 602);
             var service = new GuaranteeWorkspaceDataService(
                 new TimelineDatabaseStub(
-                    new[] { expiredOpen, expiredClosed, expiredReleased, closedBeforeExpiry, active },
-                    Array.Empty<WorkflowRequest>()),
+                    new[] { expiredOpen, expiredClosed, expiredReleased, closedBeforeExpiry, expiredClosedWithPendingRequest, expiredTerminalWithPendingRequest, active },
+                    Array.Empty<WorkflowRequest>(),
+                    requestItems: new[] { pendingRequest, pendingTerminalRequest }),
                 new ContextActionService());
 
             GuaranteeWorkspaceSnapshot snapshot = service.BuildSnapshot(
@@ -71,7 +84,7 @@ namespace GuaranteeManager.Tests
                 1);
 
             Assert.Equal("1", snapshot.ExpiredCount);
-            Assert.Equal("2", snapshot.ExpiredFollowUpCount);
+            Assert.Equal("3", snapshot.ExpiredFollowUpCount);
 
             GuaranteeWorkspaceSnapshot expiredFilterSnapshot = service.BuildSnapshot(
                 string.Empty,
@@ -84,10 +97,19 @@ namespace GuaranteeManager.Tests
                 1);
 
             GuaranteeRow row = Assert.Single(expiredFilterSnapshot.Rows);
-            Assert.Equal(expiredClosed.GuaranteeNo, row.GuaranteeNo);
+            Assert.Equal(expiredReleased.GuaranteeNo, row.GuaranteeNo);
+            Assert.DoesNotContain(
+                expiredFilterSnapshot.Rows,
+                row => row.GuaranteeNo == expiredClosed.GuaranteeNo);
             Assert.DoesNotContain(
                 expiredFilterSnapshot.Rows,
                 row => row.GuaranteeNo == closedBeforeExpiry.GuaranteeNo);
+            Assert.DoesNotContain(
+                expiredFilterSnapshot.Rows,
+                row => row.GuaranteeNo == expiredClosedWithPendingRequest.GuaranteeNo);
+            Assert.DoesNotContain(
+                expiredFilterSnapshot.Rows,
+                row => row.GuaranteeNo == expiredTerminalWithPendingRequest.GuaranteeNo);
         }
 
         [Fact]

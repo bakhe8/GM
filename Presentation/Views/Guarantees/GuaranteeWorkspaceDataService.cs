@@ -181,7 +181,9 @@ namespace GuaranteeManager
             List<Guarantee> expiringSoon = basePortfolio
                 .Where(guarantee => IsExpiringSoonWithoutPendingRequest(guarantee, pendingRootIds))
                 .ToList();
-            List<Guarantee> expired = basePortfolio.Where(IsClosedExpiredGuarantee).ToList();
+            List<Guarantee> expired = basePortfolio
+                .Where(guarantee => IsClosedExpiredWithoutPendingRequest(guarantee, pendingRootIds))
+                .ToList();
             List<Guarantee> expiredFollowUp = basePortfolio
                 .Where(guarantee => NeedsGuaranteeFollowUp(guarantee, pendingRootIds))
                 .ToList();
@@ -337,7 +339,8 @@ namespace GuaranteeManager
                     IsExpiringSoonWithoutPendingRequest(guarantee, pendingRootIds)),
                 GuaranteeStatusFilter.NeedsFollowUp => portfolio.Where(guarantee =>
                     NeedsGuaranteeFollowUp(guarantee, pendingRootIds)),
-                GuaranteeStatusFilter.Expired => portfolio.Where(IsClosedExpiredGuarantee),
+                GuaranteeStatusFilter.Expired => portfolio.Where(guarantee =>
+                    IsClosedExpiredWithoutPendingRequest(guarantee, pendingRootIds)),
                 _ => portfolio
             };
         }
@@ -370,7 +373,15 @@ namespace GuaranteeManager
 
         private static bool IsClosedExpiredGuarantee(Guarantee guarantee)
             => guarantee.IsExpired &&
-               (guarantee.LifecycleStatus is GuaranteeLifecycleStatus.Expired or GuaranteeLifecycleStatus.Closed);
+               (guarantee.LifecycleStatus is GuaranteeLifecycleStatus.Released
+                   or GuaranteeLifecycleStatus.Liquidated
+                   or GuaranteeLifecycleStatus.Replaced
+                   or GuaranteeLifecycleStatus.Closed);
+
+        private static bool IsClosedExpiredWithoutPendingRequest(
+            Guarantee guarantee,
+            IReadOnlySet<int> pendingRootIds)
+            => IsClosedExpiredGuarantee(guarantee) && !pendingRootIds.Contains(GetRootId(guarantee));
 
         private static string FormatMeta(decimal amount)
         {
