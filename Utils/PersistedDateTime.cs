@@ -34,6 +34,11 @@ namespace GuaranteeManager.Utils
                 throw new FormatException("قيمة التاريخ المخزنة فارغة أو غير صالحة.");
             }
 
+            if (IsDateOnlyCandidate(value) && DualCalendarDateService.TryParseDate(value, out DateTime dateOnly))
+            {
+                return dateOnly;
+            }
+
             if (DateTime.TryParseExact(value, SupportedFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsed))
             {
                 return parsed;
@@ -50,6 +55,15 @@ namespace GuaranteeManager.Utils
             }
 
             return DateTime.Parse(value, CultureInfo.InvariantCulture);
+        }
+
+        private static bool IsDateOnlyCandidate(string value)
+        {
+            string trimmed = value.Trim();
+            return trimmed.Length is >= 8 and <= 12
+                   && trimmed.IndexOf(' ') < 0
+                   && trimmed.IndexOf('T') < 0
+                   && (trimmed.Contains('/') || trimmed.Contains('-') || trimmed.Contains('.'));
         }
     }
 }

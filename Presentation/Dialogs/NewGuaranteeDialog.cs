@@ -96,7 +96,7 @@ namespace GuaranteeManager
             }
 
             _amountInput.Text = "0";
-            _expiryInput.Text = DateTime.Today.AddMonths(6).ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+            _expiryInput.Text = DualCalendarDateService.FormatGregorianDate(DateTime.Today.AddMonths(6));
             _beneficiaryInput.Text = BusinessPartyDefaults.DefaultBeneficiaryName;
             _beneficiaryInput.IsReadOnly = true;
             _notesInput.Height = 58;
@@ -253,9 +253,9 @@ namespace GuaranteeManager
                 return;
             }
 
-            if (!DateTime.TryParse(expiryText, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime expiryDate))
+            if (!DualCalendarDateService.TryParseDate(expiryText, out DateTime expiryDate))
             {
-                MessageBox.Show("صيغة تاريخ الانتهاء غير صحيحة. استخدم مثلاً 2026/12/31.", "إجراء جديد", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"صيغة تاريخ الانتهاء غير صحيحة. استخدم مثلاً {DualCalendarDateService.InputExamples}.", "إجراء جديد", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -426,7 +426,7 @@ namespace GuaranteeManager
             GuaranteeReferenceType referenceType = (_referenceTypeInput.SelectedItem as ReferenceTypeOption)?.Value ?? GuaranteeReferenceType.None;
 
             bool amountChanged = !decimal.TryParse(amountText, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal amount) || amount != 0;
-            bool expiryChanged = !DateTime.TryParse(expiryText, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime expiryDate)
+            bool expiryChanged = !DualCalendarDateService.TryParseDate(expiryText, out DateTime expiryDate)
                                  || expiryDate.Date != DateTime.Today.AddMonths(6).Date;
 
             return !string.IsNullOrWhiteSpace(guaranteeNo)
@@ -552,7 +552,7 @@ namespace GuaranteeManager
             }
 
             bool amountValid = ArabicAmountFormatter.TryParsePositiveSaudiRiyalAmount(amountText, out decimal amount);
-            bool expiryValid = DateTime.TryParse(expiryText, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime expiryDate);
+            bool expiryValid = DualCalendarDateService.TryParseDate(expiryText, out DateTime expiryDate);
 
             if (missing.Count > 0 || !amountValid || !expiryValid)
             {
@@ -591,7 +591,7 @@ namespace GuaranteeManager
 
             SetConsequenceState(
                 "سيُنشأ ضمان جديد كالإصدار الأول.",
-                $"{guaranteeNo} • {bank} • {guaranteeType} • {ArabicAmountFormatter.FormatSaudiRiyals(amount, 2)} • {expiryDate:yyyy/MM/dd}",
+                $"{guaranteeNo} • {bank} • {guaranteeType} • {ArabicAmountFormatter.FormatSaudiRiyals(amount, 2)} • {DualCalendarDateService.FormatDualDate(expiryDate)}",
                 $"{beneficiarySummary} • {referenceSummary} • {attachmentSummary}",
                 warningState: false);
         }

@@ -75,7 +75,7 @@ namespace GuaranteeManager.Services
                         connection,
                         transaction);
 
-                    string executionNote = $"تم تنفيذ {context.Request.TypeLabel} رقم {context.Request.SequenceNumber} بتاريخ {executedAt:yyyy-MM-dd}.";
+                    string executionNote = $"تم تنفيذ {context.Request.TypeLabel} رقم {context.Request.SequenceNumber} بتاريخ {DualCalendarDateService.FormatGregorianDate(executedAt)}.";
                     newGuaranteeId = WorkflowExecutionDataAccess.InsertGuaranteeVersion(
                         context.CurrentGuarantee,
                         context.Request.RootGuaranteeId,

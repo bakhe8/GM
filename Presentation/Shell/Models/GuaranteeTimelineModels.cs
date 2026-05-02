@@ -32,7 +32,7 @@ namespace GuaranteeManager
             string evidenceKey = "",
             bool isContextTarget = false)
             : this(
-                timestamp.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
+                DualCalendarDateService.FormatGregorianDate(timestamp),
                 timestamp.ToString("HH:mm:ss", CultureInfo.InvariantCulture),
                 title,
                 detail,
@@ -232,7 +232,7 @@ namespace GuaranteeManager
                 return new TimelineItem(
                     version.CreatedAt,
                     "إنشاء الضمان",
-                    $"تم إنشاء الضمان بقيمة {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} وانتهاء {version.ExpiryDate:yyyy/MM/dd}.",
+                    $"تم إنشاء الضمان بقيمة {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} وانتهاء {DualCalendarDateService.FormatDualDate(version.ExpiryDate)}.",
                     "مكتمل",
                     Tone.Success,
                     TimelineEvidenceActionKind.OfficialAttachment,
@@ -243,7 +243,7 @@ namespace GuaranteeManager
             return new TimelineItem(
                 version.CreatedAt,
                 $"الإصدار {version.VersionLabel}",
-                $"تم حفظ شروط هذا الإصدار: المبلغ {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} | الانتهاء {version.ExpiryDate:yyyy/MM/dd}.",
+                $"تم حفظ شروط هذا الإصدار: المبلغ {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} | الانتهاء {DualCalendarDateService.FormatDualDate(version.ExpiryDate)}.",
                 "موثق",
                 Tone.Info,
                 TimelineEvidenceActionKind.OfficialAttachment,

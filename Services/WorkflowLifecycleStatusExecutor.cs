@@ -49,7 +49,7 @@ namespace GuaranteeManager.Services
                         connection,
                         transaction);
 
-                    string executionNote = $"تم تنفيذ {context.Request.TypeLabel} رقم {context.Request.SequenceNumber} بتاريخ {executedAt:yyyy-MM-dd} وإنهاء دورة حياة الضمان بحالة {GuaranteeLifecycleStatusDisplay.GetLabel(targetStatus)}.";
+                    string executionNote = $"تم تنفيذ {context.Request.TypeLabel} رقم {context.Request.SequenceNumber} بتاريخ {DualCalendarDateService.FormatGregorianDate(executedAt)} وإنهاء دورة حياة الضمان بحالة {GuaranteeLifecycleStatusDisplay.GetLabel(targetStatus)}.";
                     WorkflowExecutionDataAccess.UpdateGuaranteeLifecycleStatus(
                         context.CurrentGuarantee.Id,
                         targetStatus,

@@ -54,7 +54,7 @@ namespace GuaranteeManager
 
             return new AttachmentItem(
                 string.IsNullOrWhiteSpace(attachment.OriginalFileName) ? "مرفق" : attachment.OriginalFileName,
-                attachment.UploadedAt.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
+                DualCalendarDateService.FormatGregorianDate(attachment.UploadedAt),
                 size,
                 attachment.FilePath,
                 FormatFileKind(attachment),

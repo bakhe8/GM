@@ -271,7 +271,7 @@ namespace GuaranteeManager
         private sealed record EligibleGuaranteeOption(Guarantee Guarantee)
         {
             public string Display =>
-                $"{Guarantee.GuaranteeNo} | {Guarantee.Supplier} | {Guarantee.Bank} | {ArabicAmountFormatter.FormatSaudiRiyals(Guarantee.Amount)} | {Guarantee.ExpiryDate:yyyy/MM/dd}";
+                $"{Guarantee.GuaranteeNo} | {Guarantee.Supplier} | {Guarantee.Bank} | {ArabicAmountFormatter.FormatSaudiRiyals(Guarantee.Amount)} | {DualCalendarDateService.FormatGregorianDate(Guarantee.ExpiryDate)}";
         }
     }
 

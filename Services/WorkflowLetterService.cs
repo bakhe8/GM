@@ -20,8 +20,8 @@ namespace GuaranteeManager.Services
             File.WriteAllText(fullPath, BuildRequestLetterHtml(
                 "خطاب طلب تمديد ضمان بنكي",
                 guarantee,
-                ("تاريخ الانتهاء الحالي", guarantee.ExpiryDate.ToString("yyyy-MM-dd")),
-                ("التاريخ المطلوب بعد التمديد", requestedExpiryDate.ToString("yyyy-MM-dd")),
+                ("تاريخ الانتهاء الحالي", DualCalendarDateService.FormatDualDate(guarantee.ExpiryDate)),
+                ("التاريخ المطلوب بعد التمديد", DualCalendarDateService.FormatDualDate(requestedExpiryDate)),
                 notes,
                 createdBy,
                 "نأمل التكرم بتمديد الضمان المشار إليه أعلاه حتى التاريخ الجديد الموضح في هذا الخطاب، مع الإبقاء على بقية بيانات الضمان دون تغيير ما لم يرد من البنك ما يخالف ذلك."), Encoding.UTF8);
@@ -151,7 +151,7 @@ namespace GuaranteeManager.Services
             string bodyText =
                 $"نأمل التكرم باستبدال الضمان المشار إليه أعلاه بضمان بديل رقم {replacementGuaranteeNo}." +
                 $"{Environment.NewLine}مبلغ الضمان البديل المطلوب: {FormatLetterAmount(replacementAmount)}" +
-                $"{Environment.NewLine}تاريخ انتهاء الضمان البديل: {replacementExpiryDate:yyyy-MM-dd}" +
+                $"{Environment.NewLine}تاريخ انتهاء الضمان البديل: {DualCalendarDateService.FormatDualDate(replacementExpiryDate)}" +
                 $"{Environment.NewLine}ويُعتمد التنفيذ النهائي وفق ما يرد في مستند رد البنك.";
 
             File.WriteAllText(fullPath, BuildRequestLetterHtml(
@@ -210,6 +210,7 @@ namespace GuaranteeManager.Services
             string safeReferenceNumber = EncodeLetterText(guarantee.ReferenceNumber);
             string safeBeneficiary = EncodeLetterText(BusinessPartyDefaults.NormalizeBeneficiary(guarantee.Beneficiary));
             string safeGuaranteeAmount = EncodeLetterText(FormatLetterAmount(guarantee.Amount));
+            string safeGuaranteeExpiry = EncodeLetterText(DualCalendarDateService.FormatDualDate(guarantee.ExpiryDate));
             string safeCurrentLabel = System.Net.WebUtility.HtmlEncode(currentValue.Label);
             string safeCurrentValue = EncodeLetterText(currentValue.Value);
             string safeRequestedLabel = System.Net.WebUtility.HtmlEncode(requestedValue.Label);
@@ -317,7 +318,7 @@ namespace GuaranteeManager.Services
 <body>
     <div class=""header"">
         <div class=""title"">{safeTitle}</div>
-        <div class=""meta"">تاريخ إنشاء الخطاب: {DateTime.Now:yyyy-MM-dd} | جهة الإصدار: نظام إدارة الضمانات البنكية</div>
+        <div class=""meta"">تاريخ إنشاء الخطاب: {DualCalendarDateService.FormatDualDate(DateTime.Now)} | جهة الإصدار: نظام إدارة الضمانات البنكية</div>
     </div>
 
     <div class=""recipient"">
@@ -337,6 +338,7 @@ namespace GuaranteeManager.Services
         <tr><th>نوع المرجع</th><td>{safeReferenceType}</td></tr>
         <tr><th>رقم المرجع</th><td>{safeReferenceNumber}</td></tr>
         <tr><th>المبلغ</th><td>{safeGuaranteeAmount}</td></tr>
+        <tr><th>تاريخ انتهاء الضمان</th><td>{safeGuaranteeExpiry}</td></tr>
         <tr><th>{safeCurrentLabel}</th><td>{safeCurrentValue}</td></tr>
         <tr><th>{safeRequestedLabel}</th><td>{safeRequestedValue}</td></tr>
     </table>

@@ -1,6 +1,6 @@
-using System.Globalization;
 using System.Windows.Media;
 using GuaranteeManager.Models;
+using GuaranteeManager.Utils;
 
 namespace GuaranteeManager
 {
@@ -66,7 +66,7 @@ namespace GuaranteeManager
                 request,
                 $"REQ-{request.Id:0000}",
                 request.TypeLabel,
-                request.RequestDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
+                DualCalendarDateService.FormatGregorianDate(request.RequestDate),
                 detail,
                 request.StatusLabel,
                 request.RequestedValueLabel,
@@ -122,7 +122,7 @@ namespace GuaranteeManager
                 request,
                 $"REQ-{request.Id:0000}",
                 request.TypeLabel,
-                request.RequestDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
+                DualCalendarDateService.FormatGregorianDate(request.RequestDate),
                 detail,
                 request.StatusLabel,
                 tone);

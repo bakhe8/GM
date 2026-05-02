@@ -223,7 +223,7 @@ namespace GuaranteeManager
             _ => "رقم المرجع"
         };
 
-        private static string FormatDate(DateTime date) => date.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+        private static string FormatDate(DateTime date) => DualCalendarDateService.FormatGregorianDate(date);
 
         private static ImageSource GetBankLogo(string bankName)
         {
@@ -456,7 +456,7 @@ namespace GuaranteeManager
                 summaryTitle = $"يوجد {pendingCount.ToString("N0", CultureInfo.InvariantCulture)} طلب قيد التنفيذ على هذا الملف";
                 summaryDetail = latestPending == null
                     ? "المتابعة الأقرب الآن هي مراجعة السجل الزمني وتسجيل رد البنك عند وصوله."
-                    : $"أقرب نقطة متابعة الآن: {latestPending.TypeLabel} بتاريخ {latestPending.RequestDate:yyyy/MM/dd}.";
+                    : $"أقرب نقطة متابعة الآن: {latestPending.TypeLabel} بتاريخ {DualCalendarDateService.FormatGregorianDate(latestPending.RequestDate)}.";
                 suggestedArea = GuaranteeFocusArea.Requests;
                 suggestedLabel = "راجع السجل";
             }

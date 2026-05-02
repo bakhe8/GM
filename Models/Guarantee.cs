@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using GuaranteeManager.Utils;
 
 namespace GuaranteeManager.Models
 {
@@ -162,6 +163,6 @@ namespace GuaranteeManager.Models
             _ => "بدون مرجع"
         };
 
-        public string WorkflowDisplayLabel => $"{GuaranteeNo} - {Supplier} - {ExpiryDate:yyyy-MM-dd}";
+        public string WorkflowDisplayLabel => $"{GuaranteeNo} - {Supplier} - {DualCalendarDateService.FormatGregorianDate(ExpiryDate)}";
     }
 }

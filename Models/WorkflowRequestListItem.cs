@@ -25,8 +25,8 @@ namespace GuaranteeManager.Models
         public string CurrentVersionLabel => GuaranteeVersionDisplay.GetLabel(CurrentVersionNumber);
         public int RelatedVersionNumber => ResultVersionNumber ?? (BaseVersionNumber > 0 ? BaseVersionNumber : CurrentVersionNumber);
         public string RelatedVersionLabel => GuaranteeVersionDisplay.GetLabel(RelatedVersionNumber);
-        public string RequestDateLabel => Request.RequestDate.ToString("yyyy-MM-dd");
-        public string ResponseDateLabel => Request.ResponseRecordedAt?.ToString("yyyy-MM-dd") ?? "---";
+        public string RequestDateLabel => DualCalendarDateService.FormatGregorianDate(Request.RequestDate);
+        public string ResponseDateLabel => Request.ResponseRecordedAt.HasValue ? DualCalendarDateService.FormatGregorianDate(Request.ResponseRecordedAt.Value) : "---";
         public bool IsPending => Request.Status == RequestStatus.Pending;
         public bool IsPurchaseOrderOnly => ReferenceType == GuaranteeReferenceType.PurchaseOrder && !string.IsNullOrWhiteSpace(ReferenceNumber);
         public bool IsContractRelated => ReferenceType == GuaranteeReferenceType.Contract && !string.IsNullOrWhiteSpace(ReferenceNumber);
@@ -58,7 +58,7 @@ namespace GuaranteeManager.Models
         };
         public string CurrentValueLabel => Request.Type switch
         {
-            RequestType.Extension => CurrentExpiryDate.ToString("yyyy-MM-dd"),
+            RequestType.Extension => DualCalendarDateService.FormatGregorianDate(CurrentExpiryDate),
             RequestType.Reduction => ArabicAmountFormatter.FormatSaudiRiyals(CurrentAmount),
             RequestType.Release => LifecycleStatusLabel,
             RequestType.Liquidation => LifecycleStatusLabel,

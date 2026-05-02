@@ -8,6 +8,7 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using ClosedXML.Excel;
 using GuaranteeManager.Models;
+using GuaranteeManager.Utils;
 using Microsoft.Win32;
 
 namespace GuaranteeManager.Services
@@ -160,8 +161,8 @@ namespace GuaranteeManager.Services
             string supplier = ExcelReportSupport.ValueOrDash(current.Supplier);
             int pendingRequests = orderedRequests.Count(item => item.Status == RequestStatus.Pending);
             int totalAttachments = orderedHistory.Sum(item => item.AttachmentCount);
-            string firstCreated = orderedHistory.LastOrDefault()?.CreatedAt.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) ?? "---";
-            string lastUpdated = orderedHistory.FirstOrDefault()?.CreatedAt.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) ?? "---";
+            string firstCreated = orderedHistory.LastOrDefault() == null ? "---" : DualCalendarDateService.FormatGregorianDate(orderedHistory.Last().CreatedAt);
+            string lastUpdated = orderedHistory.FirstOrDefault() == null ? "---" : DualCalendarDateService.FormatGregorianDate(orderedHistory.First().CreatedAt);
 
             ExcelReportSupport.WriteTitle(
                 worksheet,
@@ -199,7 +200,7 @@ namespace GuaranteeManager.Services
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "رقم الضمان", current.GuaranteeNo, "المرجع الرئيسي", BuildReferenceSummary(current));
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "المورد", supplier, "البنك", current.Bank);
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "نوع الضمان", ExcelReportSupport.ValueOrDash(current.GuaranteeType), "نوع المرجع", current.ReferenceTypeLabel);
-            ExcelReportSupport.WriteOverviewRow(worksheet, row++, "القيمة الحالية", ExcelReportSupport.FormatPlainAmount(current.Amount), "تاريخ الانتهاء", current.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture));
+            ExcelReportSupport.WriteOverviewRow(worksheet, row++, "القيمة الحالية", ExcelReportSupport.FormatPlainAmount(current.Amount), "تاريخ الانتهاء", DualCalendarDateService.FormatDualDate(current.ExpiryDate));
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "الطلبات المعلقة", pendingRequests.ToString("N0", CultureInfo.InvariantCulture), "إجمالي المرفقات", totalAttachments.ToString("N0", CultureInfo.InvariantCulture));
             ExcelReportSupport.WriteOverviewRow(worksheet, row++, "أول إنشاء", firstCreated, "آخر تحديث", lastUpdated);
             ExcelReportSupport.WriteOverviewRow(worksheet, row, "ملاحظات الإصدار الحالي", ExcelReportSupport.ValueOrDash(current.Notes), "وصف السجل", "يشمل جميع الإصدارات والطلبات المرتبطة بالسلسلة نفسها.");
@@ -391,7 +392,9 @@ namespace GuaranteeManager.Services
                 requestDateCell.Value = request.RequestDate;
                 requestDateCell.Style.DateFormat.Format = "yyyy-MM-dd";
 
-                worksheet.Cell(row, 5).Value = request.ResponseRecordedAt?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "---";
+                worksheet.Cell(row, 5).Value = request.ResponseRecordedAt.HasValue
+                    ? DualCalendarDateService.FormatGregorianDate(request.ResponseRecordedAt.Value)
+                    : "---";
                 worksheet.Cell(row, 6).Value = ResolveVersionLabel(orderedHistory, request.BaseVersionId);
                 worksheet.Cell(row, 7).Value = BuildExecutionEffectSummary(request, orderedHistory);
                 worksheet.Cell(row, 8).Value = BuildRequestedValueSummary(request);
@@ -455,8 +458,8 @@ namespace GuaranteeManager.Services
                     {
                         item.VersionLabel,
                         item.IsCurrent ? "حالي" : "محفوظ",
-                        item.CreatedAt.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
-                        item.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
+                        DualCalendarDateService.FormatGregorianDate(item.CreatedAt),
+                        DualCalendarDateService.FormatDualDate(item.ExpiryDate),
                         ExcelReportSupport.FormatPlainAmount(item.Amount),
                         item.AttachmentCount.ToString("N0", CultureInfo.InvariantCulture)
                     }),
@@ -476,8 +479,8 @@ namespace GuaranteeManager.Services
                     {
                         item.TypeLabel,
                         item.StatusLabel,
-                        item.RequestDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
-                        item.ResponseRecordedAt?.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) ?? "---",
+                        DualCalendarDateService.FormatGregorianDate(item.RequestDate),
+                        item.ResponseRecordedAt.HasValue ? DualCalendarDateService.FormatGregorianDate(item.ResponseRecordedAt.Value) : "---",
                         BuildRequestedValueSummary(item),
                         BuildDocumentState(item)
                     }),
@@ -626,7 +629,7 @@ namespace GuaranteeManager.Services
                 RequestType.Reduction => request.RequestedAmount.HasValue
                     ? ExcelReportSupport.FormatPlainAmount(request.RequestedAmount.Value)
                     : "---",
-                RequestType.Extension => request.RequestedExpiryDate?.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) ?? "---",
+                RequestType.Extension => request.RequestedExpiryDate.HasValue ? DualCalendarDateService.FormatDualDate(request.RequestedExpiryDate.Value) : "---",
                 RequestType.Replacement => string.IsNullOrWhiteSpace(request.ReplacementGuaranteeNo)
                     ? request.TypeLabel
                     : request.ReplacementGuaranteeNo,

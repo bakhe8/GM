@@ -48,7 +48,7 @@ namespace GuaranteeManager.Services
             result.Explanation = "الترتيب تم تصاعديًا حسب تاريخ الطلب مع استبعاد كل الطلبات غير المعلقة.";
 
             result.Facts.Add(new OperationalInquiryFact { Label = "عدد العناصر في القائمة", Value = oldestPending.Count.ToString("N0") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "أقدم تاريخ طلب", Value = oldest.Request.RequestDate.ToString("yyyy-MM-dd") });
+            result.Facts.Add(new OperationalInquiryFact { Label = "أقدم تاريخ طلب", Value = DualCalendarDateService.FormatGregorianDate(oldest.Request.RequestDate) });
             result.Facts.Add(new OperationalInquiryFact { Label = "أقدم بنك", Value = oldest.Bank });
             result.Facts.Add(new OperationalInquiryFact { Label = "تمديدات ضمن القائمة", Value = oldestPending.Count(item => item.Request.Type == RequestType.Extension).ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "إفراجات ضمن القائمة", Value = oldestPending.Count(item => item.Request.Type == RequestType.Release).ToString("N0") });
@@ -92,7 +92,7 @@ namespace GuaranteeManager.Services
             {
                 InquiryKey = $"extensions-this-month:{startOfMonth:yyyyMM}",
                 Title = "كم ضمان قمنا بتمديده هذا الشهر؟",
-                Subject = $"الفترة: {startOfMonth:yyyy-MM-dd} إلى {now:yyyy-MM-dd}",
+                Subject = $"الفترة: {DualCalendarDateService.FormatGregorianDate(startOfMonth)} إلى {DualCalendarDateService.FormatGregorianDate(now)}",
                 EventDate = now
             };
 
@@ -103,8 +103,8 @@ namespace GuaranteeManager.Services
 
             result.Facts.Add(new OperationalInquiryFact { Label = "إجمالي طلبات التمديد المنفذة", Value = matchingRequests.Count.ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "عدد الضمانات المختلفة", Value = uniqueGuarantees.ToString("N0") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "بداية الفترة", Value = startOfMonth.ToString("yyyy-MM-dd") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "نهاية الفترة", Value = now.ToString("yyyy-MM-dd") });
+            result.Facts.Add(new OperationalInquiryFact { Label = "بداية الفترة", Value = DualCalendarDateService.FormatGregorianDate(startOfMonth) });
+            result.Facts.Add(new OperationalInquiryFact { Label = "نهاية الفترة", Value = DualCalendarDateService.FormatGregorianDate(now) });
 
             foreach (WorkflowRequestListItem item in matchingRequests.Take(10))
             {
@@ -112,7 +112,7 @@ namespace GuaranteeManager.Services
                 {
                     Timestamp = item.Request.ResponseRecordedAt ?? item.Request.RequestDate,
                     Title = $"تمديد منفذ - {item.GuaranteeNo}",
-                    Details = $"{item.Supplier} | الانتهاء الحالي {item.CurrentExpiryDate:yyyy-MM-dd}"
+                    Details = $"{item.Supplier} | الانتهاء الحالي {DualCalendarDateService.FormatDualDate(item.CurrentExpiryDate)}"
                 });
             }
 
@@ -149,7 +149,7 @@ namespace GuaranteeManager.Services
             result.Facts.Add(new OperationalInquiryFact { Label = "العدد", Value = matchingGuarantees.Count.ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "إجمالي المبالغ", Value = ArabicAmountFormatter.FormatSaudiRiyals(totalAmount) });
             result.Facts.Add(new OperationalInquiryFact { Label = "قريب الانتهاء", Value = matchingGuarantees.Count(g => g.IsExpiringSoon).ToString("N0") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "أول انتهاء قادم", Value = matchingGuarantees.FirstOrDefault()?.ExpiryDate.ToString("yyyy-MM-dd") ?? "---" });
+            result.Facts.Add(new OperationalInquiryFact { Label = "أول انتهاء قادم", Value = matchingGuarantees.FirstOrDefault() is { } firstExpiry ? DualCalendarDateService.FormatDualDate(firstExpiry.ExpiryDate) : "---" });
 
             foreach (Guarantee guarantee in matchingGuarantees.Take(10))
             {
@@ -191,19 +191,19 @@ namespace GuaranteeManager.Services
             {
                 InquiryKey = $"contract-releases:{start:yyyyMMdd}:{end:yyyyMMdd}",
                 Title = "كم عدد الضمانات الخاصة بالعقود التي أفرجنا عنها خلال الأسبوع الفائت؟",
-                Subject = $"الفترة: {start:yyyy-MM-dd} إلى {end:yyyy-MM-dd}",
+                Subject = $"الفترة: {DualCalendarDateService.FormatGregorianDate(start)} إلى {DualCalendarDateService.FormatGregorianDate(end)}",
                 EventDate = end
             };
 
             result.Answer = matchingRequests.Any()
-                ? $"تم الإفراج عن {uniqueGuarantees} ضمانًا/ضمانات مرتبطة بالعقود خلال الفترة من {start:yyyy-MM-dd} إلى {end:yyyy-MM-dd}، عبر {matchingRequests.Count} طلب/طلبات إفراج منفذة."
-                : $"لا توجد طلبات إفراج منفذة مرتبطة بالعقود خلال الفترة من {start:yyyy-MM-dd} إلى {end:yyyy-MM-dd}.";
+                ? $"تم الإفراج عن {uniqueGuarantees} ضمانًا/ضمانات مرتبطة بالعقود خلال الفترة من {DualCalendarDateService.FormatGregorianDate(start)} إلى {DualCalendarDateService.FormatGregorianDate(end)}، عبر {matchingRequests.Count} طلب/طلبات إفراج منفذة."
+                : $"لا توجد طلبات إفراج منفذة مرتبطة بالعقود خلال الفترة من {DualCalendarDateService.FormatGregorianDate(start)} إلى {DualCalendarDateService.FormatGregorianDate(end)}.";
             result.Explanation = "الاحتساب اعتمد طلبات الإفراج المنفذة فقط، مع اعتبار الضمان متعلقًا بالعقود متى كان نوع المرجع فيه عقدًا.";
 
             result.Facts.Add(new OperationalInquiryFact { Label = "عدد الضمانات المختلفة", Value = uniqueGuarantees.ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "عدد طلبات الإفراج", Value = matchingRequests.Count.ToString("N0") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "بداية الفترة", Value = start.ToString("yyyy-MM-dd") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "نهاية الفترة", Value = end.ToString("yyyy-MM-dd") });
+            result.Facts.Add(new OperationalInquiryFact { Label = "بداية الفترة", Value = DualCalendarDateService.FormatGregorianDate(start) });
+            result.Facts.Add(new OperationalInquiryFact { Label = "نهاية الفترة", Value = DualCalendarDateService.FormatGregorianDate(end) });
 
             foreach (WorkflowRequestListItem item in matchingRequests.Take(10))
             {
@@ -264,7 +264,7 @@ namespace GuaranteeManager.Services
             {
                 InquiryKey = $"employee-contract-requests:{normalizedEmployeeName.ToUpperInvariant()}:{start:yyyyMM}",
                 Title = "كم طلب تمديد أو إفراج أنشأه موظف محدد الشهر الماضي للعقود؟",
-                Subject = $"الموظف: {normalizedEmployeeName} | الفترة: {start:yyyy-MM-dd} إلى {end:yyyy-MM-dd}",
+                Subject = $"الموظف: {normalizedEmployeeName} | الفترة: {DualCalendarDateService.FormatGregorianDate(start)} إلى {DualCalendarDateService.FormatGregorianDate(end)}",
                 EventDate = end
             };
 
@@ -278,8 +278,8 @@ namespace GuaranteeManager.Services
             result.Facts.Add(new OperationalInquiryFact { Label = "طلبات التمديد", Value = extensionCount.ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "طلبات الإفراج", Value = releaseCount.ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "عدد الضمانات المختلفة", Value = uniqueGuarantees.ToString("N0") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "بداية الفترة", Value = start.ToString("yyyy-MM-dd") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "نهاية الفترة", Value = end.ToString("yyyy-MM-dd") });
+            result.Facts.Add(new OperationalInquiryFact { Label = "بداية الفترة", Value = DualCalendarDateService.FormatGregorianDate(start) });
+            result.Facts.Add(new OperationalInquiryFact { Label = "نهاية الفترة", Value = DualCalendarDateService.FormatGregorianDate(end) });
 
             foreach (WorkflowRequestListItem item in matchingRequests.Take(10))
             {
@@ -344,7 +344,7 @@ namespace GuaranteeManager.Services
             result.Facts.Add(new OperationalInquiryFact { Label = "بطلب إفراج معلق", Value = withPendingReleaseCount.ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "بدون طلب إفراج معلق", Value = withoutPendingReleaseCount.ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "لها محاولة إفراج مغلقة", Value = withClosedReleaseAttemptCount.ToString("N0") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "أقدم تاريخ انتهاء", Value = matchingGuarantees.FirstOrDefault()?.ExpiryDate.ToString("yyyy-MM-dd") ?? "---" });
+            result.Facts.Add(new OperationalInquiryFact { Label = "أقدم تاريخ انتهاء", Value = matchingGuarantees.FirstOrDefault() is { } firstExpired ? DualCalendarDateService.FormatDualDate(firstExpired.ExpiryDate) : "---" });
 
             foreach (Guarantee guarantee in matchingGuarantees.Take(10))
             {

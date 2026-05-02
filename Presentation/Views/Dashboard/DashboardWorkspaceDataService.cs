@@ -349,7 +349,7 @@ namespace GuaranteeManager
                 ArabicAmountFormatter.FormatSaudiRiyals(item.CurrentAmount),
                 ArabicAmountFormatter.FormatSaudiRiyalsInWords(item.CurrentAmount),
                 item.Request.RequestDate.Date,
-                item.Request.RequestDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
+                DualCalendarDateService.FormatGregorianDate(item.Request.RequestDate),
                 $"ينتظر منذ {ageDays.ToString("N0", CultureInfo.InvariantCulture)} يوم",
                 $"{item.Request.TypeLabel} | {item.Supplier}",
                 "راجع الطلب",
@@ -400,7 +400,7 @@ namespace GuaranteeManager
                 ? $"افتح {pendingRequest!.Request.TypeLabel} المعلق وسجل رد البنك عند وصوله"
                 : "افتح الضمان في المحفظة وحدد هل يحتاج تمديدًا أو إفراجًا أو إقفالًا تشغيليًا";
             string note = hasPendingRequest
-                ? $"ظهر اليوم لأن تاريخ الانتهاء مضى ويوجد {pendingRequest!.Request.TypeLabel} معلق منذ {pendingRequest.Request.RequestDate:yyyy/MM/dd}. ابدأ من الطلب المرتبط قبل إنشاء إجراء جديد."
+                ? $"ظهر اليوم لأن تاريخ الانتهاء مضى ويوجد {pendingRequest!.Request.TypeLabel} معلق منذ {DualCalendarDateService.FormatGregorianDate(pendingRequest.Request.RequestDate)}. ابدأ من الطلب المرتبط قبل إنشاء إجراء جديد."
                 : $"ظهر اليوم لأن تاريخ الانتهاء مضى وما زالت الحالة التشغيلية {item.LifecycleStatusLabel}. المتابعة هنا تمنع بقاء ضمان منتهي بلا قرار.";
 
             return new DashboardWorkItem(
@@ -421,7 +421,7 @@ namespace GuaranteeManager
                 ArabicAmountFormatter.FormatSaudiRiyals(item.Amount),
                 ArabicAmountFormatter.FormatSaudiRiyalsInWords(item.Amount),
                 item.ExpiryDate.Date,
-                item.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
+                DualCalendarDateService.FormatGregorianDate(item.ExpiryDate),
                 $"متأخر {daysLate.ToString("N0", CultureInfo.InvariantCulture)} يوماً",
                 item.GuaranteeType,
                 primaryAction,
@@ -452,7 +452,7 @@ namespace GuaranteeManager
                 ? $"راجع {pendingRequest!.Request.TypeLabel} المعلق قبل إنشاء متابعة جديدة"
                 : "افتح الضمان في المحفظة وراجع قرار التمديد قبل الوصول إلى تاريخ الانتهاء";
             string note = hasPendingRequest
-                ? $"ظهر اليوم لأنه داخل نافذة الانتهاء القريبة ويوجد {pendingRequest!.Request.TypeLabel} معلق منذ {pendingRequest.Request.RequestDate:yyyy/MM/dd}. ابدأ من الطلب المرتبط."
+                ? $"ظهر اليوم لأنه داخل نافذة الانتهاء القريبة ويوجد {pendingRequest!.Request.TypeLabel} معلق منذ {DualCalendarDateService.FormatGregorianDate(pendingRequest.Request.RequestDate)}. ابدأ من الطلب المرتبط."
                 : "ظهر اليوم لأنه داخل نافذة الانتهاء القريبة. راجع الطلبات المرتبطة قبل إنشاء تمديد أو إقفال مبكر.";
 
             return new DashboardWorkItem(
@@ -473,7 +473,7 @@ namespace GuaranteeManager
                 ArabicAmountFormatter.FormatSaudiRiyals(item.Amount),
                 ArabicAmountFormatter.FormatSaudiRiyalsInWords(item.Amount),
                 item.ExpiryDate.Date,
-                item.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
+                DualCalendarDateService.FormatGregorianDate(item.ExpiryDate),
                 $"خلال {daysLeft.ToString("N0", CultureInfo.InvariantCulture)} يوم",
                 item.GuaranteeType,
                 primaryAction,

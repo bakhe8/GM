@@ -72,7 +72,7 @@ namespace GuaranteeManager
             _supplierInput.Text = string.IsNullOrWhiteSpace(currentGuarantee.Supplier) ? string.Empty : currentGuarantee.Supplier;
             _bankInput.Text = currentGuarantee.Bank;
             _amountInput.Text = currentGuarantee.Amount.ToString("N2", CultureInfo.InvariantCulture);
-            _expiryInput.Text = currentGuarantee.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+            _expiryInput.Text = DualCalendarDateService.FormatGregorianDate(currentGuarantee.ExpiryDate);
             _typeInput.Text = currentGuarantee.GuaranteeType;
             _beneficiaryInput.Text = BusinessPartyDefaults.NormalizeBeneficiary(currentGuarantee.Beneficiary);
             _beneficiaryInput.IsReadOnly = true;
@@ -198,9 +198,9 @@ namespace GuaranteeManager
                 return;
             }
 
-            if (!DateTime.TryParse(expiryText, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime replacementExpiryDate))
+            if (!DualCalendarDateService.TryParseDate(expiryText, out DateTime replacementExpiryDate))
             {
-                MessageBox.Show("صيغة تاريخ انتهاء الضمان البديل غير صحيحة. استخدم مثلاً 2026/12/31.", "طلب استبدال", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"صيغة تاريخ انتهاء الضمان البديل غير صحيحة. استخدم مثلاً {DualCalendarDateService.InputExamples}.", "طلب استبدال", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 

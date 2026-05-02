@@ -196,15 +196,15 @@ namespace GuaranteeManager
             if (!PromptDialog.TryShow(
                     "طلب تمديد",
                     "تاريخ الانتهاء المطلوب",
-                    suggestedDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture),
+                    DualCalendarDateService.FormatGregorianDate(suggestedDate),
                     out string requestedDateText))
             {
                 return;
             }
 
-            if (!DateTime.TryParse(requestedDateText, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime requestedDate))
+            if (!DualCalendarDateService.TryParseDate(requestedDateText, out DateTime requestedDate))
             {
-                MessageBox.Show("صيغة التاريخ غير صحيحة. استخدم مثلاً 2026/12/31.", "طلب تمديد", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"صيغة التاريخ غير صحيحة. استخدم مثلاً {DualCalendarDateService.InputExamples}.", "طلب تمديد", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using GuaranteeManager.Models;
+using GuaranteeManager.Utils;
 
 namespace GuaranteeManager.Services
 {
@@ -43,11 +44,11 @@ namespace GuaranteeManager.Services
             WorkflowRequestListItem oldestPending = pendingRequests.First();
             result.EventDate = oldestPending.Request.RequestDate;
             result.Answer =
-                $"يوجد {pendingRequests.Count} طلب/طلبات معلقة لدى البنك {bank}. أقدمها يعود إلى {oldestPending.Request.RequestDate:yyyy-MM-dd} على الضمان رقم {oldestPending.GuaranteeNo}.";
+                $"يوجد {pendingRequests.Count} طلب/طلبات معلقة لدى البنك {bank}. أقدمها يعود إلى {DualCalendarDateService.FormatGregorianDate(oldestPending.Request.RequestDate)} على الضمان رقم {oldestPending.GuaranteeNo}.";
             result.Explanation = "تم احتساب جميع الطلبات التي حالتها الحالية قيد الانتظار والمطابقة للبنك المحدد.";
 
             result.Facts.Add(new OperationalInquiryFact { Label = "عدد الطلبات المعلقة", Value = pendingRequests.Count.ToString("N0") });
-            result.Facts.Add(new OperationalInquiryFact { Label = "أقدم طلب", Value = oldestPending.Request.RequestDate.ToString("yyyy-MM-dd") });
+            result.Facts.Add(new OperationalInquiryFact { Label = "أقدم طلب", Value = DualCalendarDateService.FormatGregorianDate(oldestPending.Request.RequestDate) });
             result.Facts.Add(new OperationalInquiryFact { Label = "أقدم رقم ضمان", Value = oldestPending.GuaranteeNo });
             result.Facts.Add(new OperationalInquiryFact { Label = "تمديدات معلقة", Value = pendingRequests.Count(item => item.Request.Type == RequestType.Extension).ToString("N0") });
             result.Facts.Add(new OperationalInquiryFact { Label = "تخفيضات معلقة", Value = pendingRequests.Count(item => item.Request.Type == RequestType.Reduction).ToString("N0") });
@@ -127,8 +128,8 @@ namespace GuaranteeManager.Services
                     Timestamp = item.Request.ResponseRecordedAt ?? item.Request.RequestDate,
                     Title = $"{item.Request.TypeLabel} - {item.GuaranteeNo}",
                     Details = item.Request.Status == RequestStatus.Pending
-                        ? $"قيد الانتظار منذ {item.Request.RequestDate:yyyy-MM-dd}"
-                        : $"{item.Request.StatusLabel} بتاريخ {(item.Request.ResponseRecordedAt ?? item.Request.RequestDate):yyyy-MM-dd}"
+                        ? $"قيد الانتظار منذ {DualCalendarDateService.FormatGregorianDate(item.Request.RequestDate)}"
+                        : $"{item.Request.StatusLabel} بتاريخ {DualCalendarDateService.FormatGregorianDate(item.Request.ResponseRecordedAt ?? item.Request.RequestDate)}"
                 });
             }
 
@@ -179,15 +180,15 @@ namespace GuaranteeManager.Services
             {
                 result.EventDate = latestRequestDate;
                 result.Answer = latestRequest.Request.Status == RequestStatus.Pending
-                    ? $"آخر ما حدث لضمانات المورد {supplier} هو إنشاء {latestRequest.Request.TypeLabel} على الضمان رقم {latestRequest.GuaranteeNo} بتاريخ {latestRequest.Request.RequestDate:yyyy-MM-dd}، وما زال الطلب قيد الانتظار."
-                    : $"آخر ما حدث لضمانات المورد {supplier} هو تسجيل استجابة بنك على {latestRequest.Request.TypeLabel} للضمان رقم {latestRequest.GuaranteeNo} بتاريخ {latestRequestDate:yyyy-MM-dd}، وكانت النتيجة {latestRequest.Request.StatusLabel}.";
+                    ? $"آخر ما حدث لضمانات المورد {supplier} هو إنشاء {latestRequest.Request.TypeLabel} على الضمان رقم {latestRequest.GuaranteeNo} بتاريخ {DualCalendarDateService.FormatGregorianDate(latestRequest.Request.RequestDate)}، وما زال الطلب قيد الانتظار."
+                    : $"آخر ما حدث لضمانات المورد {supplier} هو تسجيل استجابة بنك على {latestRequest.Request.TypeLabel} للضمان رقم {latestRequest.GuaranteeNo} بتاريخ {DualCalendarDateService.FormatGregorianDate(latestRequestDate)}، وكانت النتيجة {latestRequest.Request.StatusLabel}.";
                 result.Explanation = "تم اختيار أحدث حدث بين الطلبات والإصدارات الرسمية الخاصة بالمورد المحدد.";
             }
             else if (latestGuarantee != null)
             {
                 result.EventDate = latestGuarantee.CreatedAt;
                 result.Answer =
-                    $"آخر ما حدث لضمانات المورد {supplier} هو تحديث السجل الرسمي للضمان رقم {latestGuarantee.GuaranteeNo} إلى الإصدار {latestGuarantee.VersionLabel} بتاريخ {latestGuarantee.CreatedAt:yyyy-MM-dd HH:mm}.";
+                    $"آخر ما حدث لضمانات المورد {supplier} هو تحديث السجل الرسمي للضمان رقم {latestGuarantee.GuaranteeNo} إلى الإصدار {latestGuarantee.VersionLabel} بتاريخ {DualCalendarDateService.FormatDateTime(latestGuarantee.CreatedAt)}.";
                 result.Explanation = "لم يظهر طلب أحدث من آخر تحديث رسمي محفوظ لهذا المورد.";
             }
 
@@ -216,7 +217,7 @@ namespace GuaranteeManager.Services
                 {
                     Timestamp = guarantee.CreatedAt,
                     Title = $"تحديث سجل رسمي - {guarantee.GuaranteeNo}",
-                    Details = $"{guarantee.VersionLabel} | {guarantee.LifecycleStatusLabel} | الانتهاء {guarantee.ExpiryDate:yyyy-MM-dd}"
+                    Details = $"{guarantee.VersionLabel} | {guarantee.LifecycleStatusLabel} | الانتهاء {DualCalendarDateService.FormatDualDate(guarantee.ExpiryDate)}"
                 });
             }
 
@@ -227,8 +228,8 @@ namespace GuaranteeManager.Services
                     Timestamp = item.Request.ResponseRecordedAt ?? item.Request.RequestDate,
                     Title = $"{item.Request.TypeLabel} - {item.GuaranteeNo}",
                     Details = item.Request.Status == RequestStatus.Pending
-                        ? $"قيد الانتظار منذ {item.Request.RequestDate:yyyy-MM-dd}"
-                        : $"{item.Request.StatusLabel} بتاريخ {(item.Request.ResponseRecordedAt ?? item.Request.RequestDate):yyyy-MM-dd}"
+                        ? $"قيد الانتظار منذ {DualCalendarDateService.FormatGregorianDate(item.Request.RequestDate)}"
+                        : $"{item.Request.StatusLabel} بتاريخ {DualCalendarDateService.FormatGregorianDate(item.Request.ResponseRecordedAt ?? item.Request.RequestDate)}"
                 });
             }
 

@@ -94,7 +94,7 @@ namespace GuaranteeManager.Models
         public string ReplacementReferenceNumber => GetRequestedData()?.ReplacementReferenceNumber?.Trim() ?? string.Empty;
         public string RequestedValueLabel => Type switch
         {
-            RequestType.Extension => RequestedExpiryDate?.ToString("yyyy-MM-dd") ?? "---",
+            RequestType.Extension => RequestedExpiryDate.HasValue ? DualCalendarDateService.FormatGregorianDate(RequestedExpiryDate.Value) : "---",
             RequestType.Reduction => RequestedAmount.HasValue ? ArabicAmountFormatter.FormatSaudiRiyals(RequestedAmount.Value) : "---",
             RequestType.Release => "إفراج",
             RequestType.Liquidation => "تسييل",

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ClosedXML.Excel;
 using GuaranteeManager.Models;
+using GuaranteeManager.Utils;
 
 namespace GuaranteeManager.Services
 {
@@ -208,7 +209,7 @@ namespace GuaranteeManager.Services
                 $"Workflow_Extensions_{periodStart:yyyyMM}_{DateTime.Now:yyyyMMdd_HHmm}.xlsx",
                 "حفظ تقرير التمديدات المنفذة هذا الشهر",
                 "التمديدات المنفذة هذا الشهر",
-                $"يعرض طلبات التمديد المنفذة خلال الفترة من {periodStart:yyyy-MM-dd} إلى {periodEnd:yyyy-MM-dd}. عدد الطلبات: {filteredRequests.Count}");
+                $"يعرض طلبات التمديد المنفذة خلال الفترة من {DualCalendarDateService.FormatGregorianDate(periodStart)} إلى {DualCalendarDateService.FormatGregorianDate(periodEnd)}. عدد الطلبات: {filteredRequests.Count}");
         }
 
         public ExcelExportResult ExportContractRelatedReleasedInPeriod(IReadOnlyList<WorkflowRequestListItem> requests, DateTime periodStart, DateTime periodEnd)
@@ -229,7 +230,7 @@ namespace GuaranteeManager.Services
                 $"Workflow_Contract_Releases_{periodStart:yyyyMMdd}_{periodEnd:yyyyMMdd}.xlsx",
                 "حفظ تقرير الإفراجات المرتبطة بالعقود",
                 "الإفراجات المرتبطة بالعقود",
-                $"يعرض طلبات الإفراج المنفذة المرتبطة بالعقود خلال الفترة من {periodStart:yyyy-MM-dd} إلى {periodEnd:yyyy-MM-dd}. عدد الطلبات: {filteredRequests.Count}");
+                $"يعرض طلبات الإفراج المنفذة المرتبطة بالعقود خلال الفترة من {DualCalendarDateService.FormatGregorianDate(periodStart)} إلى {DualCalendarDateService.FormatGregorianDate(periodEnd)}. عدد الطلبات: {filteredRequests.Count}");
         }
 
         public ExcelExportResult ExportEmployeeContractRequestsInPeriod(string employeeName, IReadOnlyList<WorkflowRequestListItem> requests, DateTime periodStart, DateTime periodEnd)
@@ -250,7 +251,7 @@ namespace GuaranteeManager.Services
                 $"Workflow_Employee_{ExcelReportSupport.MakeSafeFileName(employeeName)}_{periodStart:yyyyMM}.xlsx",
                 "حفظ تقرير طلبات الموظف",
                 $"طلبات الموظف: {employeeName}",
-                $"يعرض طلبات التمديد والإفراج المتعلقة بالعقود والمنشأة خلال الفترة من {periodStart:yyyy-MM-dd} إلى {periodEnd:yyyy-MM-dd}. عدد الطلبات: {filteredRequests.Count}");
+                $"يعرض طلبات التمديد والإفراج المتعلقة بالعقود والمنشأة خلال الفترة من {DualCalendarDateService.FormatGregorianDate(periodStart)} إلى {DualCalendarDateService.FormatGregorianDate(periodEnd)}. عدد الطلبات: {filteredRequests.Count}");
         }
 
         public bool ExportWorkflowRequestsReportToPath(

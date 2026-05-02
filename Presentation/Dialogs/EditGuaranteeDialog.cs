@@ -113,7 +113,7 @@ namespace GuaranteeManager
             _bankInput.Text = currentGuarantee.Bank;
             _typeInput.Text = currentGuarantee.GuaranteeType;
             _amountInput.Text = currentGuarantee.Amount.ToString("N2", CultureInfo.InvariantCulture);
-            _expiryInput.Text = currentGuarantee.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+            _expiryInput.Text = DualCalendarDateService.FormatGregorianDate(currentGuarantee.ExpiryDate);
             _referenceNumberInput.Text = currentGuarantee.ReferenceNumber;
             _notesInput.Text = currentGuarantee.Notes;
             _notesInput.Height = 58;
@@ -298,9 +298,9 @@ namespace GuaranteeManager
                 return;
             }
 
-            if (!DateTime.TryParse(expiryText, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime expiryDate))
+            if (!DualCalendarDateService.TryParseDate(expiryText, out DateTime expiryDate))
             {
-                MessageBox.Show("صيغة تاريخ الانتهاء غير صحيحة. استخدم مثلاً 2026/12/31.", "تعديل الضمان", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"صيغة تاريخ الانتهاء غير صحيحة. استخدم مثلاً {DualCalendarDateService.InputExamples}.", "تعديل الضمان", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -568,7 +568,7 @@ namespace GuaranteeManager
             string amountText = _amountInput.Text.Replace(",", string.Empty, StringComparison.Ordinal).Trim();
             string currentAmountText = _currentGuarantee.Amount.ToString("N2", CultureInfo.InvariantCulture).Replace(",", string.Empty, StringComparison.Ordinal).Trim();
             string expiryText = _expiryInput.Text.Trim();
-            string currentExpiryText = _currentGuarantee.ExpiryDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+            string currentExpiryText = DualCalendarDateService.FormatGregorianDate(_currentGuarantee.ExpiryDate);
             string referenceNumber = _referenceNumberInput.Text.Trim();
             string notes = _notesInput.Text.Trim();
             GuaranteeReferenceType referenceType = (_referenceTypeInput.SelectedItem as ReferenceTypeOption)?.Value ?? GuaranteeReferenceType.None;
@@ -701,7 +701,7 @@ namespace GuaranteeManager
             }
 
             bool amountValid = ArabicAmountFormatter.TryParsePositiveSaudiRiyalAmount(amountText, out decimal amount);
-            bool expiryValid = DateTime.TryParse(expiryText, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime expiryDate);
+            bool expiryValid = DualCalendarDateService.TryParseDate(expiryText, out DateTime expiryDate);
 
             if (missing.Count > 0 || !amountValid || !expiryValid)
             {

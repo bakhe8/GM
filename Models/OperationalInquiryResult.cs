@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
+using GuaranteeManager.Utils;
 
 namespace GuaranteeManager.Models
 {
@@ -19,7 +20,7 @@ namespace GuaranteeManager.Models
         public List<OperationalInquiryFact> Facts { get; } = new List<OperationalInquiryFact>();
         public List<OperationalInquiryTimelineEntry> Timeline { get; } = new List<OperationalInquiryTimelineEntry>();
 
-        public string EventDateLabel => EventDate?.ToString("yyyy-MM-dd HH:mm") ?? "---";
+        public string EventDateLabel => EventDate.HasValue ? DualCalendarDateService.FormatDateTime(EventDate.Value) : "---";
         public bool HasTimeline => Timeline.Count > 0;
         public bool CanOpenRequestLetter => RelatedRequest?.HasLetter == true;
         public bool CanOpenResponseDocument => RelatedRequest?.HasResponseDocument == true;
@@ -36,6 +37,6 @@ namespace GuaranteeManager.Models
         public DateTime Timestamp { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Details { get; set; } = string.Empty;
-        public string TimestampLabel => Timestamp.ToString("yyyy-MM-dd HH:mm");
+        public string TimestampLabel => DualCalendarDateService.FormatDateTime(Timestamp);
     }
 }
