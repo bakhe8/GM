@@ -22,7 +22,6 @@ namespace GuaranteeManager
         private readonly string _lastFileSummary;
         private readonly Action<int, GuaranteeFocusArea, int?> _openGuaranteeContext;
         private readonly Action _showGuarantees;
-        private readonly ReferenceTablePagerController _pager;
 
         private readonly ListBox _list = new();
         private readonly TextBox _searchInput = new();
@@ -84,7 +83,6 @@ namespace GuaranteeManager
             _lastFileSummary = lastFileSummary;
             _openGuaranteeContext = openGuaranteeContext;
             _showGuarantees = showGuarantees;
-            _pager = new ReferenceTablePagerController("Dashboard", "عنصر عمل", 10, ApplyFilters);
 
             UiInstrumentation.Identify(this, "Dashboard.Workspace", "اليوم");
             UiInstrumentation.Identify(_searchInput, "Dashboard.SearchBox", "بحث اليوم");
@@ -148,7 +146,6 @@ namespace GuaranteeManager
 
             _searchInput.TextChanged += (_, _) =>
             {
-                _pager.ResetToFirstPage();
                 ApplyFilters();
             };
             var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث باسم المورد أو البنك أو رقم الضمان...");
@@ -162,11 +159,6 @@ namespace GuaranteeManager
             string normalizedScope = DashboardScopeFilters.Normalize(scopeFilter);
             bool changed = !string.Equals(_selectedScopeFilter, normalizedScope, StringComparison.Ordinal);
             _selectedScopeFilter = normalizedScope;
-
-            if (resetPage)
-            {
-                _pager.ResetToFirstPage();
-            }
 
             if (apply && (changed || resetPage))
             {
@@ -333,7 +325,7 @@ namespace GuaranteeManager
 
         private Grid BuildTableFooter()
         {
-            return _pager.BuildFooter(_summary);
+            return WorkspaceSurfaceChrome.BuildReferenceTableSummaryFooter(_summary);
         }
 
         private Border BuildDetailPanel()
@@ -518,8 +510,7 @@ namespace GuaranteeManager
                 _pendingRequests,
                 expiryFollowUpFilter);
 
-            IReadOnlyList<DashboardWorkItem> pageItems = _pager.Page(filtered.Items);
-            foreach (DashboardWorkItem item in pageItems)
+            foreach (DashboardWorkItem item in filtered.Items)
             {
                 _list.Items.Add(BuildRow(item, selectedScope));
             }
@@ -531,7 +522,7 @@ namespace GuaranteeManager
 
             ApplyMetrics(filtered.Metrics);
             ApplyGuidanceState(_dataService.BuildGuidanceState(_allItems, _guarantees, _pendingRequests));
-            _summary.Text = _pager.BuildSummary();
+            _summary.Text = WorkspaceSurfaceChrome.BuildReferenceTableSummary(filtered.Items.Count, "عنصر عمل");
             UpdateDetails();
         }
 
@@ -542,7 +533,6 @@ namespace GuaranteeManager
 
             if (apply)
             {
-                _pager.ResetToFirstPage();
                 ApplyFilters();
             }
         }
@@ -691,7 +681,6 @@ namespace GuaranteeManager
 
         private void ApplyGuidanceFilter(string scopeFilter, string expiryFilter)
         {
-            _pager.ResetToFirstPage();
             SelectExpiryFollowUpFilter(expiryFilter, apply: false);
             SelectScopeFilter(scopeFilter, resetPage: false, apply: false);
             ApplyFilters();

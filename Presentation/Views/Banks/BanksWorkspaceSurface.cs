@@ -39,7 +39,6 @@ namespace GuaranteeManager
         private readonly TextBlock _detailShare = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly Action<string?> _showGuaranteesForBank;
         private readonly Action<string> _addBankReference;
-        private readonly ReferenceTablePagerController _pager;
         private string _selectedSortFilter = BankSortFilters.HighestValue;
 
         public BanksWorkspaceSurface(
@@ -53,7 +52,6 @@ namespace GuaranteeManager
             _allBanks = _dataService.BuildItems(guarantees, bankReferences);
             _showGuaranteesForBank = showGuaranteesForBank;
             _addBankReference = addBankReference;
-            _pager = new ReferenceTablePagerController("Banks", "بنك", 10, ApplyFilters);
             UiInstrumentation.Identify(this, "Banks.Workspace", "البنوك");
             UiInstrumentation.Identify(_searchInput, "Banks.SearchBox", "بحث البنوك");
             UiInstrumentation.Identify(_highestValueSortButton, "Banks.Filter.Sort.HighestValue", BankSortFilters.HighestValue);
@@ -106,7 +104,6 @@ namespace GuaranteeManager
 
             _searchInput.TextChanged += (_, _) =>
             {
-                _pager.ResetToFirstPage();
                 ApplyFilters();
             };
             var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث باسم البنك أو المورد الأعلى...");
@@ -157,11 +154,6 @@ namespace GuaranteeManager
             bool changed = !string.Equals(_selectedSortFilter, normalizedSort, StringComparison.Ordinal);
             _selectedSortFilter = normalizedSort;
             UpdateSortButtons();
-
-            if (resetPage)
-            {
-                _pager.ResetToFirstPage();
-            }
 
             if (apply && (changed || resetPage))
             {
@@ -230,7 +222,7 @@ namespace GuaranteeManager
 
         private Grid BuildTableFooter()
         {
-            return _pager.BuildFooter(_summary);
+            return WorkspaceSurfaceChrome.BuildReferenceTableSummaryFooter(_summary);
         }
 
         private Border BuildDetailPanel()
@@ -385,8 +377,7 @@ namespace GuaranteeManager
                 _allBanks,
                 _searchInput.Text,
                 selectedSort);
-            IReadOnlyList<BankWorkspaceItem> pageItems = _pager.Page(filtered.Items);
-            foreach (BankWorkspaceItem item in pageItems)
+            foreach (BankWorkspaceItem item in filtered.Items)
             {
                 _list.Items.Add(BuildRow(item));
             }
@@ -397,7 +388,7 @@ namespace GuaranteeManager
             }
 
             ApplyMetrics(filtered.Metrics);
-            _summary.Text = _pager.BuildSummary();
+            _summary.Text = WorkspaceSurfaceChrome.BuildReferenceTableSummary(filtered.Items.Count, "بنك");
             UpdateDetails();
         }
 
@@ -530,7 +521,6 @@ namespace GuaranteeManager
                 _addBankReference(normalizedBankName);
                 _allBanks.Add(BankWorkspaceItem.Empty(normalizedBankName));
                 _searchInput.Text = normalizedBankName;
-                _pager.ResetToFirstPage();
                 ApplyFilters();
                 SelectBank(normalizedBankName);
                 App.CurrentApp.GetRequiredService<IShellStatusService>().ShowInfo(

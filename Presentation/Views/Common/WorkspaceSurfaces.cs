@@ -188,6 +188,32 @@ namespace GuaranteeManager
             return border;
         }
 
+        public static Grid BuildReferenceTableSummaryFooter(TextBlock summary)
+        {
+            var footer = new Grid
+            {
+                Style = Style("ReferenceTablePager")
+            };
+
+            summary.Style = Style("ReferenceTableFooterSummary");
+            footer.Children.Add(summary);
+            return footer;
+        }
+
+        public static string BuildReferenceTableSummary(int totalItems, string itemLabel)
+        {
+            if (totalItems == 0)
+            {
+                return $"لا توجد {itemLabel} مطابقة";
+            }
+
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                "عرض {0:N0} {1}",
+                totalItems,
+                itemLabel);
+        }
+
         public static Grid BuildReferenceHeaderBand(params (string Text, int Column, bool RightAligned)[] columns)
         {
             var header = new Grid

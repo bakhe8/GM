@@ -37,7 +37,6 @@ namespace GuaranteeManager
         private readonly TextBlock _detailOutput = BuildMutedText(11, FontWeights.Normal);
         private readonly Button _runButton = new();
         private readonly Button _openButton = new();
-        private readonly ReferenceTablePagerController _pager;
         private string _selectedCategoryFilter = ReportWorkspaceItem.AllFilterLabel;
 
         public ReportsWorkspaceSurface(
@@ -48,7 +47,6 @@ namespace GuaranteeManager
             _dataService = new ReportsWorkspaceDataService();
             _coordinator = coordinator;
             _allReports = _dataService.BuildItems(actions);
-            _pager = new ReferenceTablePagerController("Reports", "تقرير", 10, ApplyFilters);
             UiInstrumentation.Identify(this, "Reports.Workspace", "التقارير");
             UiInstrumentation.Identify(_searchInput, "Reports.SearchBox", "بحث التقارير");
             UiInstrumentation.Identify(_portfolioMetricCard, "Reports.Filter.Category.Portfolio", ReportWorkspaceItem.PortfolioFilterLabel);
@@ -112,7 +110,6 @@ namespace GuaranteeManager
 
             _searchInput.TextChanged += (_, _) =>
             {
-                _pager.ResetToFirstPage();
                 ApplyFilters();
             };
             var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث بعنوان التقرير أو وصفه أو مفتاحه...");
@@ -213,11 +210,6 @@ namespace GuaranteeManager
             _selectedCategoryFilter = normalized;
             UpdateMetricCardStates();
 
-            if (resetPage)
-            {
-                _pager.ResetToFirstPage();
-            }
-
             if (apply && (changed || resetPage))
             {
                 ApplyFilters();
@@ -279,7 +271,7 @@ namespace GuaranteeManager
 
         private Grid BuildTableFooter()
         {
-            return _pager.BuildFooter(_summary);
+            return WorkspaceSurfaceChrome.BuildReferenceTableSummaryFooter(_summary);
         }
 
         private Border BuildDetailPanel()
@@ -415,8 +407,7 @@ namespace GuaranteeManager
                 _searchInput.Text,
                 category);
 
-            IReadOnlyList<ReportWorkspaceItem> pageItems = _pager.Page(filtered.Items);
-            foreach (ReportWorkspaceItem item in pageItems)
+            foreach (ReportWorkspaceItem item in filtered.Items)
             {
                 _list.Items.Add(BuildRow(item));
             }
@@ -427,7 +418,7 @@ namespace GuaranteeManager
             }
 
             ApplyMetrics(filtered.Metrics);
-            _summary.Text = _pager.BuildSummary();
+            _summary.Text = WorkspaceSurfaceChrome.BuildReferenceTableSummary(filtered.Items.Count, "تقرير");
             UpdateSelection();
         }
 

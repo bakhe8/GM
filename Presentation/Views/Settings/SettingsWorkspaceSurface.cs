@@ -31,7 +31,6 @@ namespace GuaranteeManager
         private readonly TextBlock _detailPath = BuildPathText();
         private readonly TextBlock _detailOpenPath = BuildPathText();
         private readonly Action? _dataResetCompleted;
-        private readonly ReferenceTablePagerController _pager;
         private string _selectedCategoryFilter = SettingsPathFilters.All;
 
         public SettingsWorkspaceSurface(Action? dataResetCompleted, string? initialSearchText = null)
@@ -40,7 +39,6 @@ namespace GuaranteeManager
             _coordinator = new SettingsWorkspaceCoordinator();
             _dataResetCompleted = dataResetCompleted;
             _allItems = _dataService.BuildItems();
-            _pager = new ReferenceTablePagerController("Settings", "عنصر", 10, ApplyFilters);
             UiInstrumentation.Identify(this, "Settings.Workspace", "الإعدادات");
             UiInstrumentation.Identify(_searchInput, "Settings.SearchBox", "بحث الإعدادات");
             UiInstrumentation.Identify(_allMetricCard, "Settings.Filter.All", SettingsPathFilters.All);
@@ -94,7 +92,6 @@ namespace GuaranteeManager
 
             _searchInput.TextChanged += (_, _) =>
             {
-                _pager.ResetToFirstPage();
                 ApplyFilters();
             };
             var searchBox = WorkspaceSurfaceChrome.ToolbarSearchBox(_searchInput, "ابحث باسم العنصر أو المسار...");
@@ -169,11 +166,6 @@ namespace GuaranteeManager
             _selectedCategoryFilter = normalized;
             UpdateMetricCardStates();
 
-            if (resetPage)
-            {
-                _pager.ResetToFirstPage();
-            }
-
             if (apply && (changed || resetPage))
             {
                 ApplyFilters();
@@ -235,7 +227,7 @@ namespace GuaranteeManager
 
         private Grid BuildTableFooter()
         {
-            return _pager.BuildFooter(_summary);
+            return WorkspaceSurfaceChrome.BuildReferenceTableSummaryFooter(_summary);
         }
 
         private Border BuildDetailPanel()
@@ -416,8 +408,7 @@ namespace GuaranteeManager
                 _allItems,
                 _searchInput.Text,
                 category);
-            IReadOnlyList<SettingPathItem> pageItems = _pager.Page(filtered.Items);
-            foreach (SettingPathItem item in pageItems)
+            foreach (SettingPathItem item in filtered.Items)
             {
                 _list.Items.Add(BuildRow(item));
             }
@@ -428,7 +419,7 @@ namespace GuaranteeManager
             }
 
             ApplyMetrics(filtered.Metrics);
-            _summary.Text = _pager.BuildSummary();
+            _summary.Text = WorkspaceSurfaceChrome.BuildReferenceTableSummary(filtered.Items.Count, "عنصر");
             UpdateDetails();
         }
 
