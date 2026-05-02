@@ -1,17 +1,28 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:GuaranteeManager">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Colors.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <Style x:Key="KpiTitle" TargetType="TextBlock">
+    <Style TargetType="{x:Type TextBlock}">
+        <Setter Property="FontFamily" Value="{x:Static local:UiTypography.DefaultFontFamily}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
+    </Style>
+
+    <Style x:Key="KpiTitle" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Secondary}" />
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="TextAlignment" Value="Center" />
     </Style>
 
-    <Style x:Key="KpiNumber" TargetType="TextBlock">
+    <Style x:Key="KpiNumber" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="32" />
         <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
@@ -19,50 +30,51 @@
         <Setter Property="TextAlignment" Value="Center" />
     </Style>
 
-    <Style x:Key="KpiMeta" TargetType="TextBlock">
+    <Style x:Key="KpiMeta" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="Normal" />
         <Setter Property="Foreground" Value="{StaticResource Brush.Muted}" />
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="TextAlignment" Value="Center" />
     </Style>
 
-    <Style x:Key="TextPrimaryTitle" TargetType="TextBlock">
+    <Style x:Key="TextPrimaryTitle" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="18" />
         <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
     </Style>
 
-    <Style x:Key="TextSectionTitle" TargetType="TextBlock">
+    <Style x:Key="TextSectionTitle" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
     </Style>
 
-    <Style x:Key="TextBody" TargetType="TextBlock">
+    <Style x:Key="TextBody" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="Normal" />
         <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
     </Style>
 
-    <Style x:Key="TextSecondary" TargetType="TextBlock">
+    <Style x:Key="TextSecondary" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="11" />
         <Setter Property="FontWeight" Value="Normal" />
         <Setter Property="Foreground" Value="{StaticResource Brush.Text.Secondary}" />
     </Style>
 
-    <Style x:Key="TextMuted" TargetType="TextBlock">
+    <Style x:Key="TextMuted" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="10" />
         <Setter Property="FontWeight" Value="Normal" />
         <Setter Property="Foreground" Value="{StaticResource Brush.Text.Muted}" />
     </Style>
 
-    <Style x:Key="TextLink" TargetType="TextBlock">
+    <Style x:Key="TextLink" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="11" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Foreground" Value="{StaticResource Brush.Link}" />
     </Style>
 
-    <Style x:Key="TextDisabled" TargetType="TextBlock">
+    <Style x:Key="TextDisabled" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="11" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Foreground" Value="{StaticResource Brush.Text.Disabled}" />
