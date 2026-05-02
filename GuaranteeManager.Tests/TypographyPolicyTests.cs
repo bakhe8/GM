@@ -69,6 +69,22 @@ namespace GuaranteeManager.Tests
             Assert.Contains("Property=\"Foreground\" Value=\"{StaticResource Brush.Text.Primary}\"", typography, StringComparison.Ordinal);
         }
 
+        [Fact]
+        public void AmountTableCellsUseTabularFigures()
+        {
+            string root = FindRepositoryRoot();
+            string tableTheme = File.ReadAllText(Path.Combine(root, "Presentation", "Themes", "Tables.xaml"));
+            string guaranteeSurface = File.ReadAllText(Path.Combine(root, "Presentation", "Views", "Guarantees", "GuaranteesDashboardView.xaml"));
+            string dashboardSurface = File.ReadAllText(Path.Combine(root, "Presentation", "Views", "Dashboard", "DashboardWorkspaceSurface.cs"));
+            string banksSurface = File.ReadAllText(Path.Combine(root, "Presentation", "Views", "Banks", "BanksWorkspaceSurface.cs"));
+
+            Assert.Contains("x:Key=\"TableAmountCell\"", tableTheme, StringComparison.Ordinal);
+            Assert.Contains("Property=\"Typography.NumeralAlignment\" Value=\"Tabular\"", tableTheme, StringComparison.Ordinal);
+            Assert.Contains("Style=\"{StaticResource TableAmountCell}\"", guaranteeSurface, StringComparison.Ordinal);
+            Assert.Contains("WorkspaceSurfaceChrome.Style(\"TableAmountCell\")", dashboardSurface, StringComparison.Ordinal);
+            Assert.Contains("\"TableAmountCell\"", banksSurface, StringComparison.Ordinal);
+        }
+
         private static string ReadPresentationText()
         {
             string root = FindRepositoryRoot();

@@ -626,8 +626,7 @@ namespace GuaranteeManager
             var cell = new TextBlock
             {
                 Text = text,
-                Style = WorkspaceSurfaceChrome.Style("TableCellCenter"),
-                FlowDirection = FlowDirection.LeftToRight
+                Style = WorkspaceSurfaceChrome.Style("TableAmountCell")
             };
             Grid.SetColumn(cell, column);
             return cell;
