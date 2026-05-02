@@ -10,7 +10,7 @@
         WindowStyle="None"
         ResizeMode="CanResize"
         Background="#F7F9FC"
-        FontFamily="Segoe UI Variable Text, Segoe UI, Tahoma"
+        FontFamily="{x:Static local:UiTypography.DefaultFontFamily}"
         FlowDirection="RightToLeft"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"

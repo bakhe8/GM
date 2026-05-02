@@ -43,6 +43,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Assets\Fonts\IBMPlexSansArabic\*.ttf" />
+    <Resource Include="Assets\Fonts\IBMPlexSansArabic\*.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
     <AssemblyMetadata Include="RuntimeIdentifier" Value="$(RuntimeIdentifier)" />
   </ItemGroup>
 
