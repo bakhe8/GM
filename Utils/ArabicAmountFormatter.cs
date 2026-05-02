@@ -6,6 +6,8 @@ namespace GuaranteeManager.Utils
 {
     public static class ArabicAmountFormatter
     {
+        public const string SaudiRiyalSymbol = "\u20C1";
+
         public static string FormatNumber(decimal amount, int decimals = 0)
         {
             string format = decimals <= 0 ? "N0" : $"N{decimals.ToString(CultureInfo.InvariantCulture)}";
@@ -14,7 +16,7 @@ namespace GuaranteeManager.Utils
 
         public static string FormatSaudiRiyals(decimal amount, int decimals = 0)
         {
-            return $"{FormatNumber(amount, decimals)} ريال";
+            return $"{SaudiRiyalSymbol} {FormatNumber(amount, decimals)}";
         }
 
         public static string FormatSaudiRiyalsInWords(decimal amount)
@@ -35,7 +37,7 @@ namespace GuaranteeManager.Utils
 
         public static string FormatSaudiRiyalsForLetter(decimal amount)
         {
-            return $"{FormatSaudiRiyals(amount, 2)} سعودي{Environment.NewLine}{FormatSaudiRiyalsInWords(amount)}";
+            return $"{FormatSaudiRiyals(amount, 2)}{Environment.NewLine}{FormatSaudiRiyalsInWords(amount)}";
         }
 
         public static string NumberToArabicWords(decimal amount)

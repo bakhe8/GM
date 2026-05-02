@@ -7,7 +7,9 @@ namespace GuaranteeManager
     {
         public const string DefaultFontFamilyName = "DIN Next LT W23";
         public const string EmbeddedFontFamilyPath = "./Assets/Fonts/DINNextLTArabic/#DIN Next LT W23";
+        public const string SaudiRiyalSymbolFontFamilyPath = "./Assets/Fonts/SaudiRiyal/#Saudi Riyal Symbol";
         public const string FallbackFontFamilyName = "Segoe UI Variable Text, Segoe UI, Tahoma";
+        private const string CompositeFontFamilyPath = EmbeddedFontFamilyPath + ", " + SaudiRiyalSymbolFontFamilyPath + ", " + FallbackFontFamilyName;
         public const double Tiny = 9d;
         public const double Small = 10d;
         public const double Secondary = 11d;
@@ -20,7 +22,7 @@ namespace GuaranteeManager
 
         public static FontFamily DefaultFontFamily { get; } = new(
             new Uri("pack://application:,,,/"),
-            EmbeddedFontFamilyPath);
+            CompositeFontFamilyPath);
 
         public static FontWeight RegularWeight => FontWeights.Normal;
         public static FontWeight EmphasisWeight => FontWeights.Medium;

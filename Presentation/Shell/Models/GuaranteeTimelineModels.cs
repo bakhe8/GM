@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows.Media;
 using GuaranteeManager.Models;
+using GuaranteeManager.Utils;
 
 namespace GuaranteeManager
 {
@@ -231,7 +232,7 @@ namespace GuaranteeManager
                 return new TimelineItem(
                     version.CreatedAt,
                     "إنشاء الضمان",
-                    $"تم إنشاء الضمان بقيمة {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال وانتهاء {version.ExpiryDate:yyyy/MM/dd}.",
+                    $"تم إنشاء الضمان بقيمة {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} وانتهاء {version.ExpiryDate:yyyy/MM/dd}.",
                     "مكتمل",
                     Tone.Success,
                     TimelineEvidenceActionKind.OfficialAttachment,
@@ -242,7 +243,7 @@ namespace GuaranteeManager
             return new TimelineItem(
                 version.CreatedAt,
                 $"الإصدار {version.VersionLabel}",
-                $"تم حفظ شروط هذا الإصدار: المبلغ {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال | الانتهاء {version.ExpiryDate:yyyy/MM/dd}.",
+                $"تم حفظ شروط هذا الإصدار: المبلغ {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} | الانتهاء {version.ExpiryDate:yyyy/MM/dd}.",
                 "موثق",
                 Tone.Info,
                 TimelineEvidenceActionKind.OfficialAttachment,
@@ -527,9 +528,9 @@ namespace GuaranteeManager
         private static string GetTerminalLifecycleDetail(Guarantee version) => version.LifecycleStatus switch
         {
             GuaranteeLifecycleStatus.Released =>
-                $"تم تسجيل الإفراج عن الضمان بقيمة {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال.",
+                $"تم تسجيل الإفراج عن الضمان بقيمة {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)}.",
             GuaranteeLifecycleStatus.Liquidated =>
-                $"تم تسجيل تسييل الضمان بقيمة {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال.",
+                $"تم تسجيل تسييل الضمان بقيمة {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)}.",
             GuaranteeLifecycleStatus.Replaced =>
                 "تم إنهاء السلسلة القديمة لصالح ضمان بديل.",
             _ =>

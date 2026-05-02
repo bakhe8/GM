@@ -48,6 +48,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Assets\Fonts\SaudiRiyal\*.ttf" />
+    <Resource Include="Assets\Fonts\SaudiRiyal\*.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
     <AssemblyMetadata Include="RuntimeIdentifier" Value="$(RuntimeIdentifier)" />
   </ItemGroup>
 

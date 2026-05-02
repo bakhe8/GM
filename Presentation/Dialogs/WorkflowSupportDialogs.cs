@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using GuaranteeManager.Models;
+using GuaranteeManager.Utils;
 using Microsoft.Win32;
 using MessageBox = GuaranteeManager.Services.AppMessageBox;
 
@@ -270,7 +271,7 @@ namespace GuaranteeManager
         private sealed record EligibleGuaranteeOption(Guarantee Guarantee)
         {
             public string Display =>
-                $"{Guarantee.GuaranteeNo} | {Guarantee.Supplier} | {Guarantee.Bank} | {Guarantee.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال | {Guarantee.ExpiryDate:yyyy/MM/dd}";
+                $"{Guarantee.GuaranteeNo} | {Guarantee.Supplier} | {Guarantee.Bank} | {ArabicAmountFormatter.FormatSaudiRiyals(Guarantee.Amount)} | {Guarantee.ExpiryDate:yyyy/MM/dd}";
         }
     }
 

@@ -318,7 +318,7 @@ namespace GuaranteeManager
                 : BusinessPartyDefaults.NormalizeBeneficiary(guarantee.Beneficiary);
             string headline = guarantee == null
                 ? _result.EventDateLabel.Split(' ')[0]
-                : $"{guarantee.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال";
+                : ArabicAmountFormatter.FormatSaudiRiyals(guarantee.Amount);
             string caption = guarantee == null
                 ? "تاريخ الحدث المرجعي"
                 : "القيمة الحالية للسجل المرتبط";

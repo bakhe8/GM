@@ -19,7 +19,7 @@ namespace GuaranteeManager.Tests
                 1,
                 "BG-TEST-EXP",
                 1000m,
-                "1,000 ريال",
+                "\u20C1 1,000",
                 expiryDate,
                 expiryDate.ToString("yyyy/MM/dd"),
                 "خلال 5 أيام");
@@ -32,7 +32,7 @@ namespace GuaranteeManager.Tests
                 string.Empty);
 
             Assert.Equal(DashboardDetailProfile.FollowUp, state.DetailProfile);
-            Assert.Equal("1,000 ريال", state.AmountHeadline);
+            Assert.Equal("\u20C1 1,000", state.AmountHeadline);
             Assert.Equal("خلال 5 أيام", state.Due);
             Assert.Equal(expiryDate.ToString("yyyy/MM/dd"), state.Expiry);
         }
@@ -48,7 +48,7 @@ namespace GuaranteeManager.Tests
                 0,
                 "BG-TEST-OLD",
                 2000m,
-                "2,000 ريال",
+                "\u20C1 2,000",
                 DateTime.Today.AddDays(-3),
                 DateTime.Today.AddDays(-3).ToString("yyyy/MM/dd"),
                 "متأخر 3 أيام");
@@ -59,7 +59,7 @@ namespace GuaranteeManager.Tests
                 3,
                 "BG-TEST-SOON",
                 1000m,
-                "1,000 ريال",
+                "\u20C1 1,000",
                 DateTime.Today.AddDays(5),
                 DateTime.Today.AddDays(5).ToString("yyyy/MM/dd"),
                 "خلال 5 أيام");
@@ -180,7 +180,7 @@ namespace GuaranteeManager.Tests
                 3,
                 "BG-TEST-SOON",
                 1000m,
-                "1,000 ريال",
+                "\u20C1 1,000",
                 DateTime.Today.AddDays(5),
                 DateTime.Today.AddDays(5).ToString("yyyy/MM/dd"),
                 "خلال 5 أيام");
@@ -191,7 +191,7 @@ namespace GuaranteeManager.Tests
                 0,
                 "BG-TEST-OLD",
                 2000m,
-                "2,000 ريال",
+                "\u20C1 2,000",
                 DateTime.Today.AddDays(-3),
                 DateTime.Today.AddDays(-3).ToString("yyyy/MM/dd"),
                 "متأخر 3 أيام");
@@ -217,7 +217,7 @@ namespace GuaranteeManager.Tests
                 0,
                 "BG-TEST-OLD",
                 2000m,
-                "2,000 ريال",
+                "\u20C1 2,000",
                 DateTime.Today.AddDays(-3),
                 DateTime.Today.AddDays(-3).ToString("yyyy/MM/dd"),
                 "متأخر 3 أيام");

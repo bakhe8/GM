@@ -27,7 +27,7 @@ namespace GuaranteeManager.Tests
         {
             string text = ArabicAmountFormatter.FormatSaudiRiyalsForLetter(1200m);
 
-            Assert.Contains("1,200.00 ريال سعودي", text);
+            Assert.Contains("\u20C1 1,200.00", text);
             Assert.Contains("ألف ومئتان ريال سعودي", text);
             Assert.Contains(System.Environment.NewLine, text);
         }

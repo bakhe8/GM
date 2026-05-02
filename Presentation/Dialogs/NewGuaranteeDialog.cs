@@ -591,7 +591,7 @@ namespace GuaranteeManager
 
             SetConsequenceState(
                 "سيُنشأ ضمان جديد كالإصدار الأول.",
-                $"{guaranteeNo} • {bank} • {guaranteeType} • {amount.ToString("N2", CultureInfo.InvariantCulture)} ريال • {expiryDate:yyyy/MM/dd}",
+                $"{guaranteeNo} • {bank} • {guaranteeType} • {ArabicAmountFormatter.FormatSaudiRiyals(amount, 2)} • {expiryDate:yyyy/MM/dd}",
                 $"{beneficiarySummary} • {referenceSummary} • {attachmentSummary}",
                 warningState: false);
         }

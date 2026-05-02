@@ -132,8 +132,8 @@ namespace GuaranteeManager.Services
                     sortOrder: isFirstVersion ? 10 : 50,
                     title: isFirstVersion ? "إنشاء الضمان" : $"الإصدار {version.VersionLabel}",
                     details: isFirstVersion
-                        ? $"تم إنشاء الضمان بقيمة {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال وانتهاء {version.ExpiryDate:yyyy/MM/dd}."
-                        : $"تم حفظ شروط هذا الإصدار: المبلغ {version.Amount.ToString("N0", CultureInfo.InvariantCulture)} ريال | الانتهاء {version.ExpiryDate:yyyy/MM/dd}.",
+                        ? $"تم إنشاء الضمان بقيمة {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} وانتهاء {version.ExpiryDate:yyyy/MM/dd}."
+                        : $"تم حفظ شروط هذا الإصدار: المبلغ {ArabicAmountFormatter.FormatSaudiRiyals(version.Amount)} | الانتهاء {version.ExpiryDate:yyyy/MM/dd}.",
                     status: isFirstVersion ? "مكتمل" : "موثق",
                     toneKey: isFirstVersion ? "Success" : "Info");
             }

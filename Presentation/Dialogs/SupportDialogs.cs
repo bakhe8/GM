@@ -37,7 +37,7 @@ namespace GuaranteeManager
             var list = new ListBox { Margin = new Thickness(16) };
             foreach (var group in guarantees.GroupBy(item => item.Bank).OrderByDescending(group => group.Sum(item => item.Amount)))
             {
-                list.Items.Add($"{group.Key} | {group.Count():N0} ضمان | {group.Sum(item => item.Amount):N0} ريال");
+                list.Items.Add($"{group.Key} | {group.Count():N0} ضمان | {ArabicAmountFormatter.FormatSaudiRiyals(group.Sum(item => item.Amount))}");
             }
 
             Content = list;
