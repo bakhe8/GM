@@ -47,7 +47,7 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(_list, "Settings.Table.List", "قائمة الإعدادات");
 
             FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = new FontFamily("Segoe UI, Tahoma");
+            FontFamily = UiTypography.DefaultFontFamily;
             Background = WorkspaceSurfaceChrome.BrushResource("Brush.Canvas");
 
             Content = BuildLayout();

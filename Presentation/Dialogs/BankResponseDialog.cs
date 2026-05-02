@@ -26,7 +26,7 @@ namespace GuaranteeManager
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             ResizeMode = ResizeMode.NoResize;
             FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = new FontFamily("Segoe UI, Tahoma");
+            FontFamily = UiTypography.DefaultFontFamily;
             Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
             DialogWindowSupport.Attach(this, nameof(BankResponseDialog), () => DialogResult = true, "أكمل تسجيل رد البنك أو أغلق النافذة الحالية أولاً.");
 

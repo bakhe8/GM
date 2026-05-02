@@ -10,8 +10,12 @@
         WindowStyle="None"
         ResizeMode="CanResize"
         Background="#F7F9FC"
-        FontFamily="Segoe UI, Tahoma"
+        FontFamily="Segoe UI Variable Text, Segoe UI, Tahoma"
         FlowDirection="RightToLeft"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
         automation:AutomationProperties.AutomationId="Shell.MainWindow"
         automation:AutomationProperties.Name="إدارة الضمانات البنكية">
 

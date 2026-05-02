@@ -60,7 +60,7 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(_list, "Banks.Table.List", "قائمة البنوك");
 
             FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = new FontFamily("Segoe UI, Tahoma");
+            FontFamily = UiTypography.DefaultFontFamily;
             Background = WorkspaceSurfaceChrome.BrushResource("Brush.Canvas");
             RenderOptions.SetBitmapScalingMode(_detailLogo, BitmapScalingMode.HighQuality);
 

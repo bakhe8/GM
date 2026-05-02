@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -31,7 +31,7 @@ namespace GuaranteeManager
             Height = 420;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = new FontFamily("Segoe UI, Tahoma");
+            FontFamily = UiTypography.DefaultFontFamily;
             Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
 
             var list = new ListBox { Margin = new Thickness(16) };
@@ -65,7 +65,7 @@ namespace GuaranteeManager
             Height = 430;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = new FontFamily("Segoe UI, Tahoma");
+            FontFamily = UiTypography.DefaultFontFamily;
             Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
 
             var root = new DockPanel { Margin = new Thickness(16) };
@@ -132,7 +132,7 @@ namespace GuaranteeManager
             Height = 360;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = new FontFamily("Segoe UI, Tahoma");
+            FontFamily = UiTypography.DefaultFontFamily;
             Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
 
             var text = new TextBox

@@ -56,7 +56,7 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(_list, "Reports.Table.List", "قائمة التقارير");
 
             FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = new FontFamily("Segoe UI, Tahoma");
+            FontFamily = UiTypography.DefaultFontFamily;
             Background = WorkspaceSurfaceChrome.BrushResource("Brush.Canvas");
 
             ConfigureButtons();

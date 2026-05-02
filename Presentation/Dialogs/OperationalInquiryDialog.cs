@@ -48,7 +48,7 @@ namespace GuaranteeManager
             MinHeight = 560;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = new FontFamily("Segoe UI, Tahoma");
+            FontFamily = UiTypography.DefaultFontFamily;
             Background = WorkspaceSurfaceChrome.BrushFrom("#F7F9FC");
             DialogWindowSupport.Attach(this, nameof(OperationalInquiryDialog));
 

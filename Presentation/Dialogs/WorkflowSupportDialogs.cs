@@ -30,7 +30,7 @@ namespace GuaranteeManager
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             ResizeMode = ResizeMode.NoResize;
             FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = new FontFamily("Segoe UI, Tahoma");
+            FontFamily = UiTypography.DefaultFontFamily;
             Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
             DialogWindowSupport.Attach(this, nameof(GuidedTextPromptDialog), Accept, "أكمل النافذة الحالية أو أغلقها أولاً.");
 
@@ -174,7 +174,7 @@ namespace GuaranteeManager
             MinHeight = 420;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = new FontFamily("Segoe UI, Tahoma");
+            FontFamily = UiTypography.DefaultFontFamily;
             Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
             DialogWindowSupport.Attach(this, nameof(EligibleGuaranteePickerDialog), Accept, "أكمل اختيار الضمان المؤهل أو أغلق النافذة أولاً.");
 
@@ -289,7 +289,7 @@ namespace GuaranteeManager
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             ResizeMode = ResizeMode.NoResize;
             FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = new FontFamily("Segoe UI, Tahoma");
+            FontFamily = UiTypography.DefaultFontFamily;
             Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
             DialogWindowSupport.Attach(this, nameof(AttachResponseDocumentDialog), Accept, "أكمل إلحاق مستند الرد أو أغلق النافذة الحالية أولاً.");
             UiInstrumentation.Identify(this, "Dialog.AttachResponseDocument", Title);
