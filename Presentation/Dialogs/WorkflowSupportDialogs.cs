@@ -72,7 +72,7 @@ namespace GuaranteeManager
                 Text = prompt,
                 FontSize = 12.5,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#111827")),
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A")),
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 10)
             });
@@ -81,7 +81,7 @@ namespace GuaranteeManager
                 Text = label,
                 FontSize = 11.5,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#475569")),
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B")),
                 Margin = new Thickness(0, 0, 0, 6)
             });
 
@@ -104,14 +104,14 @@ namespace GuaranteeManager
                     Margin = new Thickness(0, 12, 0, 0),
                     Padding = new Thickness(10, 8, 10, 8),
                     CornerRadius = new CornerRadius(6),
-                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF7ED")),
-                    BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FED7AA")),
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF9EC")),
+                    BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F6DE99")),
                     BorderThickness = new Thickness(1),
                     Child = new TextBlock
                     {
                         Text = hint,
                         FontSize = 11,
-                        Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#9A3412")),
+                        Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E09408")),
                         TextWrapping = TextWrapping.Wrap
                     }
                 });
@@ -187,7 +187,7 @@ namespace GuaranteeManager
                 Text = title,
                 FontSize = 17,
                 FontWeight = FontWeights.Bold,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#111827"))
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"))
             });
             header.Children.Add(new TextBlock
             {
@@ -331,7 +331,7 @@ namespace GuaranteeManager
                 Text = $"{item.GuaranteeNo} | {item.Request.TypeLabel} | {item.Request.StatusLabel}",
                 FontSize = 13,
                 FontWeight = FontWeights.Bold,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#111827"))
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"))
             });
             content.Children.Add(new TextBlock
             {
@@ -371,7 +371,7 @@ namespace GuaranteeManager
                 Text = "ملاحظات إضافية",
                 FontSize = 11.5,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#475569")),
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B")),
                 Margin = new Thickness(0, 0, 0, 6)
             });
 

@@ -104,7 +104,7 @@ namespace GuaranteeManager
                     "---",
                     WorkspaceSurfaceChrome.BrushFrom("#64748B"),
                     WorkspaceSurfaceChrome.BrushFrom("#F8FAFC"),
-                    WorkspaceSurfaceChrome.BrushFrom("#E2E8F0"),
+                    WorkspaceSurfaceChrome.BrushFrom("#E3E9F2"),
                     "---",
                     "---",
                     "---",
@@ -210,7 +210,7 @@ namespace GuaranteeManager
                 ? WorkspaceSurfaceChrome.BrushFrom("#FFF9EC")
                 : WorkspaceSurfaceChrome.BrushFrom("#F2FBF4");
         public Brush PortfolioStatusBorder => Count == 0
-            ? WorkspaceSurfaceChrome.BrushFrom("#E2E8F0")
+            ? WorkspaceSurfaceChrome.BrushFrom("#E3E9F2")
             : Expired > 0
                 ? WorkspaceSurfaceChrome.BrushFrom("#F7C5C5")
             : ExpiringSoon > 0

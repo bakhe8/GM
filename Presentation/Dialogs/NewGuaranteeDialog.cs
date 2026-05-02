@@ -325,7 +325,7 @@ namespace GuaranteeManager
                     Text = Path.GetFileName(attachment.FilePath),
                     FontSize = 10.8,
                     FontWeight = FontWeights.SemiBold,
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1F2937")),
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A")),
                     VerticalAlignment = VerticalAlignment.Center,
                     TextTrimming = TextTrimming.CharacterEllipsis,
                     FlowDirection = FlowDirection.LeftToRight
@@ -350,9 +350,9 @@ namespace GuaranteeManager
                     Width = 68,
                     Height = 28,
                     FontSize = 10,
-                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEF2F2")),
-                    BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FECACA")),
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DC2626"))
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF3F3")),
+                    BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7C5C5")),
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#EF4444"))
                 };
                 removeButton.Click += (_, _) =>
                 {
@@ -461,7 +461,7 @@ namespace GuaranteeManager
                 Text = text,
                 FontSize = 12,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#111827"))
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"))
             };
         }
 
@@ -495,7 +495,7 @@ namespace GuaranteeManager
             panel.Children.Add(BuildLabel("أثر الحفظ"));
 
             ConfigureConsequenceText(_consequenceSummary, 12, FontWeights.SemiBold, "#0F172A");
-            ConfigureConsequenceText(_consequencePrimary, 11, FontWeights.Normal, "#334155");
+            ConfigureConsequenceText(_consequencePrimary, 11, FontWeights.Normal, "#64748B");
             ConfigureConsequenceText(_consequenceSecondary, 10.8, FontWeights.Normal, "#64748B");
             _consequencePrimary.Margin = new Thickness(0, 4, 0, 0);
             _consequenceSecondary.Margin = new Thickness(0, 4, 0, 0);
@@ -602,9 +602,9 @@ namespace GuaranteeManager
             ApplyConsequenceText(_consequencePrimary, primary);
             ApplyConsequenceText(_consequenceSecondary, secondary);
 
-            _consequenceCard.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(warningState ? "#FFFBEB" : "#EFF6FF"));
-            _consequenceCard.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(warningState ? "#FCD34D" : "#BFDBFE"));
-            _consequenceSummary.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(warningState ? "#92400E" : "#1D4ED8"));
+            _consequenceCard.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(warningState ? "#FFF9EC" : "#EFF6FF"));
+            _consequenceCard.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(warningState ? "#F6DE99" : "#BFDBFE"));
+            _consequenceSummary.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(warningState ? "#E09408" : "#1D4ED8"));
         }
 
         private static void ConfigureConsequenceText(TextBlock textBlock, double fontSize, FontWeight fontWeight, string colorHex)

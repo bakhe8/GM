@@ -388,7 +388,7 @@ namespace GuaranteeManager
                     Text = $"{attachment.OriginalFileName} • {attachment.DocumentTypeLabel}",
                     FontSize = 10.8,
                     FontWeight = FontWeights.SemiBold,
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(removed ? "#94A3B8" : "#1F2937")),
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(removed ? "#94A3B8" : "#0F172A")),
                     VerticalAlignment = VerticalAlignment.Center,
                     TextTrimming = TextTrimming.CharacterEllipsis,
                     FlowDirection = FlowDirection.LeftToRight
@@ -415,13 +415,13 @@ namespace GuaranteeManager
                     FontSize = 10,
                     Background = removed
                         ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#EFF6FF"))
-                        : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEF2F2")),
+                        : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF3F3")),
                     BorderBrush = removed
                         ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#BFDBFE"))
-                        : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FECACA")),
+                        : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7C5C5")),
                     Foreground = removed
                         ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2563EB"))
-                        : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DC2626"))
+                        : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#EF4444"))
                 };
                 toggleButton.Click += (_, _) =>
                 {
@@ -460,7 +460,7 @@ namespace GuaranteeManager
                     Text = Path.GetFileName(attachment.FilePath),
                     FontSize = 10.8,
                     FontWeight = FontWeights.SemiBold,
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1F2937")),
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A")),
                     VerticalAlignment = VerticalAlignment.Center,
                     TextTrimming = TextTrimming.CharacterEllipsis,
                     FlowDirection = FlowDirection.LeftToRight
@@ -485,9 +485,9 @@ namespace GuaranteeManager
                     Width = 68,
                     Height = 28,
                     FontSize = 10,
-                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEF2F2")),
-                    BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FECACA")),
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DC2626"))
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF3F3")),
+                    BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7C5C5")),
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#EF4444"))
                 };
                 removeButton.Click += (_, _) =>
                 {
@@ -609,7 +609,7 @@ namespace GuaranteeManager
                 Text = text,
                 FontSize = 12,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#111827"))
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"))
             };
         }
 
@@ -643,7 +643,7 @@ namespace GuaranteeManager
             panel.Children.Add(BuildLabel("أثر الحفظ"));
 
             ConfigureConsequenceText(_consequenceSummary, 12, FontWeights.SemiBold, "#0F172A");
-            ConfigureConsequenceText(_consequencePrimary, 11, FontWeights.Normal, "#334155");
+            ConfigureConsequenceText(_consequencePrimary, 11, FontWeights.Normal, "#64748B");
             ConfigureConsequenceText(_consequenceSecondary, 10.8, FontWeights.Normal, "#64748B");
             _consequencePrimary.Margin = new Thickness(0, 4, 0, 0);
             _consequenceSecondary.Margin = new Thickness(0, 4, 0, 0);
@@ -817,9 +817,9 @@ namespace GuaranteeManager
             ApplyConsequenceText(_consequencePrimary, primary);
             ApplyConsequenceText(_consequenceSecondary, secondary);
 
-            string background = neutralState ? "#F8FAFC" : warningState ? "#FFFBEB" : "#EFF6FF";
-            string border = neutralState ? "#D8E1EE" : warningState ? "#FCD34D" : "#BFDBFE";
-            string summaryColor = neutralState ? "#334155" : warningState ? "#92400E" : "#1D4ED8";
+            string background = neutralState ? "#F8FAFC" : warningState ? "#FFF9EC" : "#EFF6FF";
+            string border = neutralState ? "#D8E1EE" : warningState ? "#F6DE99" : "#BFDBFE";
+            string summaryColor = neutralState ? "#64748B" : warningState ? "#E09408" : "#1D4ED8";
 
             _consequenceCard.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(background));
             _consequenceCard.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(border));

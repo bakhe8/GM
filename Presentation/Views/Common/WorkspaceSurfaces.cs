@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -608,7 +608,7 @@ namespace GuaranteeManager
                 Text = label,
                 FontSize = 10,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = BrushFrom("#94A3C8"),
+                Foreground = BrushFrom("#94A3B8"),
                 VerticalAlignment = VerticalAlignment.Center
             };
         }

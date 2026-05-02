@@ -22,7 +22,7 @@ namespace GuaranteeManager
         private readonly IExcelService _excel;
         private readonly Border _nextStepCard = new();
         private readonly TextBlock _nextStepSummary = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#0F172A");
-        private readonly TextBlock _nextStepHint = WorkspaceSurfaceChrome.Text(10.8, FontWeights.Normal, "#475569");
+        private readonly TextBlock _nextStepHint = WorkspaceSurfaceChrome.Text(10.8, FontWeights.Normal, "#64748B");
         private readonly Button _nextStepActionButton = new();
         private Action? _nextStepAction;
 
@@ -137,7 +137,7 @@ namespace GuaranteeManager
             });
             header.Children.Add(titleStack);
 
-            var closeButton = WorkspaceSurfaceChrome.ActionButton("إغلاق", "White", "#D8E1EE", "#1F2937");
+            var closeButton = WorkspaceSurfaceChrome.ActionButton("إغلاق", "White", "#D8E1EE", "#0F172A");
             UiInstrumentation.Identify(closeButton, "Dialog.OperationalInquiry.CloseButton", "إغلاق الاستعلام التشغيلي");
             closeButton.MinWidth = 92;
             closeButton.Click += (_, _) => Close();
@@ -511,7 +511,7 @@ namespace GuaranteeManager
                 contextButtonHint = $"يفتح {BuildGuaranteeHandoffSectionText(contextArea, contextRequestId)}.";
             }
 
-            Button openGuaranteeContextButton = WorkspaceSurfaceChrome.ActionButton(contextButtonText, "White", "#D8E1EE", "#1F2937");
+            Button openGuaranteeContextButton = WorkspaceSurfaceChrome.ActionButton(contextButtonText, "White", "#D8E1EE", "#0F172A");
             openGuaranteeContextButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             UiInstrumentation.Identify(openGuaranteeContextButton, "Dialog.OperationalInquiry.OpenGuaranteeContextButton", "فتح وجهة الضمان من الاستعلام");
             openGuaranteeContextButton.IsEnabled = canOpenGuaranteeContext;
@@ -521,7 +521,7 @@ namespace GuaranteeManager
             ToolTipService.SetShowOnDisabled(openGuaranteeContextButton, true);
             openGuaranteeContextButton.Click += (_, _) => OpenGuaranteeContext();
 
-            Button attachmentsButton = WorkspaceSurfaceChrome.ActionButton("مرفقات الإصدار", "White", "#D8E1EE", "#1F2937");
+            Button attachmentsButton = WorkspaceSurfaceChrome.ActionButton("مرفقات الإصدار", "White", "#D8E1EE", "#0F172A");
             attachmentsButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             UiInstrumentation.Identify(attachmentsButton, "Dialog.OperationalInquiry.OpenAttachmentsButton", "فتح مرفقات الإصدار");
             attachmentsButton.IsEnabled = hasAttachments;
@@ -531,7 +531,7 @@ namespace GuaranteeManager
             ToolTipService.SetShowOnDisabled(attachmentsButton, true);
             attachmentsButton.Click += (_, _) => OpenAttachments();
 
-            Button openLetterButton = WorkspaceSurfaceChrome.ActionButton("خطاب الطلب", "White", "#D8E1EE", "#1F2937");
+            Button openLetterButton = WorkspaceSurfaceChrome.ActionButton("خطاب الطلب", "White", "#D8E1EE", "#0F172A");
             openLetterButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             UiInstrumentation.Identify(openLetterButton, "Dialog.OperationalInquiry.OpenLetterButton", "فتح خطاب الطلب");
             openLetterButton.IsEnabled = _result.CanOpenRequestLetter;
@@ -541,7 +541,7 @@ namespace GuaranteeManager
             ToolTipService.SetShowOnDisabled(openLetterButton, true);
             openLetterButton.Click += (_, _) => OpenLetter();
 
-            Button openResponseButton = WorkspaceSurfaceChrome.ActionButton("رد البنك", "White", "#D8E1EE", "#1F2937");
+            Button openResponseButton = WorkspaceSurfaceChrome.ActionButton("رد البنك", "White", "#D8E1EE", "#0F172A");
             openResponseButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             UiInstrumentation.Identify(openResponseButton, "Dialog.OperationalInquiry.OpenResponseButton", "فتح رد البنك");
             openResponseButton.IsEnabled = _result.CanOpenResponseDocument;
@@ -551,7 +551,7 @@ namespace GuaranteeManager
             ToolTipService.SetShowOnDisabled(openResponseButton, true);
             openResponseButton.Click += (_, _) => OpenResponse();
 
-            Button exportButton = WorkspaceSurfaceChrome.ActionButton("تقرير الضمان", "White", "#D8E1EE", "#1F2937");
+            Button exportButton = WorkspaceSurfaceChrome.ActionButton("تقرير الضمان", "White", "#D8E1EE", "#0F172A");
             exportButton.Style = WorkspaceSurfaceChrome.Style("BaseButton");
             UiInstrumentation.Identify(exportButton, "Dialog.OperationalInquiry.ExportReportButton", "تصدير تقرير الضمان");
             exportButton.IsEnabled = guarantee != null;

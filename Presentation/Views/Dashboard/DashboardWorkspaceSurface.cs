@@ -187,7 +187,7 @@ namespace GuaranteeManager
 
             strip.Children.Add(BuildGuidanceCard(
                 "Icon.ShieldLock",
-                "#3B82F6",
+                "#2563EB",
                 _guideTitle,
                 _guidePrimary,
                 _guideSecondary,
@@ -197,7 +197,7 @@ namespace GuaranteeManager
                 "دليل اليوم الذكي"));
             strip.Children.Add(BuildGuidanceCard(
                 "Icon.Lightbulb",
-                "#EAB308",
+                "#E09408",
                 _recommendationTitle,
                 _recommendationPrimary,
                 _recommendationSecondary,
@@ -809,7 +809,7 @@ namespace GuaranteeManager
             {
                 FontSize = 11.3,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#1F2937"),
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                 Margin = new Thickness(0, 5, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Right,
                 FlowDirection = FlowDirection.RightToLeft,
@@ -891,7 +891,7 @@ namespace GuaranteeManager
                 Text = text,
                 FontSize = 11,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#94A3C8"),
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#94A3B8"),
                 VerticalAlignment = VerticalAlignment.Center
             };
         }

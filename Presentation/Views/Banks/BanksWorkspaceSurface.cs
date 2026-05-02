@@ -625,7 +625,7 @@ namespace GuaranteeManager
             {
                 FontSize = fontSize,
                 FontWeight = fontWeight,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#111827"),
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                 TextAlignment = TextAlignment.Right,
                 TextWrapping = TextWrapping.Wrap
             };

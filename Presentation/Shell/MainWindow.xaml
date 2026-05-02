@@ -1,4 +1,4 @@
-﻿<Window x:Class="GuaranteeManager.MainWindow"
+<Window x:Class="GuaranteeManager.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:GuaranteeManager"
@@ -161,7 +161,7 @@
                                 <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding CurrentWorkspaceKey}" Value="{x:Static local:ShellWorkspaceKeys.Dashboard}">
-                                            <Setter Property="Background" Value="#1D5ED8" />
+                                            <Setter Property="Background" Value="#1D4ED8" />
                                             <Setter Property="Foreground" Value="White" />
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -185,7 +185,7 @@
                                 <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding CurrentWorkspaceKey}" Value="{x:Static local:ShellWorkspaceKeys.Guarantees}">
-                                            <Setter Property="Background" Value="#1D5ED8" />
+                                            <Setter Property="Background" Value="#1D4ED8" />
                                             <Setter Property="Foreground" Value="White" />
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -209,7 +209,7 @@
                                 <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding CurrentWorkspaceKey}" Value="{x:Static local:ShellWorkspaceKeys.Banks}">
-                                            <Setter Property="Background" Value="#1D5ED8" />
+                                            <Setter Property="Background" Value="#1D4ED8" />
                                             <Setter Property="Foreground" Value="White" />
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -233,7 +233,7 @@
                                 <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding CurrentWorkspaceKey}" Value="{x:Static local:ShellWorkspaceKeys.Reports}">
-                                            <Setter Property="Background" Value="#1D5ED8" />
+                                            <Setter Property="Background" Value="#1D4ED8" />
                                             <Setter Property="Foreground" Value="White" />
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -259,7 +259,7 @@
                                 <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding CurrentWorkspaceKey}" Value="{x:Static local:ShellWorkspaceKeys.Settings}">
-                                            <Setter Property="Background" Value="#1D5ED8" />
+                                            <Setter Property="Background" Value="#1D4ED8" />
                                             <Setter Property="Foreground" Value="White" />
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -314,18 +314,18 @@
                                automation:AutomationProperties.AutomationId="Shell.Status.Primary"
                                automation:AutomationProperties.HelpText="{Binding ShellStatusPrimaryText}"
                                automation:AutomationProperties.ItemStatus="{Binding ShellStatusPrimaryText}" />
-                    <Border Width="1" Height="12" Background="#2A4B76" Margin="10,0" />
+                    <Border Width="1" Height="12" Background="#24466F" Margin="10,0" />
                     <TextBlock x:Name="ShellStatusSecondaryBlock"
                                Text="{Binding ShellStatusSecondaryText}"
-                               Foreground="#94A3C8"
+                               Foreground="#94A3B8"
                                FontSize="11"
                                VerticalAlignment="Center"
                                automation:AutomationProperties.AutomationId="Shell.Status.Secondary"
                                automation:AutomationProperties.HelpText="{Binding ShellStatusSecondaryText}"
                                automation:AutomationProperties.ItemStatus="{Binding ShellStatusSecondaryText}" />
-                    <Border Width="1" Height="12" Background="#2A4B76" Margin="10,0" />
+                    <Border Width="1" Height="12" Background="#24466F" Margin="10,0" />
                     <TextBlock Text="{Binding CurrentWorkspaceDisplayTitle}"
-                               Foreground="#94A3C8"
+                               Foreground="#94A3B8"
                                FontSize="11"
                                VerticalAlignment="Center" />
                 </StackPanel>
@@ -334,12 +334,12 @@
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
                     <TextBlock Text="{x:Static local:AppReleaseInfo.VersionTag}"
-                                Foreground="#94A3C8"
+                                Foreground="#94A3B8"
                                 FontSize="11"
                                 VerticalAlignment="Center" />
-                    <Border Width="1" Height="12" Background="#2A4B76" Margin="10,0" />
+                    <Border Width="1" Height="12" Background="#24466F" Margin="10,0" />
                     <TextBlock Text="{x:Static local:AppReleaseInfo.RuntimeTag}"
-                                Foreground="#94A3C8"
+                                Foreground="#94A3B8"
                                 FontSize="11"
                                 VerticalAlignment="Center" />
                 </StackPanel>
@@ -355,7 +355,7 @@
                 SnapsToDevicePixels="True">
             <Border.Style>
                 <Style TargetType="Border">
-                    <Setter Property="BorderBrush" Value="#2A3F63" />
+                    <Setter Property="BorderBrush" Value="#24466F" />
                     <Setter Property="Opacity" Value="0.75" />
                     <Style.Triggers>
                         <MultiDataTrigger>
@@ -372,7 +372,7 @@
                                 <Condition Binding="{Binding IsActive, RelativeSource={RelativeSource AncestorType=Window}}" Value="False" />
                                 <Condition Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Normal" />
                             </MultiDataTrigger.Conditions>
-                            <Setter Property="BorderBrush" Value="#5B6980" />
+                            <Setter Property="BorderBrush" Value="#64748B" />
                             <Setter Property="Opacity" Value="0.7" />
                         </MultiDataTrigger>
 

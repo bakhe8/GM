@@ -4,11 +4,11 @@
     <SolidColorBrush x:Key="Brush.Sidebar" Color="#04193F" />
     <SolidColorBrush x:Key="Brush.Canvas" Color="#F7F9FC" />
     <SolidColorBrush x:Key="Brush.Card" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="Brush.Border" Color="#E1E8F2" />
-    <SolidColorBrush x:Key="Brush.Text" Color="#111827" />
-    <SolidColorBrush x:Key="Brush.Muted" Color="#94A3C8" />
+    <SolidColorBrush x:Key="Brush.Border" Color="#E3E9F2" />
+    <SolidColorBrush x:Key="Brush.Text" Color="#0F172A" />
+    <SolidColorBrush x:Key="Brush.Muted" Color="#94A3B8" />
     <SolidColorBrush x:Key="Brush.Blue" Color="#2563EB" />
     <SolidColorBrush x:Key="Brush.Green" Color="#16A34A" />
-    <SolidColorBrush x:Key="Brush.Orange" Color="#F59E0B" />
+    <SolidColorBrush x:Key="Brush.Orange" Color="#E09408" />
     <SolidColorBrush x:Key="Brush.Red" Color="#EF4444" />
 </ResourceDictionary>

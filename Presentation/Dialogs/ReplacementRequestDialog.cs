@@ -238,7 +238,7 @@ namespace GuaranteeManager
                 {
                     Text = text,
                     FontSize = 12,
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151")),
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A")),
                     VerticalAlignment = VerticalAlignment.Center
                 }
             };
@@ -263,7 +263,7 @@ namespace GuaranteeManager
                 Text = text,
                 FontSize = 12,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#111827"))
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"))
             };
         }
 

@@ -17,7 +17,7 @@
     </Style>
 
     <Style x:Key="ReferenceTableHeaderDivider" TargetType="Border">
-        <Setter Property="BorderBrush" Value="#E1E8F2" />
+        <Setter Property="BorderBrush" Value="#E3E9F2" />
         <Setter Property="BorderThickness" Value="0,0,0,1" />
     </Style>
 
@@ -39,7 +39,7 @@
     <Style x:Key="TableCellText" TargetType="TextBlock">
         <Setter Property="FontSize" Value="11.2" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="#1B2436" />
+        <Setter Property="Foreground" Value="#0F172A" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
@@ -76,7 +76,7 @@
                             MinHeight="40"
                             Margin="2,0"
                             Background="White"
-                            BorderBrush="#E7EDF5"
+                            BorderBrush="#EDF2F7"
                             BorderThickness="0,1,0,0"
                             ClipToBounds="True">
                         <Grid>
@@ -94,7 +94,7 @@
                             <Setter TargetName="SelectionBar" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Root" Property="Background" Value="#F8FAFF" />
+                            <Setter TargetName="Root" Property="Background" Value="#F8FBFF" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -119,7 +119,7 @@
         <Setter Property="MinWidth" Value="28" />
         <Setter Property="Height" Value="28" />
         <Setter Property="Padding" Value="0" />
-        <Setter Property="BorderBrush" Value="#E2E8F0" />
+        <Setter Property="BorderBrush" Value="#E3E9F2" />
     </Style>
 
     <Style x:Key="ReferenceTablePagerActiveButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">

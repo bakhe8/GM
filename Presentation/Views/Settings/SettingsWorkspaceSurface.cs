@@ -582,7 +582,7 @@ namespace GuaranteeManager
             {
                 FontSize = fontSize,
                 FontWeight = fontWeight,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#111827"),
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                 TextAlignment = TextAlignment.Right,
                 TextWrapping = TextWrapping.Wrap
             };
@@ -645,7 +645,7 @@ namespace GuaranteeManager
                 Text = label,
                 FontSize = 10,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = WorkspaceSurfaceChrome.BrushFrom("#94A3C8"),
+                Foreground = WorkspaceSurfaceChrome.BrushFrom("#94A3B8"),
                 VerticalAlignment = VerticalAlignment.Center
             });
             grid.Children.Add(labelPanel);

@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="GuaranteeManager.GuaranteesDashboardView"
+<UserControl x:Class="GuaranteeManager.GuaranteesDashboardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:automation="clr-namespace:System.Windows.Automation;assembly=PresentationCore"
@@ -182,7 +182,7 @@
                                           CommandParameter="NeedsFollowUp" />
                         </Border.InputBindings>
                         <StackPanel FlowDirection="RightToLeft" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="تحتاج متابعة" Style="{StaticResource KpiTitle}" Foreground="#C2410C" />
+                            <TextBlock Text="تحتاج متابعة" Style="{StaticResource KpiTitle}" Foreground="#E09408" />
                             <TextBlock Text="{Binding ExpiredFollowUpCount}" Style="{StaticResource KpiNumber}" Margin="0,2,0,0" />
                             <TextBlock Text="{Binding ExpiredFollowUpMeta}" Style="{StaticResource KpiMeta}" TextTrimming="CharacterEllipsis" />
                         </StackPanel>

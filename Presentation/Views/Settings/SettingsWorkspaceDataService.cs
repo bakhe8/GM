@@ -71,9 +71,9 @@ namespace GuaranteeManager
                     "---",
                     WorkspaceSurfaceChrome.BrushFrom("#64748B"),
                     WorkspaceSurfaceChrome.BrushFrom("#F8FAFC"),
-                    WorkspaceSurfaceChrome.BrushFrom("#E2E8F0"),
+                    WorkspaceSurfaceChrome.BrushFrom("#E3E9F2"),
                     "---",
-                    WorkspaceSurfaceChrome.BrushFrom("#111827"),
+                    WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                     "---",
                     "---",
                     "---");

@@ -33,10 +33,10 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Root" Property="Background" Value="#C42B1C" />
+                            <Setter TargetName="Root" Property="Background" Value="#EF4444" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Root" Property="Background" Value="#A4262C" />
+                            <Setter TargetName="Root" Property="Background" Value="#EF4444" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -49,7 +49,7 @@
         <Setter Property="MinWidth" Value="90" />
         <Setter Property="Padding" Value="12,0" />
         <Setter Property="Background" Value="White" />
-        <Setter Property="Foreground" Value="#1F2937" />
+        <Setter Property="Foreground" Value="#0F172A" />
         <Setter Property="BorderBrush" Value="#D8E1EE" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="FontSize" Value="12" />
@@ -68,11 +68,11 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Root" Property="Background" Value="#FBFCFE" />
+                            <Setter TargetName="Root" Property="Background" Value="#F8FAFC" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Root" Property="Background" Value="#F8FAFC" />
-                            <Setter TargetName="Root" Property="BorderBrush" Value="#E2E8F0" />
+                            <Setter TargetName="Root" Property="BorderBrush" Value="#E3E9F2" />
                             <Setter Property="Foreground" Value="#94A3B8" />
                             <Setter Property="Cursor" Value="Arrow" />
                         </Trigger>
@@ -110,7 +110,7 @@
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Root" Property="Background" Value="#F8FAFC" />
-                            <Setter TargetName="Root" Property="BorderBrush" Value="#E2E8F0" />
+                            <Setter TargetName="Root" Property="BorderBrush" Value="#E3E9F2" />
                             <Setter Property="Foreground" Value="#94A3B8" />
                             <Setter Property="Cursor" Value="Arrow" />
                         </Trigger>
@@ -194,7 +194,7 @@
     </Style>
 
     <Style x:Key="NavButton.Active" TargetType="Button" BasedOn="{StaticResource NavButton}">
-        <Setter Property="Background" Value="#1D5ED8" />
+        <Setter Property="Background" Value="#1D4ED8" />
         <Setter Property="Foreground" Value="White" />
     </Style>
 </ResourceDictionary>

@@ -30,7 +30,7 @@ namespace GuaranteeManager
                 Text = label,
                 FontSize = 13,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#111827")),
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A")),
                 Margin = new Thickness(0, 0, 0, 8)
             });
 

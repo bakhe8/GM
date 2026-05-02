@@ -431,9 +431,9 @@ namespace GuaranteeManager
         public Brush ShellStatusPrimaryBrush => _shellStatus.Tone switch
         {
             ShellStatusTone.Success => Brushes.White,
-            ShellStatusTone.Warning => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FDE68A")),
-            ShellStatusTone.Error => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FCA5A5")),
-            _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D7E6FF"))
+            ShellStatusTone.Warning => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F6DE99")),
+            ShellStatusTone.Error => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7C5C5")),
+            _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#BFDBFE"))
         };
 
         public string SearchText
