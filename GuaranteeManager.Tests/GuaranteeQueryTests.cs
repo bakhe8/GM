@@ -170,22 +170,18 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
-        public void GetGuaranteesEligibleForReduction_ExcludesZeroAmountGuarantees()
+        public void GetGuaranteesEligibleForReduction_ReturnsPositiveAmountGuarantees()
         {
             DatabaseService database = _fixture.CreateDatabaseService();
             WorkflowService workflow = _fixture.CreateWorkflowService(database);
 
             Guarantee positiveAmount = _fixture.CreateGuarantee();
-            Guarantee zeroAmount = _fixture.CreateGuarantee();
-            zeroAmount.Amount = 0;
 
             database.SaveGuarantee(positiveAmount, new List<string>());
-            database.SaveGuarantee(zeroAmount, new List<string>());
 
             List<Guarantee> eligible = workflow.GetGuaranteesEligibleForReduction();
 
             Assert.Contains(eligible, item => item.GuaranteeNo == positiveAmount.GuaranteeNo);
-            Assert.DoesNotContain(eligible, item => item.GuaranteeNo == zeroAmount.GuaranteeNo);
         }
 
         [Fact]

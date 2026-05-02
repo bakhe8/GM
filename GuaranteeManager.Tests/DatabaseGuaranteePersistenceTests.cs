@@ -50,6 +50,32 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void SaveGuarantee_RejectsNegativeAmount()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            Guarantee input = _fixture.CreateGuarantee();
+            input.Amount = -1000m;
+
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                () => database.SaveGuarantee(input, new List<string>()));
+
+            Assert.Contains("بالسالب", exception.Message);
+        }
+
+        [Fact]
+        public void SaveGuarantee_RejectsZeroAmount()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            Guarantee input = _fixture.CreateGuarantee();
+            input.Amount = 0m;
+
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                () => database.SaveGuarantee(input, new List<string>()));
+
+            Assert.Contains("أكبر من صفر", exception.Message);
+        }
+
+        [Fact]
         public void AddBankReference_PersistsStandaloneBankAndExposesItAsUniqueBank()
         {
             DatabaseService database = _fixture.CreateDatabaseService();

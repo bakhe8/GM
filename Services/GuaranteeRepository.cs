@@ -28,7 +28,7 @@ namespace GuaranteeManager.Services
         public void SaveGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> attachments)
         {
             using var scope = SimpleLogger.BeginScope("GuaranteeRepository.SaveGuarantee");
-            ArabicAmountFormatter.EnsureValidSaudiRiyalAmount(g.Amount);
+            ArabicAmountFormatter.EnsurePositiveSaudiRiyalAmount(g.Amount);
             g.Amount = ArabicAmountFormatter.NormalizeSaudiRiyalAmount(g.Amount);
             List<AttachmentInput> attachmentInputs = attachments ?? new List<AttachmentInput>();
             List<StagedAttachmentFile> stagedAttachments = _attachmentStorage.StageCopies(attachmentInputs.Select(attachment => attachment.FilePath));
@@ -523,7 +523,7 @@ namespace GuaranteeManager.Services
         public int CreateNewVersionWithAttachments(Guarantee newG, int sourceId, List<AttachmentInput> newAttachments, List<AttachmentRecord> inheritedAttachments)
         {
             using var scope = SimpleLogger.BeginScope("GuaranteeRepository.CreateNewVersion");
-            ArabicAmountFormatter.EnsureValidSaudiRiyalAmount(newG.Amount);
+            ArabicAmountFormatter.EnsurePositiveSaudiRiyalAmount(newG.Amount);
             newG.Amount = ArabicAmountFormatter.NormalizeSaudiRiyalAmount(newG.Amount);
             List<AttachmentInput> attachmentInputs = newAttachments ?? new List<AttachmentInput>();
             List<StagedAttachmentFile> stagedAttachments = _attachmentStorage.StageCopies(attachmentInputs.Select(attachment => attachment.FilePath));

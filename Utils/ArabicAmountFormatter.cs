@@ -10,6 +10,7 @@ namespace GuaranteeManager.Utils
 
         public static string FormatNumber(decimal amount, int decimals = 2)
         {
+            EnsureValidSaudiRiyalAmount(amount);
             string format = decimals <= 0 ? "N0" : $"N{decimals.ToString(CultureInfo.InvariantCulture)}";
             return amount.ToString(format, CultureInfo.InvariantCulture);
         }
@@ -47,26 +48,40 @@ namespace GuaranteeManager.Utils
 
         public static void EnsureValidSaudiRiyalAmount(decimal amount, string fieldName = "المبلغ")
         {
+            if (amount < 0)
+            {
+                throw new InvalidOperationException($"{fieldName} لا يمكن أن يكون بالسالب.");
+            }
+
             if (!HasValidHalalaPrecision(amount))
             {
                 throw new InvalidOperationException($"{fieldName} لا يمكن أن يحتوي على أكثر من خانتين للهلل.");
             }
         }
 
+        public static void EnsurePositiveSaudiRiyalAmount(decimal amount, string fieldName = "المبلغ")
+        {
+            EnsureValidSaudiRiyalAmount(amount, fieldName);
+            if (amount <= 0)
+            {
+                throw new InvalidOperationException($"{fieldName} يجب أن يكون أكبر من صفر.");
+            }
+        }
+
         public static string FormatSaudiRiyalsInWords(decimal amount)
         {
-            decimal rounded = Math.Round(Math.Abs(amount), 2, MidpointRounding.AwayFromZero);
+            EnsureValidSaudiRiyalAmount(amount);
+            decimal rounded = NormalizeSaudiRiyalAmount(amount);
             long riyals = (long)Math.Floor(rounded);
             int halalas = (int)((rounded - riyals) * 100m);
-            string prefix = amount < 0 ? "سالب " : string.Empty;
 
             string riyalText = $"{NumberToArabicWords(riyals)} ريال سعودي";
             if (halalas == 0)
             {
-                return prefix + riyalText;
+                return riyalText;
             }
 
-            return $"{prefix}{riyalText} و{NumberToArabicWords(halalas)} هللة";
+            return $"{riyalText} و{NumberToArabicWords(halalas)} هللة";
         }
 
         public static string FormatSaudiRiyalsForLetter(decimal amount)
@@ -76,9 +91,9 @@ namespace GuaranteeManager.Utils
 
         public static string NumberToArabicWords(decimal amount)
         {
-            long number = (long)Math.Round(Math.Abs(amount), MidpointRounding.AwayFromZero);
-            string prefix = amount < 0 ? "سالب " : string.Empty;
-            return prefix + NumberToArabicWords(number);
+            EnsureValidSaudiRiyalAmount(amount, "الرقم");
+            long number = (long)Math.Round(amount, MidpointRounding.AwayFromZero);
+            return NumberToArabicWords(number);
         }
 
         private static string NumberToArabicWords(long number)

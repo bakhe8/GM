@@ -32,7 +32,7 @@ namespace GuaranteeManager.Services
         {
             if (newAmount.HasValue)
             {
-                ArabicAmountFormatter.EnsureValidSaudiRiyalAmount(newAmount.Value, "المبلغ الناتج");
+                ArabicAmountFormatter.EnsurePositiveSaudiRiyalAmount(newAmount.Value, "المبلغ الناتج");
                 newAmount = ArabicAmountFormatter.NormalizeSaudiRiyalAmount(newAmount.Value);
             }
 

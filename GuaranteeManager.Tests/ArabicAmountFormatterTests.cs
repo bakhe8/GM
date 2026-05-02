@@ -15,9 +15,12 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
-        public void FormatSaudiRiyals_PutsSymbolLeftOfNumberAndNegativeSign()
+        public void FormatSaudiRiyals_RejectsNegativeAmounts()
         {
-            Assert.Equal("\u20C1 -1,250.00", ArabicAmountFormatter.FormatSaudiRiyals(-1250m));
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                () => ArabicAmountFormatter.FormatSaudiRiyals(-1250m));
+
+            Assert.Contains("بالسالب", exception.Message);
         }
 
         [Fact]
@@ -31,6 +34,7 @@ namespace GuaranteeManager.Tests
         [InlineData("1,250.50", true, 1250.50)]
         [InlineData("1,250.500", false, 0)]
         [InlineData("1,250.555", false, 0)]
+        [InlineData("-1", false, 0)]
         [InlineData("0", false, 0)]
         public void TryParsePositiveSaudiRiyalAmount_RequiresPositiveAmountWithTwoHalalaDigits(
             string value,
@@ -44,6 +48,15 @@ namespace GuaranteeManager.Tests
             {
                 Assert.Equal(expectedAmount, amount);
             }
+        }
+
+        [Fact]
+        public void FormatSaudiRiyalsInWords_RejectsNegativeAmounts()
+        {
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                () => ArabicAmountFormatter.FormatSaudiRiyalsInWords(-100m));
+
+            Assert.Contains("بالسالب", exception.Message);
         }
 
         [Fact]
