@@ -591,7 +591,7 @@ namespace GuaranteeManager
                 AddHeader(_tableHeaderInner, "الموعد", 2, false);
             }
 
-            AddHeader(_tableHeaderInner, "المبلغ", 3, false);
+            AddHeader(_tableHeaderInner, "المبلغ", 3, true);
             AddHeader(_tableHeaderInner, "البنك", 4, true);
             AddHeader(_tableHeaderInner, "المطلوب", 5, true);
             AddHeader(_tableHeaderInner, "المورد", 6, true);

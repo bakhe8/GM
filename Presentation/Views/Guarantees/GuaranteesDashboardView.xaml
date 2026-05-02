@@ -274,7 +274,7 @@
                                 <TextBlock Grid.Column="1" Text="حالة الوقت" Style="{StaticResource TableHeaderText}" />
                                 <TextBlock Grid.Column="2" Text="تاريخ الانتهاء" Style="{StaticResource TableHeaderText}" />
                                 <TextBlock Grid.Column="3" Text="تاريخ الإصدار" Style="{StaticResource TableHeaderText}" />
-                                <TextBlock Grid.Column="4" Text="المبلغ" Style="{StaticResource TableHeaderText}" />
+                                <TextBlock Grid.Column="4" Text="المبلغ" Style="{StaticResource TableHeaderRight}" />
                                 <TextBlock Grid.Column="5" Text="البنك" Style="{StaticResource TableHeaderRight}" />
                                 <TextBlock Grid.Column="6" Text="المورد" Style="{StaticResource TableHeaderRight}" />
                                 <TextBlock Grid.Column="7" Text="رقم الضمان" Style="{StaticResource TableHeaderRight}" />

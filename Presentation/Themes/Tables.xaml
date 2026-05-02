@@ -52,8 +52,11 @@
         <Setter Property="TextAlignment" Value="Center" />
     </Style>
 
-    <Style x:Key="TableAmountCell" TargetType="TextBlock" BasedOn="{StaticResource TableCellCenter}">
+    <Style x:Key="TableAmountCell" TargetType="TextBlock" BasedOn="{StaticResource TableCellText}">
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="TextAlignment" Value="Right" />
         <Setter Property="FlowDirection" Value="LeftToRight" />
+        <Setter Property="Margin" Value="0,0,8,0" />
         <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
         <Setter Property="Typography.NumeralStyle" Value="Lining" />
         <Setter Property="Typography.Kerning" Value="False" />

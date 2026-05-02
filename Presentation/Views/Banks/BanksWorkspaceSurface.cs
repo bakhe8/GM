@@ -213,7 +213,7 @@ namespace GuaranteeManager
             AddHeader(inner, "نشط", 2, false);
             AddHeader(inner, "قريب الانتهاء", 3, false);
             AddHeader(inner, "منتهي", 4, false);
-            AddHeader(inner, "إجمالي المبلغ", 5, false);
+            AddHeader(inner, "إجمالي المبلغ", 5, true);
             AddHeader(inner, "المورد الأعلى", 6, true);
             AddHeader(inner, "البنك", 7, true);
             header.Children.Add(inner);
