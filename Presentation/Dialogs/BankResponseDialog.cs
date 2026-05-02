@@ -228,7 +228,7 @@ namespace GuaranteeManager
             {
                 Text = text,
                 FontSize = 12,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"))
             };
         }

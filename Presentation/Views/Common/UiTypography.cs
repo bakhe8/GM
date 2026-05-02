@@ -23,7 +23,7 @@ namespace GuaranteeManager
             EmbeddedFontFamilyPath);
 
         public static FontWeight RegularWeight => FontWeights.Normal;
-        public static FontWeight EmphasisWeight => FontWeights.SemiBold;
+        public static FontWeight EmphasisWeight => FontWeights.Medium;
         public static FontWeight StrongWeight => FontWeights.Bold;
     }
 }

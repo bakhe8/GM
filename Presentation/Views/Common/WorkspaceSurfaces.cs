@@ -434,7 +434,7 @@ namespace GuaranteeManager
         public static void ConfigureMetricLabel(TextBlock label)
         {
             label.FontSize = 13;
-            label.FontWeight = FontWeights.SemiBold;
+            label.FontWeight = FontWeights.Medium;
             label.HorizontalAlignment = HorizontalAlignment.Center;
             label.TextAlignment = TextAlignment.Center;
             label.TextTrimming = TextTrimming.CharacterEllipsis;
@@ -607,7 +607,7 @@ namespace GuaranteeManager
             {
                 Text = label,
                 FontSize = 10,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = BrushResource("Brush.Text.Muted"),
                 VerticalAlignment = VerticalAlignment.Center
             };
@@ -708,7 +708,7 @@ namespace GuaranteeManager
                 MinWidth = 102,
                 Padding = new Thickness(12, 0, 12, 0),
                 FontSize = 12,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Background = ResolveBrush(background),
                 BorderBrush = ResolveBrush(border),
                 Foreground = ResolveBrush(foreground),

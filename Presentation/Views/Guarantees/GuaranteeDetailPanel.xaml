@@ -32,7 +32,7 @@
                                 VerticalAlignment="Center"
                                 Background="{Binding SelectedGuarantee.WorkBackground}"
                                 BorderBrush="{Binding SelectedGuarantee.WorkBorder}">
-                            <TextBlock Text="{Binding SelectedGuarantee.WorkStatus}" Foreground="{Binding SelectedGuarantee.WorkBrush}" FontSize="10" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding SelectedGuarantee.WorkStatus}" Foreground="{Binding SelectedGuarantee.WorkBrush}" FontSize="10" FontWeight="Medium" />
                         </Border>
                         <StackPanel Grid.Column="1"
                                     Orientation="Horizontal"
@@ -59,7 +59,7 @@
                         <Viewbox Width="14" Height="14" VerticalAlignment="Center">
                             <Path Data="{StaticResource Icon.User}" Stroke="{StaticResource Brush.Muted}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                         </Viewbox>
-                        <TextBlock Text="{Binding SelectedGuarantee.Supplier}" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Brush.Text}" Margin="8,0,0,0" />
+                        <TextBlock Text="{Binding SelectedGuarantee.Supplier}" FontSize="16" FontWeight="Medium" Foreground="{StaticResource Brush.Text}" Margin="8,0,0,0" />
                         <Border Width="3" />
                         <Button Style="{StaticResource IconOnlyButton}"
                                 Margin="0"
@@ -75,7 +75,7 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" FlowDirection="RightToLeft" Margin="0,5,0,0" HorizontalAlignment="Right">
                         <Image Source="{Binding SelectedGuarantee.BankLogo}" Width="17" Height="17" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
-                        <TextBlock Text="{Binding SelectedGuarantee.Bank}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" Margin="7,0,0,0" />
+                        <TextBlock Text="{Binding SelectedGuarantee.Bank}" FontSize="12" FontWeight="Medium" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" Margin="7,0,0,0" />
                     </StackPanel>
                     <TextBlock Text="{Binding SelectedGuarantee.Amount}" FontSize="34" FontWeight="Bold" Foreground="{StaticResource Brush.Text.Primary}" Margin="0,12,0,0" HorizontalAlignment="Left" TextAlignment="Right" />
                     <TextBlock Text="{Binding SelectedGuarantee.AmountDescription}" FontSize="11" Foreground="{StaticResource Brush.Muted}" HorizontalAlignment="Left" TextAlignment="Right" />
@@ -104,7 +104,7 @@
                             <Border Width="7" />
                             <TextBlock Text="نوع الضمان" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding SelectedGuarantee.GuaranteeType}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding SelectedGuarantee.GuaranteeType}" FontSize="11" FontWeight="Medium" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
                         <Button Grid.Row="0"
                                 Grid.Column="3"
                                 Padding="0"
@@ -128,7 +128,7 @@
                             <Border Width="7" />
                             <TextBlock Text="{Binding SelectedGuarantee.ReferenceFieldLabel}" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding SelectedGuarantee.ReferenceNumber}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding SelectedGuarantee.ReferenceNumber}" FontSize="11" FontWeight="Medium" VerticalAlignment="Center" FlowDirection="LeftToRight" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
                         <Button Grid.Row="1"
                                 Grid.Column="3"
                                 Padding="0"
@@ -152,7 +152,7 @@
                             <Border Width="7" />
                             <TextBlock Text="تاريخ الإصدار" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding SelectedGuarantee.IssueDate}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding SelectedGuarantee.IssueDate}" FontSize="11" FontWeight="Medium" VerticalAlignment="Center" FlowDirection="LeftToRight" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
                         <Button Grid.Row="2"
                                 Grid.Column="3"
                                 Padding="0"
@@ -177,9 +177,9 @@
                             <TextBlock Text="تاريخ الانتهاء" FontSize="10" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" />
                         </StackPanel>
                         <StackPanel Grid.Row="3" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                            <TextBlock Text="{Binding SelectedGuarantee.ExpiryDate}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" FlowDirection="LeftToRight" />
+                            <TextBlock Text="{Binding SelectedGuarantee.ExpiryDate}" FontSize="11" FontWeight="Medium" VerticalAlignment="Center" FlowDirection="LeftToRight" />
                             <Border Width="7" />
-                            <TextBlock Text="{Binding SelectedGuarantee.ExpiryRemainingLabel}" FontSize="10" FontWeight="SemiBold" Foreground="{Binding SelectedGuarantee.TimeBrush}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding SelectedGuarantee.ExpiryRemainingLabel}" FontSize="10" FontWeight="Medium" Foreground="{Binding SelectedGuarantee.TimeBrush}" VerticalAlignment="Center" />
                         </StackPanel>
                         <Button Grid.Row="3"
                                 Grid.Column="3"
@@ -212,7 +212,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="السجل الزمني" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Brush.Text}" VerticalAlignment="Center" />
+                                <TextBlock Text="السجل الزمني" FontSize="13" FontWeight="Medium" Foreground="{StaticResource Brush.Text}" VerticalAlignment="Center" />
                                 <Border Grid.Column="1"
                                         CornerRadius="9"
                                         Padding="7,2"
@@ -221,7 +221,7 @@
                                         BorderThickness="1">
                                     <TextBlock Text="{Binding TimelineStationsLabel}"
                                                FontSize="9"
-                                               FontWeight="SemiBold"
+                                               FontWeight="Medium"
                                                Foreground="{StaticResource Brush.Muted}" />
                                 </Border>
                             </Grid>
@@ -248,7 +248,7 @@
                                                            Foreground="{StaticResource Brush.Muted}" />
                                                 <TextBlock Text="{Binding Time}"
                                                            FontSize="9"
-                                                           FontWeight="SemiBold"
+                                                           FontWeight="Medium"
                                                            Foreground="{StaticResource Brush.Muted}"
                                                            Margin="0,2,0,0" />
                                             </StackPanel>
@@ -278,7 +278,7 @@
                                                         </Grid.ColumnDefinitions>
                                                         <TextBlock Text="{Binding Title}"
                                                                    FontSize="11"
-                                                                   FontWeight="SemiBold"
+                                                                   FontWeight="Medium"
                                                                    Foreground="{StaticResource Brush.Text}"
                                                                    TextWrapping="Wrap"
                                                                    VerticalAlignment="Center" />
@@ -323,7 +323,7 @@
                                                     <WrapPanel FlowDirection="RightToLeft" Margin="0,4,0,0">
                                                         <Border CornerRadius="9" Padding="7,2" Margin="0,0,6,0"
                                                                 Background="{Binding StatusBackground}" BorderBrush="{Binding StatusBorder}" BorderThickness="1">
-                                                            <TextBlock Text="{Binding Status}" FontSize="9" FontWeight="SemiBold" Foreground="{Binding Brush}" />
+                                                            <TextBlock Text="{Binding Status}" FontSize="9" FontWeight="Medium" Foreground="{Binding Brush}" />
                                                         </Border>
                                                         <Border x:Name="ContextBadge"
                                                                 CornerRadius="9"
@@ -333,7 +333,7 @@
                                                                 BorderBrush="#BFDBFE"
                                                                 BorderThickness="1"
                                                                 Visibility="Collapsed">
-                                                            <TextBlock Text="{Binding ContextLabel}" FontSize="9" FontWeight="SemiBold" Foreground="{StaticResource Brush.Link}" />
+                                                            <TextBlock Text="{Binding ContextLabel}" FontSize="9" FontWeight="Medium" Foreground="{StaticResource Brush.Link}" />
                                                         </Border>
                                                     </WrapPanel>
                                                     <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{StaticResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap" />
@@ -386,7 +386,7 @@
                     automation:AutomationProperties.AutomationId="GuaranteeDetailPanel.Section.Actions"
                     automation:AutomationProperties.Name="قسم الإجراءات السريعة">
                 <StackPanel>
-                    <TextBlock Text="إجراءات سريعة" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Brush.Text}" Margin="0,0,0,9" />
+                    <TextBlock Text="إجراءات سريعة" FontSize="12" FontWeight="Medium" Foreground="{StaticResource Brush.Text}" Margin="0,0,0,9" />
                     <UniformGrid Columns="4" FlowDirection="RightToLeft">
                         <UniformGrid.Resources>
                             <Style x:Key="ActionStripButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">

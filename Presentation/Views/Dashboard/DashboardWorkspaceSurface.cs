@@ -25,7 +25,7 @@ namespace GuaranteeManager
 
         private readonly ListBox _list = new();
         private readonly TextBox _searchInput = new();
-        private readonly TextBlock _summary = BuildMutedText(12, FontWeights.SemiBold);
+        private readonly TextBlock _summary = BuildMutedText(12, FontWeights.Medium);
         private readonly Grid _tableHeaderInner = new();
         private readonly System.Windows.Controls.Primitives.UniformGrid _metricsGrid = new();
         private readonly TextBlock _guideTitle = BuildInsightTitle();
@@ -42,12 +42,12 @@ namespace GuaranteeManager
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
         private readonly Border _detailStatusBadgeBorder = new();
         private readonly Image _detailBankLogo = new() { Width = 17, Height = 17 };
-        private readonly TextBlock _detailBankText = BuildMutedText(12, FontWeights.SemiBold);
+        private readonly TextBlock _detailBankText = BuildMutedText(12, FontWeights.Medium);
         private readonly TextBlock _detailAmountHeadline = BuildAmountHeadline();
         private readonly TextBlock _detailAmountCaption = BuildMutedText(11, FontWeights.Normal);
-        private readonly TextBlock _detailDue = BuildDetailValue(12, FontWeights.SemiBold);
-        private readonly TextBlock _detailExpiry = BuildDetailValue(12, FontWeights.SemiBold);
-        private readonly TextBlock _detailAction = BuildDetailValue(12, FontWeights.SemiBold);
+        private readonly TextBlock _detailDue = BuildDetailValue(12, FontWeights.Medium);
+        private readonly TextBlock _detailExpiry = BuildDetailValue(12, FontWeights.Medium);
+        private readonly TextBlock _detailAction = BuildDetailValue(12, FontWeights.Medium);
         private readonly TextBlock _detailNote = BuildMutedText(11, FontWeights.Normal);
         private readonly TextBlock _detailDueLabel = BuildInfoLabel("الموعد");
         private readonly TextBlock _detailExpiryLabel = BuildInfoLabel("تاريخ الانتهاء");
@@ -798,7 +798,7 @@ namespace GuaranteeManager
             return new TextBlock
             {
                 FontSize = 13,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text"),
                 HorizontalAlignment = HorizontalAlignment.Right,
                 FlowDirection = FlowDirection.RightToLeft,
@@ -811,7 +811,7 @@ namespace GuaranteeManager
             return new TextBlock
             {
                 FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Primary"),
                 Margin = new Thickness(0, 5, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -841,7 +841,7 @@ namespace GuaranteeManager
             {
                 Style = WorkspaceSurfaceChrome.Style("PlainLinkButton"),
                 FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Link"),
                 Margin = new Thickness(0, 7, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -893,7 +893,7 @@ namespace GuaranteeManager
             {
                 Text = text,
                 FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Muted"),
                 VerticalAlignment = VerticalAlignment.Center
             };
@@ -916,7 +916,7 @@ namespace GuaranteeManager
             return new TextBlock
             {
                 FontSize = size,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
             };
         }
@@ -937,7 +937,7 @@ namespace GuaranteeManager
             return new TextBlock
             {
                 FontSize = 16,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text"),
                 Margin = new Thickness(8, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center
@@ -987,7 +987,7 @@ namespace GuaranteeManager
             return new TextBlock
             {
                 FontSize = 10,
-                FontWeight = FontWeights.SemiBold
+                FontWeight = FontWeights.Medium
             };
         }
 

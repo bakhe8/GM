@@ -23,7 +23,7 @@
     <Style x:Key="NavSectionTitle" TargetType="TextBlock">
         <Setter Property="Width" Value="57" />
         <Setter Property="FontSize" Value="7.4" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Foreground" Value="{StaticResource Brush.Text.Muted}" />
         <Setter Property="TextAlignment" Value="Center" />
         <Setter Property="TextWrapping" Value="Wrap" />

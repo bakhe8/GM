@@ -387,7 +387,7 @@ namespace GuaranteeManager
                 {
                     Text = $"{attachment.OriginalFileName} • {attachment.DocumentTypeLabel}",
                     FontSize = 11,
-                    FontWeight = FontWeights.SemiBold,
+                    FontWeight = FontWeights.Medium,
                     Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(removed ? "#94A3B8" : "#0F172A")),
                     VerticalAlignment = VerticalAlignment.Center,
                     TextTrimming = TextTrimming.CharacterEllipsis,
@@ -459,7 +459,7 @@ namespace GuaranteeManager
                 {
                     Text = Path.GetFileName(attachment.FilePath),
                     FontSize = 11,
-                    FontWeight = FontWeights.SemiBold,
+                    FontWeight = FontWeights.Medium,
                     Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A")),
                     VerticalAlignment = VerticalAlignment.Center,
                     TextTrimming = TextTrimming.CharacterEllipsis,
@@ -608,7 +608,7 @@ namespace GuaranteeManager
             {
                 Text = text,
                 FontSize = 12,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"))
             };
         }
@@ -642,7 +642,7 @@ namespace GuaranteeManager
             var panel = new StackPanel { Margin = new Thickness(0, 4, 0, 10) };
             panel.Children.Add(BuildLabel("أثر الحفظ"));
 
-            ConfigureConsequenceText(_consequenceSummary, 12, FontWeights.SemiBold, "#0F172A");
+            ConfigureConsequenceText(_consequenceSummary, 12, FontWeights.Medium, "#0F172A");
             ConfigureConsequenceText(_consequencePrimary, 11, FontWeights.Normal, "#64748B");
             ConfigureConsequenceText(_consequenceSecondary, 11, FontWeights.Normal, "#64748B");
             _consequencePrimary.Margin = new Thickness(0, 4, 0, 0);

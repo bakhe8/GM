@@ -71,7 +71,7 @@ namespace GuaranteeManager
             {
                 Text = prompt,
                 FontSize = 13,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A")),
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 10)
@@ -80,7 +80,7 @@ namespace GuaranteeManager
             {
                 Text = label,
                 FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B")),
                 Margin = new Thickness(0, 0, 0, 6)
             });
@@ -330,7 +330,7 @@ namespace GuaranteeManager
             {
                 Text = $"{item.GuaranteeNo} | {item.Request.TypeLabel} | {item.Request.StatusLabel}",
                 FontSize = 13,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"))
             });
             content.Children.Add(new TextBlock
@@ -370,7 +370,7 @@ namespace GuaranteeManager
             {
                 Text = "ملاحظات إضافية",
                 FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B")),
                 Margin = new Thickness(0, 0, 0, 6)
             });

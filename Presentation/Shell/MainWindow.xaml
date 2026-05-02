@@ -313,7 +313,7 @@
                                Text="{Binding ShellStatusPrimaryText}"
                                Foreground="{Binding ShellStatusPrimaryBrush}"
                                FontSize="11"
-                               FontWeight="SemiBold"
+                               FontWeight="Medium"
                                VerticalAlignment="Center"
                                automation:AutomationProperties.AutomationId="Shell.Status.Primary"
                                automation:AutomationProperties.HelpText="{Binding ShellStatusPrimaryText}"

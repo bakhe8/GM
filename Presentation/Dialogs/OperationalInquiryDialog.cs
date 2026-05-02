@@ -21,7 +21,7 @@ namespace GuaranteeManager
         private readonly IWorkflowService _workflow;
         private readonly IExcelService _excel;
         private readonly Border _nextStepCard = new();
-        private readonly TextBlock _nextStepSummary = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#0F172A");
+        private readonly TextBlock _nextStepSummary = WorkspaceSurfaceChrome.Text(12, FontWeights.Medium, "#0F172A");
         private readonly TextBlock _nextStepHint = WorkspaceSurfaceChrome.Text(11, FontWeights.Normal, "#64748B");
         private readonly Button _nextStepActionButton = new();
         private Action? _nextStepAction;
@@ -123,7 +123,7 @@ namespace GuaranteeManager
             {
                 Text = _result.Subject,
                 FontSize = 12,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
                 Margin = new Thickness(0, 4, 0, 0),
                 TextWrapping = TextWrapping.Wrap
@@ -203,7 +203,7 @@ namespace GuaranteeManager
             {
                 Text = "الجواب المختصر",
                 FontSize = 13,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A")
             });
             stack.Children.Add(new TextBlock
@@ -238,7 +238,7 @@ namespace GuaranteeManager
             {
                 Text = "ملخص الأدلة",
                 FontSize = 13,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A")
             });
             stack.Children.Add(WorkspaceSurfaceChrome.Divider());
@@ -281,7 +281,7 @@ namespace GuaranteeManager
             {
                 Text = "التسلسل الزمني الداعم",
                 FontSize = 13,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A")
             });
             stack.Children.Add(WorkspaceSurfaceChrome.Divider());
@@ -331,7 +331,7 @@ namespace GuaranteeManager
             detailGuaranteeNo.Text = guarantee?.GuaranteeNo ?? _result.Title;
             detailGuaranteeNo.Margin = new Thickness(0, 8, 0, 0);
 
-            TextBlock detailSubject = WorkspaceSurfaceChrome.Text(11, FontWeights.SemiBold, "#64748B");
+            TextBlock detailSubject = WorkspaceSurfaceChrome.Text(11, FontWeights.Medium, "#64748B");
             detailSubject.Text = _result.Subject;
             detailSubject.Margin = new Thickness(0, 4, 0, 0);
 
@@ -347,7 +347,7 @@ namespace GuaranteeManager
             {
                 Text = statusText,
                 FontSize = 10,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = TonePalette.Foreground(tone)
             };
 
@@ -371,7 +371,7 @@ namespace GuaranteeManager
             {
                 Text = string.IsNullOrWhiteSpace(beneficiary) ? bank : $"{bank} | {beneficiary}",
                 FontSize = 12,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
                 VerticalAlignment = VerticalAlignment.Center
             });
@@ -392,7 +392,7 @@ namespace GuaranteeManager
                     {
                         Text = "سياق النتيجة",
                         FontSize = 16,
-                        FontWeight = FontWeights.SemiBold,
+                        FontWeight = FontWeights.Medium,
                         Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A")
                     },
                     detailGuaranteeNo,
@@ -481,7 +481,7 @@ namespace GuaranteeManager
             {
                 Text = "الخطوة التالية",
                 FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#2563EB"),
                 Margin = new Thickness(0, 0, 0, 6)
             });
@@ -607,7 +607,7 @@ namespace GuaranteeManager
             {
                 Text = fact.Label,
                 FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#94A3B8"),
                 TextAlignment = TextAlignment.Right
             });
@@ -615,7 +615,7 @@ namespace GuaranteeManager
             {
                 Text = fact.Value,
                 FontSize = 12,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                 Margin = new Thickness(0, 5, 0, 0),
                 TextWrapping = TextWrapping.Wrap,
@@ -645,7 +645,7 @@ namespace GuaranteeManager
             {
                 Text = entry.TimestampLabel,
                 FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#64748B"),
                 VerticalAlignment = VerticalAlignment.Top,
                 FlowDirection = FlowDirection.LeftToRight
@@ -660,7 +660,7 @@ namespace GuaranteeManager
             {
                 Text = entry.Title,
                 FontSize = 12,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                 TextWrapping = TextWrapping.Wrap
             });
@@ -681,7 +681,7 @@ namespace GuaranteeManager
 
         private static Grid BuildInfoLine(string label, string value)
         {
-            TextBlock valueBlock = WorkspaceSurfaceChrome.Text(12, FontWeights.SemiBold, "#0F172A");
+            TextBlock valueBlock = WorkspaceSurfaceChrome.Text(12, FontWeights.Medium, "#0F172A");
             valueBlock.Text = value;
             return WorkspaceSurfaceChrome.InfoLine(label, valueBlock);
         }
@@ -706,7 +706,7 @@ namespace GuaranteeManager
             {
                 Text = title,
                 FontSize = 11,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#94A3B8"),
                 Margin = new Thickness(0, 0, 0, 6)
             });

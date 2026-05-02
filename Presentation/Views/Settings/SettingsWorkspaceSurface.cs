@@ -18,16 +18,16 @@ namespace GuaranteeManager
         private readonly Border _allMetricCard = new();
         private readonly Border _dataMetricCard = new();
         private readonly Border _workflowMetricCard = new();
-        private readonly TextBlock _summary = BuildMutedText(12, FontWeights.SemiBold);
+        private readonly TextBlock _summary = BuildMutedText(12, FontWeights.Medium);
         private readonly TextBlock _allValue = BuildMetricValue();
         private readonly TextBlock _dataValue = BuildMetricValue();
         private readonly TextBlock _workflowValue = BuildMetricValue();
         private readonly TextBlock _detailTitle = BuildDetailValue(18, FontWeights.Bold);
-        private readonly TextBlock _detailSubtitle = BuildMutedText(11, FontWeights.SemiBold);
+        private readonly TextBlock _detailSubtitle = BuildMutedText(11, FontWeights.Medium);
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
         private readonly Border _detailStatusBadgeBorder = new();
-        private readonly TextBlock _detailState = BuildDetailValue(12, FontWeights.SemiBold);
-        private readonly TextBlock _detailAction = BuildDetailValue(12, FontWeights.SemiBold);
+        private readonly TextBlock _detailState = BuildDetailValue(12, FontWeights.Medium);
+        private readonly TextBlock _detailAction = BuildDetailValue(12, FontWeights.Medium);
         private readonly TextBlock _detailPath = BuildPathText();
         private readonly TextBlock _detailOpenPath = BuildPathText();
         private readonly Action? _dataResetCompleted;
@@ -346,7 +346,7 @@ namespace GuaranteeManager
             {
                 Text = "إجراءات سريعة",
                 FontSize = 12,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
             });
 
@@ -618,7 +618,7 @@ namespace GuaranteeManager
             return new TextBlock
             {
                 FontSize = 10,
-                FontWeight = FontWeights.SemiBold
+                FontWeight = FontWeights.Medium
             };
         }
 
@@ -644,7 +644,7 @@ namespace GuaranteeManager
             {
                 Text = label,
                 FontSize = 10,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Muted"),
                 VerticalAlignment = VerticalAlignment.Center
             });

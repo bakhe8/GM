@@ -21,19 +21,19 @@ namespace GuaranteeManager
         private readonly Border _requestsMetricCard = new();
         private readonly Border _operationalMetricCard = new();
         private readonly Border _totalMetricCard = new();
-        private readonly TextBlock _summary = BuildMutedText(12, FontWeights.SemiBold);
+        private readonly TextBlock _summary = BuildMutedText(12, FontWeights.Medium);
         private readonly TextBlock _portfolioValue = BuildMetricValue();
         private readonly TextBlock _requestsValue = BuildMetricValue();
         private readonly TextBlock _operationalValue = BuildMetricValue();
         private readonly TextBlock _totalValue = BuildMetricValue();
         private readonly TextBlock _detailTitle = BuildDetailValue(18, FontWeights.Bold);
-        private readonly TextBlock _detailSubtitle = BuildMutedText(11, FontWeights.SemiBold);
+        private readonly TextBlock _detailSubtitle = BuildMutedText(11, FontWeights.Medium);
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
         private readonly Border _detailStatusBadgeBorder = new();
-        private readonly TextBlock _detailKey = BuildDetailValue(11, FontWeights.SemiBold);
-        private readonly TextBlock _detailCategory = BuildDetailValue(12, FontWeights.SemiBold);
-        private readonly TextBlock _detailStatus = BuildDetailValue(12, FontWeights.SemiBold);
-        private readonly TextBlock _detailAction = BuildDetailValue(12, FontWeights.SemiBold);
+        private readonly TextBlock _detailKey = BuildDetailValue(11, FontWeights.Medium);
+        private readonly TextBlock _detailCategory = BuildDetailValue(12, FontWeights.Medium);
+        private readonly TextBlock _detailStatus = BuildDetailValue(12, FontWeights.Medium);
+        private readonly TextBlock _detailAction = BuildDetailValue(12, FontWeights.Medium);
         private readonly TextBlock _detailOutput = BuildMutedText(11, FontWeights.Normal);
         private readonly Button _runButton = new();
         private readonly Button _openButton = new();
@@ -351,7 +351,7 @@ namespace GuaranteeManager
             {
                 Text = "إجراءات سريعة",
                 FontSize = 12,
-                FontWeight = FontWeights.SemiBold,
+                FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
             });
 
@@ -569,7 +569,7 @@ namespace GuaranteeManager
             return new TextBlock
             {
                 FontSize = 10,
-                FontWeight = FontWeights.SemiBold
+                FontWeight = FontWeights.Medium
             };
         }
 
