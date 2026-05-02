@@ -992,16 +992,7 @@ namespace GuaranteeManager
 
         private static TextBlock BuildAmountHeadline()
         {
-            return new TextBlock
-            {
-                FontSize = 34,
-                FontWeight = FontWeights.Bold,
-                Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Primary"),
-                Margin = new Thickness(0, 12, 0, 0),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                TextAlignment = TextAlignment.Right,
-                FlowDirection = FlowDirection.LeftToRight
-            };
+            return new TextBlock { Style = WorkspaceSurfaceChrome.Style("FinancialAmountHeadline") };
         }
 
         private static Viewbox CreateIcon(string iconKey, string color, double size)

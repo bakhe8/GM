@@ -14,6 +14,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Automation;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using GuaranteeManager.Models;
@@ -449,6 +450,14 @@ namespace GuaranteeManager
             value.TextAlignment = TextAlignment.Center;
             value.FlowDirection = FlowDirection.LeftToRight;
             value.TextTrimming = TextTrimming.CharacterEllipsis;
+            ApplyTabularNumberTypography(value);
+        }
+
+        public static void ApplyTabularNumberTypography(TextBlock value)
+        {
+            Typography.SetNumeralAlignment(value, FontNumeralAlignment.Tabular);
+            Typography.SetNumeralStyle(value, FontNumeralStyle.Lining);
+            Typography.SetKerning(value, false);
         }
 
         public static void ApplyMetricCardSpacing(Panel metrics)

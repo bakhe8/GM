@@ -28,6 +28,22 @@
         <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+        <Setter Property="Typography.NumeralStyle" Value="Lining" />
+        <Setter Property="Typography.Kerning" Value="False" />
+    </Style>
+
+    <Style x:Key="FinancialAmountHeadline" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter Property="FontSize" Value="34" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
+        <Setter Property="Margin" Value="0,12,0,0" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="TextAlignment" Value="Right" />
+        <Setter Property="FlowDirection" Value="LeftToRight" />
+        <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+        <Setter Property="Typography.NumeralStyle" Value="Lining" />
+        <Setter Property="Typography.Kerning" Value="False" />
     </Style>
 
     <Style x:Key="KpiMeta" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">

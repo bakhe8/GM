@@ -77,7 +77,7 @@
                         <Image Source="{Binding SelectedGuarantee.BankLogo}" Width="17" Height="17" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
                         <TextBlock Text="{Binding SelectedGuarantee.Bank}" FontSize="12" FontWeight="Medium" Foreground="{StaticResource Brush.Muted}" VerticalAlignment="Center" Margin="7,0,0,0" />
                     </StackPanel>
-                    <TextBlock Text="{Binding SelectedGuarantee.Amount}" FontSize="34" FontWeight="Bold" Foreground="{StaticResource Brush.Text.Primary}" Margin="0,12,0,0" HorizontalAlignment="Left" TextAlignment="Right" FlowDirection="LeftToRight" />
+                    <TextBlock Text="{Binding SelectedGuarantee.Amount}" Style="{StaticResource FinancialAmountHeadline}" />
                     <TextBlock Text="{Binding SelectedGuarantee.AmountDescription}" FontSize="11" Foreground="{StaticResource Brush.Muted}" HorizontalAlignment="Left" TextAlignment="Right" />
                     <Border Height="1" Background="#EDF2F7" Margin="0,13,0,12" />
 

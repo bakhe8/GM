@@ -74,12 +74,20 @@ namespace GuaranteeManager.Tests
         {
             string root = FindRepositoryRoot();
             string tableTheme = File.ReadAllText(Path.Combine(root, "Presentation", "Themes", "Tables.xaml"));
+            string typographyTheme = File.ReadAllText(Path.Combine(root, "Presentation", "Themes", "Typography.xaml"));
             string guaranteeSurface = File.ReadAllText(Path.Combine(root, "Presentation", "Views", "Guarantees", "GuaranteesDashboardView.xaml"));
+            string guaranteeDetailPanel = File.ReadAllText(Path.Combine(root, "Presentation", "Views", "Guarantees", "GuaranteeDetailPanel.xaml"));
             string dashboardSurface = File.ReadAllText(Path.Combine(root, "Presentation", "Views", "Dashboard", "DashboardWorkspaceSurface.cs"));
             string banksSurface = File.ReadAllText(Path.Combine(root, "Presentation", "Views", "Banks", "BanksWorkspaceSurface.cs"));
 
             Assert.Contains("x:Key=\"TableAmountCell\"", tableTheme, StringComparison.Ordinal);
             Assert.Contains("Property=\"Typography.NumeralAlignment\" Value=\"Tabular\"", tableTheme, StringComparison.Ordinal);
+            Assert.Contains("Property=\"Typography.NumeralStyle\" Value=\"Lining\"", tableTheme, StringComparison.Ordinal);
+            Assert.Contains("Property=\"Typography.Kerning\" Value=\"False\"", tableTheme, StringComparison.Ordinal);
+            Assert.Contains("x:Key=\"FinancialAmountHeadline\"", typographyTheme, StringComparison.Ordinal);
+            Assert.Contains("Style=\"{StaticResource FinancialAmountHeadline}\"", guaranteeDetailPanel, StringComparison.Ordinal);
+            Assert.Contains("Style(\"FinancialAmountHeadline\")", dashboardSurface, StringComparison.Ordinal);
+            Assert.Contains("Style(\"FinancialAmountHeadline\")", banksSurface, StringComparison.Ordinal);
             Assert.Contains("Style=\"{StaticResource TableAmountCell}\"", guaranteeSurface, StringComparison.Ordinal);
             Assert.Contains("WorkspaceSurfaceChrome.Style(\"TableAmountCell\")", dashboardSurface, StringComparison.Ordinal);
             Assert.Contains("\"TableAmountCell\"", banksSurface, StringComparison.Ordinal);
