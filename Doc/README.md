@@ -32,6 +32,8 @@
   - دليل المستخدم.
 - `guides/Next_Development_Plan.md`
   - حدود العمل بعد `rc.1` وما يذهب إلى المرحلة القادمة.
+- `guides/Color_Palette_Audit.md`
+  - جرد ألوان الواجهة ومقترح اختصارها إلى tokens رسمية.
 - `guides/Repository_Stabilization_Checklist_2026-04-30.md`
   - قائمة تثبيت المستودع.
 - `guides/UIAutomation_Supported_API.md`
