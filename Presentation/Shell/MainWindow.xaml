@@ -122,43 +122,6 @@
                            Width="20"
                            Height="20"
                            Margin="9,0,0,0" />
-                    <Border Width="1" Height="22" Background="#24466F" Margin="13,0,10,0" />
-                    <Button x:Name="ShellMenuButton"
-                            Style="{StaticResource ChromeButton}"
-                            Width="30"
-                            Height="30"
-                            Click="ShellMenuButton_Click"
-                            ToolTip="قائمة التطبيق"
-                            automation:AutomationProperties.AutomationId="Shell.AppMenuButton"
-                            automation:AutomationProperties.Name="قائمة التطبيق">
-                        <Button.ContextMenu>
-                            <ContextMenu Width="170"
-                                         FlowDirection="RightToLeft">
-                                <MenuItem Header="اليوم"
-                                          Command="{Binding PlacementTarget.DataContext.ShowDashboardCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
-                                <MenuItem Header="الضمانات"
-                                          Command="{Binding PlacementTarget.DataContext.ShowGuaranteesCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
-                                <MenuItem Header="البنوك"
-                                          Command="{Binding PlacementTarget.DataContext.ShowBanksCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
-                                <MenuItem Header="التقارير"
-                                          Command="{Binding PlacementTarget.DataContext.ShowReportsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
-                                <MenuItem Header="الإعدادات"
-                                          Command="{Binding PlacementTarget.DataContext.ShowSettingsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
-                                <Separator />
-                                <MenuItem Header="حول البرنامج"
-                                          Click="AboutMenuItem_Click" />
-                                <MenuItem Header="خروج"
-                                          Command="{Binding PlacementTarget.DataContext.ExitCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
-                            </ContextMenu>
-                        </Button.ContextMenu>
-                        <Viewbox Width="16" Height="16">
-                            <Path Data="{StaticResource Icon.Menu}"
-                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                  StrokeThickness="2"
-                                  StrokeStartLineCap="Square"
-                                  StrokeEndLineCap="Square" />
-                        </Viewbox>
-                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
