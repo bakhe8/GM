@@ -32,10 +32,10 @@ namespace GuaranteeManager
         private readonly Border _detailStatusBadgeBorder = new();
         private readonly TextBlock _detailAmountHeadline = BuildAmountHeadline();
         private readonly TextBlock _detailAmountCaption = BuildMutedText(11.5, FontWeights.Normal);
-        private readonly TextBlock _detailCount = BuildDetailValue(12, FontWeights.Bold);
-        private readonly TextBlock _detailActive = BuildDetailValue(12, FontWeights.Bold);
-        private readonly TextBlock _detailExpiring = BuildDetailValue(12, FontWeights.Bold);
-        private readonly TextBlock _detailExpired = BuildDetailValue(12, FontWeights.Bold);
+        private readonly TextBlock _detailCount = BuildDetailValue(12, FontWeights.SemiBold);
+        private readonly TextBlock _detailActive = BuildDetailValue(12, FontWeights.SemiBold);
+        private readonly TextBlock _detailExpiring = BuildDetailValue(12, FontWeights.SemiBold);
+        private readonly TextBlock _detailExpired = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailShare = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly Action<string?> _showGuaranteesForBank;
         private readonly Action<string> _addBankReference;
@@ -322,7 +322,7 @@ namespace GuaranteeManager
             {
                 Text = "إجراءات سريعة",
                 FontSize = 12,
-                FontWeight = FontWeights.Bold,
+                FontWeight = FontWeights.SemiBold,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
             });
 

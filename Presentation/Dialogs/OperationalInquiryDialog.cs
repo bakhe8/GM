@@ -203,7 +203,7 @@ namespace GuaranteeManager
             {
                 Text = "الجواب المختصر",
                 FontSize = 13,
-                FontWeight = FontWeights.Bold,
+                FontWeight = FontWeights.SemiBold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A")
             });
             stack.Children.Add(new TextBlock
@@ -238,7 +238,7 @@ namespace GuaranteeManager
             {
                 Text = "ملخص الأدلة",
                 FontSize = 13,
-                FontWeight = FontWeights.Bold,
+                FontWeight = FontWeights.SemiBold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A")
             });
             stack.Children.Add(WorkspaceSurfaceChrome.Divider());
@@ -281,7 +281,7 @@ namespace GuaranteeManager
             {
                 Text = "التسلسل الزمني الداعم",
                 FontSize = 13,
-                FontWeight = FontWeights.Bold,
+                FontWeight = FontWeights.SemiBold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A")
             });
             stack.Children.Add(WorkspaceSurfaceChrome.Divider());
@@ -392,7 +392,7 @@ namespace GuaranteeManager
                     {
                         Text = "سياق النتيجة",
                         FontSize = 16,
-                        FontWeight = FontWeights.Bold,
+                        FontWeight = FontWeights.SemiBold,
                         Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A")
                     },
                     detailGuaranteeNo,
@@ -660,7 +660,7 @@ namespace GuaranteeManager
             {
                 Text = entry.Title,
                 FontSize = 12,
-                FontWeight = FontWeights.Bold,
+                FontWeight = FontWeights.SemiBold,
                 Foreground = WorkspaceSurfaceChrome.BrushFrom("#0F172A"),
                 TextWrapping = TextWrapping.Wrap
             });

@@ -330,7 +330,7 @@ namespace GuaranteeManager
             {
                 Text = $"{item.GuaranteeNo} | {item.Request.TypeLabel} | {item.Request.StatusLabel}",
                 FontSize = 13,
-                FontWeight = FontWeights.Bold,
+                FontWeight = FontWeights.SemiBold,
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"))
             });
             content.Children.Add(new TextBlock

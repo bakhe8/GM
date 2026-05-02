@@ -31,8 +31,8 @@ namespace GuaranteeManager
         private readonly TextBlock _detailStatusBadge = BuildBadgeText();
         private readonly Border _detailStatusBadgeBorder = new();
         private readonly TextBlock _detailKey = BuildDetailValue(11.5, FontWeights.SemiBold);
-        private readonly TextBlock _detailCategory = BuildDetailValue(12, FontWeights.Bold);
-        private readonly TextBlock _detailStatus = BuildDetailValue(12, FontWeights.Bold);
+        private readonly TextBlock _detailCategory = BuildDetailValue(12, FontWeights.SemiBold);
+        private readonly TextBlock _detailStatus = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailAction = BuildDetailValue(12, FontWeights.SemiBold);
         private readonly TextBlock _detailOutput = BuildMutedText(11, FontWeights.Normal);
         private readonly Button _runButton = new();
@@ -351,7 +351,7 @@ namespace GuaranteeManager
             {
                 Text = "إجراءات سريعة",
                 FontSize = 12,
-                FontWeight = FontWeights.Bold,
+                FontWeight = FontWeights.SemiBold,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
             });
 

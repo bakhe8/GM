@@ -795,7 +795,7 @@ namespace GuaranteeManager
             return new TextBlock
             {
                 FontSize = 13,
-                FontWeight = FontWeights.Bold,
+                FontWeight = FontWeights.SemiBold,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text"),
                 HorizontalAlignment = HorizontalAlignment.Right,
                 FlowDirection = FlowDirection.RightToLeft,
@@ -913,7 +913,7 @@ namespace GuaranteeManager
             return new TextBlock
             {
                 FontSize = size,
-                FontWeight = FontWeights.Bold,
+                FontWeight = FontWeights.SemiBold,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text")
             };
         }
@@ -923,7 +923,7 @@ namespace GuaranteeManager
             return new TextBlock
             {
                 FontSize = 16,
-                FontWeight = FontWeights.Bold,
+                FontWeight = FontWeights.SemiBold,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text"),
                 Margin = new Thickness(8, 0, 0, 0)
             };
