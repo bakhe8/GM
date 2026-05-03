@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using GuaranteeManager.Services;
 using GuaranteeManager.Utils;
 
 namespace GuaranteeManager.Models
@@ -75,8 +76,11 @@ namespace GuaranteeManager.Models
             {
                 return JsonSerializer.Deserialize<WorkflowRequestedData>(RequestedDataJson);
             }
-            catch
+            catch (Exception ex)
             {
+                SimpleLogger.LogError(
+                    ex,
+                    $"WorkflowRequest.GetRequestedData: invalid RequestedDataJson for request Id={Id}, Type={Type}");
                 return null;
             }
         }
@@ -95,6 +99,7 @@ namespace GuaranteeManager.Models
         public string ReplacementBeneficiary => GetRequestedData()?.ReplacementBeneficiary?.Trim() ?? string.Empty;
         public GuaranteeReferenceType ReplacementReferenceType => GetRequestedData()?.ReplacementReferenceType ?? GuaranteeReferenceType.None;
         public string ReplacementReferenceNumber => GetRequestedData()?.ReplacementReferenceNumber?.Trim() ?? string.Empty;
+        public IReadOnlyList<WorkflowRequestAttachmentData> ReplacementAttachments => GetRequestedData()?.ReplacementAttachments ?? [];
         public string RequestedValueLabel => Type switch
         {
             RequestType.Extension => RequestedExpiryDate.HasValue ? DualCalendarDateService.FormatDate(RequestedExpiryDate.Value, RequestedDateCalendar) : "---",
@@ -144,5 +149,14 @@ namespace GuaranteeManager.Models
         public string ReplacementBeneficiary { get; set; } = string.Empty;
         public GuaranteeReferenceType? ReplacementReferenceType { get; set; }
         public string ReplacementReferenceNumber { get; set; } = string.Empty;
+        public List<WorkflowRequestAttachmentData> ReplacementAttachments { get; set; } = new();
+    }
+
+    public class WorkflowRequestAttachmentData
+    {
+        public string OriginalFileName { get; set; } = string.Empty;
+        public string SavedFileName { get; set; } = string.Empty;
+        public string FileExtension { get; set; } = string.Empty;
+        public AttachmentDocumentType DocumentType { get; set; } = AttachmentDocumentType.SupportingDocument;
     }
 }

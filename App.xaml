@@ -5,17 +5,17 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/IconsDictionary.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Colors.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Effects.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Converters.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/ScrollBars.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Buttons.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Inputs.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Cards.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Typography.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Tables.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Navigation.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/IconsDictionary.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/Colors.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/Effects.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/Converters.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/ScrollBars.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/Buttons.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/Inputs.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/Cards.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/Typography.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/Tables.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/Navigation.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

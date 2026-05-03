@@ -60,8 +60,17 @@ namespace GuaranteeManager
         public ReportWorkspaceRowState BuildRowState(
             ReportWorkspaceItem item,
             IReadOnlyDictionary<string, ReportRunResult> results,
-            bool canOpen)
+            bool canOpen,
+            bool isRunning = false)
         {
+            if (isRunning)
+            {
+                return new ReportWorkspaceRowState(
+                    "قيد الإنشاء",
+                    WorkspaceSurfaceChrome.BrushFrom("#2563EB"),
+                    false);
+            }
+
             if (!TryGetResult(item, results, out ReportRunResult result))
             {
                 return new ReportWorkspaceRowState("جاهز", WorkspaceSurfaceChrome.BrushFrom("#64748B"), canOpen);
@@ -76,7 +85,9 @@ namespace GuaranteeManager
         public ReportsWorkspaceDetailState BuildDetailState(
             ReportWorkspaceItem? selectedItem,
             IReadOnlyDictionary<string, ReportRunResult> results,
-            bool canOpen)
+            bool canOpen,
+            bool isSelectedRunning = false,
+            bool isAnyReportRunning = false)
         {
             if (selectedItem == null)
             {
@@ -98,7 +109,15 @@ namespace GuaranteeManager
                     false);
             }
 
-            ReportRunState runState = GetRunState(selectedItem, results);
+            ReportRunState runState = isSelectedRunning
+                ? new ReportRunState(
+                    "قيد الإنشاء",
+                    "جاري إنشاء التقرير في الخلفية.",
+                    "انتظر اكتمال التقرير قبل تشغيل إجراء آخر.",
+                    WorkspaceSurfaceChrome.BrushFrom("#2563EB"),
+                    WorkspaceSurfaceChrome.BrushFrom("#EFF6FF"),
+                    WorkspaceSurfaceChrome.BrushFrom("#BFDBFE"))
+                : GetRunState(selectedItem, results);
             string output = TryGetResult(selectedItem, results, out ReportRunResult result)
                 ? !string.IsNullOrWhiteSpace(result.OutputPath)
                     ? result.OutputPath
@@ -121,8 +140,8 @@ namespace GuaranteeManager
                 runState.Foreground,
                 runState.ActionLabel,
                 output,
-                true,
-                canOpen);
+                !isAnyReportRunning,
+                canOpen && !isAnyReportRunning);
         }
 
         private static ReportRunState GetRunState(

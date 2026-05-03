@@ -1,14 +1,15 @@
 # الحالة الحالية — GuaranteeManager
 
-**تاريخ التحديث:** 2026-05-01
+**تاريخ التحديث:** 2026-05-03
 
 ## الخلاصة
 
-- النسخة الحالية: `v1.1.0-rc.1`.
+- النسخة الحالية: `v1.1.0-rc.5`.
 - الفرع النشط: `feature/v1.1-operational-polish`.
 - الواجهة الرسمية الحالية هي ما تحت `Presentation/`.
-- أزيلت الأرشيفات القديمة من الشجرة حتى لا تبقى مرجعًا يوميًا مضللًا.
+- الجذر يجب أن يبقى نظيفًا: التقارير وملفات التشغيل المؤقتة تذهب إلى `scratch/` أو مجلدات النشر، والوثائق القديمة إلى `Doc/archive/`.
 - لا توجد واجهة مستقلة للطلبات أو التنبيهات أو ملف الضمان.
+- لا توجد نافذة استعلام تشغيلي مستقلة ولا طبقة `ContextAction` قديمة.
 - السجل الزمني داخل الضمان هو مصدر الحقيقة لدورة الحياة والطلبات وردود البنك والمرفقات.
 
 ## المساحات الحالية
@@ -32,17 +33,34 @@
 
 ## آخر تحقق
 
-- `dotnet test .\GuaranteeManager.Tests\GuaranteeManager.Tests.csproj --no-restore -p:BaseOutputPath=.\artifacts\rc1-version-test\`
-- النتيجة: `107/107`.
-- `dotnet build .\my_work.sln -c Debug --no-restore` نجح.
-- `.\scripts\publish_release.ps1` نجح وأنشأ حزمة `v1.1.0-rc.1` مع اختبارات Release ناجحة: `105/105`.
-- تمت ترقية `preview.4` إلى `rc.1` بعد UAT معزول على الحزمة المنشورة شمل إنشاء ضمان، تمديد، تسجيل رد بنك، إفراج، منع تكرار الإجراء النهائي، تصدير تقرير، وإنشاء نسخة احتياطية.
+- `dotnet build GuaranteeManager.csproj` نجح: `0 warnings / 0 errors`.
+- `dotnet test GuaranteeManager.Tests\GuaranteeManager.Tests.csproj` نجح: `167/167`.
+- `dotnet test GuaranteeManager.Tests\GuaranteeManager.Tests.csproj -c Release` نجح: `167/167`.
+- `.\scripts\publish_release.ps1` أنشأ حزمة `v1.1.0-rc.5` المحلية بعد اختبار Release.
+- أصبحت التقارير تعمل في الخلفية مع منع تشغيل تقرير ثان أثناء التنفيذ.
+- أضيف طابور دائم لتعافي ترقية المرفقات ومستندات رد البنك وتنظيف الملفات عند التهيئة التالية.
+- أضيفت اختبارات تعافي الملفات، حزمة محمولة ناقصة، ملف نسخة احتياطية مقفل، SQL pagination، وحارس `5,000` ضمان.
+- أضيف حارس في طبقة المستودع يمنع التعديل الإداري من تغيير الحقول التشغيلية حتى عند تجاوز الواجهة.
+- أزيل حجب `DEBUG` عن اختبارات توليد البيانات حتى تدخل في فحص Release.
+- تم نقل عدّ وتجميع وتصفح واجهة الضمانات إلى قاعدة البيانات بدل التحميل الكامل داخل الذاكرة.
+- أصبحت تحديثات رد البنك وإلحاق مستند الرد داخل معاملات صريحة.
+- أضيفت اختبارات فشل لمسارات النسخ الاحتياطي والاسترجاع.
+- تمت إعادة ترتيب التوثيق: النشط في `Doc/`, التصميم في `Doc/design/`, التدقيق في `Doc/audits/`, والقديم في `Doc/archive/`.
+- تمت إزالة مسار الاستعلام التشغيلي القديم دون إبقاء استدعاءات نشطة له.
+- تمت إعادة ترتيب `Services/` إلى مجلدات وظيفية، ونقل توليد البيانات إلى `Services/Seeding/`.
+- أصبحت مخرجات فحص الواجهة تذهب إلى `scratch/UIAcceptance/` بدلا من إعادة إنشاء مجلدات توثيق قديمة.
 
 ## المراجع الحية
 
-- `missing_features_report.md`
+- `README.md`
 - `AI_HANDOFF.md`
+- `Doc/README.md`
+- `Doc/git_workflow.md`
+- `Doc/releases/README_v1.1.0-rc.5.md`
+- `Doc/audits/Missing_Features_Report.md`
 - `Doc/guides/Workflow_Event_Logic_Study.md`
 - `Doc/guides/User_Guide_Final.md`
 - `Doc/guides/Next_Development_Plan.md`
 - `Doc/guides/Repository_Stabilization_Checklist_2026-04-30.md`
+- `Doc/guides/Repository_Structure.md`
+- `Doc/design/Visual_Identity.md`

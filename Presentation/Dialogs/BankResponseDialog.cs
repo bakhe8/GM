@@ -22,7 +22,7 @@ namespace GuaranteeManager
         {
             Title = "تسجيل رد البنك";
             Width = 460;
-            Height = 368;
+            SizeToContent = SizeToContent.Height;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             ResizeMode = ResizeMode.NoResize;
             FlowDirection = FlowDirection.RightToLeft;
@@ -50,7 +50,6 @@ namespace GuaranteeManager
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
             root.Children.Add(BuildLabel("الطلب المعلق"));
 
@@ -97,6 +96,7 @@ namespace GuaranteeManager
                 Height = 54,
                 FontSize = 12,
                 Padding = new Thickness(8),
+                TextAlignment = TextAlignment.Right,
                 TextWrapping = TextWrapping.Wrap,
                 AcceptsReturn = true,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
@@ -137,21 +137,10 @@ namespace GuaranteeManager
             Grid.SetRow(documentRow, 6);
             root.Children.Add(documentRow);
 
-            var actions = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                VerticalAlignment = VerticalAlignment.Bottom,
-                Margin = new Thickness(0, 14, 0, 0)
-            };
-
             var okButton = new Button
             {
                 Content = "تسجيل",
-                Width = 90,
-                Height = 32,
-                IsDefault = true,
-                Margin = new Thickness(8, 0, 0, 0)
+                IsDefault = true
             };
             UiInstrumentation.Identify(okButton, "Dialog.BankResponse.SaveButton", "اعتماد رد البنك");
             okButton.Click += (_, _) => DialogResult = true;
@@ -159,14 +148,11 @@ namespace GuaranteeManager
             var cancelButton = new Button
             {
                 Content = "إلغاء",
-                Width = 90,
-                Height = 32,
                 IsCancel = true
             };
             UiInstrumentation.Identify(cancelButton, "Dialog.BankResponse.CancelButton", "إلغاء تسجيل رد البنك");
 
-            actions.Children.Add(okButton);
-            actions.Children.Add(cancelButton);
+            var actions = DialogFormSupport.BuildActionBar(okButton, cancelButton, 96, 96);
             Grid.SetRow(actions, 7);
             root.Children.Add(actions);
 
@@ -180,6 +166,15 @@ namespace GuaranteeManager
             out string notes,
             out string responseDocumentPath)
         {
+            if (requests.Count == 0)
+            {
+                requestId = 0;
+                resultStatus = RequestStatus.Pending;
+                notes = string.Empty;
+                responseDocumentPath = string.Empty;
+                return false;
+            }
+
             var dialog = new BankResponseDialog(requests)
             {
                 Owner = Application.Current.MainWindow
@@ -243,6 +238,8 @@ namespace GuaranteeManager
 
             public WorkflowRequest Request { get; }
             public string Display { get; }
+
+            public override string ToString() => Display;
         }
 
         private sealed class BankResponseStatusOption
@@ -255,6 +252,8 @@ namespace GuaranteeManager
 
             public RequestStatus Status { get; }
             public string Label { get; }
+
+            public override string ToString() => Label;
         }
     }
 }

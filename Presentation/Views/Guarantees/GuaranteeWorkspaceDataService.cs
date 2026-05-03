@@ -11,14 +11,10 @@ namespace GuaranteeManager
     public sealed class GuaranteeWorkspaceDataService
     {
         private readonly IDatabaseService _database;
-        private readonly IContextActionService _contextActionService;
 
-        public GuaranteeWorkspaceDataService(
-            IDatabaseService database,
-            IContextActionService contextActionService)
+        public GuaranteeWorkspaceDataService(IDatabaseService database)
         {
             _database = database;
-            _contextActionService = contextActionService;
         }
 
         public GuaranteeWorkspaceFilterData BuildFilters(string allBanksLabel, string allTypesLabel)
@@ -40,57 +36,6 @@ namespace GuaranteeManager
             return new GuaranteeWorkspaceFilterData(timeStatuses, banks, guaranteeTypes);
         }
 
-        public IReadOnlyList<OperationalInquiryOption> BuildOperationalInquiryOptions()
-        {
-            var options = new List<OperationalInquiryOption>();
-            foreach (ContextActionSection section in GuaranteeInquiryActionSupport.BuildSections(_contextActionService))
-            {
-                foreach (ContextActionDefinition action in section.Items)
-                {
-                    if (!action.IsLeaf || string.IsNullOrWhiteSpace(action.Id))
-                    {
-                        continue;
-                    }
-
-                    options.Add(new OperationalInquiryOption(
-                        action.Id,
-                        section.Header,
-                        action.Header,
-                        action.Description));
-                }
-            }
-
-            return options;
-        }
-
-        public string BuildOperationalInquiryDescription(OperationalInquiryOption? option, GuaranteeRow? selectedGuarantee)
-        {
-            if (option == null)
-            {
-                return "اختر سؤالاً تشغيليًا لعرض جواب مدعوم بالأدلة.";
-            }
-
-            string description = option.Description;
-            if (selectedGuarantee == null)
-            {
-                return description;
-            }
-
-            Guarantee? current = _database.GetGuaranteeById(selectedGuarantee.Id);
-            if (current == null)
-            {
-                return description;
-            }
-
-            ContextActionAvailability availability = GuaranteeInquiryActionSupport.GetAvailability(option.Id, current);
-            if (!availability.IsEnabled && !string.IsNullOrWhiteSpace(availability.DisabledReason))
-            {
-                description = $"{description} {availability.DisabledReason}";
-            }
-
-            return description;
-        }
-
         public GuaranteeWorkspaceSnapshot BuildSnapshot(
             string searchText,
             string selectedBank,
@@ -101,13 +46,9 @@ namespace GuaranteeManager
             int pageSize,
             int pageNumber)
         {
-            List<WorkflowRequestListItem> pendingRequests = _database.QueryWorkflowRequests(new WorkflowRequestQueryOptions
-            {
-                RequestStatus = RequestStatus.Pending,
-                SortMode = WorkflowRequestQuerySortMode.RequestDateDescending
-            });
+            HashSet<int> pendingRootIds = _database.GetPendingWorkflowRequestRootIds().ToHashSet();
 
-            List<Guarantee> basePortfolio = QueryGuarantees(
+            GuaranteeQueryOptions baseOptions = BuildGuaranteeQueryOptions(
                 searchText,
                 selectedBank,
                 allBanksLabel,
@@ -115,45 +56,79 @@ namespace GuaranteeManager
                 allTypesLabel,
                 selectedTimeStatus: null,
                 includeAttachments: false,
-                limit: null);
+                limit: null,
+                offset: null);
 
-            HashSet<int> pendingRootIds = BuildPendingRootIds(pendingRequests);
-            List<Guarantee> portfolio = ApplyStatusFilter(
-                    basePortfolio,
-                    selectedStatusFilter,
-                    pendingRootIds)
-                .ToList();
+            GuaranteeQueryOptions activeOptions = CloneQueryOptions(
+                baseOptions,
+                timeStatus: GuaranteeTimeStatus.Active,
+                lifecycleStatus: GuaranteeLifecycleStatus.Active);
+            GuaranteeQueryOptions expiringSoonOptions = CloneQueryOptions(
+                baseOptions,
+                timeStatus: GuaranteeTimeStatus.ExpiringSoon,
+                lifecycleStatus: GuaranteeLifecycleStatus.Active,
+                excludeRootIds: pendingRootIds);
+            GuaranteeQueryOptions expiredOptions = CloneQueryOptions(
+                baseOptions,
+                timeStatus: GuaranteeTimeStatus.Expired,
+                lifecycleStatuses: new[]
+                {
+                    GuaranteeLifecycleStatus.Released,
+                    GuaranteeLifecycleStatus.Liquidated,
+                    GuaranteeLifecycleStatus.Replaced,
+                    GuaranteeLifecycleStatus.Closed
+                },
+                excludeRootIds: pendingRootIds);
+            GuaranteeQueryOptions followUpOptions = CloneQueryOptions(
+                baseOptions,
+                needsExpiryFollowUpOnly: true,
+                followUpPendingRootIds: pendingRootIds);
 
-            int totalCount = portfolio.Count;
+            GuaranteeQueryOptions selectedOptions = selectedStatusFilter switch
+            {
+                GuaranteeStatusFilter.Active => activeOptions,
+                GuaranteeStatusFilter.ExpiringSoon => expiringSoonOptions,
+                GuaranteeStatusFilter.NeedsFollowUp => followUpOptions,
+                GuaranteeStatusFilter.Expired => expiredOptions,
+                _ => baseOptions
+            };
+
+            int totalCount = _database.CountGuarantees(selectedOptions);
             int totalPages = ReferenceTablePagerController.CalculateTotalPages(totalCount, pageSize);
             int currentPage = System.Math.Clamp(pageNumber, 1, totalPages);
             int offset = (currentPage - 1) * pageSize;
 
-            List<Guarantee> currentGuarantees = portfolio
-                .Skip(offset)
-                .Take(pageSize)
-                .Select(guarantee => _database.GetGuaranteeById(guarantee.Id) ?? guarantee)
-                .ToList();
+            List<Guarantee> currentGuarantees = _database.QueryGuarantees(CloneQueryOptions(
+                selectedOptions,
+                includeAttachments: false,
+                limit: pageSize,
+                offset: offset));
 
-            HashSet<int> visibleRootIds = basePortfolio
+            HashSet<int> pendingVisibleRootIds = pendingRootIds.Count == 0
+                ? new HashSet<int>()
+                : _database.QueryGuarantees(CloneQueryOptions(
+                        baseOptions,
+                        includeRootIds: pendingRootIds,
+                        includeAttachments: false))
                 .Select(guarantee => guarantee.RootId ?? guarantee.Id)
                 .ToHashSet();
 
-            List<WorkflowRequestListItem> visiblePendingRequests = pendingRequests
-                .Where(request => visibleRootIds.Contains(request.RootGuaranteeId))
-                .ToList();
+            List<WorkflowRequestListItem> visiblePendingRequests = pendingVisibleRootIds.Count == 0
+                ? new List<WorkflowRequestListItem>()
+                : _database.QueryWorkflowRequests(new WorkflowRequestQueryOptions
+                {
+                    RequestStatus = RequestStatus.Pending,
+                    RootGuaranteeIds = pendingVisibleRootIds,
+                    SortMode = WorkflowRequestQuerySortMode.RequestDateDescending
+                });
 
-            Dictionary<int, List<WorkflowRequest>> requestsByRootId = currentGuarantees
+            List<int> currentRootIds = currentGuarantees
                 .Select(guarantee => guarantee.RootId ?? guarantee.Id)
                 .Distinct()
-                .ToDictionary(
-                    rootId => rootId,
-                    rootId => _database.GetWorkflowRequestsByRootId(rootId));
+                .ToList();
+            Dictionary<int, List<WorkflowRequest>> requestsByRootId = _database.GetWorkflowRequestsByRootIds(currentRootIds);
             Dictionary<int, IReadOnlyList<AttachmentRecord>> attachmentsByRootId = _database.GetSeriesAttachmentsByRootIds(
-                currentGuarantees
-                    .Select(guarantee => guarantee.RootId ?? guarantee.Id)
-                    .Distinct()
-                    .ToList());
+                currentRootIds);
 
             List<GuaranteeRow> rows = currentGuarantees
                 .Select(guarantee =>
@@ -175,35 +150,31 @@ namespace GuaranteeManager
                 })
                 .ToList();
 
-            List<Guarantee> active = basePortfolio
-                .Where(guarantee => guarantee.LifecycleStatus == GuaranteeLifecycleStatus.Active && !guarantee.IsExpired && !guarantee.IsExpiringSoon)
-                .ToList();
-            List<Guarantee> expiringSoon = basePortfolio
-                .Where(guarantee => IsExpiringSoonWithoutPendingRequest(guarantee, pendingRootIds))
-                .ToList();
-            List<Guarantee> expired = basePortfolio
-                .Where(guarantee => IsClosedExpiredWithoutPendingRequest(guarantee, pendingRootIds))
-                .ToList();
-            List<Guarantee> expiredFollowUp = basePortfolio
-                .Where(guarantee => NeedsGuaranteeFollowUp(guarantee, pendingRootIds))
-                .ToList();
             decimal pendingAmount = visiblePendingRequests
                 .GroupBy(request => request.RootGuaranteeId)
                 .Select(group => group.First().CurrentAmount)
                 .Sum();
+            int expiredCount = _database.CountGuarantees(expiredOptions);
+            decimal expiredAmount = _database.SumGuaranteeAmounts(expiredOptions);
+            int expiredFollowUpCount = _database.CountGuarantees(followUpOptions);
+            decimal expiredFollowUpAmount = _database.SumGuaranteeAmounts(followUpOptions);
+            int expiringSoonCount = _database.CountGuarantees(expiringSoonOptions);
+            decimal expiringSoonAmount = _database.SumGuaranteeAmounts(expiringSoonOptions);
+            int activeCount = _database.CountGuarantees(activeOptions);
+            decimal activeAmount = _database.SumGuaranteeAmounts(activeOptions);
 
             return new GuaranteeWorkspaceSnapshot(
                 rows,
                 visiblePendingRequests.Count.ToString("N0", CultureInfo.InvariantCulture),
                 FormatMeta(pendingAmount),
-                expired.Count.ToString("N0", CultureInfo.InvariantCulture),
-                FormatMeta(expired.Sum(guarantee => guarantee.Amount)),
-                expiredFollowUp.Count.ToString("N0", CultureInfo.InvariantCulture),
-                FormatMeta(expiredFollowUp.Sum(guarantee => guarantee.Amount)),
-                expiringSoon.Count.ToString("N0", CultureInfo.InvariantCulture),
-                FormatMeta(expiringSoon.Sum(guarantee => guarantee.Amount)),
-                active.Count.ToString("N0", CultureInfo.InvariantCulture),
-                FormatMeta(active.Sum(guarantee => guarantee.Amount)),
+                expiredCount.ToString("N0", CultureInfo.InvariantCulture),
+                FormatMeta(expiredAmount),
+                expiredFollowUpCount.ToString("N0", CultureInfo.InvariantCulture),
+                FormatMeta(expiredFollowUpAmount),
+                expiringSoonCount.ToString("N0", CultureInfo.InvariantCulture),
+                FormatMeta(expiringSoonAmount),
+                activeCount.ToString("N0", CultureInfo.InvariantCulture),
+                FormatMeta(activeAmount),
                 currentPage,
                 totalPages,
                 ReferenceTablePagerController.BuildSummary(totalCount, pageSize, currentPage, "عنصر"));
@@ -306,6 +277,9 @@ namespace GuaranteeManager
             int? offset,
             GuaranteeLifecycleStatus? lifecycleStatus = null,
             IReadOnlyCollection<GuaranteeLifecycleStatus>? lifecycleStatuses = null,
+            IReadOnlyCollection<int>? includeRootIds = null,
+            IReadOnlyCollection<int>? excludeRootIds = null,
+            IReadOnlyCollection<int>? followUpPendingRootIds = null,
             bool needsExpiryFollowUpOnly = false)
         {
             return new GuaranteeQueryOptions
@@ -316,11 +290,51 @@ namespace GuaranteeManager
                 TimeStatus = selectedTimeStatus,
                 LifecycleStatus = lifecycleStatus,
                 LifecycleStatuses = lifecycleStatuses,
+                IncludeRootIds = includeRootIds,
+                ExcludeRootIds = excludeRootIds,
+                FollowUpPendingRootIds = followUpPendingRootIds,
                 NeedsExpiryFollowUpOnly = needsExpiryFollowUpOnly,
                 IncludeAttachments = includeAttachments,
                 Limit = limit,
                 Offset = offset,
                 SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
+            };
+        }
+
+        private static GuaranteeQueryOptions CloneQueryOptions(
+            GuaranteeQueryOptions source,
+            GuaranteeTimeStatus? timeStatus = null,
+            GuaranteeLifecycleStatus? lifecycleStatus = null,
+            IReadOnlyCollection<GuaranteeLifecycleStatus>? lifecycleStatuses = null,
+            IReadOnlyCollection<int>? includeRootIds = null,
+            IReadOnlyCollection<int>? excludeRootIds = null,
+            IReadOnlyCollection<int>? followUpPendingRootIds = null,
+            bool? needsExpiryFollowUpOnly = null,
+            bool? includeAttachments = null,
+            int? limit = null,
+            int? offset = null)
+        {
+            return new GuaranteeQueryOptions
+            {
+                SearchText = source.SearchText,
+                Bank = source.Bank,
+                Supplier = source.Supplier,
+                GuaranteeType = source.GuaranteeType,
+                TimeStatus = timeStatus ?? source.TimeStatus,
+                LifecycleStatus = lifecycleStatus ?? source.LifecycleStatus,
+                LifecycleStatuses = lifecycleStatuses ?? source.LifecycleStatuses,
+                IncludeRootIds = includeRootIds ?? source.IncludeRootIds,
+                ExcludeRootIds = excludeRootIds ?? source.ExcludeRootIds,
+                FollowUpPendingRootIds = followUpPendingRootIds ?? source.FollowUpPendingRootIds,
+                ReferenceType = source.ReferenceType,
+                RequireReferenceNumber = source.RequireReferenceNumber,
+                UrgentOnly = source.UrgentOnly,
+                NotExpiredOnly = source.NotExpiredOnly,
+                NeedsExpiryFollowUpOnly = needsExpiryFollowUpOnly ?? source.NeedsExpiryFollowUpOnly,
+                IncludeAttachments = includeAttachments ?? source.IncludeAttachments,
+                Limit = limit,
+                Offset = offset,
+                SortMode = source.SortMode
             };
         }
 

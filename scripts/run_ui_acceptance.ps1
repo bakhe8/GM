@@ -1,7 +1,7 @@
 param(
     [ValidateSet("SmokeNavigation", "NewGuaranteeDiscard", "All")]
     [string]$Scenario = "All",
-    [string]$OutputRoot = ".\\Doc\\Assets\\Documentation\\Screenshots\\UIAcceptance",
+    [string]$OutputRoot = ".\\scratch\\UIAcceptance",
     [switch]$ReuseRunningSession = $true
 )
 

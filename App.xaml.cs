@@ -1,11 +1,13 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using GuaranteeManager.Services;
 using GuaranteeManager.Utils;
 #if DEBUG
 using GuaranteeManager.Development;
+using GuaranteeManager.Services.Seeding;
 #endif
 using Microsoft.Extensions.DependencyInjection;
 using MessageBox = GuaranteeManager.Services.AppMessageBox;
@@ -79,25 +81,42 @@ namespace GuaranteeManager
             // 4. Trigger Automatic Backup
             ConfigureServices();
 
-            try
-            {
-                Services.GetRequiredService<BackupService>().PerformAutoBackup();
-            }
-            catch (Exception ex)
-            {
-                SimpleLogger.LogError(ex, "App Startup (Backup)");
-                RecordRuntimeFault(
-                    action: "startup.backup-failed",
-                    severity: "Warning",
-                    title: "خطأ في النسخة الاحتياطية التلقائية",
-                    message: ex.Message,
-                    exception: ex,
-                    isTerminating: false);
-            }
+            StartAutoBackupInBackground();
 
             ShutdownMode = ShutdownMode.OnMainWindowClose;
             MainWindow = new MainWindow();
             MainWindow.Show();
+
+#if DEBUG
+            if (e.Args.Any(arg => string.Equals(arg, "--dialog-audit", StringComparison.OrdinalIgnoreCase)))
+            {
+                bool exitAfterAudit = e.Args.Any(arg => string.Equals(arg, "--exit-after-dialog-audit", StringComparison.OrdinalIgnoreCase));
+                DialogAuditRunner.Start(MainWindow, exitAfterAudit);
+            }
+#endif
+        }
+
+        private void StartAutoBackupInBackground()
+        {
+            BackupService backupService = Services.GetRequiredService<BackupService>();
+            _ = Task.Run(() => backupService.PerformAutoBackup())
+                .ContinueWith(task =>
+                {
+                    Exception? ex = task.Exception?.GetBaseException();
+                    if (ex == null)
+                    {
+                        return;
+                    }
+
+                    SimpleLogger.LogError(ex, "App Startup (Backup)");
+                    RecordRuntimeFault(
+                        action: "startup.backup-failed",
+                        severity: "Warning",
+                        title: "خطأ في النسخة الاحتياطية التلقائية",
+                        message: ex.Message,
+                        exception: ex,
+                        isTerminating: false);
+                }, TaskScheduler.Default);
         }
 
         protected override void OnExit(ExitEventArgs e)
@@ -265,9 +284,6 @@ namespace GuaranteeManager
                     provider.GetRequiredService<WorkflowResponseStorageService>()));
             services.AddSingleton<IExcelService, ExcelService>();
             services.AddSingleton<IGuaranteeHistoryDocumentService, GuaranteeHistoryDocumentService>();
-            services.AddSingleton<IOperationalInquiryService>(provider =>
-                new OperationalInquiryService(provider.GetRequiredService<IDatabaseService>()));
-            services.AddSingleton<IContextActionService, ContextActionService>();
 #if DEBUG
             services.AddSingleton<DataSeedingService>();
 #endif

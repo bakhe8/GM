@@ -1,12 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using GuaranteeManager.Models;
-using GuaranteeManager.Utils;
 using Microsoft.Win32;
 using MessageBox = GuaranteeManager.Services.AppMessageBox;
 
@@ -27,45 +23,38 @@ namespace GuaranteeManager
         {
             Title = title;
             Width = 430;
-            Height = string.IsNullOrWhiteSpace(hint) ? 250 : 310;
+            SizeToContent = SizeToContent.Height;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             ResizeMode = ResizeMode.NoResize;
             FlowDirection = FlowDirection.RightToLeft;
             FontFamily = UiTypography.DefaultFontFamily;
             Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
-            DialogWindowSupport.Attach(this, nameof(GuidedTextPromptDialog), Accept, "أكمل النافذة الحالية أو أغلقها أولاً.");
+            DialogWindowSupport.Attach(
+                this,
+                nameof(GuidedTextPromptDialog),
+                Accept,
+                "أكمل النافذة الحالية أو أغلقها أولاً.",
+                persistWindowState: false);
 
-            var root = new DockPanel { Margin = new Thickness(16) };
-
-            var actions = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 14, 0, 0)
-            };
-            DockPanel.SetDock(actions, Dock.Bottom);
+            var root = new Grid { Margin = new Thickness(18, 16, 18, 16) };
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
             var confirmButton = new Button
             {
                 Content = confirmText,
-                Width = 122,
-                Height = 32,
-                IsDefault = true,
-                Margin = new Thickness(8, 0, 0, 0)
+                IsDefault = true
             };
             confirmButton.Click += (_, _) => Accept();
 
             var cancelButton = new Button
             {
                 Content = "إلغاء",
-                Width = 90,
-                Height = 32,
                 IsCancel = true
             };
 
-            actions.Children.Add(confirmButton);
-            actions.Children.Add(cancelButton);
-            root.Children.Add(actions);
+            var actions = DialogFormSupport.BuildActionBar(confirmButton, cancelButton, 122, 96);
+            Grid.SetRow(actions, 1);
 
             var content = new StackPanel();
             content.Children.Add(new TextBlock
@@ -92,6 +81,7 @@ namespace GuaranteeManager
                 Height = 34,
                 FontSize = 12,
                 Padding = new Thickness(8, 0, 8, 0),
+                TextAlignment = TextAlignment.Right,
                 VerticalContentAlignment = VerticalAlignment.Center,
                 BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D8E1EE")),
                 BorderThickness = new Thickness(1)
@@ -119,6 +109,7 @@ namespace GuaranteeManager
             }
 
             root.Children.Add(content);
+            root.Children.Add(actions);
             Content = root;
 
             Loaded += (_, _) =>
@@ -161,120 +152,6 @@ namespace GuaranteeManager
         }
     }
 
-    public sealed class EligibleGuaranteePickerDialog : Window
-    {
-        private readonly ListBox _list = new();
-        private Guarantee? _selectedGuarantee;
-
-        private EligibleGuaranteePickerDialog(string title, string description, IReadOnlyList<Guarantee> guarantees)
-        {
-            Title = title;
-            Width = 700;
-            Height = 520;
-            MinWidth = 620;
-            MinHeight = 420;
-            WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            FlowDirection = FlowDirection.RightToLeft;
-            FontFamily = UiTypography.DefaultFontFamily;
-            Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
-            DialogWindowSupport.Attach(this, nameof(EligibleGuaranteePickerDialog), Accept, "أكمل اختيار الضمان المؤهل أو أغلق النافذة أولاً.");
-
-            var root = new DockPanel { Margin = new Thickness(16) };
-
-            var header = new StackPanel { Margin = new Thickness(0, 0, 0, 12) };
-            DockPanel.SetDock(header, Dock.Top);
-            header.Children.Add(new TextBlock
-            {
-                Text = title,
-                FontSize = 18,
-                FontWeight = FontWeights.Bold,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"))
-            });
-            header.Children.Add(new TextBlock
-            {
-                Text = description,
-                Margin = new Thickness(0, 6, 0, 0),
-                FontSize = 11,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B")),
-                TextWrapping = TextWrapping.Wrap
-            });
-            root.Children.Add(header);
-
-            _list.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D8E1EE"));
-            _list.BorderThickness = new Thickness(1);
-            _list.Background = Brushes.White;
-            _list.Padding = new Thickness(6);
-            foreach (Guarantee guarantee in guarantees.OrderBy(item => item.GuaranteeNo))
-            {
-                _list.Items.Add(new EligibleGuaranteeOption(guarantee));
-            }
-
-            _list.DisplayMemberPath = nameof(EligibleGuaranteeOption.Display);
-            _list.SelectedIndex = _list.Items.Count > 0 ? 0 : -1;
-            root.Children.Add(_list);
-
-            var actions = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 12, 0, 0)
-            };
-            DockPanel.SetDock(actions, Dock.Bottom);
-
-            var confirmButton = new Button
-            {
-                Content = "متابعة",
-                Width = 104,
-                Height = 32,
-                IsDefault = true,
-                Margin = new Thickness(8, 0, 0, 0)
-            };
-            confirmButton.Click += (_, _) => Accept();
-            var cancelButton = new Button
-            {
-                Content = "إلغاء",
-                Width = 90,
-                Height = 32,
-                IsCancel = true
-            };
-            actions.Children.Add(confirmButton);
-            actions.Children.Add(cancelButton);
-            root.Children.Add(actions);
-
-            Content = root;
-        }
-
-        public static bool TryShow(string title, string description, IReadOnlyList<Guarantee> guarantees, out Guarantee? selectedGuarantee)
-        {
-            var dialog = new EligibleGuaranteePickerDialog(title, description, guarantees)
-            {
-                Owner = Application.Current.MainWindow
-            };
-
-            bool accepted = dialog.ShowDialog() == true && dialog._selectedGuarantee != null;
-            selectedGuarantee = dialog._selectedGuarantee;
-            return accepted;
-        }
-
-        private void Accept()
-        {
-            if (_list.SelectedItem is not EligibleGuaranteeOption option)
-            {
-                MessageBox.Show("اختر ضمانًا مؤهلًا أولًا.", Title, MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            _selectedGuarantee = option.Guarantee;
-            DialogResult = true;
-        }
-
-        private sealed record EligibleGuaranteeOption(Guarantee Guarantee)
-        {
-            public string Display =>
-                $"{Guarantee.GuaranteeNo} | {Guarantee.Supplier} | {Guarantee.Bank} | {ArabicAmountFormatter.FormatSaudiRiyals(Guarantee.Amount)} | {DualCalendarDateService.FormatDate(Guarantee.ExpiryDate, Guarantee.DateCalendar)}";
-        }
-    }
-
     public sealed class AttachResponseDocumentDialog : Window
     {
         private readonly TextBox _notesInput = new();
@@ -286,7 +163,7 @@ namespace GuaranteeManager
         {
             Title = "إلحاق مستند رد البنك";
             Width = 480;
-            Height = 340;
+            SizeToContent = SizeToContent.Height;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             ResizeMode = ResizeMode.NoResize;
             FlowDirection = FlowDirection.RightToLeft;
@@ -295,36 +172,25 @@ namespace GuaranteeManager
             DialogWindowSupport.Attach(this, nameof(AttachResponseDocumentDialog), Accept, "أكمل إلحاق مستند الرد أو أغلق النافذة الحالية أولاً.");
             UiInstrumentation.Identify(this, "Dialog.AttachResponseDocument", Title);
 
-            var root = new DockPanel { Margin = new Thickness(16) };
+            var root = new Grid { Margin = new Thickness(18, 16, 18, 16) };
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            var actions = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 14, 0, 0)
-            };
-            DockPanel.SetDock(actions, Dock.Bottom);
             var saveButton = new Button
             {
                 Content = "إلحاق المستند",
-                Width = 112,
-                Height = 32,
-                IsDefault = true,
-                Margin = new Thickness(8, 0, 0, 0)
+                IsDefault = true
             };
             saveButton.Click += (_, _) => Accept();
             UiInstrumentation.Identify(saveButton, "Dialog.AttachResponseDocument.SaveButton", "إلحاق المستند");
             var cancelButton = new Button
             {
                 Content = "إلغاء",
-                Width = 90,
-                Height = 32,
                 IsCancel = true
             };
             UiInstrumentation.Identify(cancelButton, "Dialog.AttachResponseDocument.CancelButton", "إلغاء");
-            actions.Children.Add(saveButton);
-            actions.Children.Add(cancelButton);
-            root.Children.Add(actions);
+            var actions = DialogFormSupport.BuildActionBar(saveButton, cancelButton, 122, 96);
+            Grid.SetRow(actions, 1);
 
             var content = new StackPanel();
             content.Children.Add(new TextBlock
@@ -380,6 +246,7 @@ namespace GuaranteeManager
             _notesInput.Height = 92;
             _notesInput.AcceptsReturn = true;
             _notesInput.TextWrapping = TextWrapping.Wrap;
+            _notesInput.TextAlignment = TextAlignment.Right;
             _notesInput.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
             _notesInput.Padding = new Thickness(8);
             _notesInput.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D8E1EE"));
@@ -388,6 +255,7 @@ namespace GuaranteeManager
             content.Children.Add(_notesInput);
 
             root.Children.Add(content);
+            root.Children.Add(actions);
             Content = root;
         }
 

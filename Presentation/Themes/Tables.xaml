@@ -2,9 +2,9 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:GuaranteeManager">
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Colors.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Buttons.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Cards.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/Colors.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/Buttons.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/Cards.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <Style x:Key="ReferenceTableContainer" TargetType="Border" BasedOn="{StaticResource Card}">
@@ -118,7 +118,7 @@
     <Style x:Key="ReferenceTableRowsListBox" TargetType="ListBox">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Hidden" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
         <Setter Property="ItemContainerStyle" Value="{StaticResource ReferenceTableRowItem}" />
     </Style>

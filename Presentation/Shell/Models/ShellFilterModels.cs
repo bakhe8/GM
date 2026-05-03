@@ -25,23 +25,4 @@ namespace GuaranteeManager
 
         public override string ToString() => Label;
     }
-
-    public sealed class OperationalInquiryOption
-    {
-        public OperationalInquiryOption(string id, string section, string label, string description)
-        {
-            Id = id;
-            Section = section;
-            Label = label;
-            Description = description;
-        }
-
-        public string Id { get; }
-        public string Section { get; }
-        public string Label { get; }
-        public string Description { get; }
-        public string Display => $"{Section} | {Label}";
-
-        public override string ToString() => Display;
-    }
 }

@@ -10,6 +10,9 @@ namespace GuaranteeManager
 {
     public sealed class ShellWorkspaceFactory
     {
+        private const int DashboardGuaranteeLoadLimit = 500;
+        private const int DashboardPendingRequestLoadLimit = 500;
+
         private readonly IDatabaseService _database;
         private readonly GuaranteeWorkspaceDataService _guaranteeData;
         private readonly ReportsWorkspaceCoordinator _reportsWorkspace;
@@ -39,21 +42,43 @@ namespace GuaranteeManager
             string? initialSearchText = null,
             string? initialScopeFilter = null)
         {
-            return new DashboardWorkspaceSurface(
-                () => _guaranteeData.QueryGuarantees(
-                    searchText,
-                    selectedBank,
-                    allBanksLabel,
-                    selectedGuaranteeType,
-                    allTypesLabel,
-                    selectedTimeStatus,
-                    includeAttachments: true,
-                    limit: null),
-                () => _database.QueryWorkflowRequests(new WorkflowRequestQueryOptions
+            List<WorkflowRequestListItem>? pendingRequestsCache = null;
+            IReadOnlyList<WorkflowRequestListItem> LoadPendingRequests()
+            {
+                pendingRequestsCache ??= _database.QueryWorkflowRequests(new WorkflowRequestQueryOptions
                 {
                     RequestStatus = RequestStatus.Pending,
-                    SortMode = WorkflowRequestQuerySortMode.ActivityDateDescending
-                }),
+                    SortMode = WorkflowRequestQuerySortMode.ActivityDateDescending,
+                    Limit = DashboardPendingRequestLoadLimit
+                });
+
+                return pendingRequestsCache;
+            }
+
+            IReadOnlyList<Guarantee> LoadDashboardGuarantees()
+            {
+                IReadOnlyList<int> pendingRootIds = LoadPendingRequests()
+                    .Select(request => request.RootGuaranteeId)
+                    .Distinct()
+                    .ToList();
+
+                return _database.QueryGuarantees(new GuaranteeQueryOptions
+                {
+                    SearchText = searchText,
+                    Bank = selectedBank == allBanksLabel ? null : selectedBank,
+                    GuaranteeType = selectedGuaranteeType == allTypesLabel ? null : selectedGuaranteeType,
+                    TimeStatus = selectedTimeStatus,
+                    NeedsExpiryFollowUpOnly = !selectedTimeStatus.HasValue,
+                    FollowUpPendingRootIds = pendingRootIds,
+                    IncludeAttachments = false,
+                    Limit = DashboardGuaranteeLoadLimit,
+                    SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
+                });
+            }
+
+            return new DashboardWorkspaceSurface(
+                LoadDashboardGuarantees,
+                LoadPendingRequests,
                 hasLastFile,
                 lastFileGuaranteeNo,
                 lastFileSummary,
@@ -65,9 +90,9 @@ namespace GuaranteeManager
 
         public FrameworkElement CreateBanksWorkspace(Action<string?> showGuaranteesForBank, string? initialSearchText = null)
         {
-            List<Guarantee> guarantees = _database.QueryGuarantees(new GuaranteeQueryOptions());
+            List<BankPortfolioSummary> summaries = _database.GetBankPortfolioSummaries();
             return new BanksWorkspaceSurface(
-                guarantees,
+                summaries,
                 _database.GetBankReferences(),
                 showGuaranteesForBank,
                 _database.AddBankReference,

@@ -1,8 +1,8 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Colors.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Effects.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/Colors.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/Effects.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <Style x:Key="Card" TargetType="Border">

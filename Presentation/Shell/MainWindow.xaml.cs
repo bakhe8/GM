@@ -40,8 +40,6 @@ namespace GuaranteeManager
                 App.CurrentApp.GetRequiredService<IDatabaseService>(),
                 App.CurrentApp.GetRequiredService<IWorkflowService>(),
                 App.CurrentApp.GetRequiredService<IExcelService>(),
-                App.CurrentApp.GetRequiredService<IOperationalInquiryService>(),
-                App.CurrentApp.GetRequiredService<IContextActionService>(),
                 App.CurrentApp.GetRequiredService<INavigationGuard>(),
                 _shellStatus,
                 App.CurrentApp.GetRequiredService<IUiDiagnosticsService>());

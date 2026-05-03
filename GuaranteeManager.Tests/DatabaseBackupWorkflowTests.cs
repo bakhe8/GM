@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using GuaranteeManager.Models;
 using GuaranteeManager.Services;
@@ -68,6 +69,125 @@ namespace GuaranteeManager.Tests
             Assert.Equal(baselineCount, database.CountGuarantees());
             Assert.NotNull(database.GetCurrentGuaranteeByNo(baselineGuarantee.GuaranteeNo));
             Assert.Null(database.GetCurrentGuaranteeByNo(afterBackupGuarantee.GuaranteeNo));
+        }
+
+        [Fact]
+        public void CreateManualBackup_ToCurrentDatabasePath_IsRejected()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            BackupService backupService = _fixture.CreateBackupService();
+
+            database.SaveGuarantee(_fixture.CreateGuarantee(), new List<string>());
+
+            Assert.Throws<InvalidOperationException>(() => backupService.CreateManualBackup(AppPaths.DatabasePath));
+            Assert.Null(backupService.LastManualBackupPath);
+        }
+
+        [Fact]
+        public void RestoreManualBackup_WithCorruptSource_DoesNotReplaceCurrentDatabase()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            BackupService backupService = _fixture.CreateBackupService();
+            Guarantee baselineGuarantee = _fixture.CreateGuarantee();
+            string corruptBackupPath = _fixture.CreateArtifactPath();
+
+            database.SaveGuarantee(baselineGuarantee, new List<string>());
+            int baselineCount = database.CountGuarantees();
+            File.WriteAllText(corruptBackupPath, "not a valid encrypted sqlite backup");
+
+            Assert.ThrowsAny<Exception>(() => backupService.RestoreManualBackup(corruptBackupPath));
+
+            Assert.Null(backupService.LastRestoreSourcePath);
+            Assert.Equal(baselineCount, database.CountGuarantees());
+            Assert.NotNull(database.GetCurrentGuaranteeByNo(baselineGuarantee.GuaranteeNo));
+        }
+
+        [Fact]
+        public void CreateManualBackup_WhenDestinationFileIsLocked_LeavesExistingFileUntouched()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            BackupService backupService = _fixture.CreateBackupService();
+            string backupPath = _fixture.CreateArtifactPath();
+            string originalContents = "existing locked backup placeholder";
+
+            database.SaveGuarantee(_fixture.CreateGuarantee(), new List<string>());
+            File.WriteAllText(backupPath, originalContents);
+
+            using (new FileStream(backupPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            {
+                Assert.ThrowsAny<IOException>(() => backupService.CreateManualBackup(backupPath));
+            }
+
+            Assert.Null(backupService.LastManualBackupPath);
+            Assert.Equal(originalContents, File.ReadAllText(backupPath));
+            Assert.Empty(Directory.GetFiles(
+                Path.GetDirectoryName(backupPath)!,
+                $"{Path.GetFileName(backupPath)}.*.tmp"));
+        }
+
+        [Fact]
+        public void RestorePortableBackupPackage_WithMissingManifest_DoesNotReplaceCurrentDatabase()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            BackupService backupService = _fixture.CreateBackupService();
+            Guarantee baselineGuarantee = _fixture.CreateGuarantee();
+            string packagePath = _fixture.CreateArtifactPath(".gmpkg");
+
+            database.SaveGuarantee(baselineGuarantee, new List<string>());
+            int baselineCount = database.CountGuarantees();
+
+            using (ZipArchive archive = ZipFile.Open(packagePath, ZipArchiveMode.Create))
+            {
+                ZipArchiveEntry entry = archive.CreateEntry("payload/readme.txt");
+                using StreamWriter writer = new(entry.Open());
+                writer.Write("not a valid GuaranteeManager portable package");
+            }
+
+            Assert.Throws<InvalidOperationException>(
+                () => backupService.RestorePortableBackupPackage(packagePath, "StrongPass#2026"));
+
+            Assert.Null(backupService.LastPortableRestorePackagePath);
+            Assert.Null(backupService.LastPortableRestoreSafetyPackagePath);
+            Assert.Equal(baselineCount, database.CountGuarantees());
+            Assert.NotNull(database.GetCurrentGuaranteeByNo(baselineGuarantee.GuaranteeNo));
+        }
+
+        [Fact]
+        public void PerformAutoBackup_WhenBackupFolderPathIsBlocked_RecordsFailure()
+        {
+            string originalStorageRoot = AppPaths.StorageRootDirectory;
+            string blockedStorageRoot = _fixture.CreateStorageRoot($"backup-blocked-{_fixture.NextToken("ROOT")}");
+
+            try
+            {
+                _fixture.SwitchStorageRoot(blockedStorageRoot);
+                DatabaseService.InitializeRuntime();
+
+                DatabaseService database = _fixture.CreateDatabaseService();
+                database.SaveGuarantee(_fixture.CreateGuarantee(), new List<string>());
+
+                if (Directory.Exists(AppPaths.BackupFolder))
+                {
+                    Directory.Delete(AppPaths.BackupFolder, recursive: true);
+                }
+
+                Directory.CreateDirectory(Path.GetDirectoryName(AppPaths.BackupFolder)!);
+                File.WriteAllText(AppPaths.BackupFolder, "this file intentionally blocks the backup folder path");
+
+                BackupService backupService = _fixture.CreateBackupService();
+                Assert.Throws<InvalidOperationException>(() => backupService.PerformAutoBackup());
+                Assert.NotNull(backupService.LastAutoBackupError);
+            }
+            finally
+            {
+                if (File.Exists(AppPaths.BackupFolder))
+                {
+                    File.Delete(AppPaths.BackupFolder);
+                }
+
+                _fixture.SwitchStorageRoot(originalStorageRoot);
+                DatabaseService.InitializeRuntime();
+            }
         }
 
         [Fact]

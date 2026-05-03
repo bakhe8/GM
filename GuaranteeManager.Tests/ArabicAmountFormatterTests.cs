@@ -60,6 +60,15 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void FormatSaudiRiyalsInWords_RejectsAmountsBeyondWholeRiyalWordRange()
+        {
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                () => ArabicAmountFormatter.FormatSaudiRiyalsInWords(decimal.MaxValue));
+
+            Assert.Contains("الحد المدعوم", exception.Message);
+        }
+
+        [Fact]
         public void FormatSaudiRiyalsInWords_IncludesHalalasWhenPresent()
         {
             Assert.Equal(

@@ -26,9 +26,5 @@ namespace GuaranteeManager.Services
         int? SelectedGuaranteeRootId,
         string SelectedGuaranteeNo,
         string SelectedGuaranteeSupplier,
-        string SelectedGuaranteeBank,
-        string SelectedOperationalInquiryId,
-        bool HasLatestInquiryResult,
-        bool HasLatestInquirySuggestedSection,
-        string LatestInquirySuggestedSectionLabel);
+        string SelectedGuaranteeBank);
 }

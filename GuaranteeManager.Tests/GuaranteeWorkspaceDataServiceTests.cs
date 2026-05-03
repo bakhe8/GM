@@ -72,8 +72,7 @@ namespace GuaranteeManager.Tests
                 new TimelineDatabaseStub(
                     new[] { expiredOpen, expiredClosed, expiredReleased, closedBeforeExpiry, expiredClosedWithPendingRequest, expiredTerminalWithPendingRequest, active },
                     Array.Empty<WorkflowRequest>(),
-                    requestItems: new[] { pendingRequest, pendingTerminalRequest }),
-                new ContextActionService());
+                    requestItems: new[] { pendingRequest, pendingTerminalRequest }));
 
             GuaranteeWorkspaceSnapshot snapshot = service.BuildSnapshot(
                 string.Empty,
@@ -135,8 +134,7 @@ namespace GuaranteeManager.Tests
                 new TimelineDatabaseStub(
                     new[] { expiringWithRequest, expiringWithoutRequest, expiredOpen },
                     Array.Empty<WorkflowRequest>(),
-                    requestItems: new[] { pendingRequest }),
-                new ContextActionService());
+                    requestItems: new[] { pendingRequest }));
 
             GuaranteeWorkspaceSnapshot expiringSnapshot = service.BuildSnapshot(
                 string.Empty,
@@ -166,6 +164,39 @@ namespace GuaranteeManager.Tests
             Assert.Contains(followUpSnapshot.Rows, row => row.GuaranteeNo == expiringWithRequest.GuaranteeNo);
             Assert.Contains(followUpSnapshot.Rows, row => row.GuaranteeNo == expiredOpen.GuaranteeNo);
             Assert.DoesNotContain(followUpSnapshot.Rows, row => row.GuaranteeNo == expiringWithoutRequest.GuaranteeNo);
+        }
+
+        [Fact]
+        public void BuildSnapshot_WithFiveThousandGuarantees_RequestsOnlyVisiblePage()
+        {
+            DateTime start = new(2026, 4, 28, 8, 0, 0);
+            List<Guarantee> guarantees = Enumerable.Range(0, 5_000)
+                .Select(index =>
+                {
+                    Guarantee guarantee = CreateGuarantee(1_000 + index, null, 1, true, start.AddMinutes(index), 1_000m + index);
+                    guarantee.GuaranteeNo = $"BG-LARGE-{index:D5}";
+                    guarantee.ExpiryDate = DateTime.Today.AddDays(60 + index);
+                    return guarantee;
+                })
+                .ToList();
+            var database = new TimelineDatabaseStub(guarantees, Array.Empty<WorkflowRequest>());
+            var service = new GuaranteeWorkspaceDataService(database);
+
+            GuaranteeWorkspaceSnapshot snapshot = service.BuildSnapshot(
+                string.Empty,
+                "كل البنوك",
+                "كل البنوك",
+                "كل الأنواع",
+                "كل الأنواع",
+                GuaranteeStatusFilter.Active,
+                50,
+                100);
+
+            Assert.Equal(50, snapshot.Rows.Count);
+            Assert.Equal(100, snapshot.CurrentPage);
+            Assert.Contains(
+                database.QueryGuaranteeCalls,
+                options => options.Limit == 50 && options.Offset == 4_950 && options.IncludeAttachments == false);
         }
 
         [Fact]
@@ -199,8 +230,7 @@ namespace GuaranteeManager.Tests
             };
 
             var service = new GuaranteeWorkspaceDataService(
-                new TimelineDatabaseStub(new[] { current }, new[] { request }),
-                new ContextActionService());
+                new TimelineDatabaseStub(new[] { current }, new[] { request }));
             GuaranteeRow row = GuaranteeRow.FromGuarantee(current, new[] { request });
 
             GuaranteeSelectionArtifacts artifacts = service.BuildSelectionArtifacts(row);
@@ -271,8 +301,7 @@ namespace GuaranteeManager.Tests
             };
 
             var service = new GuaranteeWorkspaceDataService(
-                new TimelineDatabaseStub(new[] { current }, new[] { request }, events),
-                new ContextActionService());
+                new TimelineDatabaseStub(new[] { current }, new[] { request }, events));
             GuaranteeRow row = GuaranteeRow.FromGuarantee(current, new[] { request });
 
             GuaranteeSelectionArtifacts artifacts = service.BuildSelectionArtifacts(row);
@@ -319,8 +348,7 @@ namespace GuaranteeManager.Tests
             };
 
             var service = new GuaranteeWorkspaceDataService(
-                new TimelineDatabaseStub(new[] { current }, new[] { request }),
-                new ContextActionService());
+                new TimelineDatabaseStub(new[] { current }, new[] { request }));
             GuaranteeRow row = GuaranteeRow.FromGuarantee(current, new[] { request });
 
             GuaranteeSelectionArtifacts artifacts = service.BuildSelectionArtifacts(row);
@@ -368,8 +396,7 @@ namespace GuaranteeManager.Tests
             };
 
             var service = new GuaranteeWorkspaceDataService(
-                new TimelineDatabaseStub(new[] { extended, original }, new[] { extensionRequest, releaseRequest }),
-                new ContextActionService());
+                new TimelineDatabaseStub(new[] { extended, original }, new[] { extensionRequest, releaseRequest }));
             GuaranteeRow row = GuaranteeRow.FromGuarantee(extended, new[] { extensionRequest, releaseRequest });
 
             GuaranteeSelectionArtifacts artifacts = service.BuildSelectionArtifacts(row);
@@ -486,6 +513,8 @@ namespace GuaranteeManager.Tests
             private readonly List<WorkflowRequestListItem> _requestItems;
             private readonly List<GuaranteeTimelineEvent> _events;
 
+            public List<GuaranteeQueryOptions> QueryGuaranteeCalls { get; } = new();
+
             public TimelineDatabaseStub(
                 IEnumerable<Guarantee> history,
                 IEnumerable<WorkflowRequest> requests,
@@ -512,6 +541,14 @@ namespace GuaranteeManager.Tests
             public List<WorkflowRequest> GetWorkflowRequestsByRootId(int rootId)
                 => _requests.Where(request => request.RootGuaranteeId == rootId).ToList();
 
+            public Dictionary<int, List<WorkflowRequest>> GetWorkflowRequestsByRootIds(IReadOnlyCollection<int> rootIds)
+            {
+                HashSet<int> rootSet = rootIds.ToHashSet();
+                return rootSet.ToDictionary(
+                    rootId => rootId,
+                    rootId => _requests.Where(request => request.RootGuaranteeId == rootId).ToList());
+            }
+
             public void SaveGuarantee(Guarantee g, List<string> tempFilePaths) => throw new NotSupportedException();
             public void SaveGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> attachments) => throw new NotSupportedException();
             public void AddGuaranteeAttachments(int guaranteeId, List<AttachmentInput> attachments) => throw new NotSupportedException();
@@ -519,6 +556,11 @@ namespace GuaranteeManager.Tests
             public int UpdateGuaranteeWithAttachments(Guarantee g, List<AttachmentInput> newAttachments, List<AttachmentRecord> removedAttachments) => throw new NotSupportedException();
             public List<Guarantee> QueryGuarantees(GuaranteeQueryOptions options)
             {
+                if (options.Limit.HasValue || options.Offset.HasValue || options.IncludeRootIds != null)
+                {
+                    QueryGuaranteeCalls.Add(CloneQueryOptionsForRecording(options));
+                }
+
                 IEnumerable<Guarantee> query = _history.Where(guarantee => guarantee.IsCurrent);
                 string search = options.SearchText?.Trim() ?? string.Empty;
 
@@ -553,9 +595,49 @@ namespace GuaranteeManager.Tests
                     query = query.Where(guarantee => statuses.Contains(guarantee.LifecycleStatus));
                 }
 
+                if (options.IncludeRootIds != null)
+                {
+                    HashSet<int> includeRootIds = options.IncludeRootIds.Where(rootId => rootId > 0).ToHashSet();
+                    query = includeRootIds.Count == 0
+                        ? Enumerable.Empty<Guarantee>()
+                        : query.Where(guarantee => includeRootIds.Contains(guarantee.RootId ?? guarantee.Id));
+                }
+
+                if (options.ExcludeRootIds != null)
+                {
+                    HashSet<int> excludeRootIds = options.ExcludeRootIds.Where(rootId => rootId > 0).ToHashSet();
+                    query = query.Where(guarantee => !excludeRootIds.Contains(guarantee.RootId ?? guarantee.Id));
+                }
+
+                if (options.ReferenceType.HasValue)
+                {
+                    query = query.Where(guarantee => guarantee.ReferenceType == options.ReferenceType.Value);
+                }
+
+                if (options.RequireReferenceNumber)
+                {
+                    query = query.Where(guarantee => !string.IsNullOrWhiteSpace(guarantee.ReferenceNumber));
+                }
+
+                if (options.NotExpiredOnly)
+                {
+                    query = query.Where(guarantee => !guarantee.IsExpired);
+                }
+
                 if (options.NeedsExpiryFollowUpOnly)
                 {
-                    query = query.Where(guarantee => guarantee.NeedsExpiryFollowUp);
+                    HashSet<int> followUpPendingRootIds = (options.FollowUpPendingRootIds ?? Array.Empty<int>())
+                        .Where(rootId => rootId > 0)
+                        .ToHashSet();
+                    query = query.Where(guarantee =>
+                        guarantee.NeedsExpiryFollowUp ||
+                        (guarantee.LifecycleStatus == GuaranteeLifecycleStatus.Active &&
+                         guarantee.IsExpiringSoon &&
+                         followUpPendingRootIds.Contains(guarantee.RootId ?? guarantee.Id)));
+                }
+                else if (options.UrgentOnly)
+                {
+                    query = query.Where(guarantee => guarantee.IsExpired || guarantee.IsExpiringSoon);
                 }
                 else if (options.TimeStatus.HasValue)
                 {
@@ -584,12 +666,82 @@ namespace GuaranteeManager.Tests
 
                 return query.ToList();
             }
-            public int CountGuarantees(GuaranteeQueryOptions? options = null) => throw new NotSupportedException();
+
+            public int CountGuarantees(GuaranteeQueryOptions? options = null)
+            {
+                GuaranteeQueryOptions countOptions = CloneQueryOptionsWithoutPaging(options ?? new GuaranteeQueryOptions());
+                return QueryGuarantees(countOptions).Count;
+            }
+
+            public decimal SumGuaranteeAmounts(GuaranteeQueryOptions? options = null)
+            {
+                GuaranteeQueryOptions sumOptions = CloneQueryOptionsWithoutPaging(options ?? new GuaranteeQueryOptions());
+                return QueryGuarantees(sumOptions).Sum(guarantee => guarantee.Amount);
+            }
+
+            public List<BankPortfolioSummary> GetBankPortfolioSummaries() => throw new NotSupportedException();
+
+            private static GuaranteeQueryOptions CloneQueryOptionsWithoutPaging(GuaranteeQueryOptions source)
+            {
+                return new GuaranteeQueryOptions
+                {
+                    SearchText = source.SearchText,
+                    Bank = source.Bank,
+                    Supplier = source.Supplier,
+                    GuaranteeType = source.GuaranteeType,
+                    TimeStatus = source.TimeStatus,
+                    LifecycleStatus = source.LifecycleStatus,
+                    LifecycleStatuses = source.LifecycleStatuses,
+                    IncludeRootIds = source.IncludeRootIds,
+                    ExcludeRootIds = source.ExcludeRootIds,
+                    FollowUpPendingRootIds = source.FollowUpPendingRootIds,
+                    ReferenceType = source.ReferenceType,
+                    RequireReferenceNumber = source.RequireReferenceNumber,
+                    UrgentOnly = source.UrgentOnly,
+                    NotExpiredOnly = source.NotExpiredOnly,
+                    NeedsExpiryFollowUpOnly = source.NeedsExpiryFollowUpOnly,
+                    IncludeAttachments = source.IncludeAttachments,
+                    SortMode = source.SortMode
+                };
+            }
+
+            private static GuaranteeQueryOptions CloneQueryOptionsForRecording(GuaranteeQueryOptions source)
+            {
+                return new GuaranteeQueryOptions
+                {
+                    SearchText = source.SearchText,
+                    Bank = source.Bank,
+                    Supplier = source.Supplier,
+                    GuaranteeType = source.GuaranteeType,
+                    TimeStatus = source.TimeStatus,
+                    LifecycleStatus = source.LifecycleStatus,
+                    LifecycleStatuses = source.LifecycleStatuses,
+                    IncludeRootIds = source.IncludeRootIds,
+                    ExcludeRootIds = source.ExcludeRootIds,
+                    FollowUpPendingRootIds = source.FollowUpPendingRootIds,
+                    ReferenceType = source.ReferenceType,
+                    RequireReferenceNumber = source.RequireReferenceNumber,
+                    UrgentOnly = source.UrgentOnly,
+                    NotExpiredOnly = source.NotExpiredOnly,
+                    NeedsExpiryFollowUpOnly = source.NeedsExpiryFollowUpOnly,
+                    IncludeAttachments = source.IncludeAttachments,
+                    Limit = source.Limit,
+                    Offset = source.Offset,
+                    SortMode = source.SortMode
+                };
+            }
+
             public int CountAttachments() => throw new NotSupportedException();
             public List<Guarantee> SearchGuarantees(string query) => throw new NotSupportedException();
             public int SaveWorkflowRequest(WorkflowRequest req) => throw new NotSupportedException();
             public bool HasPendingWorkflowRequest(int rootId, RequestType requestType) => throw new NotSupportedException();
             public int GetPendingWorkflowRequestCount() => throw new NotSupportedException();
+            public List<int> GetPendingWorkflowRequestRootIds()
+                => _requestItems
+                    .Where(item => item.Request.Status == RequestStatus.Pending)
+                    .Select(item => item.RootGuaranteeId)
+                    .Distinct()
+                    .ToList();
             public WorkflowRequest? GetWorkflowRequestById(int requestId) => throw new NotSupportedException();
             public List<WorkflowRequestListItem> QueryWorkflowRequests(WorkflowRequestQueryOptions options)
             {
@@ -598,6 +750,12 @@ namespace GuaranteeManager.Tests
                 if (options.RequestStatus.HasValue)
                 {
                     query = query.Where(item => item.Request.Status == options.RequestStatus.Value);
+                }
+
+                if (options.RootGuaranteeIds is { Count: > 0 })
+                {
+                    HashSet<int> rootIds = options.RootGuaranteeIds.ToHashSet();
+                    query = query.Where(item => rootIds.Contains(item.RootGuaranteeId));
                 }
 
                 return query.ToList();
@@ -612,7 +770,6 @@ namespace GuaranteeManager.Tests
             public int ExecuteLiquidationWorkflowRequest(int requestId, string responseNotes, string responseOriginalFileName, string responseSavedFileName, string? responseAttachmentSourcePath = null) => throw new NotSupportedException();
             public int? ExecuteVerificationWorkflowRequest(int requestId, string responseNotes, string responseOriginalFileName, string responseSavedFileName, string? responseAttachmentSourcePath = null, bool promoteResponseDocumentToOfficialAttachment = false) => throw new NotSupportedException();
             public int ExecuteReplacementWorkflowRequest(int requestId, string replacementGuaranteeNo, string replacementSupplier, string replacementBank, decimal replacementAmount, DateTime replacementExpiryDate, string replacementGuaranteeType, string replacementBeneficiary, GuaranteeReferenceType replacementReferenceType, string replacementReferenceNumber, string responseNotes, string responseOriginalFileName, string responseSavedFileName, string? responseAttachmentSourcePath = null) => throw new NotSupportedException();
-            public void DeleteAttachment(AttachmentRecord att) => throw new NotSupportedException();
             public void AddBankReference(string bankName) => throw new NotSupportedException();
             public List<string> GetBankReferences() => throw new NotSupportedException();
             public List<string> GetUniqueValues(string columnName) => throw new NotSupportedException();

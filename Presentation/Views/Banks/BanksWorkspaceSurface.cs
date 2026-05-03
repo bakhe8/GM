@@ -69,6 +69,34 @@ namespace GuaranteeManager
             ApplyInitialSearch(initialSearchText);
         }
 
+        public BanksWorkspaceSurface(
+            IReadOnlyList<BankPortfolioSummary> summaries,
+            IReadOnlyList<string> bankReferences,
+            Action<string?> showGuaranteesForBank,
+            Action<string> addBankReference,
+            string? initialSearchText = null)
+        {
+            _dataService = new BanksWorkspaceDataService();
+            _allBanks = _dataService.BuildItemsFromSummaries(summaries, bankReferences);
+            _showGuaranteesForBank = showGuaranteesForBank;
+            _addBankReference = addBankReference;
+            UiInstrumentation.Identify(this, "Banks.Workspace", "البنوك");
+            UiInstrumentation.Identify(_searchInput, "Banks.SearchBox", "بحث البنوك");
+            UiInstrumentation.Identify(_highestValueSortButton, "Banks.Filter.Sort.HighestValue", BankSortFilters.HighestValue);
+            UiInstrumentation.Identify(_mostCountSortButton, "Banks.Filter.Sort.MostCount", BankSortFilters.MostCount);
+            UiInstrumentation.Identify(_mostActiveSortButton, "Banks.Filter.Sort.MostActive", BankSortFilters.MostActive);
+            UiInstrumentation.Identify(_list, "Banks.Table.List", "قائمة البنوك");
+
+            FlowDirection = FlowDirection.RightToLeft;
+            FontFamily = UiTypography.DefaultFontFamily;
+            Background = WorkspaceSurfaceChrome.BrushResource("Brush.Canvas");
+            RenderOptions.SetBitmapScalingMode(_detailLogo, BitmapScalingMode.HighQuality);
+
+            Content = BuildLayout();
+            ApplyFilters();
+            ApplyInitialSearch(initialSearchText);
+        }
+
         private void ApplyInitialSearch(string? initialSearchText)
         {
             if (!string.IsNullOrWhiteSpace(initialSearchText))

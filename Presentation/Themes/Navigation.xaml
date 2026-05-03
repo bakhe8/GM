@@ -2,14 +2,13 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:GuaranteeManager">
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="pack://application:,,,/Presentation/Themes/Colors.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/GuaranteeManager;component/Presentation/Themes/Colors.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <Style x:Key="NavIconText" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
         <Setter Property="FontSize" Value="19" />
         <Setter Property="FontWeight" Value="Normal" />
-        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Muted}" />
         <Setter Property="Width" Value="57" />
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="TextAlignment" Value="Center" />
@@ -19,7 +18,6 @@
         <Setter Property="FontFamily" Value="{x:Static local:UiTypography.DefaultFontFamily}" />
         <Setter Property="FontSize" Value="8" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Muted}" />
         <Setter Property="Width" Value="57" />
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="TextAlignment" Value="Center" />

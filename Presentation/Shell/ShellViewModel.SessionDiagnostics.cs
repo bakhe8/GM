@@ -68,11 +68,7 @@ namespace GuaranteeManager
                 diagnosticsSelection.RootGuaranteeId,
                 diagnosticsSelection.GuaranteeNo,
                 diagnosticsSelection.Supplier,
-                diagnosticsSelection.Bank,
-                SelectedOperationalInquiryOption?.Id ?? string.Empty,
-                HasLatestInquiryResult,
-                HasLatestInquirySuggestedSection,
-                LatestInquirySuggestedSectionLabel));
+                diagnosticsSelection.Bank));
         }
 
         private ShellDiagnosticsSelection ResolveDiagnosticsSelection()

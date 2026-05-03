@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using GuaranteeManager.Services;
 using GuaranteeManager.Utils;
@@ -17,6 +18,8 @@ namespace GuaranteeManager
         private readonly IUiDiagnosticsService _diagnostics;
         private readonly IShellStatusService _shellStatus;
         private readonly Dictionary<string, ReportRunResult> _reportResults = new(StringComparer.OrdinalIgnoreCase);
+        private readonly object _runLock = new();
+        private string _runningReportKey = string.Empty;
 
         public ReportsWorkspaceCoordinator(
             IDatabaseService database,
@@ -32,32 +35,64 @@ namespace GuaranteeManager
 
         public IReadOnlyDictionary<string, ReportRunResult> Results => _reportResults;
 
-        public bool TryRun(ReportWorkspaceItem? item)
+        public bool IsRunning => !string.IsNullOrWhiteSpace(_runningReportKey);
+
+        public bool IsRunningReport(ReportWorkspaceItem? item)
+        {
+            return item != null
+                && string.Equals(_runningReportKey, item.Key, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public async Task<bool> TryRunAsync(ReportWorkspaceItem? item)
         {
             if (item == null)
             {
                 return false;
             }
 
-            if (!TryResolveInput(item, out string? input))
+            if (!TryBeginRun(item))
             {
+                _shellStatus.ShowInfo("يوجد تقرير قيد الإنشاء.", "التقارير");
                 return false;
             }
 
-            _reportResults[item.Key] = Run(item.Key, input);
-            ReportRunResult result = _reportResults[item.Key];
-            if (result.Succeeded)
+            if (!TryResolveInput(item, out string? input))
             {
-                _shellStatus.ShowSuccess(result.Message, $"التقارير • {item.Title}");
+                EndRun(item);
+                return false;
             }
-            _diagnostics.RecordEvent("reports.operation", "run", new
+
+            _shellStatus.ShowInfo("جاري إنشاء التقرير...", $"التقارير • {item.Title}");
+
+            try
             {
-                item.Key,
-                item.Title,
-                result.Succeeded,
-                result.OutputPath
-            });
-            return true;
+                ReportRunResult result = WorkspaceReportCatalog.IsPrintAction(item.Key)
+                    ? Run(item.Key, input)
+                    : await Task.Run(() => Run(item.Key, input)).ConfigureAwait(true);
+
+                _reportResults[item.Key] = result;
+                if (result.Succeeded)
+                {
+                    _shellStatus.ShowSuccess(result.Message, $"التقارير • {item.Title}");
+                }
+                else
+                {
+                    _shellStatus.ShowInfo(result.Message, $"التقارير • {item.Title}");
+                }
+
+                _diagnostics.RecordEvent("reports.operation", "run", new
+                {
+                    item.Key,
+                    item.Title,
+                    result.Succeeded,
+                    result.OutputPath
+                });
+                return true;
+            }
+            finally
+            {
+                EndRun(item);
+            }
         }
 
         public void OpenLastReport(ReportWorkspaceItem? item)
@@ -103,6 +138,31 @@ namespace GuaranteeManager
 
             result = default!;
             return false;
+        }
+
+        private bool TryBeginRun(ReportWorkspaceItem item)
+        {
+            lock (_runLock)
+            {
+                if (!string.IsNullOrWhiteSpace(_runningReportKey))
+                {
+                    return false;
+                }
+
+                _runningReportKey = item.Key;
+                return true;
+            }
+        }
+
+        private void EndRun(ReportWorkspaceItem item)
+        {
+            lock (_runLock)
+            {
+                if (string.Equals(_runningReportKey, item.Key, StringComparison.OrdinalIgnoreCase))
+                {
+                    _runningReportKey = string.Empty;
+                }
+            }
         }
 
         private ReportRunResult Run(string reportKey, string? input)

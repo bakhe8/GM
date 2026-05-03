@@ -1,48 +1,58 @@
 # Documentation Map
 
-هذا المجلد هو المرجع الرسمي لوضع المشروع الحالي، الإصدارات، ونتائج القبول. تمت إزالة وثائق الانتقال والأرشيفات القديمة من دورة العمل اليومية.
+هذا هو فهرس التوثيق النشط بعد تنظيف 2026-05-03. أي ملف غير مذكور هنا لا يدخل في دورة العمل اليومية، ويعامل كتاريخ أو مادة تدقيق داخل `archive/` أو `audits/`.
 
-## ملفات الحقيقة الرسمية
+## مراجع البداية
 
+- `../README.md`
+  - بوابة المشروع المختصرة: الهدف، التشغيل، والتحقق.
+- `../AI_HANDOFF.md`
+  - نقطة استمرار مختصرة للمحادثات الجديدة.
 - `CURRENT_STATE.md`
-  - أسرع صورة دقيقة لوضع المشروع الحالي.
+  - أسرع صورة دقيقة لوضع المنتج والكود الآن.
 - `git_workflow.md`
   - سياسة الفروع، الترقيم، ومعايير الانتقال بين `preview` و`rc` و`release`.
-- `releases/README_v1.1.0-rc.1.md`
-  - وصف مرشح الإطلاق الحالي.
-- `Assets/Documentation/Screenshots/README.md`
-  - سياسة لقطات القبول ومخرجات الأداة.
 
-## ملفات مساندة خارج هذا المجلد
-
-- `AI_HANDOFF.md`
-  - نقطة استمرار مختصرة للمحادثات الجديدة.
-- `missing_features_report.md`
-  - سجل تدقيق الفجوات بين القديم والجديد بعد الاختصار.
-
-## أدلة حية
+## أدلة التشغيل والمنطق
 
 - `guides/Core_Workflows.md`
   - تعريف العمل الأساسي للبرنامج على مستوى المهام.
 - `guides/Daily_Quick_Guide.md`
   - دليل يومي مختصر للعمليات الأساسية.
-- `guides/Workflow_Event_Logic_Study.md`
-  - قواعد workflow ودورة حياة الضمان.
 - `guides/User_Guide_Final.md`
   - دليل المستخدم.
+- `guides/Workflow_Event_Logic_Study.md`
+  - قواعد workflow ودورة حياة الضمان.
 - `guides/Next_Development_Plan.md`
-  - حدود العمل بعد `rc.1` وما يذهب إلى المرحلة القادمة.
-- `guides/Color_Palette_Audit.md`
-  - جرد ألوان الواجهة ومقترح اختصارها إلى tokens رسمية.
+  - حدود العمل بعد مرشح الإطلاق الحالي.
 - `guides/Repository_Stabilization_Checklist_2026-04-30.md`
-  - قائمة تثبيت المستودع.
-- `guides/UIAutomation_Supported_API.md`
-- `guides/UIAutomation_Tooling_Roadmap.md`
-- `guides/UIAutomation_Adaptive_Capabilities_Roadmap.md`
+  - قائمة تثبيت المستودع قبل الوسم أو الدمج.
+- `guides/Repository_Structure.md`
+  - خريطة المجلدات النشطة وقواعد إضافة الملفات الجديدة.
 
-## ما لا يعد مرجعًا رسميًا
+## تصميم الواجهة
 
-- أي ملف داخل `Assets/Documentation/Screenshots/UIAcceptance/latest/`.
-- أي مجلد تشغيل زمني مباشر تحت `Assets/Documentation/Screenshots/UIAcceptance/20*`.
+- `design/Visual_Identity.md`
+  - الهوية البصرية المعتمدة للبرنامج.
+- `design/Color_System.md`
+  - ألوان الواجهة الرسمية.
+- `design/Typography_System.md`
+  - الخطوط، الأوزان، والمقاسات.
+- `design/Subwindow_Design_System.md`
+  - قواعد النوافذ الفرعية.
 
-هذه نواتج generated للتحقق والتجربة، وليست baseline معتمدة.
+## الإصدارات والتدقيق
+
+- `releases/README_v1.1.0-rc.5.md`
+  - وصف مرشح الإطلاق الحالي.
+- `audits/`
+  - تقارير التدقيق الخارجية وفجوات القديم مقابل الجديد.
+- `archive/`
+  - وثائق قديمة ومراجع تاريخية لا تعد baseline حاليًا.
+
+## سياسة التوثيق
+
+- لا توضع تقارير Excel أو لقطات UI أو مخرجات تشغيل في الجذر.
+- أي مخرجات مؤقتة مكانها `scratch/` ولا تعد توثيقًا رسميًا.
+- ملاحظات الإصدارات القديمة وأدلة الأدوات المؤرشفة لا تحدث إلا إذا احتجنا الرجوع التاريخي لها.
+- عند إضافة وثيقة جديدة، يجب ربطها من هذا الفهرس أو وضعها مباشرة في `archive/`.

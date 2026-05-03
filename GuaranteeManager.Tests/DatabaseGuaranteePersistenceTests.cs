@@ -104,6 +104,46 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void GetBankPortfolioSummaries_AggregatesCurrentGuaranteesInDatabase()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            string bankName = $"Summary Bank {_fixture.NextToken("BANK")}";
+            string otherBankName = $"Summary Bank {_fixture.NextToken("BANK")}";
+
+            Guarantee first = _fixture.CreateGuarantee();
+            first.Bank = bankName;
+            first.Supplier = "Summary Supplier A";
+            first.Amount = 1000m;
+            first.ExpiryDate = DateTime.Today.AddDays(10);
+
+            Guarantee second = _fixture.CreateGuarantee();
+            second.Bank = bankName;
+            second.Supplier = "Summary Supplier A";
+            second.Amount = 500m;
+            second.ExpiryDate = DateTime.Today.AddDays(-1);
+
+            Guarantee other = _fixture.CreateGuarantee();
+            other.Bank = otherBankName;
+            other.Supplier = "Summary Supplier B";
+            other.Amount = 750m;
+            other.ExpiryDate = DateTime.Today.AddDays(60);
+
+            database.SaveGuarantee(first, new List<string>());
+            database.SaveGuarantee(second, new List<string>());
+            database.SaveGuarantee(other, new List<string>());
+
+            List<BankPortfolioSummary> summaries = database.GetBankPortfolioSummaries();
+
+            BankPortfolioSummary summary = Assert.Single(summaries, item => item.Bank == bankName);
+            Assert.Equal(2, summary.Count);
+            Assert.Equal(2, summary.Active);
+            Assert.Equal(1, summary.ExpiringSoon);
+            Assert.Equal(1, summary.Expired);
+            Assert.Equal(1500m, summary.Amount);
+            Assert.Equal("Summary Supplier A", summary.TopSupplier);
+        }
+
+        [Fact]
         public void UpdateGuarantee_CreatesNewCurrentVersionAndKeepsHistory()
         {
             DatabaseService database = _fixture.CreateDatabaseService();
@@ -113,8 +153,7 @@ namespace GuaranteeManager.Tests
             database.SaveGuarantee(seed, new List<string> { sourceAttachmentPath });
             Guarantee original = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
 
-            original.Amount += 250m;
-            original.ExpiryDate = original.ExpiryDate.AddDays(30);
+            original.Supplier = $"{original.Supplier} Updated";
             original.Notes = "updated-version";
 
             int newVersionId = database.UpdateGuarantee(
@@ -136,6 +175,203 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void UpdateGuarantee_RejectsOperationalFieldMutations()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            (string FieldLabel, Action<Guarantee> Mutate)[] mutations =
+            {
+                ("رقم الضمان", guarantee => guarantee.GuaranteeNo += "-CHANGED"),
+                ("البنك", guarantee => guarantee.Bank += " Changed"),
+                ("نوع الضمان", guarantee => guarantee.GuaranteeType += " Changed"),
+                ("المبلغ", guarantee => guarantee.Amount += 250m),
+                ("تاريخ الانتهاء", guarantee => guarantee.ExpiryDate = guarantee.ExpiryDate.AddDays(30)),
+                ("تقويم التاريخ", guarantee => guarantee.DateCalendar = GuaranteeDateCalendar.Hijri),
+                ("نوع المرجع", guarantee => guarantee.ReferenceType = GuaranteeReferenceType.PurchaseOrder),
+                ("رقم المرجع", guarantee => guarantee.ReferenceNumber += "-CHANGED"),
+                ("الحالة التشغيلية", guarantee => guarantee.LifecycleStatus = GuaranteeLifecycleStatus.Released),
+                ("رابط الضمان المستبدل", guarantee => guarantee.ReplacesRootId = 12345),
+                ("رابط الضمان البديل", guarantee => guarantee.ReplacedByRootId = 67890)
+            };
+
+            foreach ((string fieldLabel, Action<Guarantee> mutate) in mutations)
+            {
+                Guarantee seed = _fixture.CreateGuarantee();
+                database.SaveGuarantee(seed, new List<string>());
+                Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+                int currentId = current.Id;
+                int rootId = current.RootId ?? current.Id;
+
+                mutate(current);
+                current.Notes = $"blocked mutation for {fieldLabel}";
+
+                OperationalFieldMutationException exception = Assert.Throws<OperationalFieldMutationException>(
+                    () => database.UpdateGuarantee(
+                        current,
+                        new List<string>(),
+                        new List<AttachmentRecord>()));
+                Guarantee persisted = database.GetCurrentGuaranteeByRootId(rootId)!;
+                List<Guarantee> history = database.GetGuaranteeHistory(currentId);
+
+                Assert.Contains(fieldLabel, exception.Message);
+                Assert.Equal(currentId, persisted.Id);
+                Assert.Equal(1, persisted.VersionNumber);
+                Assert.Single(history);
+            }
+        }
+
+        [Fact]
+        public void GuaranteeVersionConstraints_RejectDuplicateCurrentAndDuplicateVersionNumbers()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee original = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+            original.Supplier = $"{original.Supplier} Updated";
+            int newVersionId = database.UpdateGuarantee(original, new List<string>(), new List<AttachmentRecord>());
+
+            using SqliteConnection connection = SqliteConnectionFactory.OpenForPath(AppPaths.DatabasePath);
+
+            using SqliteCommand duplicateCurrent = connection.CreateCommand();
+            duplicateCurrent.CommandText = "UPDATE Guarantees SET IsCurrent = 1 WHERE Id = $id";
+            duplicateCurrent.Parameters.AddWithValue("$id", original.Id);
+            Assert.Throws<SqliteException>(() => duplicateCurrent.ExecuteNonQuery());
+
+            using SqliteCommand duplicateVersion = connection.CreateCommand();
+            duplicateVersion.CommandText = "UPDATE Guarantees SET VersionNumber = 1 WHERE Id = $id";
+            duplicateVersion.Parameters.AddWithValue("$id", newVersionId);
+            Assert.Throws<SqliteException>(() => duplicateVersion.ExecuteNonQuery());
+        }
+
+        [Fact]
+        public void GuaranteeAmountConstraint_RejectsNegativeRawDatabaseWrites()
+        {
+            string guaranteeNo = $"RAW-NEG-{_fixture.NextToken("NO")}";
+
+            using SqliteConnection connection = SqliteConnectionFactory.OpenForPath(AppPaths.DatabasePath);
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = @"
+                INSERT INTO Guarantees (
+                    Supplier, Bank, GuaranteeNo, Amount, ExpiryDate, GuaranteeType, Beneficiary, Notes,
+                    CreatedAt, RootId, VersionNumber, IsCurrent, ReferenceType, ReferenceNumber, LifecycleStatus, DateCalendar
+                )
+                VALUES (
+                    'Supplier', 'Bank', $guaranteeNo, -1, $expiryDate, 'Performance', $beneficiary, '',
+                    $createdAt, NULL, 1, 1, 'None', '', 'Active', 'Gregorian'
+                )";
+            command.Parameters.AddWithValue("$guaranteeNo", guaranteeNo);
+            command.Parameters.AddWithValue("$expiryDate", PersistedDateTime.FormatDate(DateTime.Today.AddDays(30)));
+            command.Parameters.AddWithValue("$beneficiary", BusinessPartyDefaults.DefaultBeneficiaryName);
+            command.Parameters.AddWithValue("$createdAt", PersistedDateTime.FormatDateTime(DateTime.Now));
+
+            Assert.Throws<SqliteException>(() => command.ExecuteNonQuery());
+        }
+
+        [Fact]
+        public void GuaranteeRelationshipTriggers_RejectDanglingRootReferences()
+        {
+            string guaranteeNo = $"RAW-ROOT-{_fixture.NextToken("NO")}";
+
+            using SqliteConnection connection = SqliteConnectionFactory.OpenForPath(AppPaths.DatabasePath);
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = @"
+                INSERT INTO Guarantees (
+                    Supplier, Bank, GuaranteeNo, Amount, ExpiryDate, GuaranteeType, Beneficiary, Notes,
+                    CreatedAt, RootId, VersionNumber, IsCurrent, ReferenceType, ReferenceNumber, LifecycleStatus, DateCalendar
+                )
+                VALUES (
+                    'Supplier', 'Bank', $guaranteeNo, 1000, $expiryDate, 'Performance', $beneficiary, '',
+                    $createdAt, 999999999, 1, 1, 'None', '', 'Active', 'Gregorian'
+                )";
+            command.Parameters.AddWithValue("$guaranteeNo", guaranteeNo);
+            command.Parameters.AddWithValue("$expiryDate", PersistedDateTime.FormatDate(DateTime.Today.AddDays(30)));
+            command.Parameters.AddWithValue("$beneficiary", BusinessPartyDefaults.DefaultBeneficiaryName);
+            command.Parameters.AddWithValue("$createdAt", PersistedDateTime.FormatDateTime(DateTime.Now));
+
+            Assert.Throws<SqliteException>(() => command.ExecuteNonQuery());
+        }
+
+        [Fact]
+        public void DeleteGuarantee_IsBlocked_EnsuringVersionHistoryPermanence()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee persisted = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+
+            using SqliteConnection connection = SqliteConnectionFactory.OpenForPath(AppPaths.DatabasePath);
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "DELETE FROM Guarantees WHERE Id = $id";
+            command.Parameters.AddWithValue("$id", persisted.Id);
+
+            Assert.Throws<SqliteException>(() => command.ExecuteNonQuery());
+            Assert.NotNull(database.GetCurrentGuaranteeByNo(seed.GuaranteeNo));
+        }
+
+        [Fact]
+        public void DeleteAttachment_IsBlocked_EnsuringAuditTrailPermanence()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            string sourceAttachmentPath = _fixture.CreateSourceFile(contents: "permanent-attachment");
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string> { sourceAttachmentPath });
+            Guarantee persisted = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+            AttachmentRecord attachment = Assert.Single(persisted.Attachments);
+
+            using SqliteConnection connection = SqliteConnectionFactory.OpenForPath(AppPaths.DatabasePath);
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "DELETE FROM Attachments WHERE Id = $id";
+            command.Parameters.AddWithValue("$id", attachment.Id);
+
+            Assert.Throws<SqliteException>(() => command.ExecuteNonQuery());
+            Assert.Single(database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!.Attachments);
+        }
+
+        [Fact]
+        public void SaveGuarantee_WhenAttachmentPromotionIsDeferred_CanRecoverStagedFile()
+        {
+            var storage = new DeferringAttachmentStorageService();
+            var database = new DatabaseService(storage);
+            string sourceAttachmentPath = _fixture.CreateSourceFile(contents: "recoverable-attachment");
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            DeferredFilePromotionException exception = Assert.Throws<DeferredFilePromotionException>(
+                () => database.SaveGuarantee(seed, new List<string> { sourceAttachmentPath }));
+            Guarantee persisted = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+            AttachmentRecord attachment = Assert.Single(persisted.Attachments);
+
+            Assert.Contains("SaveGuarantee", exception.OperationName);
+            Assert.False(File.Exists(attachment.FilePath));
+
+            DatabaseService.ResetRuntimeInitializationForTesting();
+            DatabaseService.InitializeRuntime();
+
+            Guarantee recovered = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+            Assert.True(File.Exists(Assert.Single(recovered.Attachments).FilePath));
+        }
+
+        [Fact]
+        public void SaveGuarantee_RejectsOversizedAttachments()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            string sourceAttachmentPath = _fixture.CreateArtifactPath(".pdf");
+            using (FileStream stream = File.Create(sourceAttachmentPath))
+            {
+                stream.SetLength(AttachmentStorageService.MaxAttachmentFileSizeBytes + 1);
+            }
+
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                () => database.SaveGuarantee(seed, new List<string> { sourceAttachmentPath }));
+
+            Assert.Contains("25 ميجابايت", exception.Message);
+            Assert.Null(database.GetCurrentGuaranteeByNo(seed.GuaranteeNo));
+        }
+
+        [Fact]
         public void SaveGuarantee_WithAttachment_PersistsMetadataAndMovesFile()
         {
             DatabaseService database = _fixture.CreateDatabaseService();
@@ -152,6 +388,17 @@ namespace GuaranteeManager.Tests
             Assert.True(File.Exists(attachment.FilePath));
             Assert.NotEqual(sourceAttachmentPath, attachment.FilePath);
             Assert.Equal("attachment-body", File.ReadAllText(attachment.FilePath));
+        }
+
+        private sealed class DeferringAttachmentStorageService : AttachmentStorageService
+        {
+            public override void FinalizeStagedCopies(IEnumerable<StagedAttachmentFile> stagedCopies, string operationName)
+            {
+                throw new DeferredFilePromotionException(
+                    operationName,
+                    stagedCopies.Select(stagedCopy => stagedCopy.SavedFileName),
+                    new IOException("Simulated promotion deferral."));
+            }
         }
 
         [Fact]

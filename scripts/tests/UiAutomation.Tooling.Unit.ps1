@@ -1,5 +1,5 @@
 param(
-    [string]$OutputRoot = ".\Doc\Assets\Documentation\Screenshots\UIAcceptance\latest",
+    [string]$OutputRoot = ".\scratch\UIAcceptance\latest",
     [switch]$ReuseRunningSession = $false
 )
 

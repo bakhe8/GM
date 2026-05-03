@@ -19,6 +19,13 @@ namespace GuaranteeManager
                 typeof(bool),
                 typeof(DialogChrome),
                 new PropertyMetadata(false));
+        private static readonly DependencyProperty IsChromeHeightAdjustedProperty =
+            DependencyProperty.RegisterAttached(
+                "IsChromeHeightAdjusted",
+                typeof(bool),
+                typeof(DialogChrome),
+                new PropertyMetadata(false));
+        private const double TitleBarHeight = 38d;
 
         public static void ApplyWindowDefaults(Window window)
         {
@@ -36,12 +43,33 @@ namespace GuaranteeManager
                     ResizeBorderThickness = canResize ? new Thickness(6) : new Thickness(0),
                     UseAeroCaptionButtons = false
                 });
+
             TextOptions.SetTextFormattingMode(window, TextFormattingMode.Display);
             TextOptions.SetTextRenderingMode(window, TextRenderingMode.ClearType);
+            AdjustWindowHeightForChrome(window);
 
             if (window.WindowStartupLocation == WindowStartupLocation.Manual)
             {
                 window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            }
+        }
+
+        private static void AdjustWindowHeightForChrome(Window window)
+        {
+            if (Equals(window.GetValue(IsChromeHeightAdjustedProperty), true))
+            {
+                return;
+            }
+
+            window.SetValue(IsChromeHeightAdjustedProperty, true);
+            if (!double.IsNaN(window.Height) && window.Height > 0)
+            {
+                window.Height += TitleBarHeight;
+            }
+
+            if (!double.IsNaN(window.MinHeight) && window.MinHeight > 0)
+            {
+                window.MinHeight += TitleBarHeight;
             }
         }
 
@@ -71,19 +99,35 @@ namespace GuaranteeManager
             var shell = new Border
             {
                 Background = Brush("Brush.Canvas"),
-                BorderBrush = Brush("Brush.Border"),
-                BorderThickness = new Thickness(1),
+                BorderBrush = Brush("Brush.Muted"),
+                BorderThickness = new Thickness(2),
                 ClipToBounds = true
             };
 
-            var grid = new Grid();
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(38) });
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            var grid = new Grid
+            {
+                SnapsToDevicePixels = true,
+                UseLayoutRounding = true
+            };
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(TitleBarHeight) });
+            grid.RowDefinitions.Add(new RowDefinition
+            {
+                Height = window.SizeToContent is SizeToContent.Height or SizeToContent.WidthAndHeight
+                    ? GridLength.Auto
+                    : new GridLength(1, GridUnitType.Star)
+            });
             grid.Children.Add(BuildTitleBar(window));
             Grid.SetRow(content, 1);
             grid.Children.Add(content);
 
-            shell.Child = grid;
+            var innerFrame = new Border
+            {
+                BorderBrush = Brush("Brush.Border.Control"),
+                BorderThickness = new Thickness(1),
+                Child = grid
+            };
+
+            shell.Child = innerFrame;
             window.Content = shell;
         }
 
@@ -92,7 +136,7 @@ namespace GuaranteeManager
             var titleBar = new Border
             {
                 Background = Brush("Brush.TopBar"),
-                Height = 38
+                Height = TitleBarHeight
             };
             titleBar.MouseLeftButtonDown += (_, e) => DragWindow(window, e);
 
@@ -105,7 +149,7 @@ namespace GuaranteeManager
             {
                 Style = Style("ChromeCloseButton"),
                 Width = 38,
-                Height = 38,
+                Height = TitleBarHeight,
                 ToolTip = "إغلاق",
                 Content = BuildTitleBarIcon("Icon.Close", 10, 2)
             };
@@ -231,6 +275,11 @@ namespace GuaranteeManager
 
         private static void ApplyTextBox(TextBox textBox)
         {
+            if (IsUnset(textBox, Control.StyleProperty))
+            {
+                textBox.Style = Style("DialogTextBox");
+            }
+
             textBox.FontFamily = UiTypography.DefaultFontFamily;
             SetIfUnset(textBox, Control.FontSizeProperty, 12d);
             SetIfUnset(textBox, Control.ForegroundProperty, Brush("Brush.Text.Primary"));
@@ -238,6 +287,8 @@ namespace GuaranteeManager
             SetIfUnset(textBox, Control.BorderBrushProperty, Brush("Brush.Border.Control"));
             SetIfUnset(textBox, Control.BorderThicknessProperty, new Thickness(1));
             SetIfUnset(textBox, Control.PaddingProperty, new Thickness(8, textBox.AcceptsReturn ? 6 : 0, 8, textBox.AcceptsReturn ? 6 : 0));
+            SetIfUnset(textBox, FrameworkElement.FlowDirectionProperty, FlowDirection.LeftToRight);
+            SetIfUnset(textBox, TextBox.TextAlignmentProperty, TextAlignment.Right);
 
             if (!textBox.AcceptsReturn && IsUnset(textBox, Control.VerticalContentAlignmentProperty))
             {
@@ -250,6 +301,11 @@ namespace GuaranteeManager
 
         private static void ApplyComboBox(ComboBox comboBox)
         {
+            if (IsUnset(comboBox, Control.StyleProperty))
+            {
+                comboBox.Style = Style("DialogComboBox");
+            }
+
             comboBox.FontFamily = UiTypography.DefaultFontFamily;
             SetIfUnset(comboBox, Control.FontSizeProperty, 12d);
             SetIfUnset(comboBox, Control.ForegroundProperty, Brush("Brush.Text.Primary"));
@@ -258,18 +314,46 @@ namespace GuaranteeManager
             SetIfUnset(comboBox, Control.BorderThicknessProperty, new Thickness(1));
             SetIfUnset(comboBox, Control.PaddingProperty, new Thickness(8, 0, 8, 0));
             SetIfUnset(comboBox, Control.VerticalContentAlignmentProperty, VerticalAlignment.Center);
+            SetIfUnset(comboBox, Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Right);
+            comboBox.FlowDirection = FlowDirection.RightToLeft;
+            comboBox.Loaded -= AlignEditableComboBoxText;
+            comboBox.Loaded += AlignEditableComboBoxText;
             TextOptions.SetTextFormattingMode(comboBox, TextFormattingMode.Display);
             TextOptions.SetTextRenderingMode(comboBox, TextRenderingMode.ClearType);
         }
 
+        private static void AlignEditableComboBoxText(object sender, RoutedEventArgs e)
+        {
+            if (sender is not ComboBox comboBox
+                || !comboBox.IsEditable
+                || comboBox.Template.FindName("PART_EditableTextBox", comboBox) is not TextBox editableTextBox)
+            {
+                return;
+            }
+
+            editableTextBox.TextAlignment = TextAlignment.Right;
+            editableTextBox.VerticalContentAlignment = VerticalAlignment.Center;
+            editableTextBox.FlowDirection = FlowDirection.LeftToRight;
+        }
+
         private static void ApplyListBox(ListBox listBox)
         {
+            if (IsUnset(listBox, Control.StyleProperty))
+            {
+                listBox.Style = Style("DialogListBox");
+            }
+
             listBox.FontFamily = UiTypography.DefaultFontFamily;
             SetIfUnset(listBox, Control.FontSizeProperty, 12d);
             SetIfUnset(listBox, Control.ForegroundProperty, Brush("Brush.Text.Primary"));
             SetIfUnset(listBox, Control.BackgroundProperty, Brushes.White);
             SetIfUnset(listBox, Control.BorderBrushProperty, Brush("Brush.Border.Control"));
             SetIfUnset(listBox, Control.BorderThicknessProperty, new Thickness(1));
+            if (listBox.ItemContainerStyle == null)
+            {
+                listBox.ItemContainerStyle = Style("DialogListBoxItem");
+            }
+
             TextOptions.SetTextFormattingMode(listBox, TextFormattingMode.Display);
             TextOptions.SetTextRenderingMode(listBox, TextRenderingMode.ClearType);
         }

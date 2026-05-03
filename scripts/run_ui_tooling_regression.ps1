@@ -1,5 +1,5 @@
 param(
-    [string]$OutputRoot = ".\Doc\Assets\Documentation\Screenshots\UIAcceptance\latest",
+    [string]$OutputRoot = ".\scratch\UIAcceptance\latest",
     [ValidateSet("Smoke", "Integration", "Unit", "Freedom", "All")]
     [string]$Suite = "Smoke",
     [switch]$ReuseRunningSession = $false

@@ -19,6 +19,47 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void ClosedLegacyLifecycle_BlocksAllWorkflowCreation()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee seed = _fixture.CreateGuarantee();
+            seed.LifecycleStatus = GuaranteeLifecycleStatus.Closed;
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+
+            Action[] blockedActions =
+            {
+                () => workflow.CreateExtensionRequest(current.Id, current.ExpiryDate.AddDays(30), "extension", "tester"),
+                () => workflow.CreateReductionRequest(current.Id, current.Amount - 1m, "reduction", "tester"),
+                () => workflow.CreateReleaseRequest(current.Id, "release", "tester"),
+                () => workflow.CreateLiquidationRequest(current.Id, "liquidation", "tester"),
+                () => workflow.CreateVerificationRequest(current.Id, "verification", "tester"),
+                () => workflow.CreateReplacementRequest(
+                    current.Id,
+                    $"REP-{_fixture.NextToken("NO")}",
+                    current.Supplier,
+                    current.Bank,
+                    current.Amount,
+                    current.ExpiryDate.AddDays(30),
+                    current.DateCalendar,
+                    current.GuaranteeType,
+                    current.Beneficiary,
+                    current.ReferenceType,
+                    current.ReferenceNumber,
+                    "replacement",
+                    "tester")
+            };
+
+            foreach (Action blockedAction in blockedActions)
+            {
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(blockedAction);
+                Assert.False(string.IsNullOrWhiteSpace(exception.Message));
+            }
+        }
+
+        [Fact]
         public void RecordBankResponse_ExecutedRelease_EndsLifecycleWithoutCreatingVersion()
         {
             DatabaseService database = _fixture.CreateDatabaseService();
@@ -267,6 +308,7 @@ namespace GuaranteeManager.Tests
             Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
             int originalRootId = current.RootId ?? current.Id;
             string replacementNo = $"BG-R-{_fixture.NextToken("NO")}";
+            string replacementImagePath = _fixture.CreateSourceFile(".pdf", "replacement-guarantee-image");
 
             WorkflowRequest replacementRequest = workflow.CreateReplacementRequest(
                 current.Id,
@@ -281,13 +323,18 @@ namespace GuaranteeManager.Tests
                 current.ReferenceType,
                 current.ReferenceNumber,
                 "replacement",
-                "tester");
+                "tester",
+                new List<AttachmentInput>
+                {
+                    new(replacementImagePath, AttachmentDocumentType.GuaranteeImage)
+                });
             workflow.RecordBankResponse(replacementRequest.Id, RequestStatus.Executed, "replaced");
 
             Guarantee originalAfterReplacement = database.GetCurrentGuaranteeByRootId(originalRootId)!;
             Guarantee replacementGuarantee = database.GetCurrentGuaranteeByNo(replacementNo)!;
             WorkflowRequest executedRequest = database.GetWorkflowRequestById(replacementRequest.Id)!;
             List<Guarantee> originalHistory = database.GetGuaranteeHistory(current.Id);
+            AttachmentRecord replacementAttachment = Assert.Single(replacementGuarantee.Attachments);
 
             Assert.Equal(current.Id, originalAfterReplacement.Id);
             Assert.Equal(GuaranteeLifecycleStatus.Replaced, originalAfterReplacement.LifecycleStatus);
@@ -299,6 +346,9 @@ namespace GuaranteeManager.Tests
             Assert.Equal(1, replacementGuarantee.VersionNumber);
             Assert.Equal(GuaranteeLifecycleStatus.Active, replacementGuarantee.LifecycleStatus);
             Assert.Equal(replacementGuarantee.Id, executedRequest.ResultVersionId);
+            Assert.Single(executedRequest.ReplacementAttachments);
+            Assert.Equal(AttachmentDocumentType.GuaranteeImage, replacementAttachment.DocumentType);
+            Assert.True(File.Exists(replacementAttachment.FilePath));
             Assert.Single(originalHistory);
         }
     }

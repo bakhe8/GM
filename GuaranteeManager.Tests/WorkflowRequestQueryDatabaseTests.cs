@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using GuaranteeManager.Models;
 using GuaranteeManager.Services;
 using GuaranteeManager.Utils;
@@ -116,6 +118,107 @@ namespace GuaranteeManager.Tests
             Assert.Single(filteredRequests);
             Assert.Equal(firstRequest.Id, filteredRequests[0].Request.Id);
             Assert.DoesNotContain(filteredRequests, item => item.Request.Id == secondRequest.Id);
+        }
+
+        [Fact]
+        public void SaveWorkflowRequest_RejectsDuplicatePendingRequestOfSameType()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+            int rootId = current.RootId ?? current.Id;
+
+            WorkflowRequest first = CreatePendingVerificationRequest(rootId, current.Id);
+            WorkflowRequest duplicate = CreatePendingVerificationRequest(rootId, current.Id);
+
+            int firstId = database.SaveWorkflowRequest(first);
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                () => database.SaveWorkflowRequest(duplicate));
+
+            Assert.True(firstId > 0);
+            Assert.Contains("يوجد بالفعل طلب معلق", exception.Message);
+        }
+
+        [Fact]
+        public void CreateWorkflowRequest_Concurrently_RejectsDuplicates()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+            int rootId = current.RootId ?? current.Id;
+            var savedRequestIds = new ConcurrentBag<int>();
+
+            Parallel.For(
+                0,
+                8,
+                _ =>
+                {
+                    try
+                    {
+                        int id = database.SaveWorkflowRequest(CreatePendingVerificationRequest(rootId, current.Id));
+                        savedRequestIds.Add(id);
+                    }
+                    catch
+                    {
+                        // Expected for all contenders that lose the pending-request race.
+                    }
+                });
+
+            List<WorkflowRequest> requests = database.GetWorkflowRequestsByRootId(rootId)
+                .Where(request => request.Type == RequestType.Verification && request.Status == RequestStatus.Pending)
+                .ToList();
+
+            Assert.Single(savedRequestIds);
+            Assert.Single(requests);
+        }
+
+        [Fact]
+        public void LoadWorkflowRequest_WithMalformedJson_FailsGracefully()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            Guarantee seed = _fixture.CreateGuarantee();
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+            int rootId = current.RootId ?? current.Id;
+            WorkflowRequest malformed = CreatePendingVerificationRequest(rootId, current.Id);
+            malformed.Type = RequestType.Replacement;
+            malformed.RequestedDataJson = "{not-valid-json";
+
+            int requestId = database.SaveWorkflowRequest(malformed);
+
+            WorkflowRequest? loaded = database.GetWorkflowRequestById(requestId);
+            List<WorkflowRequestListItem> listItems = database.QueryWorkflowRequests(new WorkflowRequestQueryOptions
+            {
+                RootGuaranteeId = rootId
+            });
+
+            Assert.NotNull(loaded);
+            Assert.Null(loaded!.GetRequestedData());
+            Assert.Contains(listItems, item => item.Request.Id == requestId && item.Request.ReplacementGuaranteeNo == string.Empty);
+        }
+
+        private static WorkflowRequest CreatePendingVerificationRequest(int rootId, int baseVersionId)
+        {
+            DateTime now = DateTime.Now;
+            return new WorkflowRequest
+            {
+                RootGuaranteeId = rootId,
+                BaseVersionId = baseVersionId,
+                Type = RequestType.Verification,
+                Status = RequestStatus.Pending,
+                RequestDate = now,
+                CreatedAt = now,
+                UpdatedAt = now,
+                RequestedDataJson = "{}",
+                DateCalendar = GuaranteeDateCalendar.Gregorian,
+                Notes = "duplicate guard test",
+                CreatedBy = "tester"
+            };
         }
     }
 }

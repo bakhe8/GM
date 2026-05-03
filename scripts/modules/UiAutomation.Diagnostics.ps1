@@ -18,7 +18,7 @@ function Get-UiAppLogPath {
 
 function Get-UiAcceptanceArtifactsRoot {
     $repoRoot = Get-UiAcceptanceRepoRoot
-    return Join-Path $repoRoot "Doc\\Assets\\Documentation\\Screenshots\\UIAcceptance\\latest"
+    return Join-Path $repoRoot "scratch\\UIAcceptance\\latest"
 }
 
 function Get-UiTimelinePath {

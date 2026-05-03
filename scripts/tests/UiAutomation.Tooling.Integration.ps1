@@ -1,5 +1,5 @@
 param(
-    [string]$OutputRoot = ".\Doc\Assets\Documentation\Screenshots\UIAcceptance\latest",
+    [string]$OutputRoot = ".\scratch\UIAcceptance\latest",
     [switch]$ReuseRunningSession = $false
 )
 
@@ -13,7 +13,7 @@ New-Item -ItemType Directory -Force -Path $resolvedOutputRoot | Out-Null
 
 $summaryPath = Join-Path $resolvedOutputRoot "tooling-integration-summary.md"
 $failureCapturePath = Join-Path $resolvedOutputRoot "tooling-integration-failure.png"
-$relativeFailureCapturePath = ".\Doc\Assets\Documentation\Screenshots\UIAcceptance\latest\tooling-integration-failure.png"
+$relativeFailureCapturePath = ".\scratch\UIAcceptance\latest\tooling-integration-failure.png"
 if (Test-Path -LiteralPath $failureCapturePath) {
     Remove-Item -LiteralPath $failureCapturePath -Force
 }

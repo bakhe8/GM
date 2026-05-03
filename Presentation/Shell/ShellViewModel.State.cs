@@ -29,11 +29,8 @@ namespace GuaranteeManager
         private int? _focusedGuaranteeRequestId;
         private int _guaranteeFocusRequestVersion;
         private GuaranteeFocusArea _currentGuaranteeFocusArea = GuaranteeFocusArea.None;
-        private OperationalInquiryResult? _latestInquiryResult;
         private GuaranteeOutputPreviewItem? _latestLetterOutput;
         private GuaranteeOutputPreviewItem? _latestResponseOutput;
-        private OperationalInquiryOption? _selectedOperationalInquiryOption;
-        private string _selectedOperationalInquiryDescription = "اختر سؤالاً تشغيليًا لعرض جواب مدعوم بالأدلة.";
         private string _pendingRequestCount = "0";
         private string _pendingRequestMeta = $"إجمالي المبلغ {ArabicAmountFormatter.FormatSaudiRiyals(0)}";
         private string _expiredCount = "0";
@@ -114,7 +111,6 @@ namespace GuaranteeManager
         public ObservableCollection<string> BankOptions { get; } = new();
         public ObservableCollection<string> GuaranteeTypeOptions { get; } = new();
         public ObservableCollection<ReferenceTablePagerButtonItem> GuaranteePagerButtons { get; } = new();
-        public ObservableCollection<OperationalInquiryOption> OperationalInquiryOptions { get; } = new();
         public ICommand CreateNewGuaranteeCommand { get; }
         public ICommand EditGuaranteeCommand { get; }
         public ICommand PreviousGuaranteePageCommand { get; }
@@ -163,11 +159,6 @@ namespace GuaranteeManager
                     return;
                 }
 
-                if (_selectedGuarantee?.RootId != value?.RootId)
-                {
-                    LatestInquiryResult = null;
-                }
-
                 _selectedGuarantee = value;
                 SynchronizeSelectedTableGuarantee(value);
                 if (_focusedGuaranteeRequestId.HasValue)
@@ -182,7 +173,6 @@ namespace GuaranteeManager
                     RememberLastFile(value);
                 }
                 RefreshSelectedGuaranteeArtifacts();
-                UpdateSelectedOperationalInquiryDescription();
                 RaiseSelectionCommandStates();
             }
         }
@@ -210,44 +200,6 @@ namespace GuaranteeManager
             }
         }
 
-        public OperationalInquiryOption? SelectedOperationalInquiryOption
-        {
-            get => _selectedOperationalInquiryOption;
-            set
-            {
-                if (ReferenceEquals(_selectedOperationalInquiryOption, value))
-                {
-                    return;
-                }
-
-                _selectedOperationalInquiryOption = value;
-                OnPropertyChanged();
-                UpdateSelectedOperationalInquiryDescription();
-                RaiseSelectionCommandStates();
-            }
-        }
-
-        public OperationalInquiryResult? LatestInquiryResult
-        {
-            get => _latestInquiryResult;
-            private set
-            {
-                if (ReferenceEquals(_latestInquiryResult, value))
-                {
-                    return;
-                }
-
-                _latestInquiryResult = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(HasLatestInquiryResult));
-                OnPropertyChanged(nameof(HasLatestInquirySuggestedSection));
-                OnPropertyChanged(nameof(LatestInquirySuggestedSectionLabel));
-                RaiseInquiryCommandStates();
-            }
-        }
-
-        public bool HasLatestInquiryResult => LatestInquiryResult != null;
-        public bool HasLatestInquirySuggestedSection => ResolveLatestInquirySuggestedArea(LatestInquiryResult) != GuaranteeFocusArea.None;
         public GuaranteeOutputPreviewItem? LatestLetterOutput
         {
             get => _latestLetterOutput;
@@ -282,13 +234,6 @@ namespace GuaranteeManager
 
         public bool HasLatestLetterOutput => LatestLetterOutput != null;
         public bool HasLatestResponseOutput => LatestResponseOutput != null;
-        public string LatestInquirySuggestedSectionLabel => ResolveLatestInquirySuggestedLabel(LatestInquiryResult);
-
-        public string SelectedOperationalInquiryDescription
-        {
-            get => _selectedOperationalInquiryDescription;
-            private set => SetProperty(ref _selectedOperationalInquiryDescription, value);
-        }
 
         public bool HasLastFile => _lastFileState.HasLastFile;
 
@@ -517,38 +462,6 @@ namespace GuaranteeManager
         {
             get => _globalSearchText;
             set => SetProperty(ref _globalSearchText, value);
-        }
-
-        private static GuaranteeFocusArea ResolveLatestInquirySuggestedArea(OperationalInquiryResult? result)
-        {
-            if (result == null)
-            {
-                return GuaranteeFocusArea.None;
-            }
-
-            return InquiryContextRoutingResolver.TryResolve(result, out GuaranteeFocusArea area, out _)
-                ? area
-                : GuaranteeFocusArea.None;
-        }
-
-        private static string ResolveLatestInquirySuggestedLabel(OperationalInquiryResult? result)
-        {
-            if (result == null ||
-                !InquiryContextRoutingResolver.TryResolve(result, out GuaranteeFocusArea area, out int? requestIdToFocus))
-            {
-                return "لا يوجد قسم مقترح";
-            }
-
-            return area switch
-            {
-                GuaranteeFocusArea.Requests when requestIdToFocus.HasValue => "انتقل إلى حدث الطلب",
-                GuaranteeFocusArea.Requests => "انتقل إلى السجل الزمني",
-                GuaranteeFocusArea.Series => "انتقل إلى الخط الزمني",
-                GuaranteeFocusArea.Attachments => "انتقل إلى السجل الزمني",
-                GuaranteeFocusArea.Outputs => "انتقل إلى السجل الزمني",
-                GuaranteeFocusArea.Actions => "انتقل إلى الإجراءات",
-                _ => "لا يوجد قسم مقترح"
-            };
         }
     }
 }

@@ -253,7 +253,7 @@ namespace GuaranteeManager
                     _detailSubtitle,
                     new Border { Height = 1, Background = WorkspaceSurfaceChrome.BrushFrom("#EDF2F7"), Margin = new Thickness(0, 13, 0, 12) },
                     BuildReadOnlyDetailLine("الحالة التشغيلية", _detailState, "Icon.Check"),
-                    WorkspaceSurfaceChrome.DetailFactLine("الإجراء التالي", _detailAction, "Icon.Extend"),
+                    WorkspaceSurfaceChrome.DetailFactBlock("الإجراء التالي", _detailAction, "Icon.Extend"),
                     WorkspaceSurfaceChrome.DetailFactBlock("المسار", _detailPath, "Icon.Document", (_, _) => _coordinator.CopyPath(SelectedItem), "Settings.Detail.CopyPath", "نسخ المسار"),
                     WorkspaceSurfaceChrome.DetailFactBlock("مسار الفتح", _detailOpenPath, "Icon.Logout", (_, _) => _coordinator.CopyOpenPath(SelectedItem), "Settings.Detail.CopyOpenPath", "نسخ مسار الفتح")
                 }
@@ -627,6 +627,7 @@ namespace GuaranteeManager
             var grid = new Grid
             {
                 MinHeight = 28,
+                Margin = new Thickness(0, 0, 0, 8),
                 FlowDirection = FlowDirection.RightToLeft
             };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(118) });
@@ -636,7 +637,8 @@ namespace GuaranteeManager
             var labelPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                VerticalAlignment = VerticalAlignment.Center
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(0, 3, 0, 0)
             };
             labelPanel.Children.Add(CreateIcon(iconKey, "Brush.Text.Muted", 12));
             labelPanel.Children.Add(new Border { Width = 7 });
@@ -646,14 +648,15 @@ namespace GuaranteeManager
                 FontSize = 10,
                 FontWeight = FontWeights.Medium,
                 Foreground = WorkspaceSurfaceChrome.BrushResource("Brush.Text.Muted"),
-                VerticalAlignment = VerticalAlignment.Center
+                VerticalAlignment = VerticalAlignment.Top
             });
             grid.Children.Add(labelPanel);
 
-            value.VerticalAlignment = VerticalAlignment.Center;
+            value.VerticalAlignment = VerticalAlignment.Top;
             value.TextAlignment = TextAlignment.Right;
-            value.TextWrapping = TextWrapping.NoWrap;
-            value.TextTrimming = TextTrimming.CharacterEllipsis;
+            value.TextWrapping = TextWrapping.Wrap;
+            value.TextTrimming = TextTrimming.None;
+            value.Margin = new Thickness(0, 3, 0, 0);
             Grid.SetColumn(value, 2);
             grid.Children.Add(value);
             return grid;

@@ -465,7 +465,7 @@ namespace GuaranteeManager
             else if (guarantee.NeedsExpiryFollowUp)
             {
                 summaryTitle = "الضمان منتهٍ ويحتاج متابعة مباشرة";
-                summaryDetail = "لا توجد طلبات معلقة حاليًا، لذا الأفضل البدء من السجل الزمني أو الاستعلامات لمعرفة سبب بقاء الضمان دون إغلاق.";
+                summaryDetail = "لا توجد طلبات معلقة حاليًا، لذا الأفضل البدء من السجل الزمني والمرفقات الرسمية لمعرفة سبب بقاء الضمان دون إغلاق.";
                 suggestedArea = GuaranteeFocusArea.Requests;
                 suggestedLabel = "راجع السجل";
             }

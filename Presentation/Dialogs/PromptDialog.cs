@@ -12,18 +12,23 @@ namespace GuaranteeManager
         {
             Title = title;
             Width = 360;
-            Height = 174;
+            SizeToContent = SizeToContent.Height;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             ResizeMode = ResizeMode.NoResize;
             FlowDirection = FlowDirection.RightToLeft;
             FontFamily = UiTypography.DefaultFontFamily;
             Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F7F9FC"));
-            DialogWindowSupport.Attach(this, nameof(PromptDialog), () => DialogResult = true, "أغلق نافذة الإدخال الحالية أو أكملها أولاً.");
+            DialogWindowSupport.Attach(
+                this,
+                nameof(PromptDialog),
+                () => DialogResult = true,
+                "أغلق نافذة الإدخال الحالية أو أكملها أولاً.",
+                persistWindowState: false);
 
-            var root = new Grid { Margin = new Thickness(16) };
+            var root = new Grid { Margin = new Thickness(18, 16, 18, 16) };
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
             root.Children.Add(new TextBlock
             {
@@ -40,6 +45,7 @@ namespace GuaranteeManager
                 Height = 34,
                 FontSize = 12,
                 Padding = new Thickness(8, 0, 8, 0),
+                TextAlignment = TextAlignment.Right,
                 VerticalContentAlignment = VerticalAlignment.Center,
                 BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D8E1EE")),
                 BorderThickness = new Thickness(1)
@@ -47,34 +53,20 @@ namespace GuaranteeManager
             Grid.SetRow(_input, 1);
             root.Children.Add(_input);
 
-            var actions = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                VerticalAlignment = VerticalAlignment.Bottom,
-                Margin = new Thickness(0, 16, 0, 0)
-            };
-
             var okButton = new Button
             {
                 Content = "موافق",
-                Width = 88,
-                Height = 32,
-                IsDefault = true,
-                Margin = new Thickness(8, 0, 0, 0)
+                IsDefault = true
             };
             okButton.Click += (_, _) => DialogResult = true;
 
             var cancelButton = new Button
             {
                 Content = "إلغاء",
-                Width = 88,
-                Height = 32,
                 IsCancel = true
             };
 
-            actions.Children.Add(okButton);
-            actions.Children.Add(cancelButton);
+            var actions = DialogFormSupport.BuildActionBar(okButton, cancelButton, 96, 96);
             Grid.SetRow(actions, 2);
             root.Children.Add(actions);
 

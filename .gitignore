@@ -3,13 +3,13 @@ Logs/
 *.log
 
 # Runtime data — never commit
-Data/*.db
-Data/*.db-*
-Data/.dbkey
-Data/window-state.json
-Attachments/
-Workflow/
-Data/Backups/
+/Data/*.db
+/Data/*.db-*
+/Data/.dbkey
+/Data/window-state.json
+/Attachments/
+/Workflow/
+/Data/Backups/
 
 # Build output and temp artifacts
 bin/
@@ -20,19 +20,22 @@ DevSeedRuntime/
 **/obj/
 .mypy_cache/
 *_wpftmp.csproj
-Attachments/_staging/
+/Attachments/_staging/
 releases/*.zip
 releases/v*/
 
 # Generated root-level report exports
+/Daily_*.xlsx
+/Guarantee_*.xlsx
+/GuaranteeHistory_*.xlsx
+/Guarantee_Versions_*.xlsx
 /Guarantees_*.xlsx
+/Pending_*.xlsx
 /tmp-*.json
 /_acceptance*.png
 /_acceptance2_*.png
 /_uiaccept*.png
 /_notification_check.png
-/Doc/Assets/Documentation/Screenshots/UIAcceptance/latest/
-/Doc/Assets/Documentation/Screenshots/UIAcceptance/20*/
 
 # Editor directories and files
 .vs/

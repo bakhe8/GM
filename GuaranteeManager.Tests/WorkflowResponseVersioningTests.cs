@@ -34,7 +34,7 @@ namespace GuaranteeManager.Tests
                 "tester");
 
             current.ExpiryDate = current.ExpiryDate.AddDays(10);
-            int updatedVersionId = database.UpdateGuarantee(current, new List<string>(), new List<AttachmentRecord>());
+            int updatedVersionId = database.CreateNewVersion(current, current.Id, new List<string>(), current.Attachments);
 
             InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
                 () => workflow.RecordBankResponse(extensionRequest.Id, RequestStatus.Executed, "approved"));
@@ -63,7 +63,7 @@ namespace GuaranteeManager.Tests
                 "tester");
 
             current.Amount += 250m;
-            int updatedVersionId = database.UpdateGuarantee(current, new List<string>(), new List<AttachmentRecord>());
+            int updatedVersionId = database.CreateNewVersion(current, current.Id, new List<string>(), current.Attachments);
 
             InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
                 () => workflow.RecordBankResponse(reductionRequest.Id, RequestStatus.Executed, "approved"));

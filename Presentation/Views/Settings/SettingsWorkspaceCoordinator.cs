@@ -1,10 +1,11 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using GuaranteeManager.Utils;
 #if DEBUG
-using GuaranteeManager.Development;
+using GuaranteeManager.Services.Seeding;
 #endif
 using Microsoft.Win32;
 using MessageBox = GuaranteeManager.Services.AppMessageBox;
@@ -95,7 +96,7 @@ namespace GuaranteeManager
             }
         }
 
-        public void CreateManualBackup()
+        public async void CreateManualBackup()
         {
             SaveFileDialog dialog = new()
             {
@@ -114,7 +115,8 @@ namespace GuaranteeManager
             try
             {
                 string targetPath = ResolveManualBackupPath(dialog.FileName);
-                _backupService.CreateManualBackup(targetPath);
+                _shellStatus.ShowInfo("جاري إنشاء النسخة الاحتياطية...", "الإعدادات • النسخ الاحتياطي");
+                await Task.Run(() => _backupService.CreateManualBackup(targetPath));
                 string output = _backupService.LastManualBackupPath ?? targetPath;
                 _diagnostics.RecordEvent("settings.operation", "manual-backup-created", new
                 {
@@ -157,7 +159,7 @@ namespace GuaranteeManager
             return fullPath;
         }
 
-        public void RestoreManualBackup(Action refreshAfterDataChange)
+        public async void RestoreManualBackup(Action refreshAfterDataChange)
         {
             OpenFileDialog dialog = new()
             {
@@ -183,7 +185,8 @@ namespace GuaranteeManager
 
             try
             {
-                _backupService.RestoreManualBackup(dialog.FileName);
+                _shellStatus.ShowInfo("جاري استرجاع النسخة الاحتياطية...", "الإعدادات • الاسترجاع");
+                await Task.Run(() => _backupService.RestoreManualBackup(dialog.FileName));
                 refreshAfterDataChange();
                 string safety = string.IsNullOrWhiteSpace(_backupService.LastPreRestoreSafetyBackupPath)
                     ? "لم يلزم إنشاء نسخة أمان."
@@ -206,7 +209,7 @@ namespace GuaranteeManager
             }
         }
 
-        public void CreatePortableBackup()
+        public async void CreatePortableBackup()
         {
             SaveFileDialog dialog = new()
             {
@@ -234,7 +237,8 @@ namespace GuaranteeManager
 
             try
             {
-                _backupService.CreatePortableBackupPackage(dialog.FileName, passphrase);
+                _shellStatus.ShowInfo("جاري إنشاء الحزمة المحمولة...", "الإعدادات • الحزمة المحمولة");
+                await Task.Run(() => _backupService.CreatePortableBackupPackage(dialog.FileName, passphrase));
                 string output = _backupService.LastPortableBackupPackagePath ?? dialog.FileName;
                 _diagnostics.RecordEvent("settings.operation", "portable-backup-created", new { OutputPath = output });
                 _shellStatus.ShowSuccess("تم إنشاء الحزمة المحمولة.", $"الإعدادات • {Path.GetFileName(output)}");
@@ -246,7 +250,7 @@ namespace GuaranteeManager
             }
         }
 
-        public void RestorePortableBackup(Action refreshAfterDataChange)
+        public async void RestorePortableBackup(Action refreshAfterDataChange)
         {
             OpenFileDialog dialog = new()
             {
@@ -284,7 +288,8 @@ namespace GuaranteeManager
 
             try
             {
-                _backupService.RestorePortableBackupPackage(dialog.FileName, passphrase);
+                _shellStatus.ShowInfo("جاري استرجاع الحزمة المحمولة...", "الإعدادات • الحزمة المحمولة");
+                await Task.Run(() => _backupService.RestorePortableBackupPackage(dialog.FileName, passphrase));
                 refreshAfterDataChange();
                 string safety = string.IsNullOrWhiteSpace(_backupService.LastPortableRestoreSafetyPackagePath)
                     ? "لم يلزم إنشاء حزمة أمان."

@@ -117,6 +117,38 @@ namespace GuaranteeManager.Tests
         }
 
         [Fact]
+        public void QueryGuarantees_LimitAndOffset_ReturnsExpectedSqlWindow()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            string bankToken = $"Paging Bank {_fixture.NextToken("PAGE")}";
+
+            for (int i = 0; i < 8; i++)
+            {
+                Guarantee guarantee = _fixture.CreateGuarantee($"BG-PAGE-{bankToken}-{i:D2}");
+                guarantee.Bank = bankToken;
+                guarantee.ExpiryDate = DateTime.Today.AddDays(i);
+                database.SaveGuarantee(guarantee, new List<string>());
+            }
+
+            List<Guarantee> results = database.QueryGuarantees(new GuaranteeQueryOptions
+            {
+                Bank = bankToken,
+                Limit = 3,
+                Offset = 4,
+                SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
+            });
+
+            Assert.Equal(
+                new[]
+                {
+                    $"BG-PAGE-{bankToken}-04",
+                    $"BG-PAGE-{bankToken}-05",
+                    $"BG-PAGE-{bankToken}-06"
+                },
+                results.Select(guarantee => guarantee.GuaranteeNo));
+        }
+
+        [Fact]
         public void HasPendingWorkflowRequest_ReturnsTrueWhenPendingExists()
         {
             DatabaseService database = _fixture.CreateDatabaseService();
@@ -167,6 +199,49 @@ namespace GuaranteeManager.Tests
 
             Assert.Contains(eligible, item => item.GuaranteeNo == active.GuaranteeNo);
             Assert.DoesNotContain(eligible, item => item.GuaranteeNo == expiredLifecycle.GuaranteeNo);
+        }
+
+        [Fact]
+        public void ActiveButDateExpiredGuarantees_AreExcludedFromNonReleaseEligibilityLists()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+
+            Guarantee expiredActive = _fixture.CreateGuarantee();
+            expiredActive.ExpiryDate = DateTime.Today.AddDays(-1);
+            expiredActive.LifecycleStatus = GuaranteeLifecycleStatus.Active;
+
+            database.SaveGuarantee(expiredActive, new List<string>());
+
+            Assert.DoesNotContain(workflow.GetGuaranteesEligibleForExtension(), item => item.GuaranteeNo == expiredActive.GuaranteeNo);
+            Assert.DoesNotContain(workflow.GetGuaranteesEligibleForReduction(), item => item.GuaranteeNo == expiredActive.GuaranteeNo);
+            Assert.DoesNotContain(workflow.GetGuaranteesEligibleForLiquidation(), item => item.GuaranteeNo == expiredActive.GuaranteeNo);
+            Assert.DoesNotContain(workflow.GetGuaranteesEligibleForVerification(), item => item.GuaranteeNo == expiredActive.GuaranteeNo);
+            Assert.DoesNotContain(workflow.GetGuaranteesEligibleForReplacement(), item => item.GuaranteeNo == expiredActive.GuaranteeNo);
+        }
+
+        [Fact]
+        public void GetGuaranteesEligibleForRelease_ReturnsActiveAndExpiredLifecycleGuarantees()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+
+            Guarantee active = _fixture.CreateGuarantee();
+            Guarantee expiredLifecycle = _fixture.CreateGuarantee();
+            expiredLifecycle.LifecycleStatus = GuaranteeLifecycleStatus.Expired;
+            expiredLifecycle.ExpiryDate = DateTime.Today.AddDays(-5);
+            Guarantee released = _fixture.CreateGuarantee();
+            released.LifecycleStatus = GuaranteeLifecycleStatus.Released;
+
+            database.SaveGuarantee(active, new List<string>());
+            database.SaveGuarantee(expiredLifecycle, new List<string>());
+            database.SaveGuarantee(released, new List<string>());
+
+            List<Guarantee> eligible = workflow.GetGuaranteesEligibleForRelease();
+
+            Assert.Contains(eligible, item => item.GuaranteeNo == active.GuaranteeNo);
+            Assert.Contains(eligible, item => item.GuaranteeNo == expiredLifecycle.GuaranteeNo);
+            Assert.DoesNotContain(eligible, item => item.GuaranteeNo == released.GuaranteeNo);
         }
 
         [Fact]

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using ClosedXML.Excel;
@@ -47,6 +48,25 @@ namespace GuaranteeManager.Tests
             Assert.Contains("المورد", headers);
             Assert.DoesNotContain("المستفيد", headers);
             Assert.Equal("شركة التشغيل الطبي", worksheet.Cell(5, 4).GetString());
+        }
+
+        [Fact]
+        public void GuaranteeListReport_WhenOutputFileIsLocked_ShowsActionableArabicMessage()
+        {
+            Guarantee guarantee = _fixture.CreateGuarantee("BG-EXCEL-LOCKED");
+            string outputPath = _fixture.CreateArtifactPath(".xlsx");
+            File.WriteAllText(outputPath, "locked");
+
+            using var lockStream = new FileStream(outputPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            var excel = new ExcelService();
+
+            IOException exception = Assert.Throws<IOException>(() => excel.ExportGuaranteesReportToPath(
+                new[] { guarantee },
+                "تقرير الضمانات",
+                "اختبار الملف المفتوح",
+                outputPath));
+
+            Assert.Contains("أغلقه ثم أعد المحاولة", exception.Message);
         }
 
         [Fact]

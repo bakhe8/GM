@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Automation;
 using System.Windows;
 using System.Windows.Controls;
@@ -296,10 +297,10 @@ namespace GuaranteeManager
                     BuildReportTitleRow(),
                     _detailSubtitle,
                     new Border { Height = 1, Background = WorkspaceSurfaceChrome.BrushFrom("#EDF2F7"), Margin = new Thickness(0, 13, 0, 12) },
-                    WorkspaceSurfaceChrome.DetailFactLine("المفتاح التشغيلي", _detailKey, "Icon.Badge"),
-                    WorkspaceSurfaceChrome.DetailFactLine("نوع التقرير", _detailCategory, "Icon.Reports"),
-                    WorkspaceSurfaceChrome.DetailFactLine("جاهزية التقرير", _detailStatus, "Icon.Check"),
-                    WorkspaceSurfaceChrome.DetailFactLine("الخطوة التالية", _detailAction, "Icon.Extend"),
+                    WorkspaceSurfaceChrome.DetailFactBlock("المفتاح التشغيلي", _detailKey, "Icon.Badge"),
+                    WorkspaceSurfaceChrome.DetailFactBlock("نوع التقرير", _detailCategory, "Icon.Reports"),
+                    WorkspaceSurfaceChrome.DetailFactBlock("جاهزية التقرير", _detailStatus, "Icon.Check"),
+                    WorkspaceSurfaceChrome.DetailFactBlock("الخطوة التالية", _detailAction, "Icon.Extend"),
                     WorkspaceSurfaceChrome.DetailFactBlock("آخر ملف ناتج", _detailOutput, "Icon.Document")
                 }
             };
@@ -397,8 +398,13 @@ namespace GuaranteeManager
         private ReportWorkspaceItem? SelectedItem
             => (_list.SelectedItem as FrameworkElement)?.Tag as ReportWorkspaceItem;
 
-        private void ApplyFilters()
+        private void ApplyFilters(string? preferredReportKey = null)
         {
+            string? reportKeyToRestore = string.IsNullOrWhiteSpace(preferredReportKey)
+                ? SelectedItem?.Key
+                : preferredReportKey;
+            FrameworkElement? rowToRestore = null;
+
             _list.Items.Clear();
             string category = NormalizeCategoryFilter(_selectedCategoryFilter);
             UpdateMetricCardStates();
@@ -409,10 +415,22 @@ namespace GuaranteeManager
 
             foreach (ReportWorkspaceItem item in filtered.Items)
             {
-                _list.Items.Add(BuildRow(item));
+                FrameworkElement row = BuildRow(item);
+                _list.Items.Add(row);
+
+                if (rowToRestore == null
+                    && !string.IsNullOrWhiteSpace(reportKeyToRestore)
+                    && string.Equals(item.Key, reportKeyToRestore, StringComparison.OrdinalIgnoreCase))
+                {
+                    rowToRestore = row;
+                }
             }
 
-            if (_list.Items.Count > 0)
+            if (rowToRestore != null)
+            {
+                _list.SelectedItem = rowToRestore;
+            }
+            else if (_list.Items.Count > 0)
             {
                 _list.SelectedIndex = 0;
             }
@@ -428,7 +446,11 @@ namespace GuaranteeManager
             row.Tag = item;
             row.Height = 40;
 
-            ReportWorkspaceRowState rowState = _dataService.BuildRowState(item, _coordinator.Results, _coordinator.HasOutput(item));
+            ReportWorkspaceRowState rowState = _dataService.BuildRowState(
+                item,
+                _coordinator.Results,
+                _coordinator.HasOutput(item),
+                _coordinator.IsRunningReport(item));
             row.Children.Add(BuildCell(item.Category, 0, "TableCellCenter", item.CategoryBrush));
             row.Children.Add(BuildCell(rowState.StatusLabel, 1, "TableCellCenter", rowState.StatusBrush));
             row.Children.Add(BuildCell(item.Key, 2, "TableCellRight"));
@@ -458,7 +480,9 @@ namespace GuaranteeManager
             ReportsWorkspaceDetailState state = _dataService.BuildDetailState(
                 SelectedItem,
                 _coordinator.Results,
-                SelectedItem != null && _coordinator.HasOutput(SelectedItem));
+                SelectedItem != null && _coordinator.HasOutput(SelectedItem),
+                _coordinator.IsRunningReport(SelectedItem),
+                _coordinator.IsRunning);
             _detailTitle.Text = state.Title;
             _detailSubtitle.Text = state.Subtitle;
             _detailStatusBadge.Text = state.BadgeText;
@@ -500,14 +524,23 @@ namespace GuaranteeManager
             AutomationProperties.SetItemStatus(_openButton, outputLabel);
         }
 
-        private void RunSelectedReport()
+        private async void RunSelectedReport()
         {
-            if (!_coordinator.TryRun(SelectedItem))
+            ReportWorkspaceItem? selected = SelectedItem;
+            if (selected == null)
             {
                 return;
             }
 
-            ApplyFilters();
+            UpdateSelection();
+            bool started = await _coordinator.TryRunAsync(selected);
+            if (!started)
+            {
+                UpdateSelection();
+                return;
+            }
+
+            ApplyFilters(selected?.Key);
         }
 
         private void OpenLastReport()

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows.Media;
 using GuaranteeManager.Models;
+using GuaranteeManager.Services;
 using GuaranteeManager.Utils;
 
 namespace GuaranteeManager
@@ -40,6 +41,47 @@ namespace GuaranteeManager
                         topSupplier,
                         GuaranteeRow.ResolveBankLogo(first.Bank));
                 })
+                .OrderByDescending(item => item.Amount)
+                .ToList();
+
+            var existingBanks = new HashSet<string>(
+                items.Select(item => item.Bank),
+                StringComparer.OrdinalIgnoreCase);
+
+            foreach (string bankReference in bankReferences)
+            {
+                string bank = bankReference.Trim();
+                if (string.IsNullOrWhiteSpace(bank) || !existingBanks.Add(bank))
+                {
+                    continue;
+                }
+
+                items.Add(BankWorkspaceItem.Empty(bank));
+            }
+
+            return items
+                .OrderByDescending(item => item.Amount)
+                .ThenBy(item => item.Bank, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        public List<BankWorkspaceItem> BuildItemsFromSummaries(
+            IReadOnlyList<BankPortfolioSummary> summaries,
+            IReadOnlyList<string> bankReferences)
+        {
+            decimal totalAmount = summaries.Sum(item => item.Amount);
+            List<BankWorkspaceItem> items = summaries
+                .Where(item => !string.IsNullOrWhiteSpace(item.Bank))
+                .Select(item => new BankWorkspaceItem(
+                    item.Bank,
+                    item.Count,
+                    item.Active,
+                    item.ExpiringSoon,
+                    item.Expired,
+                    item.Amount,
+                    totalAmount <= 0 ? 0 : (item.Amount / totalAmount) * 100m,
+                    string.IsNullOrWhiteSpace(item.TopSupplier) ? "---" : item.TopSupplier,
+                    GuaranteeRow.ResolveBankLogo(item.Bank)))
                 .OrderByDescending(item => item.Amount)
                 .ToList();
 

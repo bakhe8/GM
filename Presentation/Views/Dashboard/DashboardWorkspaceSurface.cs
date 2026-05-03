@@ -359,7 +359,7 @@ namespace GuaranteeManager
                     new Border { Height = 1, Background = WorkspaceSurfaceChrome.BrushFrom("#EDF2F7"), Margin = new Thickness(0, 13, 0, 12) },
                     WorkspaceSurfaceChrome.DetailFactLine(_detailDueLabel, _detailDue, "Icon.Calendar"),
                     _detailExpiryLine,
-                    WorkspaceSurfaceChrome.DetailFactLine(_detailActionLabel, _detailAction, "Icon.Extend"),
+                    WorkspaceSurfaceChrome.DetailFactBlock(_detailActionLabel, _detailAction, "Icon.Extend"),
                     WorkspaceSurfaceChrome.DetailFactBlock(_detailNoteLabel, _detailNote, "Icon.Document")
                 }
             };

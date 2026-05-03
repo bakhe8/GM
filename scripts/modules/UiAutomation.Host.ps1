@@ -18,12 +18,12 @@ function Normalize-UiCapabilitySessionState {
 
 function Get-UiCapabilitySessionPath {
     $repoRoot = Get-UiAcceptanceRepoRoot
-    return Join-Path $repoRoot "Doc\\Assets\\Documentation\\Screenshots\\UIAcceptance\\latest\\interactive-capability-session.json"
+    return Join-Path $repoRoot "scratch\\UIAcceptance\\latest\\interactive-capability-session.json"
 }
 
 function Get-UiCapabilityObservationsPath {
     $repoRoot = Get-UiAcceptanceRepoRoot
-    return Join-Path $repoRoot "Doc\\Assets\\Documentation\\Screenshots\\UIAcceptance\\latest\\interactive-capability-observations.jsonl"
+    return Join-Path $repoRoot "scratch\\UIAcceptance\\latest\\interactive-capability-observations.jsonl"
 }
 
 function Read-UiCapabilitySessionStateRaw {

@@ -21,7 +21,7 @@ namespace GuaranteeManager
         public const double HeroNumber = 34d;
 
         public static FontFamily DefaultFontFamily { get; } = new(
-            new Uri("pack://application:,,,/"),
+            new Uri("pack://application:,,,/GuaranteeManager;component/"),
             CompositeFontFamilyPath);
 
         public static FontWeight RegularWeight => FontWeights.Normal;

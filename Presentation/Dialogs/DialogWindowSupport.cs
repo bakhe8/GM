@@ -7,15 +7,24 @@ namespace GuaranteeManager
 {
     public static class DialogWindowSupport
     {
-        public static void Attach(Window window, string stateKey, Action? saveAction = null, string? navigationReason = null)
+        public static void Attach(
+            Window window,
+            string stateKey,
+            Action? saveAction = null,
+            string? navigationReason = null,
+            bool persistWindowState = true)
         {
             IDisposable? navigationScope = null;
             DialogChrome.ApplyWindowDefaults(window);
 
-            window.Loaded += (_, _) => WindowStateService.Restore(window, stateKey);
+            if (persistWindowState)
+            {
+                window.Loaded += (_, _) => WindowStateService.Restore(window, stateKey);
+                window.Closing += (_, _) => WindowStateService.Save(window, stateKey);
+            }
+
             window.Loaded += (_, _) => DialogChrome.ApplyWindowDefaults(window);
             window.Loaded += (_, _) => DialogChrome.ApplyContentDefaults(window);
-            window.Closing += (_, _) => WindowStateService.Save(window, stateKey);
             window.Loaded += (_, _) => Record(window, stateKey, "loaded");
             window.Loaded += (_, _) =>
             {

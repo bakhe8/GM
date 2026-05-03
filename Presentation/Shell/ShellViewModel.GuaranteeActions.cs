@@ -20,29 +20,6 @@ namespace GuaranteeManager
             ExecuteGuaranteeAction(row, _guaranteeWorkspace.EditGuarantee);
         }
 
-        private void RunSelectedInquiry()
-        {
-            GuaranteeRow? target = ResolveTarget(SelectedGuarantee);
-            OperationalInquiryOption? option = SelectedOperationalInquiryOption;
-            if (target == null || option == null)
-            {
-                return;
-            }
-
-            LatestInquiryResult = _guaranteeWorkspace.RunInquiry(target, option);
-            _diagnostics.RecordEvent(
-                "guarantee.inquiry",
-                "run",
-                new
-                {
-                    target.Id,
-                    target.RootId,
-                    target.GuaranteeNo,
-                    InquiryId = option.Id
-                });
-            WriteDiagnosticsState("run-inquiry");
-        }
-
         private void CreateExtensionRequest(GuaranteeRow? row)
         {
             ExecuteGuaranteeAction(row, _guaranteeWorkspace.CreateExtensionRequest);
@@ -180,15 +157,6 @@ namespace GuaranteeManager
             }
         }
 
-        private void FocusLatestInquirySection()
-        {
-            if (LatestInquiryResult != null &&
-                InquiryContextRoutingResolver.TryResolve(LatestInquiryResult, out GuaranteeFocusArea area, out int? requestIdToFocus))
-            {
-                FocusGuaranteeSection(area, requestIdToFocus);
-            }
-        }
-
         private static string FormatOfficialAttachmentCount(int count)
         {
             return count switch
@@ -268,71 +236,6 @@ namespace GuaranteeManager
             {
                 _guaranteeWorkspace.OpenResponseDocument(item.Request);
             }
-        }
-
-        private void OpenLatestInquiryDialog()
-        {
-            if (LatestInquiryResult != null)
-            {
-                _guaranteeWorkspace.ShowInquiryResult(LatestInquiryResult);
-            }
-        }
-
-        private void OpenLatestInquiryLetter()
-        {
-            if (LatestInquiryResult?.RelatedRequest != null)
-            {
-                _guaranteeWorkspace.OpenRequestLetter(LatestInquiryResult.RelatedRequest);
-            }
-        }
-
-        private void OpenLatestInquiryResponse()
-        {
-            if (LatestInquiryResult?.RelatedRequest != null)
-            {
-                _guaranteeWorkspace.OpenResponseDocument(LatestInquiryResult.RelatedRequest);
-            }
-        }
-
-        public void RunInquiryAction(string actionId, GuaranteeRow? row)
-        {
-            GuaranteeRow? target = ResolveTarget(row);
-            if (target == null || string.IsNullOrWhiteSpace(actionId))
-            {
-                return;
-            }
-
-            SelectedGuarantee = target;
-            SelectedOperationalInquiryOption = OperationalInquiryOptions.FirstOrDefault(option => option.Id == actionId)
-                                               ?? SelectedOperationalInquiryOption;
-
-            Guarantee? guarantee = _database.GetGuaranteeById(target.Id);
-            if (guarantee == null)
-            {
-                MessageBox.Show("تعذر تحميل الضمان المحدد لتنفيذ الاستعلام.", "الاستعلامات التشغيلية", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            ContextActionAvailability availability = GuaranteeInquiryActionSupport.GetAvailability(actionId, guarantee);
-            if (!availability.IsEnabled)
-            {
-                MessageBox.Show(
-                    availability.DisabledReason ?? "هذا الاستعلام غير متاح لهذا السجل حاليًا.",
-                    "الاستعلامات التشغيلية",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
-                return;
-            }
-
-            LatestInquiryResult = _guaranteeWorkspace.RunInquiry(target, new OperationalInquiryOption(actionId, "استعلام مباشر", actionId, string.Empty));
-        }
-
-        public ContextActionAvailability GetInquiryAvailability(GuaranteeRow row, string actionId)
-        {
-            Guarantee? guarantee = _database.GetGuaranteeById(row.Id);
-            return guarantee == null
-                ? ContextActionAvailability.Disabled("تعذر تحميل السجل الحالي لتقييم إتاحة هذا الاستعلام.")
-                : GuaranteeInquiryActionSupport.GetAvailability(actionId, guarantee);
         }
 
         private void ExecuteGuaranteeAction(GuaranteeRow? row, Action<GuaranteeRow> action, bool syncSelection = false)

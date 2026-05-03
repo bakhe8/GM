@@ -1,6 +1,5 @@
-#if DEBUG
 using System.Collections.Generic;
-using GuaranteeManager.Development;
+using GuaranteeManager.Services.Seeding;
 using GuaranteeManager.Services;
 using GuaranteeManager.Utils;
 using Xunit;
@@ -83,4 +82,3 @@ namespace GuaranteeManager.Tests
         }
     }
 }
-#endif

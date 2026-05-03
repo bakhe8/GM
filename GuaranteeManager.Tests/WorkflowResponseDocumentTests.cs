@@ -44,5 +44,34 @@ namespace GuaranteeManager.Tests
             Assert.Contains("approved-without-file", executedAfterAttach.ResponseNotes);
             Assert.Contains("late doc", executedAfterAttach.ResponseNotes);
         }
+
+        [Fact]
+        public void AttachResponseDocumentToClosedRequest_FillsMissingResponseRecordedAt()
+        {
+            DatabaseService database = _fixture.CreateDatabaseService();
+            WorkflowService workflow = _fixture.CreateWorkflowService(database);
+            Guarantee seed = _fixture.CreateGuarantee();
+            string responseDocumentPath = _fixture.CreateSourceFile(".pdf", "late-response-with-missing-date");
+
+            database.SaveGuarantee(seed, new List<string>());
+            Guarantee current = database.GetCurrentGuaranteeByNo(seed.GuaranteeNo)!;
+
+            WorkflowRequest releaseRequest = workflow.CreateReleaseRequest(current.Id, "release", "tester");
+            workflow.RecordBankResponse(releaseRequest.Id, RequestStatus.Executed, "approved-without-file");
+
+            using (SqliteConnection connection = SqliteConnectionFactory.OpenForPath(AppPaths.DatabasePath))
+            using (SqliteCommand command = connection.CreateCommand())
+            {
+                command.CommandText = "UPDATE WorkflowRequests SET ResponseRecordedAt = NULL WHERE Id = $id";
+                command.Parameters.AddWithValue("$id", releaseRequest.Id);
+                command.ExecuteNonQuery();
+            }
+
+            workflow.AttachResponseDocumentToClosedRequest(releaseRequest.Id, responseDocumentPath, "late doc");
+
+            WorkflowRequest executedAfterAttach = database.GetWorkflowRequestById(releaseRequest.Id)!;
+            Assert.NotNull(executedAfterAttach.ResponseRecordedAt);
+            Assert.True(executedAfterAttach.HasResponseDocument);
+        }
     }
 }

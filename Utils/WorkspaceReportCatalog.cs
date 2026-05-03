@@ -65,22 +65,22 @@ namespace GuaranteeManager.Utils
                     QueryPendingRequests(databaseService)),
                 "requests.pending.extension" => excelService.ExportPendingWorkflowRequestsByType(
                     RequestType.Extension,
-                    QueryPendingRequests(databaseService)),
+                    QueryPendingRequestsByType(databaseService, RequestType.Extension)),
                 "requests.pending.reduction" => excelService.ExportPendingWorkflowRequestsByType(
                     RequestType.Reduction,
-                    QueryPendingRequests(databaseService)),
+                    QueryPendingRequestsByType(databaseService, RequestType.Reduction)),
                 "requests.pending.release" => excelService.ExportPendingWorkflowRequestsByType(
                     RequestType.Release,
-                    QueryPendingRequests(databaseService)),
+                    QueryPendingRequestsByType(databaseService, RequestType.Release)),
                 "requests.pending.liquidation" => excelService.ExportPendingWorkflowRequestsByType(
                     RequestType.Liquidation,
-                    QueryPendingRequests(databaseService)),
+                    QueryPendingRequestsByType(databaseService, RequestType.Liquidation)),
                 "requests.pending.verification" => excelService.ExportPendingWorkflowRequestsByType(
                     RequestType.Verification,
-                    QueryPendingRequests(databaseService)),
+                    QueryPendingRequestsByType(databaseService, RequestType.Verification)),
                 "requests.pending.replacement" => excelService.ExportPendingWorkflowRequestsByType(
                     RequestType.Replacement,
-                    QueryPendingRequests(databaseService)),
+                    QueryPendingRequestsByType(databaseService, RequestType.Replacement)),
                 "operational.guarantee-file" when !string.IsNullOrWhiteSpace(input)
                     => TryExportSingleGuaranteeReport(input.Trim(), databaseService, excelService),
                 "operational.guarantee-history" when !string.IsNullOrWhiteSpace(input)
@@ -90,32 +90,32 @@ namespace GuaranteeManager.Utils
                 "operational.bank-pending-requests" when !string.IsNullOrWhiteSpace(input)
                     => excelService.ExportPendingRequestsByBank(
                         input.Trim(),
-                        QueryAllRequests(databaseService)),
+                        QueryPendingRequestsByBank(input.Trim(), databaseService)),
                 "operational.bank-requests" when !string.IsNullOrWhiteSpace(input)
                     => excelService.ExportWorkflowRequestsByBank(
                         input.Trim(),
-                        QueryAllRequests(databaseService)),
+                        QueryRequestsByBank(input.Trim(), databaseService)),
                 "operational.supplier-guarantees" when !string.IsNullOrWhiteSpace(input)
                     => excelService.ExportGuaranteesBySupplier(
                         input.Trim(),
                         QueryGuaranteesBySupplier(input.Trim(), databaseService)),
                 "operational.oldest-pending" => excelService.ExportOldestPendingRequests(
-                    QueryAllRequests(databaseService),
+                    QueryOldestPendingRequests(databaseService, 10),
                     topCount: 10),
                 "operational.executed-extensions-this-month" => excelService.ExportExecutedExtensionsThisMonth(
-                    QueryAllRequests(databaseService),
+                    QueryExecutedExtensions(databaseService, StartOfCurrentMonth(), System.DateTime.Now),
                     StartOfCurrentMonth(),
                     System.DateTime.Now),
                 "operational.active-purchase-order-only" => excelService.ExportActivePurchaseOrderOnlyGuarantees(
                     QueryAllGuarantees(databaseService)),
                 "operational.contract-released-last-week" => excelService.ExportContractRelatedReleasedInPeriod(
-                    QueryAllRequests(databaseService),
+                    QueryContractRelatedReleased(databaseService, StartOfPreviousSevenDayWindow(), EndOfPreviousSevenDayWindow()),
                     StartOfPreviousSevenDayWindow(),
                     EndOfPreviousSevenDayWindow()),
                 "operational.employee-contract-requests-last-month" when !string.IsNullOrWhiteSpace(input)
                     => excelService.ExportEmployeeContractRequestsInPeriod(
                         input.Trim(),
-                        QueryAllRequests(databaseService),
+                        QueryEmployeeContractRequests(input.Trim(), databaseService, StartOfPreviousMonth(), EndOfPreviousMonth()),
                         StartOfPreviousMonth(),
                         EndOfPreviousMonth()),
                 "operational.expired-po-without-extension" => excelService.ExportExpiredPurchaseOrderOnlyWithoutExecutedExtension(
@@ -240,9 +240,11 @@ namespace GuaranteeManager.Utils
             string supplier,
             IDatabaseService databaseService)
         {
-            return QueryAllGuarantees(databaseService)
-                .Where(guarantee => string.Equals(guarantee.Supplier, supplier, System.StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            return databaseService.QueryGuarantees(new GuaranteeQueryOptions
+            {
+                Supplier = supplier,
+                SortMode = GuaranteeQuerySortMode.CreatedAtDescending
+            });
         }
 
         private static List<Guarantee> QueryExpiringSoonGuarantees(IDatabaseService databaseService)
@@ -257,12 +259,10 @@ namespace GuaranteeManager.Utils
         private static List<Guarantee> QueryExpiredFollowUpGuarantees(IDatabaseService databaseService)
         {
             return databaseService.QueryGuarantees(new GuaranteeQueryOptions
-                {
-                    TimeStatus = GuaranteeTimeStatus.Expired,
-                    SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
-                })
-                .Where(guarantee => guarantee.NeedsExpiryFollowUp)
-                .ToList();
+            {
+                NeedsExpiryFollowUpOnly = true,
+                SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
+            });
         }
 
         private static List<Guarantee> QueryDailyFollowUpGuarantees(IDatabaseService databaseService)
@@ -338,6 +338,104 @@ namespace GuaranteeManager.Utils
             });
         }
 
+        private static List<WorkflowRequestListItem> QueryPendingRequestsByType(
+            IDatabaseService databaseService,
+            RequestType requestType)
+        {
+            return databaseService.QueryWorkflowRequests(new WorkflowRequestQueryOptions
+            {
+                RequestStatus = RequestStatus.Pending,
+                RequestType = requestType,
+                SortMode = WorkflowRequestQuerySortMode.RequestDateAscending
+            });
+        }
+
+        private static List<WorkflowRequestListItem> QueryPendingRequestsByBank(
+            string bank,
+            IDatabaseService databaseService)
+        {
+            return databaseService.QueryWorkflowRequests(new WorkflowRequestQueryOptions
+            {
+                RequestStatus = RequestStatus.Pending,
+                Bank = bank,
+                SortMode = WorkflowRequestQuerySortMode.RequestDateAscending
+            });
+        }
+
+        private static List<WorkflowRequestListItem> QueryRequestsByBank(
+            string bank,
+            IDatabaseService databaseService)
+        {
+            return databaseService.QueryWorkflowRequests(new WorkflowRequestQueryOptions
+            {
+                Bank = bank,
+                SortMode = WorkflowRequestQuerySortMode.ActivityDateDescending
+            });
+        }
+
+        private static List<WorkflowRequestListItem> QueryOldestPendingRequests(
+            IDatabaseService databaseService,
+            int topCount)
+        {
+            return databaseService.QueryWorkflowRequests(new WorkflowRequestQueryOptions
+            {
+                RequestStatus = RequestStatus.Pending,
+                SortMode = WorkflowRequestQuerySortMode.RequestDateAscending,
+                Limit = topCount
+            });
+        }
+
+        private static List<WorkflowRequestListItem> QueryExecutedExtensions(
+            IDatabaseService databaseService,
+            System.DateTime periodStart,
+            System.DateTime periodEnd)
+        {
+            return databaseService.QueryWorkflowRequests(new WorkflowRequestQueryOptions
+            {
+                RequestType = RequestType.Extension,
+                RequestStatus = RequestStatus.Executed,
+                ResponseRecordedFrom = periodStart,
+                ResponseRecordedTo = periodEnd,
+                SortMode = WorkflowRequestQuerySortMode.ActivityDateDescending
+            });
+        }
+
+        private static List<WorkflowRequestListItem> QueryContractRelatedReleased(
+            IDatabaseService databaseService,
+            System.DateTime periodStart,
+            System.DateTime periodEnd)
+        {
+            return databaseService.QueryWorkflowRequests(new WorkflowRequestQueryOptions
+            {
+                RequestType = RequestType.Release,
+                RequestStatus = RequestStatus.Executed,
+                ReferenceType = GuaranteeReferenceType.Contract,
+                RequireReferenceNumber = true,
+                ResponseRecordedFrom = periodStart,
+                ResponseRecordedTo = periodEnd,
+                SortMode = WorkflowRequestQuerySortMode.ActivityDateDescending
+            });
+        }
+
+        private static List<WorkflowRequestListItem> QueryEmployeeContractRequests(
+            string employeeName,
+            IDatabaseService databaseService,
+            System.DateTime periodStart,
+            System.DateTime periodEnd)
+        {
+            return databaseService.QueryWorkflowRequests(new WorkflowRequestQueryOptions
+            {
+                CreatedBy = employeeName,
+                ReferenceType = GuaranteeReferenceType.Contract,
+                RequireReferenceNumber = true,
+                RequestDateFrom = periodStart,
+                RequestDateTo = periodEnd,
+                SortMode = WorkflowRequestQuerySortMode.RequestDateDescending
+            })
+            .Where(item => item.Request.Type is RequestType.Extension or RequestType.Release)
+            .ToList();
+        }
+
         private static List<WorkflowRequestListItem> QueryDailyFollowUpRequests(IDatabaseService databaseService)
         {
             List<WorkflowRequestListItem> pendingRequests = QueryPendingRequests(databaseService);
@@ -354,14 +452,12 @@ namespace GuaranteeManager.Utils
         private static List<Guarantee> QueryExpiredPurchaseOrderOnlyWithoutExecutedExtension(IDatabaseService databaseService)
         {
             return databaseService.QueryGuarantees(new GuaranteeQueryOptions
-                {
-                    ReferenceType = GuaranteeReferenceType.PurchaseOrder,
-                    RequireReferenceNumber = true,
-                    TimeStatus = GuaranteeTimeStatus.Expired,
-                    SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
-                })
-                .Where(guarantee => guarantee.NeedsExpiryFollowUp)
-                .ToList();
+            {
+                ReferenceType = GuaranteeReferenceType.PurchaseOrder,
+                RequireReferenceNumber = true,
+                NeedsExpiryFollowUpOnly = true,
+                SortMode = GuaranteeQuerySortMode.ExpiryDateAscendingThenGuaranteeNo
+            });
         }
 
         public sealed record WorkspaceReportAction(string Key, string Title, string Description);

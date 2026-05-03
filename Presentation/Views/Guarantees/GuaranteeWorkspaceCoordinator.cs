@@ -16,28 +16,20 @@ namespace GuaranteeManager
     {
         private readonly IDatabaseService _database;
         private readonly IWorkflowService _workflow;
-        private readonly IExcelService _excel;
-        private readonly IOperationalInquiryService _inquiry;
         private readonly IShellStatusService _shellStatus;
-        private readonly IUiDiagnosticsService _diagnostics;
         private readonly Action _loadFilterOptions;
         private readonly Action<int, int?> _refreshAfterWorkflowChange;
 
         public GuaranteeWorkspaceCoordinator(
             IDatabaseService database,
             IWorkflowService workflow,
-            IExcelService excel,
-            IOperationalInquiryService inquiry,
             IShellStatusService shellStatus,
             Action loadFilterOptions,
             Action<int, int?> refreshAfterWorkflowChange)
         {
             _database = database;
             _workflow = workflow;
-            _excel = excel;
-            _inquiry = inquiry;
             _shellStatus = shellStatus;
-            _diagnostics = App.CurrentApp.GetRequiredService<IUiDiagnosticsService>();
             _loadFilterOptions = loadFilterOptions;
             _refreshAfterWorkflowChange = refreshAfterWorkflowChange;
         }
@@ -103,7 +95,7 @@ namespace GuaranteeManager
             if (HasOperationalFieldChanges(current, input))
             {
                 MessageBox.Show(
-                    "التعديل من هذه الواجهة مخصص للتصحيح الإداري الوصفي فقط مثل اسم المورد أو الجهة المستفيدة أو الملاحظات والمرفقات. لا يمكن تغيير رقم الضمان أو البنك أو النوع أو المبلغ أو تاريخ الانتهاء أو بيانات المرجع من هنا لأنها تؤثر في منطق الطلبات ودورة حياة الضمان.",
+                    "التعديل من هذه الواجهة مخصص للتصحيح الإداري الوصفي فقط مثل اسم المورد أو الجهة المستفيدة أو الملاحظات والمرفقات. لا يمكن تغيير رقم الضمان أو البنك أو النوع أو المبلغ أو تاريخ الانتهاء أو تقويم التاريخ أو بيانات المرجع من هنا لأنها تؤثر في منطق الطلبات ودورة حياة الضمان.",
                     "تعديل الضمان",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
@@ -137,6 +129,7 @@ namespace GuaranteeManager
                    || !SameText(input.GuaranteeType, current.GuaranteeType)
                    || input.Amount != current.Amount
                    || input.ExpiryDate.Date != current.ExpiryDate.Date
+                   || input.DateCalendar != current.DateCalendar
                    || input.ReferenceType != current.ReferenceType
                    || !SameText(input.ReferenceNumber, current.ReferenceNumber);
         }
@@ -144,52 +137,15 @@ namespace GuaranteeManager
         private static bool SameText(string? left, string? right)
             => string.Equals((left ?? string.Empty).Trim(), (right ?? string.Empty).Trim(), StringComparison.Ordinal);
 
-        public OperationalInquiryResult? RunInquiry(GuaranteeRow target, OperationalInquiryOption option)
-        {
-            Guarantee? current = GetGuarantee(target, "الاستعلامات التشغيلية");
-            if (current == null)
-            {
-                return null;
-            }
-
-            ContextActionAvailability availability = GuaranteeInquiryActionSupport.GetAvailability(option.Id, current);
-            if (!availability.IsEnabled)
-            {
-                MessageBox.Show(
-                    availability.DisabledReason ?? "هذا الاستعلام غير متاح لهذا السجل حاليًا.",
-                    "الاستعلامات التشغيلية",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
-                return null;
-            }
-
-            OperationalInquiryResult? result = GuaranteeInquiryActionSupport.Execute(
-                option.Id,
-                current,
-                _inquiry,
-                PromptForEmployeeName);
-
-            if (result == null)
-            {
-                _diagnostics.RecordEvent("guarantee.inquiry", "cancelled", new { target.GuaranteeNo, option.Id });
-                return null;
-            }
-
-            _diagnostics.RecordEvent("guarantee.inquiry", "completed", new
-            {
-                target.GuaranteeNo,
-                option.Id,
-                result.CanOpenRequestLetter,
-                result.CanOpenResponseDocument
-            });
-            OperationalInquiryDialog.ShowFor(result, _database, _workflow, _excel);
-            return result;
-        }
-
         public void CreateExtensionRequest(GuaranteeRow target)
         {
             Guarantee? current = GetGuarantee(target, "طلب تمديد");
             if (current == null)
+            {
+                return;
+            }
+
+            if (!ConfirmIfPendingTerminalRequest(current.RootId ?? current.Id, current.GuaranteeNo, "طلب تمديد"))
             {
                 return;
             }
@@ -226,12 +182,10 @@ namespace GuaranteeManager
 
         public void CreateReleaseRequest(GuaranteeRow target)
         {
-            MessageBoxResult result = MessageBox.Show(
-                $"تأكيد إنشاء طلب إفراج للضمان {target.GuaranteeNo}؟",
-                "طلب إفراج",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-            if (result != MessageBoxResult.Yes)
+            if (!ConfirmationDialog.TryShow(
+                    "طلب إفراج نهائي",
+                    $"سيؤدي طلب الإفراج عند تأكيد البنك إلى إنهاء دورة حياة الضمان {target.GuaranteeNo} وإسقاط أي طلبات عالقة على نفس الضمان. هل تريد إنشاء الطلب؟",
+                    "إنشاء الطلب"))
             {
                 return;
             }
@@ -245,6 +199,11 @@ namespace GuaranteeManager
 
         public void CreateReductionRequest(GuaranteeRow target)
         {
+            if (!ConfirmIfPendingTerminalRequest(target.RootId, target.GuaranteeNo, "طلب تخفيض"))
+            {
+                return;
+            }
+
             if (!PromptDialog.TryShow(
                     "طلب تخفيض",
                     "المبلغ المطلوب بعد التخفيض",
@@ -289,6 +248,14 @@ namespace GuaranteeManager
                 ? "طلب تسييل من واجهة الضمانات."
                 : requestNotes.Trim();
 
+            if (!ConfirmationDialog.TryShow(
+                    "طلب تسييل نهائي",
+                    $"التسييل إجراء نهائي للضمان {target.GuaranteeNo}. عند تأكيد البنك ستنتهي دورة حياة الضمان وتُسقط أي طلبات عالقة على نفس الضمان. هل تريد إنشاء طلب التسييل؟",
+                    "إنشاء طلب التسييل"))
+            {
+                return;
+            }
+
             ExecuteAction("طلب تسييل", () =>
             {
                 WorkflowRequest request = _workflow.CreateLiquidationRequest(current.Id, normalizedNotes, Environment.UserName);
@@ -300,6 +267,11 @@ namespace GuaranteeManager
         {
             Guarantee? current = GetGuarantee(target, "طلب تحقق");
             if (current == null)
+            {
+                return;
+            }
+
+            if (!ConfirmIfPendingTerminalRequest(current.RootId ?? current.Id, current.GuaranteeNo, "طلب تحقق"))
             {
                 return;
             }
@@ -342,6 +314,14 @@ namespace GuaranteeManager
                 return;
             }
 
+            if (!ConfirmationDialog.TryShow(
+                    "طلب استبدال نهائي",
+                    $"الاستبدال إجراء نهائي للضمان {target.GuaranteeNo}. عند تأكيد البنك سيُغلق الضمان الحالي كضمان مستبدل وتُسقط أي طلبات عالقة على نفس الجذر. هل تريد إنشاء طلب الاستبدال؟",
+                    "إنشاء طلب الاستبدال"))
+            {
+                return;
+            }
+
             ExecuteAction("طلب استبدال", () =>
             {
                 WorkflowRequest request = _workflow.CreateReplacementRequest(
@@ -357,7 +337,8 @@ namespace GuaranteeManager
                     input.ReplacementReferenceType,
                     input.ReplacementReferenceNumber,
                     input.Notes,
-                    Environment.UserName);
+                    Environment.UserName,
+                    input.Attachments);
                 return GuaranteeActionResult.Success($"تم إنشاء طلب استبدال للضمان {target.GuaranteeNo}.", request.RootGuaranteeId, request.Id);
             });
         }
@@ -480,11 +461,6 @@ namespace GuaranteeManager
         public void CopyExpiryDate(GuaranteeRow target)
         {
             CopyValue(target.ExpiryDate, "تاريخ الانتهاء", target.GuaranteeNo);
-        }
-
-        public void ShowInquiryResult(OperationalInquiryResult result)
-        {
-            OperationalInquiryDialog.ShowFor(result, _database, _workflow, _excel);
         }
 
         public void OpenRequestLetter(WorkflowRequest request)
@@ -639,11 +615,23 @@ namespace GuaranteeManager
             };
         }
 
-        private static Guarantee? ResolveInquiryGuarantee(OperationalInquiryResult result)
+        private bool ConfirmIfPendingTerminalRequest(int rootId, string guaranteeNo, string requestedActionTitle)
         {
-            return result.CurrentGuarantee
-                   ?? result.SelectedGuarantee
-                   ?? result.ResultGuarantee;
+            bool hasPendingTerminalRequest = _database
+                .GetWorkflowRequestsByRootId(rootId)
+                .Any(request =>
+                    request.Status == RequestStatus.Pending &&
+                    request.Type is RequestType.Release or RequestType.Liquidation or RequestType.Replacement);
+
+            if (!hasPendingTerminalRequest)
+            {
+                return true;
+            }
+
+            return ConfirmationDialog.TryShow(
+                requestedActionTitle,
+                $"يوجد طلب نهائي معلق على الضمان {guaranteeNo}. إذا تم تنفيذ الطلب النهائي لاحقًا فسيُسقط هذا الطلب تلقائيًا. هل تريد إنشاء {requestedActionTitle} رغم ذلك؟",
+                "إنشاء رغم التنبيه");
         }
 
         private void ExecuteAction(string title, Func<GuaranteeActionResult> action)
@@ -686,17 +674,6 @@ namespace GuaranteeManager
             {
                 MessageBox.Show(ex.Message, $"نسخ {label}", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
-        }
-
-        private static string? PromptForEmployeeName()
-        {
-            return PromptDialog.TryShow(
-                "استعلام أداء موظف",
-                "اسم الموظف",
-                Environment.UserName,
-                out string employeeName)
-                ? employeeName
-                : null;
         }
 
         private static void TryOpenWorkflowDocument(Action openAction, string title, string missingMessage)

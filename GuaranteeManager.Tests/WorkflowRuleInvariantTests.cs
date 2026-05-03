@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-#if DEBUG
-using GuaranteeManager.Development;
-#endif
+using GuaranteeManager.Services.Seeding;
 using GuaranteeManager.Services;
 using GuaranteeManager.Utils;
 using Microsoft.Data.Sqlite;
@@ -20,7 +18,6 @@ namespace GuaranteeManager.Tests
             _fixture = fixture;
         }
 
-#if DEBUG
         [Fact]
         public void DataSeedingService_GeneratedData_RespectsFinalizedWorkflowRules()
         {
@@ -54,7 +51,6 @@ namespace GuaranteeManager.Tests
                 DatabaseService.InitializeRuntime();
             }
         }
-#endif
 
         private static List<string> LoadWorkflowInvariantViolations()
         {

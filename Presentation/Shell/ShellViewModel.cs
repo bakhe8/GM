@@ -14,8 +14,6 @@ namespace GuaranteeManager
             IDatabaseService database,
             IWorkflowService workflow,
             IExcelService excel,
-            IOperationalInquiryService inquiry,
-            IContextActionService contextActionService,
             INavigationGuard navigationGuard,
             IShellStatusService shellStatus,
             IUiDiagnosticsService diagnostics)
@@ -24,12 +22,10 @@ namespace GuaranteeManager
             _navigationGuard = navigationGuard;
             _shellStatus = shellStatus;
             _diagnostics = diagnostics;
-            _guaranteeData = new GuaranteeWorkspaceDataService(_database, contextActionService);
+            _guaranteeData = new GuaranteeWorkspaceDataService(_database);
             _guaranteeWorkspace = new GuaranteeWorkspaceCoordinator(
                 _database,
                 workflow,
-                excel,
-                inquiry,
                 shellStatus,
                 LoadFilterOptions,
                 RefreshAfterWorkflowChange);
@@ -75,46 +71,22 @@ namespace GuaranteeManager
             ShowSettingsCommand = new RelayCommand(_ => ShowSettingsWorkspace());
             ExecuteGlobalSearchCommand = new RelayCommand(_ => ExecuteGlobalSearch());
             ExitCommand = new RelayCommand(_ => RequestExit());
-            LoadOperationalInquiryOptions();
         }
 
         public static ShellViewModel Create(
             IDatabaseService database,
             IWorkflowService workflow,
             IExcelService excel,
-            IOperationalInquiryService inquiry,
-            IContextActionService contextActionService,
             INavigationGuard navigationGuard,
             IShellStatusService shellStatus,
             IUiDiagnosticsService diagnostics)
         {
-            var viewModel = new ShellViewModel(database, workflow, excel, inquiry, contextActionService, navigationGuard, shellStatus, diagnostics);
+            var viewModel = new ShellViewModel(database, workflow, excel, navigationGuard, shellStatus, diagnostics);
             viewModel.LoadFilterOptions();
             viewModel.Refresh();
             viewModel.ShowDashboardWorkspace();
             viewModel.WriteDiagnosticsState("startup");
             return viewModel;
-        }
-
-        private void LoadOperationalInquiryOptions()
-        {
-            string? selectedOptionId = SelectedOperationalInquiryOption?.Id;
-            IReadOnlyList<OperationalInquiryOption> options = _guaranteeData.BuildOperationalInquiryOptions();
-            OperationalInquiryOptions.Clear();
-            foreach (OperationalInquiryOption option in options)
-            {
-                OperationalInquiryOptions.Add(option);
-            }
-
-            SelectedOperationalInquiryOption = OperationalInquiryOptions.FirstOrDefault(option => option.Id == selectedOptionId)
-                                               ?? OperationalInquiryOptions.FirstOrDefault();
-        }
-
-        private void UpdateSelectedOperationalInquiryDescription()
-        {
-            SelectedOperationalInquiryDescription = _guaranteeData.BuildOperationalInquiryDescription(
-                SelectedOperationalInquiryOption,
-                SelectedGuarantee);
         }
 
         private int? ResolveContextRequestId(GuaranteeRow target)

@@ -209,7 +209,6 @@ namespace GuaranteeManager
         {
             if (row != null)
             {
-                LatestInquiryResult = null;
                 SelectedGuarantee = row;
                 _diagnostics.RecordEvent(
                     "shell.selection",
@@ -281,8 +280,6 @@ namespace GuaranteeManager
             {
                 SetLastFileState(ShellLastFileState.Empty);
             }
-
-            LatestInquiryResult = null;
             WriteDiagnosticsState("data-reset");
         }
 
@@ -374,21 +371,6 @@ namespace GuaranteeManager
                          CopyGuaranteeExpiryDateCommand,
                          ShowAllAttachmentsCommand,
                          OpenTimelineEvidenceCommand,
-                         OpenOutputLetterCommand,
-                         OpenOutputResponseCommand
-                     })
-            {
-                if (command is RelayCommand relayCommand)
-                {
-                    relayCommand.RaiseCanExecuteChanged();
-                }
-            }
-        }
-
-        private void RaiseInquiryCommandStates()
-        {
-            foreach (ICommand command in new[]
-                     {
                          OpenOutputLetterCommand,
                          OpenOutputResponseCommand
                      })

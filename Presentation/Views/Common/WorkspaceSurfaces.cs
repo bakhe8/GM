@@ -149,7 +149,7 @@ namespace GuaranteeManager
 
             var scroll = new ScrollViewer
             {
-                VerticalScrollBarVisibility = ScrollBarVisibility.Hidden,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 Content = scrollContent
             };
             grid.Children.Add(scroll);
@@ -588,6 +588,7 @@ namespace GuaranteeManager
             if (allowWrapping)
             {
                 value.TextWrapping = TextWrapping.Wrap;
+                value.TextTrimming = TextTrimming.None;
                 value.Margin = new Thickness(0, 3, 0, 0);
             }
             else
@@ -606,6 +607,14 @@ namespace GuaranteeManager
                     automationId,
                     copyName ?? $"نسخ {label.Text}");
             Grid.SetColumn(affordance, 3);
+            if (affordance is FrameworkElement affordanceElement)
+            {
+                affordanceElement.VerticalAlignment = allowWrapping
+                    ? VerticalAlignment.Top
+                    : VerticalAlignment.Center;
+                affordanceElement.Margin = new Thickness(0, allowWrapping ? 3 : 0, 0, 0);
+            }
+
             grid.Children.Add(affordance);
 
             return grid;

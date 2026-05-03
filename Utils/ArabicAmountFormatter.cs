@@ -72,6 +72,7 @@ namespace GuaranteeManager.Utils
         {
             EnsureValidSaudiRiyalAmount(amount);
             decimal rounded = NormalizeSaudiRiyalAmount(amount);
+            EnsureWholeRiyalAmountWithinWordsRange(rounded);
             long riyals = (long)Math.Floor(rounded);
             int halalas = (int)((rounded - riyals) * 100m);
 
@@ -92,8 +93,18 @@ namespace GuaranteeManager.Utils
         public static string NumberToArabicWords(decimal amount)
         {
             EnsureValidSaudiRiyalAmount(amount, "الرقم");
-            long number = (long)Math.Round(amount, MidpointRounding.AwayFromZero);
+            decimal rounded = Math.Round(amount, MidpointRounding.AwayFromZero);
+            EnsureWholeRiyalAmountWithinWordsRange(rounded);
+            long number = (long)rounded;
             return NumberToArabicWords(number);
+        }
+
+        private static void EnsureWholeRiyalAmountWithinWordsRange(decimal amount)
+        {
+            if (Math.Floor(amount) > long.MaxValue)
+            {
+                throw new InvalidOperationException("المبلغ أكبر من الحد المدعوم للتحويل إلى كلمات عربية.");
+            }
         }
 
         private static string NumberToArabicWords(long number)

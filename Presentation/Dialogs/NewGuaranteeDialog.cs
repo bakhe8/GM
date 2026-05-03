@@ -33,7 +33,6 @@ namespace GuaranteeManager
         private readonly Func<string, bool> _isGuaranteeNoUnique;
         private readonly TextBox _guaranteeNoInput = BuildTextBox();
         private readonly TextBox _supplierInput = BuildTextBox();
-        private readonly TextBox _beneficiaryInput = BuildTextBox();
         private readonly ComboBox _bankInput = BuildEditableComboBox();
         private readonly ComboBox _typeInput = BuildEditableComboBox();
         private readonly TextBox _amountInput = BuildTextBox();
@@ -45,10 +44,6 @@ namespace GuaranteeManager
         private readonly TextBlock _attachmentsLabel = new();
         private readonly StackPanel _attachmentsList = new() { Margin = new Thickness(0, 8, 0, 0) };
         private readonly List<AttachmentInput> _attachments = new();
-        private readonly Border _consequenceCard = new();
-        private readonly TextBlock _consequenceSummary = new();
-        private readonly TextBlock _consequencePrimary = new();
-        private readonly TextBlock _consequenceSecondary = new();
 
         private NewGuaranteeInput? _input;
         private bool _isDirty;
@@ -60,11 +55,10 @@ namespace GuaranteeManager
             Func<string, bool> isGuaranteeNoUnique)
         {
             _isGuaranteeNoUnique = isGuaranteeNoUnique;
-            Title = "إجراء جديد";
+            Title = "إضافة ضمان جديد";
             UiInstrumentation.Identify(this, "Dialog.NewGuarantee", Title);
             UiInstrumentation.Identify(_guaranteeNoInput, "Dialog.NewGuarantee.GuaranteeNoInput", "رقم الضمان");
             UiInstrumentation.Identify(_supplierInput, "Dialog.NewGuarantee.SupplierInput", "المورد");
-            UiInstrumentation.Identify(_beneficiaryInput, "Dialog.NewGuarantee.BeneficiaryInput", "الجهة المستفيدة");
             UiInstrumentation.Identify(_bankInput, "Dialog.NewGuarantee.BankInput", "البنك");
             UiInstrumentation.Identify(_typeInput, "Dialog.NewGuarantee.TypeInput", "نوع الضمان");
             UiInstrumentation.Identify(_amountInput, "Dialog.NewGuarantee.AmountInput", "المبلغ");
@@ -74,11 +68,8 @@ namespace GuaranteeManager
             UiInstrumentation.Identify(_notesInput, "Dialog.NewGuarantee.NotesInput", "ملاحظات");
             UiInstrumentation.Identify(_attachmentTypeInput, "Dialog.NewGuarantee.AttachmentTypeInput", "نوع المستند");
             UiInstrumentation.Identify(_attachmentsLabel, "Dialog.NewGuarantee.AttachmentsSummary", "ملخص المرفقات");
-            UiInstrumentation.Identify(_consequenceSummary, "Dialog.NewGuarantee.ConsequenceSummary", "معاينة أثر الحفظ");
-            UiInstrumentation.Identify(_consequencePrimary, "Dialog.NewGuarantee.ConsequencePrimary", "تفاصيل أثر الحفظ");
-            UiInstrumentation.Identify(_consequenceSecondary, "Dialog.NewGuarantee.ConsequenceSecondary", "ملاحظات أثر الحفظ");
-            Width = 520;
-            Height = 640;
+            Width = 560;
+            Height = 580;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             ResizeMode = ResizeMode.NoResize;
             FlowDirection = FlowDirection.RightToLeft;
@@ -96,10 +87,8 @@ namespace GuaranteeManager
                 _typeInput.Items.Add(guaranteeType);
             }
 
-            _amountInput.Text = "0";
+            _amountInput.Text = "0.00";
             _expiryInput.Text = DualCalendarDateService.FormatGregorianDate(DateTime.Today.AddMonths(6));
-            _beneficiaryInput.Text = BusinessPartyDefaults.DefaultBeneficiaryName;
-            _beneficiaryInput.IsReadOnly = true;
             _notesInput.Height = 58;
             _notesInput.AcceptsReturn = true;
             _notesInput.TextWrapping = TextWrapping.Wrap;
@@ -126,17 +115,18 @@ namespace GuaranteeManager
             var scroll = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
             var fields = new StackPanel();
 
-            fields.Children.Add(BuildField("رقم الضمان", _guaranteeNoInput));
-            fields.Children.Add(BuildField("المورد", _supplierInput));
-            fields.Children.Add(BuildField("الجهة المستفيدة", _beneficiaryInput));
-            fields.Children.Add(BuildField("البنك", _bankInput));
-            fields.Children.Add(BuildField("نوع الضمان", _typeInput));
-            fields.Children.Add(BuildField("المبلغ", _amountInput));
+            fields.Children.Add(BuildTwoColumnRow(
+                BuildField("رقم الضمان", _guaranteeNoInput),
+                BuildField("البنك", _bankInput)));
+            fields.Children.Add(BuildTwoColumnRow(
+                BuildField("المبلغ", _amountInput),
+                BuildField("نوع الضمان", _typeInput)));
             fields.Children.Add(BuildField("تاريخ الانتهاء", _expiryInput));
-            fields.Children.Add(BuildField("نوع المرجع", _referenceTypeInput));
-            fields.Children.Add(BuildField("رقم المرجع", _referenceNumberInput));
+            fields.Children.Add(BuildTwoColumnRow(
+                BuildField("نوع المرجع", _referenceTypeInput),
+                BuildField("رقم المرجع", _referenceNumberInput)));
+            fields.Children.Add(BuildField("المورد", _supplierInput));
             fields.Children.Add(BuildField("ملاحظات", _notesInput));
-            fields.Children.Add(BuildConsequenceSection());
 
             var attachmentPanel = new StackPanel { Margin = new Thickness(0, 4, 0, 8) };
             attachmentPanel.Children.Add(BuildLabel("المرفقات"));
@@ -160,37 +150,22 @@ namespace GuaranteeManager
 
             scroll.Content = fields;
 
-            var actions = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 14, 0, 0)
-            };
-            DockPanel.SetDock(actions, Dock.Bottom);
-
             var saveButton = UiInstrumentation.Identify(
-                new Button { Content = "حفظ", Width = 90, Height = 32, IsDefault = true, Margin = new Thickness(8, 0, 0, 0) },
+                new Button { Content = "حفظ", IsDefault = true },
                 "Dialog.NewGuarantee.SaveButton",
                 "حفظ");
             saveButton.Click += (_, _) => TryAccept();
-            var reportsButton = UiInstrumentation.Identify(
-                new Button { Content = "التقارير", Width = 96, Height = 32, Margin = new Thickness(8, 0, 0, 0) },
-                "Dialog.NewGuarantee.ReportsButton",
-                "التقارير");
-            reportsButton.Click += (_, _) => DialogFormSupport.RunWorkspaceReport(Title);
             var cancelButton = UiInstrumentation.Identify(
-                new Button { Content = "إلغاء", Width = 90, Height = 32, IsCancel = true },
+                new Button { Content = "إلغاء", IsCancel = true },
                 "Dialog.NewGuarantee.CancelButton",
                 "إلغاء");
-            actions.Children.Add(saveButton);
-            actions.Children.Add(reportsButton);
-            actions.Children.Add(cancelButton);
+            var actions = DialogFormSupport.BuildActionBar(saveButton, cancelButton, 96, 96);
+            DockPanel.SetDock(actions, Dock.Bottom);
             root.Children.Add(actions);
             root.Children.Add(scroll);
 
             Content = root;
             WireDirtyTracking();
-            RefreshConsequencePreview();
             Closing += OnClosing;
         }
 
@@ -226,7 +201,6 @@ namespace GuaranteeManager
         {
             string guaranteeNo = _guaranteeNoInput.Text.Trim();
             string supplier = _supplierInput.Text.Trim();
-            string beneficiary = _beneficiaryInput.Text.Trim();
             string bank = GetComboText(_bankInput);
             string guaranteeType = GetComboText(_typeInput);
             string amountText = _amountInput.Text.Replace(",", string.Empty, StringComparison.Ordinal).Trim();
@@ -265,7 +239,7 @@ namespace GuaranteeManager
             _input = new NewGuaranteeInput(
                 guaranteeNo,
                 supplier,
-                BusinessPartyDefaults.NormalizeBeneficiary(beneficiary),
+                BusinessPartyDefaults.NormalizeBeneficiary(BusinessPartyDefaults.DefaultBeneficiaryName),
                 bank,
                 guaranteeType,
                 amount,
@@ -376,7 +350,6 @@ namespace GuaranteeManager
                 MarkDirty,
                 _guaranteeNoInput,
                 _supplierInput,
-                _beneficiaryInput,
                 _bankInput,
                 _typeInput,
                 _amountInput,
@@ -391,7 +364,6 @@ namespace GuaranteeManager
         private void MarkDirty()
         {
             _isDirty = true;
-            RefreshConsequencePreview();
         }
 
         private void OnClosing(object? sender, CancelEventArgs e)
@@ -419,7 +391,6 @@ namespace GuaranteeManager
         {
             string guaranteeNo = _guaranteeNoInput.Text.Trim();
             string supplier = _supplierInput.Text.Trim();
-            string beneficiary = _beneficiaryInput.Text.Trim();
             string bank = GetComboText(_bankInput);
             string guaranteeType = GetComboText(_typeInput);
             string amountText = _amountInput.Text.Replace(",", string.Empty, StringComparison.Ordinal).Trim();
@@ -434,7 +405,6 @@ namespace GuaranteeManager
 
             return !string.IsNullOrWhiteSpace(guaranteeNo)
                    || !string.IsNullOrWhiteSpace(supplier)
-                   || !string.IsNullOrWhiteSpace(beneficiary)
                    || !string.IsNullOrWhiteSpace(bank)
                    || !string.IsNullOrWhiteSpace(guaranteeType)
                    || amountChanged
@@ -448,13 +418,27 @@ namespace GuaranteeManager
         private static string GetComboText(ComboBox comboBox)
             => (comboBox.Text ?? comboBox.SelectedItem?.ToString() ?? string.Empty).Trim();
 
-        private static FrameworkElement BuildField(string label, Control input)
+        private static FrameworkElement BuildField(string label, FrameworkElement input)
         {
             var panel = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
             panel.Children.Add(BuildLabel(label));
             input.Margin = new Thickness(0, 4, 0, 0);
             panel.Children.Add(input);
             return panel;
+        }
+
+        private static FrameworkElement BuildTwoColumnRow(FrameworkElement firstField, FrameworkElement secondField)
+        {
+            var row = new Grid { FlowDirection = FlowDirection.RightToLeft };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(12) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            Grid.SetColumn(firstField, 0);
+            Grid.SetColumn(secondField, 2);
+            row.Children.Add(firstField);
+            row.Children.Add(secondField);
+            return row;
         }
 
         private static TextBlock BuildLabel(string text)
@@ -492,151 +476,6 @@ namespace GuaranteeManager
             };
         }
 
-        private FrameworkElement BuildConsequenceSection()
-        {
-            var panel = new StackPanel { Margin = new Thickness(0, 4, 0, 10) };
-            panel.Children.Add(BuildLabel("أثر الحفظ"));
-
-            ConfigureConsequenceText(_consequenceSummary, 12, FontWeights.Medium, "#0F172A");
-            ConfigureConsequenceText(_consequencePrimary, 11, FontWeights.Normal, "#64748B");
-            ConfigureConsequenceText(_consequenceSecondary, 11, FontWeights.Normal, "#64748B");
-            _consequencePrimary.Margin = new Thickness(0, 4, 0, 0);
-            _consequenceSecondary.Margin = new Thickness(0, 4, 0, 0);
-
-            _consequenceCard.CornerRadius = new CornerRadius(8);
-            _consequenceCard.BorderThickness = new Thickness(1);
-            _consequenceCard.Padding = new Thickness(12, 10, 12, 10);
-            _consequenceCard.Margin = new Thickness(0, 4, 0, 0);
-            _consequenceCard.Child = new StackPanel
-            {
-                Children =
-                {
-                    _consequenceSummary,
-                    _consequencePrimary,
-                    _consequenceSecondary
-                }
-            };
-
-            panel.Children.Add(_consequenceCard);
-            return panel;
-        }
-
-        private void RefreshConsequencePreview()
-        {
-            string guaranteeNo = _guaranteeNoInput.Text.Trim();
-            string supplier = _supplierInput.Text.Trim();
-            string beneficiary = _beneficiaryInput.Text.Trim();
-            string bank = GetComboText(_bankInput);
-            string guaranteeType = GetComboText(_typeInput);
-            string amountText = _amountInput.Text.Replace(",", string.Empty, StringComparison.Ordinal).Trim();
-            string expiryText = _expiryInput.Text.Trim();
-            string referenceNumber = _referenceNumberInput.Text.Trim();
-            GuaranteeReferenceType referenceType = (_referenceTypeInput.SelectedItem as ReferenceTypeOption)?.Value ?? GuaranteeReferenceType.None;
-
-            var missing = new List<string>();
-            if (string.IsNullOrWhiteSpace(guaranteeNo))
-            {
-                missing.Add("رقم الضمان");
-            }
-
-            if (string.IsNullOrWhiteSpace(supplier))
-            {
-                missing.Add("المورد");
-            }
-
-            if (string.IsNullOrWhiteSpace(bank))
-            {
-                missing.Add("البنك");
-            }
-
-            if (string.IsNullOrWhiteSpace(guaranteeType))
-            {
-                missing.Add("نوع الضمان");
-            }
-
-            bool amountValid = ArabicAmountFormatter.TryParsePositiveSaudiRiyalAmount(amountText, out decimal amount);
-            bool expiryValid = DualCalendarDateService.TryParseDate(expiryText, out DateTime expiryDate, out GuaranteeDateCalendar dateCalendar);
-
-            if (missing.Count > 0 || !amountValid || !expiryValid)
-            {
-                var blockers = new List<string>();
-                if (missing.Count > 0)
-                {
-                    blockers.Add($"أكمل: {string.Join("، ", missing)}");
-                }
-
-                if (!amountValid)
-                {
-                    blockers.Add("المبلغ يجب أن يكون أكبر من صفر وبحد أقصى خانتين للهلل.");
-                }
-
-                if (!expiryValid)
-                {
-                    blockers.Add("تاريخ الانتهاء غير صالح بعد.");
-                }
-
-                SetConsequenceState(
-                    "الحفظ لن يكتمل بعد.",
-                    blockers.FirstOrDefault() ?? "أكمل البيانات الأساسية أولًا.",
-                    blockers.Count > 1 ? string.Join(" ", blockers.Skip(1)) : "عند اكتمال البيانات سيُنشأ الضمان مباشرة كإصدار أول.",
-                    warningState: true);
-                return;
-            }
-
-            string effectiveBeneficiary = BusinessPartyDefaults.NormalizeBeneficiary(beneficiary);
-            string referenceSummary = BuildReferenceSummary(referenceType, referenceNumber);
-            string attachmentSummary = _attachments.Count == 0
-                ? "بدون مرفقات إضافية"
-                : $"{_attachments.Count.ToString("N0", CultureInfo.InvariantCulture)} مرفق سيُحفظ";
-            string beneficiarySummary = string.IsNullOrWhiteSpace(beneficiary)
-                ? $"سيُستخدم المستفيد الافتراضي: {effectiveBeneficiary}"
-                : $"الجهة المستفيدة: {effectiveBeneficiary}";
-
-            SetConsequenceState(
-                "سيُنشأ ضمان جديد كالإصدار الأول.",
-                $"{guaranteeNo} • {bank} • {guaranteeType} • {ArabicAmountFormatter.FormatSaudiRiyals(amount, 2)} • {DualCalendarDateService.FormatDate(expiryDate, dateCalendar)}",
-                $"{beneficiarySummary} • {referenceSummary} • {attachmentSummary}",
-                warningState: false);
-        }
-
-        private void SetConsequenceState(string summary, string primary, string secondary, bool warningState)
-        {
-            ApplyConsequenceText(_consequenceSummary, summary);
-            ApplyConsequenceText(_consequencePrimary, primary);
-            ApplyConsequenceText(_consequenceSecondary, secondary);
-
-            _consequenceCard.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(warningState ? "#FFF9EC" : "#EFF6FF"));
-            _consequenceCard.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(warningState ? "#F6DE99" : "#BFDBFE"));
-            _consequenceSummary.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(warningState ? "#E09408" : "#1D4ED8"));
-        }
-
-        private static void ConfigureConsequenceText(TextBlock textBlock, double fontSize, FontWeight fontWeight, string colorHex)
-        {
-            textBlock.FontSize = fontSize;
-            textBlock.FontWeight = fontWeight;
-            textBlock.TextWrapping = TextWrapping.Wrap;
-            textBlock.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colorHex));
-        }
-
-        private static void ApplyConsequenceText(TextBlock textBlock, string value)
-        {
-            string resolved = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
-            textBlock.Text = resolved;
-            System.Windows.Automation.AutomationProperties.SetHelpText(textBlock, resolved);
-            System.Windows.Automation.AutomationProperties.SetItemStatus(textBlock, resolved);
-        }
-
-        private static string BuildReferenceSummary(GuaranteeReferenceType referenceType, string referenceNumber)
-        {
-            string number = referenceNumber?.Trim() ?? string.Empty;
-            return referenceType switch
-            {
-                GuaranteeReferenceType.Contract when !string.IsNullOrWhiteSpace(number) => $"عقد: {number}",
-                GuaranteeReferenceType.PurchaseOrder when !string.IsNullOrWhiteSpace(number) => $"أمر شراء: {number}",
-                _ => "بدون مرجع"
-            };
-        }
-
         private static List<AttachmentDocumentTypeOption> BuildAttachmentTypeOptions()
         {
             return AttachmentDocumentTypeText.OfficialAttachmentTypes
@@ -644,6 +483,9 @@ namespace GuaranteeManager
                 .ToList();
         }
 
-        private sealed record ReferenceTypeOption(GuaranteeReferenceType Value, string Label);
+        private sealed record ReferenceTypeOption(GuaranteeReferenceType Value, string Label)
+        {
+            public override string ToString() => Label;
+        }
     }
 }
